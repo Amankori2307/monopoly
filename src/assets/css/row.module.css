@@ -1,0 +1,26 @@
+.row{
+ border: 1px solid black;
+ position: absolute;
+}
+.vertical{
+    width: 125px;
+    height: calc(100% - 125px);
+}
+.horizontal{
+    height: 125px;
+    width: calc(100% - 125px);
+}
+
+.bottom{
+    bottom: 0;
+}
+.top{
+    top: 0;
+}
+.left{
+    left:0;
+}
+.right{
+    right: 0;
+}
+

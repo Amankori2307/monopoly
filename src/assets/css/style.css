@@ -1,0 +1,12 @@
+*{
+    margin:0px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+.App{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
