@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import style from '../../assets/css/card.module.css'
-import CardModal from '../CardModal'
-
+import {connect} from 'react-redux'
+import {setShowModal} from '../../redux/actions/card'
 const SPECIAL = "special"
 const SITE = "site"
 const CHANCE = "chance"
@@ -10,17 +10,13 @@ const TAX = "tax"
 const STATION = "station"
 const UTILITY = "utility"
 
-const Card = ({data, rowNum}) => {
-    const [show, setShow] = useState(false);
+const Card = ({data, rowNum, setShowModal}) => {
     const genClassList = () => {
         let classList = "";
         classList += rowNum === 1 || rowNum ===2? style.reverse+" ": ""
         return classList
     }
-    const onClick = () => {
-        console.log("clicked")
-        setShow(true)
-    }
+
     const genCard = () => {
         let UI = null;
         switch(data.type){
@@ -28,7 +24,7 @@ const Card = ({data, rowNum}) => {
             case STATION:
             case UTILITY:
                 UI = (
-                    <div className={`${style.card} ${genClassList()}`} onClick={onClick}>
+                    <div className={`${style.card} ${genClassList()}`} onClick={() => setShowModal(true)}>
                         <div className={`${style.strip} ${data.color}`}></div>
                         <div className={style.details}>
                             <p className={style.sellingPrice}>${data.sellingPrice}</p>
@@ -73,9 +69,17 @@ const Card = ({data, rowNum}) => {
     return (
         <>
             {genCard()}
-            <CardModal show={show} setShow={setShow} />
         </>
     );
 }
+// const mapStateToProps =  (store) => {
+//     return {
 
-export default Card
+//     }
+// }
+const mapDispatchToProps = (dispatch) => {
+    return {
+        setShowModal: (payload) => dispatch(setShowModal(payload))
+    }
+}
+export default connect(null, mapDispatchToProps)(Card) 

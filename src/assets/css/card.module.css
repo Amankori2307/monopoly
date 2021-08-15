@@ -3,6 +3,7 @@
     display: flex;
     border-top: 1px solid black;
     border-left: 1px solid black;
+    cursor: pointer;
 }
 .specialCard{
     flex-basis: 120px;
