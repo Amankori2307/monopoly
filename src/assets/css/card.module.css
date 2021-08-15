@@ -1,0 +1,31 @@
+.card{
+    flex: 1 1 0px;
+    border: 1px solid black;
+    display: flex;
+}
+
+.special{
+    flex-basis: 120px;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+.type{
+    width: 20px;
+    border-right: 1px solid black;
+}
+.details{
+    text-align: center;
+    width: 100%;
+}
+.name{
+    
+    font-size: 13px;
+    font-weight: bold;
+}
+.sellingPrice{
+    font-size: 12px;
+}
+
+.rowReverse{
+    flex-direction: row-reverse;
+}
