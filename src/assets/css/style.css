@@ -11,6 +11,34 @@
     justify-content: center;
 }
 
+
+.brown{
+    background-color: brown;
+}
+.green{
+    background-color: green;
+}
+.pink{
+    background-color: pink;
+}
+.orange{
+    background-color: orange;
+}
 .red{
     background-color: red;
+}
+.yellow{
+    background-color: yellow;
+}
+.skyblue{
+    background-color: skyblue;
+}
+.blue{
+    background-color: blue;
+}
+.grey{
+    background-color: grey;
+}
+.black{
+    background-color: black;
 }

@@ -5,23 +5,24 @@
     height: calc(100% - 120px);
     flex-direction: column;
 }
+
 .row1{
-    top: 0;
-    right: 0;
-}
-.row2{
     top: 0;
     right: 0;
     transform: rotate(-90deg);
     transform-origin: 100% 100%;
 }
-.row3{
+.row2{
     left: 0;
     bottom: 0;
 }
-.row4{
+.row3{
     left: 0;
     top: 120px;
     transform: rotate(-90deg);
     transform-origin: 0% 0%;
+}
+.row4{
+    top: 0;
+    right: 0;
 }
