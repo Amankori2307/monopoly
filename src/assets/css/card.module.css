@@ -1,31 +1,48 @@
 .card{
     flex: 1 1 0px;
-    border: 1px solid black;
     display: flex;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
 }
-
-.special{
+.specialCard{
     flex-basis: 120px;
-    flex-grow: 0;
-    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-style: italic;
+    border-left: 1px solid black;
 }
-.type{
+.chest{
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+.strip{
     width: 20px;
-    border-right: 1px solid black;
 }
 .details{
     text-align: center;
     width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
 }
-.name{
-    
+.sellingPrice, .debit{
     font-size: 13px;
     font-weight: bold;
 }
-.sellingPrice{
-    font-size: 12px;
+.name{
+    font-size: 10px;
 }
-
-.rowReverse{
+.reverse{
     flex-direction: row-reverse;
+    border-left: none;
+    border-right: 1px solid black;
+    border-top: none;
+    border-bottom: 1px solid black;
+}   
+.reverseSpecialCard{
+    border-left: none;
+    border-right: 1px solid black;
 }

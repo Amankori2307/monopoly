@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import style from '../assets/css/board.module.css'
 import Row from './row/Row';
-import boardData from '../assets/data/data.json'
+import boardData from '../assets/data/boardData.json'
 
 const Board = () => {
     const boardRef = useRef(null)
