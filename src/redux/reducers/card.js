@@ -1,8 +1,8 @@
-import {SET_SHOW_MODAL} from '../actions/actionTypes'
+import {SET_CURRENT_CARD, SET_SHOW_MODAL} from '../actions/actionTypes'
 
 const initialState = {
     showModal: false,
-    currentCard: null
+    currentCard: {}
 }
 
 export default function cardReducer(state = initialState, action) {
@@ -12,6 +12,11 @@ export default function cardReducer(state = initialState, action) {
             return {
                 ...state,
                 showModal: payload
+            }
+        case SET_CURRENT_CARD:
+            return {
+                ...state,
+                currentCard: payload
             }
         default:
             return state;

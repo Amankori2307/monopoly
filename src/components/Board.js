@@ -14,7 +14,12 @@ const Board = () => {
     }, [])
     return (
         <div className={style.board} ref={boardRef}>
-            {boardData.map((data, index) => <Row key={index} data={data} rowNum={index+1}/>)}
+            {[
+                boardData.slice(0,10),
+                boardData.slice(10,20),
+                boardData.slice(20,30),
+                boardData.slice(30,40),
+            ].map((data, index) => <Row key={index} data={data} rowNum={index+1}/>)}
         </div>
     );
 }

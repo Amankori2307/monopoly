@@ -1,0 +1,62 @@
+
+.cardModal{
+    width: 300px;
+    background-color: white;
+    position: relative;
+    z-index: 2;
+}
+
+.card{
+    margin: 20% 5% 5% 5%;
+    width: 90%;
+    height: 85%;
+    border: 1px solid black;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+.close{
+    position:absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 25px;
+    cursor: pointer;
+}
+.name{
+    text-align: center;
+    padding: 10px 0px;
+    font-weight: bold;
+}
+.rent{
+    text-align: center;
+    font-size: 13px;
+    padding: 10px 0px;
+    font-weight: bold;
+}
+.rentWithHouse{
+    width: 100%;
+    padding: 0px 20px;
+    margin-bottom: 20px;
+}
+.rentWithHouse  .text{
+    text-align: left;
+    font-size: 13px
+}
+.rentWithHouse  .houseRent{
+    text-align: right;
+    font-size: 13px;
+}
+
+.mortgage, .construction{
+    font-weight: bold;
+    font-size: 13px;
+    text-align: center;
+}
+.construction{
+    margin-bottom: 20px;
+}
+.info{
+    padding: 0px 10px;
+    font-size: 10px;
+    margin-bottom: 10px; 
+}

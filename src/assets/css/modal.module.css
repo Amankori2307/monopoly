@@ -8,19 +8,3 @@
     align-items: center;
     z-index: 1;
 }
-
-.cardModal{
-    width: 300px;
-    height: 500px;
-    background-color: white;
-    position: relative;
-    z-index: 2;
-}
-.card{
-    margin: 20% 5% 5% 5%;
-    width: 90%;
-    height: 85%;
-    border: 1px solid black;
-    border-radius: 15px;
-    
-}
