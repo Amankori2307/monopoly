@@ -72,3 +72,27 @@
 .utilityInfo p{
     margin-bottom: 3px;
 }
+.centerWrapper{
+ justify-content: center;
+ align-items: center;
+ display: flex;
+}
+.circle{
+    width: 230px;
+    height: 230px;
+    border-radius: 140px;
+    background-color: white;
+}
+.centerWrapper .heading{
+    font-size: 25px;
+    font-weight: bold;
+}
+.centerWrapper .subHeading{
+    font-size: 13px;
+}
+.column{
+    flex-direction: column;
+}
+.radialBackground{
+    background: radial-gradient(black, grey, lightgrey, white);
+}

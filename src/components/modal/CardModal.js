@@ -50,8 +50,7 @@ const CardModal = ({hideOnClick, onClick, currentCard: card}) => {
                 )
                 break;
         
-            case UTILITY:
-                
+            case UTILITY:    
                 UI = (
                     <div className={style.cardModal} onClick={onClick}>
                         <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
@@ -61,6 +60,20 @@ const CardModal = ({hideOnClick, onClick, currentCard: card}) => {
                                 {UTILITY_INFO.map((data, index) => <p key={index}>{data}</p>)}
                             </div>
                             <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
+                        </div>
+                    </div>
+                )
+                break;
+            
+            case TAX:    
+                UI = (
+                    <div className={style.cardModal} onClick={onClick}>
+                        <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
+                        <div className={`${style.card} ${style.centerWrapper} ${style.radialBackground}`}>
+                            <div className={`${style.circle} ${style.centerWrapper} ${style.column}`}>
+                                <p className={style.heading}>Pay ${card.debit}</p>
+                                <p className={style.subHeading}>{card.name}</p>
+                            </div>
                         </div>
                     </div>
                 )
