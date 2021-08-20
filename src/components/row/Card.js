@@ -49,7 +49,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard}) => {
                 break;
             case TAX:
                 UI = (
-                    <div className={`${style.card} ${genClassList()}`}>
+                    <div className={`${style.card} ${genClassList()}`} onClick={onCardClick}>
                         <div className={style.details}>
                             <p className={style.debit}>Pay ${data.debit}</p>
                             <p className={style.name}>{data.name}</p>
