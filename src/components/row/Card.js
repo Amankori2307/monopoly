@@ -1,15 +1,8 @@
-import { useState } from 'react'
 import style from '../../assets/css/card.module.css'
 import {connect} from 'react-redux'
 import {setShowModal, setCurrentCard} from '../../redux/actions/card'
+import {REALM_RAILS, SITE, UTILITY, CHANCE, CHEST, TAX, SPECIAL} from '../../utility/constants'
 
-const SPECIAL = "special"
-const SITE = "site"
-const CHANCE = "chance"
-const CHEST = "chest"
-const TAX = "tax"
-const STATION = "station"
-const UTILITY = "utility"
 
 const Card = ({data, rowNum, setShowModal, setCurrentCard}) => {
     const genClassList = () => {
@@ -26,7 +19,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard}) => {
         let UI = null;
         switch(data.type){
             case SITE:
-            case STATION:
+            case REALM_RAILS:
             case UTILITY:
                 UI = (
                     <div className={`${style.card} ${genClassList()}`} onClick={onCardClick}>

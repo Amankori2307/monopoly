@@ -9,7 +9,7 @@
 .card{
     margin: 20% 5% 5% 5%;
     width: 90%;
-    height: 85%;
+    height: 300px;
     border: 1px solid black;
     border-radius: 15px;
     overflow: hidden;
@@ -59,4 +59,16 @@
     padding: 0px 10px;
     font-size: 10px;
     margin-bottom: 10px; 
+}
+.mt{
+   margin-top: 20px; 
+}
+.utilityInfo{
+    font-size: 13px;
+    padding: 20px 10px;
+    text-indent: 10px;
+    text-align: justify;
+}
+.utilityInfo p{
+    margin-bottom: 3px;
 }

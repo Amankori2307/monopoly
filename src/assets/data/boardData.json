@@ -45,10 +45,13 @@
     },
     {
         "id": 6,
-        "type": "station",
+        "type": "realm_rails",
         "color": "grey",
+        "textColorOnShow": "white",
         "name": "Forest Realm Rails",
-        "sellingPrice": 200
+        "sellingPrice": 200,
+        "rent": [25, 50, 100, 200],
+        "mortgage": 100
     },
     {
         "id":5,
@@ -142,10 +145,13 @@
     },
     {
         "id": 16,
-        "type": "station",
+        "type": "realm_rails",
         "color": "grey",
         "name": "Send Relm Rails",
-        "sellingPrice": 200
+        "sellingPrice": 200,
+        "textColorOnShow": "white",
+        "rent": [25, 50, 100, 200],
+        "mortgage": 100
     },
     {
         "id": 15,
@@ -174,7 +180,7 @@
     {
         "id": 13,
         "type": "utility",
-        "color": "white",
+        "color": "lightgrey",
         "name": "Windmill Hut",
         "sellingPrice": 150
     },
@@ -248,10 +254,13 @@
     },
     {   
         "id": 26,
-        "type": "station",
+        "type": "realm_rails",
         "color": "grey",
         "name": "Fire Realm Rails",
-        "sellingPrice": 200
+        "sellingPrice": 200,
+        "textColorOnShow": "white",
+        "rent": [25, 50, 100, 200],
+        "mortgage": 100
     },
     {
         "id": 27,
@@ -280,7 +289,7 @@
     {
         "id": 29,
         "type": "utility",
-        "color": "white",
+        "color": "lightgrey",
         "name": "Waterfall Cave",
         "sellingPrice": 150
     },
@@ -347,10 +356,13 @@
     },
     {
         "id": 36,
-        "type": "station",
+        "type": "realm_rails",
         "color": "grey",
         "name": "Ocean Realm Rails",
-        "sellingPrice": 200
+        "sellingPrice": 200,
+        "textColorOnShow": "white",
+        "rent": [25, 50, 100, 200],
+        "mortgage": 100
     },
     {
         "id": 37,
