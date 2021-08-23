@@ -12,3 +12,4 @@ function player(state = initialState, action){
             break;
     }
 }
+export default player
