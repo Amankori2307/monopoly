@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import style from '../../assets/css/dice.module.css'
 
 const Dice = ({number}) => {

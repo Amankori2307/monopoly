@@ -1,12 +1,14 @@
 import Dice from './Dice'
 import style from '../../assets/css/dice.module.css'
 import { useState } from 'react'
+import rollDiceAudio from '../../assets/audio/rolldice2.wav'
 const DiceContainer = ()=>{
-   
+    const [disabled, setDisabled] = useState(false)
     const [number, setNumber] = useState({
         dice1: 6,
         dice2: 6
     })
+    const audioElement = new Audio(rollDiceAudio)
     const genNumber = () => {
         return Math.floor(Math.random()*6) + 1
     }
@@ -19,10 +21,15 @@ const DiceContainer = ()=>{
         })
     }
     const onClick = () => {
-        let interval = setInterval(rollDice, 50)
-        setTimeout(() => {
-            clearInterval(interval)
-        }, 500)
+        if(!disabled){
+            setDisabled(true)
+            let interval = setInterval(rollDice, 50)
+            setTimeout(() => {
+                clearInterval(interval)
+                setDisabled(false)
+            }, 500)
+            audioElement.play()
+        }        
     }
     return (
         <div className={style.diceContainer} onClick={onClick}>

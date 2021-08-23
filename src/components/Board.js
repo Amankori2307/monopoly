@@ -3,6 +3,7 @@ import style from '../assets/css/board.module.css'
 import Row from './row/Row';
 import boardData from '../assets/data/boardData.json'
 import DiceContainer from "./dice/DiceContainer";
+import PlayerContainer from './player/PlayerContainer';
 
 const Board = () => {
     const boardRef = useRef(null)
@@ -22,7 +23,7 @@ const Board = () => {
                 boardData.slice(30,40),
             ].map((data, index) => <Row key={index} data={data} rowNum={index+1}/>)}
             <DiceContainer />
-       
+            <PlayerContainer />
         </div>
     );
 }
