@@ -9,7 +9,6 @@ function player(state = initialState, action){
     switch(type){
         default:
             return state;
-            break;
     }
 }
 export default player

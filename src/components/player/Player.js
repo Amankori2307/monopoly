@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import style from '../../assets/css/player.module.css'
 import {connect} from 'react-redux'
-function Player({player}){
+function Player({player, dice}){
     useEffect(() => {
-        console.log(player)
+        console.log(dice)
     })
     return (
         <div className={`${style.player} red`}>
@@ -13,7 +13,8 @@ function Player({player}){
 }
 const mapStateToProps = (store) => {
     return {
-        player: store.player
+        player: store.player,
+        dice: store.dice
     }
 }
 

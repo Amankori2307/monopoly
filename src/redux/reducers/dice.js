@@ -1,8 +1,9 @@
-import {ROLL_DICE} from '../actions/actionTypes'
+import {ROLL_DICE, SET_DICE_SUM} from '../actions/actionTypes'
 
 const initialState = {
     dice1: 6,
     dice2: 6, 
+    sum: 12
 }
 
 function dice(state=initialState, action){
@@ -13,11 +14,15 @@ function dice(state=initialState, action){
             return {
                 ...state,
                 dice1: payload.dice1,
-                dice2: payload.dice2
+                dice2: payload.dice2,
+            }
+        case SET_DICE_SUM:
+            return {
+                ...state,
+                sum: state.dice1 + state.dice2
             }
         default:
             return state;
-            break;
 
     }
 }
