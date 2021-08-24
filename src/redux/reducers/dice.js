@@ -3,7 +3,7 @@ import {ROLL_DICE, SET_DICE_SUM} from '../actions/actionTypes'
 const initialState = {
     dice1: 6,
     dice2: 6, 
-    diceSum: 12,
+    diceSum: null,
     setDiceSumCalledCount: 1 // to identify if if SET_DICE_SUM was triggered
 }
 

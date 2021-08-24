@@ -2,6 +2,7 @@ import { MOVE_PLAYER } from "../actions/actionTypes";
 
 const initialState = {
     site: 1,
+    previousSite: 1,
     top:null,
     right: 45,
     bottom: 45,
@@ -15,6 +16,7 @@ function player(state = initialState, action){
         case MOVE_PLAYER:
             return {
                 ...state,
+                previousSite: state.site,
                 top: payload.top,
                 right: payload.right,
                 bottom: payload.bottom,
