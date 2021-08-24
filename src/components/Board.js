@@ -4,16 +4,22 @@ import Row from './row/Row';
 import boardData from '../assets/data/boardData.json'
 import DiceContainer from "./dice/DiceContainer";
 import PlayerContainer from './player/PlayerContainer';
-
-const Board = () => {
+import { connect } from 'react-redux';
+import {setBoardSize} from '../redux/actions/board'
+const Board = ({setBoardSize}) => {
     const boardRef = useRef(null)
     useEffect(() => {
         let w = window.innerWidth;
         let h = window.innerHeight;
-        let side = (Math.min(w,h)-40)+"px"
+        let side = (Math.min(w,h)-40)
+        setBoardSize({
+            side: side,
+            rowWidth: 120
+        })
+        side += "px"
         boardRef.current.style.width = side;
         boardRef.current.style.height = side;
-    }, [])
+    }, [setBoardSize])
     return (
         <div className={style.board} ref={boardRef}>
             {[
@@ -28,4 +34,10 @@ const Board = () => {
     );
 }
 
-export default Board
+const mapDispatchToProps = (dispatch) => {
+    return {
+        setBoardSize: data => dispatch(setBoardSize(data))
+    }
+}
+
+export default connect(null, mapDispatchToProps)(Board)

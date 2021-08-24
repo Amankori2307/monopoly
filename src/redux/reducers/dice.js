@@ -3,7 +3,8 @@ import {ROLL_DICE, SET_DICE_SUM} from '../actions/actionTypes'
 const initialState = {
     dice1: 6,
     dice2: 6, 
-    sum: 12
+    diceSum: 12,
+    setDiceSumCalledCount: 1 // to identify if if SET_DICE_SUM was triggered
 }
 
 function dice(state=initialState, action){
@@ -19,7 +20,8 @@ function dice(state=initialState, action){
         case SET_DICE_SUM:
             return {
                 ...state,
-                sum: state.dice1 + state.dice2
+                setDiceSumCalledCount: state.setDiceSumCalledCount+1,
+                diceSum: state.dice1 + state.dice2
             }
         default:
             return state;

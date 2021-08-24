@@ -30,7 +30,6 @@ const DiceContainer = ({dice, rollDice, setDiceSum})=>{
             audioElement.play()
         }        
     }
-    console.log(dice.dice1)
     return (
         <div className={style.diceContainer} onClick={onClick}>
             <Dice number={dice.dice1}/>

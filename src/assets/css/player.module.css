@@ -4,4 +4,5 @@
     border-radius: 15px;
     filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
     position: absolute;
+    transition: top 0.1s ease-in-out, right 0.1s ease-in-out, bottom 0.1s ease-in-out, left 0.1s ease-in-out;
 }
