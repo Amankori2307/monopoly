@@ -1,8 +1,9 @@
-import { SET_BOARD_SIZE } from "../actions/actionTypes";
-
+import { CALC_SITE_POSITIONS, SET_BOARD_SIZE } from "../actions/actionTypes";
+import {calculatePositions} from '../../utility/boardUtility'
 const initialState = {
     side: null,
-    rowWidth: null
+    rowWidth: null,
+    positions: []
 }
 
 export default function board(state=initialState, action){
@@ -13,6 +14,12 @@ export default function board(state=initialState, action){
                 ...state,
                 side: payload.side,
                 rowWidth: payload.rowWidth
+            }
+        case CALC_SITE_POSITIONS:
+            let calculatedPositions = calculatePositions(payload)
+            return {
+                ...state,
+                positions: calculatedPositions
             }
         default:
             return state

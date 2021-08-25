@@ -13,3 +13,4 @@ export const SET_DICE_SUM = "SET_DICE_SUM"
 
 // Board
 export const SET_BOARD_SIZE = "SET_BOARD_SIZE"
+export const CALC_SITE_POSITIONS = "CALC_SITE_POSITIONS"
