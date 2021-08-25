@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import style from '../../assets/css/player.module.css'
 import {connect} from 'react-redux'
 import {movePlayer} from '../../redux/actions/player'
-
+import audio1 from '../../assets/audio/playermove.wav'
 function Player({player, diceSum, movePlayer, board, setDiceSumCalledCount}){
     const isMounted = useRef(false)
     const site = useRef(player.site)
+    const playerMoveAudio = new Audio(audio1)
 
 
 
@@ -85,6 +86,9 @@ function Player({player, diceSum, movePlayer, board, setDiceSumCalledCount}){
             else return null;
         }
         const setPlayerPosition = (positionData) => {
+            playerMoveAudio.load()
+            playerMoveAudio.play()
+
             playerRef.current.style.top = positionData.top != null? positionData.top +"px": "unset";
             playerRef.current.style.right = positionData.right != null? positionData.right +"px": "unset";
             playerRef.current.style.bottom = positionData.bottom != null? positionData.bottom +"px": "unset";
@@ -96,10 +100,13 @@ function Player({player, diceSum, movePlayer, board, setDiceSumCalledCount}){
         // console.log(isLtype)
         if(isLtype){
             let tempPlayer = calculatePositionAndSite(isLtype, 0)
+            playerMoveAudio.play()
+            
             setPlayerPosition(tempPlayer)
             setTimeout(() => {
+                // playerMoveAudio2.play()
                 setPlayerPosition(player)
-            }, 200)
+            }, 400)
         }else{
             setPlayerPosition(player)
         }
