@@ -5,7 +5,7 @@ import dice from './dice'
 import board from './board'
 export default combineReducers({
     card,
-    player,
+    playersData: player,
     dice,
     board
 })

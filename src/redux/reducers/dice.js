@@ -5,6 +5,7 @@ const initialState = {
     dice2: 6, 
     diceSum: null,
     setDiceSumCalledCount: 1 // to identify if if SET_DICE_SUM was triggered
+    
 }
 
 function dice(state=initialState, action){
@@ -16,6 +17,8 @@ function dice(state=initialState, action){
                 ...state,
                 dice1: payload.dice1,
                 dice2: payload.dice2,
+                setDiceSumCalledCount: state.setDiceSumCalledCount+1,
+                diceSum: payload.dice1 + payload .dice2
             }
         case SET_DICE_SUM:
             return {
