@@ -18,7 +18,7 @@ function dice(state=initialState, action){
                 dice1: payload.dice1,
                 dice2: payload.dice2,
                 setDiceSumCalledCount: state.setDiceSumCalledCount+1,
-                diceSum: payload.dice1 + payload .dice2
+                diceSum: payload.dice1 + payload.dice2
             }
         case SET_DICE_SUM:
             return {

@@ -4,8 +4,7 @@ export const SET_CURRENT_CARD = "SET_CURRENT_CARD"
 
 // Player
 export const MOVE_PLAYER = "MOVE_PLAYER"
-
-
+export const SET_TOTAL_PLAYERS = "SET_TOTAL_PLAYERS"
 
 // Dice
 export const ROLL_DICE = "ROLL_DICE"

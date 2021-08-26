@@ -3,9 +3,9 @@ import style from '../../assets/css/dice.module.css'
 import { useState } from 'react'
 import rollDiceAudio from '../../assets/audio/rolldice2.wav'
 import {connect} from 'react-redux' 
-import {rollDice, setDiceSum} from '../../redux/actions/dice'
+import {rollDice} from '../../redux/actions/dice'
 
-const DiceContainer = ({dice, rollDice, setDiceSum})=>{
+const DiceContainer = ({rollDice})=>{
     const [disabled, setDisabled] = useState(false)
     const audioElement = new Audio(rollDiceAudio)
     const [number, setNumber] = useState({
@@ -49,14 +49,12 @@ const DiceContainer = ({dice, rollDice, setDiceSum})=>{
 
 const mapStateToProps = (store) => {
     return {
-        dice: store.dice
     }
 }
 
 const mapDispatchToProps = (dispatch) => {
     return {
         rollDice: diceData => dispatch(rollDice(diceData)),
-        setDiceSum: () => dispatch(setDiceSum()),
     }
 }
 

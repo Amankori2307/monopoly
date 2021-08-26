@@ -1,12 +1,13 @@
 import Player from "./Player"
 
-const PlayerContainer = () => {
+const PlayerContainer = ({totalPlayers}) => {
+    console.log(Array(totalPlayers).fill(1))
+    const colors = ['red', 'yellow', 'blue', 'green', 'orange', 'pink']
     return (
-        <div>
-            <Player color={"red"} id={1}/>
-            {/* <Player color={"blue"} id={2}/> */}
-            {/* <Player color={"green"}/> */}
-            {/* <Player color={"yellow"}/> */}
+        <div className="playerContainer">
+            {
+                Array(totalPlayers).fill(0).map((data, idx) => <Player key={idx} id={idx+1} color={colors[idx]}/>)
+            }
         </div>
     );
 }

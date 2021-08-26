@@ -35,6 +35,9 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
         playerRef.current.style.bottom = positionData.bottom != null? positionData.bottom +"px": "unset";
         playerRef.current.style.left = positionData.left != null? positionData.left +"px": "unset";
     },[playerMoveAudio])
+
+
+    // To move player || set updated position data in store 
     useEffect(() => {
         if(isMounted.current && (playersDataRef.current.activePlayer === id)){
             
@@ -46,6 +49,7 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
         }
     }, [diceSum, movePlayer, setDiceSumCalledCount, id, playersDataRef.current.activePlayer]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
 
+    // To render player according to the data in store
     useEffect(() => {
         currentPlayer.current = playersData.players[playersData.activePlayer]
         if(!isMounted.current){
