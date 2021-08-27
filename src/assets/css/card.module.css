@@ -1,0 +1,49 @@
+.card{
+    flex: 1 1 0px;
+    display: flex;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    cursor: pointer;
+}
+.specialCard{
+    flex-basis: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-style: italic;
+    border-left: 1px solid black;
+}
+.chest{
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+.strip{
+    width: 20px;
+}
+.details{
+    text-align: center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.sellingPrice, .debit{
+    font-size: 13px;
+    font-weight: bold;
+}
+.name{
+    font-size: 10px;
+}
+.reverse{
+    flex-direction: row-reverse;
+    border-left: none;
+    border-right: 1px solid black;
+    border-top: none;
+    border-bottom: 1px solid black;
+}   
+.reverseSpecialCard{
+    border-left: none;
+    border-right: 1px solid black;
+}

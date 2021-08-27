@@ -1,26 +1,28 @@
 .row{
- border: 1px solid black;
- position: absolute;
-}
-.vertical{
-    width: 125px;
-    height: calc(100% - 125px);
-}
-.horizontal{
-    height: 125px;
-    width: calc(100% - 125px);
+    display: flex;
+    position: absolute;
+    width: 120px;
+    height: calc(100% - 120px);
+    flex-direction: column;
 }
 
-.bottom{
+.row1{
+    top: 0;
+    right: 0;
+    transform: rotate(-90deg);
+    transform-origin: 100% 100%;
+}
+.row2{
+    left: 0;
     bottom: 0;
 }
-.top{
+.row3{
+    left: 0;
+    top: 120px;
+    transform: rotate(-90deg);
+    transform-origin: 0% 0%;
+}
+.row4{
     top: 0;
-}
-.left{
-    left:0;
-}
-.right{
     right: 0;
 }
-

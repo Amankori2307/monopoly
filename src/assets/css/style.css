@@ -2,6 +2,7 @@
     margin:0px;
     padding: 0px;
     box-sizing: border-box;
+    font-family: cursive;
 }
 
 .App{
@@ -10,3 +11,43 @@
     justify-content: center;
 }
 
+
+.brown{
+    background-color: brown;
+}
+.green{
+    background-color: green;
+}
+.pink{
+    background-color: pink;
+}
+.orange{
+    background-color: orange;
+}
+.red{
+    background-color: red;
+}
+.yellow{
+    background-color: yellow;
+}
+.skyblue{
+    background-color: skyblue;
+}
+.blue{
+    background-color: blue;
+}
+.grey{
+    background-color: grey;
+}
+.lightgrey{
+    background-color: lightgrey;
+}
+.black{
+    background-color: black;
+}
+.c-white{
+    color: white;
+}
+.c-black{
+    color: black;
+}
