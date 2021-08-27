@@ -10,7 +10,7 @@ import { setTotalPlayers } from '../redux/actions/player';
 
 const Board = ({positions, setBoardSize, calculateSitePositions, setTotalPlayers}) => {
     const boardRef = useRef(null)
-    const totalPlayers = 2
+    const totalPlayers = 4
     useEffect(() => {
         let w = window.innerWidth;
         let h = window.innerHeight;

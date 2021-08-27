@@ -1,8 +1,8 @@
-import { MOVE_PLAYER, SET_TOTAL_PLAYERS } from "../actions/actionTypes";
+import { MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_TOTAL_PLAYERS } from "../actions/actionTypes";
 
 
 const initialState = {
-    activePlayer: 1,
+    activePlayer: 0,
     totalPlayers: null,
     players:  null
 }
@@ -15,21 +15,20 @@ function player(state = initialState, action){
             let players = state.players
             let currentPlayer = players[state.activePlayer]
             players[state.activePlayer] = {
+                ...currentPlayer,
                 previousSite: currentPlayer.site,
                 site: payload.site,
             }
-            
             return {
                 ...state,
                 players: players,
-                activePlayer: state.activePlayer===state.totalPlayers?1:state.activePlayer+1
             }
         case SET_TOTAL_PLAYERS:
             let tempPlayers = {}
-            for(let player=1; player<=payload; player++){
+            for(let player=0; player<payload; player++){
                 tempPlayers[player] = {
-                    site: 1,
-                    previousSite: 1,
+                    site: 0,
+                    previousSite: 0,
                     playerId: player
                 }
             }
@@ -38,7 +37,11 @@ function player(state = initialState, action){
                 players: tempPlayers,
                 totalPlayers: payload
             }
-
+        case SET_ACTIVE_PLAYER:
+            return {
+                ...state,
+                activePlayer: (state.activePlayer+1)%state.totalPlayers
+            }
         default:
             return state;
     }
