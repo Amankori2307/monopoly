@@ -1,6 +1,6 @@
 import style from '../../assets/css/card-modal.module.css'
 import { connect } from 'react-redux';
-import {REALM_RAILS, SITE, UTILITY, CHANCE, CHEST, TAX, SPECIAL} from '../../utility/constants'
+import {REALM_RAILS, SITE, UTILITY, TAX} from '../../utility/constants'
 
 const CardModal = ({hideOnClick, onClick, currentCard: card}) => {
     const SITE_INFO = "if a player owns all the sites of any color group the rent is doubled on unimproved sites in that group."
