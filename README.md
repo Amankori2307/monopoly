@@ -1,15 +1,3 @@
-# MONOPLY
-## `Card`
-- Selling Price
-- Mortage
-- Construction Charges each
-- Rent
-    - Normal Rent
-    - 1 House Rent
-    - 2 House Rent
-    - 3 House Rent
-    - 4 House Rent
-    - Hotel Rent
-
-
+# MONOPLY BOARD GAME
+[Monopoly](https://monopoly.amankori.me/) is a multi-player economics-themed board game. In the game, players roll two dice to move around the game board, buying and trading properties, and developing them with houses and hotels. Players collect rent from their opponents, aiming to drive them to bankruptcy.
 
