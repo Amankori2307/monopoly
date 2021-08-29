@@ -7,8 +7,9 @@ import ModalContainer from "./components/modal/ModalCotainer";
 function App({showModal, setShowModal}) {
   return (
     <div className="App">
-      <Board />
-      {showModal && <ModalContainer setShow={setShowModal} component={CardModal}/>}
+      <h1>Test</h1>
+      {/* <Board /> */}
+      {/* {showModal && <ModalContainer setShow={setShowModal} component={CardModal}/>} */}
     </div>
   );
 }
