@@ -1,9 +1,9 @@
-import Board from "./components/Board";
+// import Board from "./components/Board";
 import './assets/css/style.css';
 import {connect} from 'react-redux'
-import CardModal from "./components/modal/CardModal";
+// import CardModal from "./components/modal/CardModal";
 import {setShowModal} from './redux/actions/card'
-import ModalContainer from "./components/modal/ModalCotainer";
+// import ModalContainer from "./components/modal/ModalCotainer";
 function App({showModal, setShowModal}) {
   return (
     <div className="App">
