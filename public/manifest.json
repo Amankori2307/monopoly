@@ -4,14 +4,19 @@
     "description": "Monopoly is a multi-player economics-themed board game. In the game, players roll two dice to move around the game board, buying and trading properties, and developing them with houses and hotels. Players collect rent from their opponents, aiming to drive them to bankruptcy.",
     "icons": [
       {
-        "src": "favicon.ico",
-        "sizes": "32x32",
-        "type": "image/x-icon"
+        "src": "favicon-16x16.png",
+        "sizes": "16x16",
+        "type": "image/png"
       },
       {
-        "src": "logo.png",
+        "src": "favicon-32x32.png",
+        "sizes": "32x32",
+        "type": "image/png"
+      },
+      {
+        "src": "preview-512-512.png",
         "type": "image/png",
-        "sizes": "60x60"
+        "sizes": "512x512"
       }
     ],
     "start_url": ".",
