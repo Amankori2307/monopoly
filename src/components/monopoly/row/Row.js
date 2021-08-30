@@ -1,5 +1,5 @@
 import React from 'react'
-import style from '../../assets/css/row.module.css'
+import style from '../../../assets/css/row.module.css'
 import Card from './Card'
 const Row = ({rowNum, data}) => {
     return (

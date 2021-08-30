@@ -1,0 +1,13 @@
+.header{
+    box-shadow: 2px 0px 3px 3px rgba(0,90,156,0.3);
+    width: 100%;
+    padding: 10px 50px;
+    background-color: dodgerblue;
+}
+.logo{
+    height: 40px;
+}
+.logo img{
+    height: 100%;
+    width: auto;
+}

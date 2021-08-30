@@ -1,4 +1,4 @@
-import style from '../../assets/css/modal.module.css'
+import style from '../../../assets/css/modal.module.css'
 
 const ModalContainer = ({component: Component, setShow, ...rest}) => {
     const hideOnClick = e => {    

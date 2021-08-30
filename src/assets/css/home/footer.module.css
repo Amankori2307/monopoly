@@ -1,0 +1,14 @@
+.footerContainer{
+    background-color: dodgerblue;   
+}
+.footer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+}
+.copyright{
+    text-align: center;
+    color: white;
+    font-size: 12px;
+}

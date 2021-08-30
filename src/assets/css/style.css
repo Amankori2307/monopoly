@@ -10,8 +10,14 @@
     display: flex;
     justify-content: center;
 }
-
-
+.parentContainer{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.container{
+    width: 100%;
+}
 .brown{
     background-color: brown;
 }
@@ -50,4 +56,10 @@
 }
 .c-black{
     color: black;
+}
+
+@media screen and (min-width: 1300px) {
+    .container{
+        width: 1300px;
+    }
 }
