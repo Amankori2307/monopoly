@@ -5,7 +5,7 @@ const Main = () => {
         <div className={style.main}>
             <div className={`${style.bannerContainer} parentContainer`}>
                 <div className={style.banner}>
-                    <img src={banner} />
+                    <img src={banner} alt="banner"/>
                 </div>
                 
                 <div className={`${style.bannerText} container`}>
