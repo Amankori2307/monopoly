@@ -1,4 +1,4 @@
-import style from '../../assets/css/dice.module.css'
+import style from '../../../assets/css/dice.module.css'
 
 const Dice = ({number}) => {
     return (

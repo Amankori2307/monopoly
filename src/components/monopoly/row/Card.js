@@ -1,7 +1,7 @@
-import style from '../../assets/css/card.module.css'
+import style from '../../../assets/css/card.module.css'
 import {connect} from 'react-redux'
-import {setShowModal, setCurrentCard} from '../../redux/actions/card'
-import {REALM_RAILS, SITE, UTILITY, CHANCE, CHEST, TAX, SPECIAL} from '../../utility/constants'
+import {setShowModal, setCurrentCard} from '../../../redux/actions/card'
+import {REALM_RAILS, SITE, UTILITY, CHANCE, CHEST, TAX, SPECIAL} from '../../../utility/constants'
 
 
 const Card = ({data, rowNum, setShowModal, setCurrentCard}) => {

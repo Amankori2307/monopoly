@@ -1,9 +1,9 @@
 import Dice from './Dice'
-import style from '../../assets/css/dice.module.css'
+import style from '../../../assets/css/dice.module.css'
 import { useState } from 'react'
-import rollDiceAudio from '../../assets/audio/rolldice2.wav'
+import rollDiceAudio from '../../../assets/audio/rolldice2.wav'
 import {connect} from 'react-redux' 
-import {rollDice} from '../../redux/actions/dice'
+import {rollDice} from '../../../redux/actions/dice'
 
 const DiceContainer = ({rollDice})=>{
     const [disabled, setDisabled] = useState(false)

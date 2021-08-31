@@ -1,9 +1,9 @@
 import { useEffect, useRef, useMemo, useCallback } from 'react';
-import style from '../../assets/css/player.module.css'
+import style from '../../../assets/css/player.module.css'
 import {connect} from 'react-redux'
-import {movePlayer} from '../../redux/actions/player'
-import audio1 from '../../assets/audio/playermove.wav'
-import { setActivePlayer } from '../../redux/actions/player';
+import {movePlayer} from '../../../redux/actions/player'
+import audio1 from '../../../assets/audio/playermove.wav'
+import { setActivePlayer } from '../../../redux/actions/player';
 function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setActivePlayer}){
     const isMounted = useRef(false)
     const currentPlayer = useRef(null)
