@@ -1,9 +1,12 @@
 .card{
     flex: 1 1 0px;
     display: flex;
-    border-top: 1px solid black;
-    border-left: 1px solid black;
+    /* border-top: 1px solid black; */
+    /* border-left: 1px solid black; */
     cursor: pointer;
+
+    background: rgb(233,233,233);
+background: linear-gradient(0deg, rgba(233,233,233,1) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
 }
 .specialCard{
     flex-basis: 120px;
@@ -12,7 +15,9 @@
     align-items: center;
     font-weight: bold;
     font-style: italic;
-    border-left: 1px solid black;
+    background: linear-gradient(0deg, rgba(233,233,233,1) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+
+    /* border-left: 1px solid black; */
 }
 .chest{
     justify-content: center;
@@ -41,11 +46,11 @@
 .reverse{
     flex-direction: row-reverse;
     border-left: none;
-    border-right: 1px solid black;
+    /* border-right: 1px solid black; */
     border-top: none;
-    border-bottom: 1px solid black;
+    /* border-bottom: 1px solid black; */
 }   
 .reverseSpecialCard{
     border-left: none;
-    border-right: 1px solid black;
+    /* border-right: 1px solid black; */
 }

@@ -10,10 +10,11 @@
     margin: 20% 5% 5% 5%;
     width: 90%;
     height: 300px;
-    border: 1px solid black;
+    /* border: 1px solid black; */
     border-radius: 15px;
     overflow: hidden;
     position: relative;
+
 }
 .close{
     position:absolute;

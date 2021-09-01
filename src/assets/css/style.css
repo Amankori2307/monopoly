@@ -7,8 +7,6 @@
 
 .App{
     width: 100%;
-    display: flex;
-    justify-content: center;
 }
 .parentContainer{
     width: 100%;
@@ -57,6 +55,38 @@
 .c-black{
     color: black;
 }
+.linearGradientBrown{
+    background: linear-gradient(0deg, brown 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientGreen{
+    background: linear-gradient(0deg, green 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%); 
+}
+.linearGradientPink{
+    background: linear-gradient(0deg, pink 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientOrange{
+    background: linear-gradient(0deg, orange 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientRed{
+    background: linear-gradient(0deg, red 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientYellow{
+    background: linear-gradient(0deg, yellow 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientSkyBlue{
+    background: linear-gradient(0deg, skyblue 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientBlue{
+    background: linear-gradient(0deg, blue 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientGrey{
+    background: linear-gradient(0deg, grey 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+.linearGradientLightGrey{
+    background: linear-gradient(0deg, lightgrey 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+}
+
+
 
 @media screen and (min-width: 1300px) {
     .container{
