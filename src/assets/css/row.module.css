@@ -4,6 +4,7 @@
     width: 120px;
     height: calc(100% - 120px);
     flex-direction: column;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.3);
 }
 
 .row1{

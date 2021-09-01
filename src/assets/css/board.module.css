@@ -1,5 +1,5 @@
 .board{
     margin: 20px;
     position: relative;
-    border: 1px solid black;
+    box-shadow:3px 4px 10px 0px rgba(0,0,0,0.3);
 }

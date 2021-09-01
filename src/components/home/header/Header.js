@@ -5,7 +5,7 @@ const Header = () => {
         <header className={`${style.header} parentContainer`}>
             <div className={'container'}>
                 <div className={style.logo}>
-                    <img src={logo} alt={logo}/>
+                    <a href="/"><img src={logo} alt={logo}/></a>
                 </div>
 
             </div>
