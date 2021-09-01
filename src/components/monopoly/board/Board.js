@@ -7,6 +7,7 @@ import PlayerContainer from '../player/PlayerContainer';
 import { connect } from 'react-redux';
 import {setBoardSize, calculateSitePositions} from '../../../redux/actions/board'
 import { setTotalPlayers } from '../../../redux/actions/player';
+import boardBackground from '../../../assets/images/board-background2.jpg'
 
 const Board = ({positions, setBoardSize, calculateSitePositions, setTotalPlayers}) => {
     const boardRef = useRef(null)
@@ -30,7 +31,7 @@ const Board = ({positions, setBoardSize, calculateSitePositions, setTotalPlayers
     }, [setBoardSize, calculateSitePositions, setTotalPlayers])
 
     return (
-            <div className={style.board} ref={boardRef}>
+            <div className={style.board} ref={boardRef} style={{backgroundImage:`url(${boardBackground})`}}>
                 {positions.length &&
                     <>
                     {[

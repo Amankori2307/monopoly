@@ -21,6 +21,8 @@
 }
 .strip{
     width: 20px;
+    opacity: 0.6;
+    /* background-blend-mode: lighten; */
 }
 .details{
     text-align: center;
