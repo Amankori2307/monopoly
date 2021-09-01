@@ -9,7 +9,7 @@ const Main = () => {
                 </div>
                 
                 <div className={`${style.bannerText} container`}>
-                    <h1 className={style.title}>Monopoly - Board Game</h1>
+                    <p className={style.title}>Monopoly - Board Game</p>
                     <p className={style.shortDesc}>A real-estate board board game</p>
                     <a href="/monopoly" className={style.btn}>Play Now</a>
                 </div>
