@@ -14,68 +14,56 @@ const CardModal = ({hideOnClick, onClick, currentCard: card}) => {
         switch(card.type){
             case SITE:
                 UI = (
-                    <div className={style.cardModal} onClick={onClick}>
-                        <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
-                        <div className={style.card}>
-                            <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
-                            <p className={`${style.rent}`}>RENT: ${card.rent}</p>
-                            <table className={style.rentWithHouse}>                        
-                                    {card.rentWithHouse.map((data, index) => <tr key={index}>
-                                        <td className={style.text}>With {index+1} House</td>
-                                        <td className={style.houseRent}>${data}</td>
-                                    </tr>)}
-                            </table>
-                            <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
-                            <p className={style.construction}>Construction ${card.construction} Each</p>
-                            <p className={style.info}>{SITE_INFO}</p>
-                        </div>
+                    <div className={style.card}>
+                        <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
+                        <p className={`${style.rent}`}>RENT: ${card.rent}</p>
+                        <table className={style.rentWithHouse}>                        
+                                {card.rentWithHouse.map((data, index) => <tr key={index}>
+                                    <td className={style.text}>With {index+1} House</td>
+                                    <td className={style.houseRent}>${data}</td>
+                                </tr>)}
+                        </table>
+                        <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
+                        <p className={style.construction}>Construction ${card.construction} Each</p>
+                        <p className={style.info}>{SITE_INFO}</p>
                     </div>
                 )
                 break;
             case REALM_RAILS:
                 UI = (
-                    <div className={style.cardModal} onClick={onClick}>
-                        <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
-                        <div className={style.card}>
-                            <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
-                            <table className={`${style.rentWithHouse}  ${style.mt}`}>                        
-                                    {card.rent.map((data, index) => <tr key={index}>
-                                        <td className={style.text}>Rent if owns {index+1} realm rail{index?"s":""}</td>
-                                        <td className={style.houseRent}>${data}</td>
-                                    </tr>)}
-                            </table>
-                            <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
-                        </div>
+                    <div className={style.card}>
+                        <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
+                        <table className={`${style.rentWithHouse}  ${style.mt}`}>                        
+                                {card.rent.map((data, index) => <tr key={index}>
+                                    <td className={style.text}>Rent if owns {index+1} realm rail{index?"s":""}</td>
+                                    <td className={style.houseRent}>${data}</td>
+                                </tr>)}
+                        </table>
+                        <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
                     </div>
                 )
                 break;
         
             case UTILITY:    
                 UI = (
-                    <div className={style.cardModal} onClick={onClick}>
-                        <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
-                        <div className={style.card}>
-                            <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
-                            <div className={style.utilityInfo}>
-                                {UTILITY_INFO.map((data, index) => <p key={index}>{data}</p>)}
-                            </div>
-                            <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
+                    <div className={style.card}>
+                        <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
+                        <div className={style.utilityInfo}>
+                            {UTILITY_INFO.map((data, index) => <p key={index}>{data}</p>)}
                         </div>
+                        <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
                     </div>
                 )
                 break;
             
             case TAX:    
                 UI = (
-                    <div className={style.cardModal} onClick={onClick}>
-                        <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
                         <div className={`${style.card} ${style.centerWrapper} ${style.radialBackground}`}>
                             <div className={`${style.circle} ${style.centerWrapper} ${style.column}`}>
                                 <p className={style.heading}>Pay ${card.debit}</p>
                                 <p className={style.subHeading}>{card.name}</p>
                             </div>
                         </div>
-                    </div>
                 )
                 break;
             default:

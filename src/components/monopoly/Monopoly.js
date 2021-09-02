@@ -7,6 +7,7 @@ import Board from './board/Board';
 import style from '../../assets/css/monopoly.module.css'
 import Header from '../home/header/Header';
 import Footer from '../home/footer/Footer';
+import BuyCardModal from './modal/BuyCardModal';
 
 const Monopoly = ({showModal, setShowModal}) => {
   
@@ -15,6 +16,7 @@ const Monopoly = ({showModal, setShowModal}) => {
             <Header />
             <Board />
             {showModal && <ModalContainer setShow={setShowModal} component={CardModal}/>}
+            {/* {showModal && <ModalContainer setShow={setShowModal} component={BuyCardModal}/>} */}
             <Footer />
         </div>
     );

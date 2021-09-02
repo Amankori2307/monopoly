@@ -9,7 +9,15 @@ const ModalContainer = ({component: Component, setShow, ...rest}) => {
     } 
     return (
         <div className={style.modalContainer} onClick={hideOnClick}>
-            <Component hideOnClick={hideOnClick} onClick={preventModalCloseOnClick}/>
+            <div className={style.cardModal} onClick={preventModalCloseOnClick}>
+                <div className={style.closeStrip} >
+                    <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
+                </div>
+                <div className={style.cardContent}>
+
+                    <Component hideOnClick={hideOnClick} onClick={preventModalCloseOnClick}/>
+                </div>
+            </div>
         </div>
     );
 }
