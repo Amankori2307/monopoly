@@ -4,7 +4,9 @@ import {connect} from 'react-redux'
 import {movePlayer} from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import { setActivePlayer } from '../../../redux/actions/player';
-function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setActivePlayer}){
+import {setShowModal} from '../../../redux/actions/modal'
+import modalTypes from '../../../utility/modalTypes'
+function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setActivePlayer, setShowModal}){
     const isMounted = useRef(false)
     const currentPlayer = useRef(null)
     const positions = useRef(board.positions)
@@ -92,8 +94,9 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             let currentSite = sum<40?sum:(sum-40);
             let playerData = positions.current[currentSite]
             movePlayer(playerData)
+            setShowModal(true, modalTypes.BUY_CARD)
         }
-    }, [diceSum, id, movePlayer, setDiceSumCalledCount]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
+    }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
 
     // To render player according to the data in store
     useEffect(() => {
@@ -115,7 +118,7 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             }else{
                 setPlayerPosition(currentPlayer.current.site, isMounted.current)
             }
-                setActivePlayer()
+            // setActivePlayer()
             console.log("useEffect1 onUpdate ID:"+ id)
         }
 
@@ -147,6 +150,7 @@ const mapDispatchToProps = (dispatch) => {
     return {
         movePlayer: (data) => dispatch(movePlayer(data)),
         setActivePlayer: () => dispatch(setActivePlayer()),
+        setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
     }
 }
 

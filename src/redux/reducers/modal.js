@@ -1,7 +1,6 @@
 import {SET_SHOW_MODAL} from '../actions/actionTypes'
 const initialState = {
-    showModal:  false,
-    currentModal: null
+
 }
 
 function modal(state=initialState, action){

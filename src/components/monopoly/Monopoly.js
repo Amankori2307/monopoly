@@ -16,7 +16,7 @@ const Monopoly = ({modalData, currentCard, playersData}) => {
             <Board />
             {modalData.showModal && <>
                 {modalData.currentModal === modalTypes.SHOW_CARD && <ModalContainer component={CardModal} card={currentCard}/>}
-                {modalData.currentModal === modalTypes.BUY_CARD && <ModalContainer  component={BuyCardModal}/>}
+                {modalData.currentModal === modalTypes.BUY_CARD && <ModalContainer  component={BuyCardModal} card={playersData.players[playersData.activePlayer].site} disableHideOnOuterClick={true}/>}
                 
             </>
             }

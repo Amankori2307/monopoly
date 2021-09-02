@@ -7,28 +7,30 @@ import PlayerContainer from '../player/PlayerContainer';
 import { connect } from 'react-redux';
 import {setBoardSize, calculateSitePositions} from '../../../redux/actions/board'
 import { setTotalPlayers } from '../../../redux/actions/player';
+import { setSites } from '../../../redux/actions/site';
 
-const Board = ({positions, setBoardSize, calculateSitePositions, setTotalPlayers}) => {
+const Board = ({positions, setBoardSize, calculateSitePositions, setTotalPlayers, setSites}) => {
     const boardRef = useRef(null)
     const totalPlayers = 4
    
     useEffect(() => {
         let w = window.innerWidth;
         let h = window.innerHeight;
-        let side = (Math.min(w,h)-40)
-        let boardData = {
+        let side = (Math.min(w,h)-100)
+        let calculatedBoardData = {
             side: side,
             rowWidth: 120
         }
-        setBoardSize(boardData)
-        calculateSitePositions(boardData)
+        setBoardSize(calculatedBoardData)
+        calculateSitePositions(calculatedBoardData)
         setTotalPlayers(totalPlayers)
+        setSites([...boardData])
         
         side += "px"
         boardRef.current.style.width = side;
         boardRef.current.style.height = side;
         console.log("Board UseEffect")
-    }, [setBoardSize, calculateSitePositions, setTotalPlayers])
+    }, [setBoardSize, calculateSitePositions, setTotalPlayers, setSites])
 
     return (
             <div className={style.board} ref={boardRef} >
@@ -53,6 +55,7 @@ const mapDispatchToProps = (dispatch) => {
         setBoardSize: data => dispatch(setBoardSize(data)),
         calculateSitePositions: data => dispatch(calculateSitePositions(data)),
         setTotalPlayers: totalPlayers => dispatch(setTotalPlayers(totalPlayers)),
+        setSites: data => dispatch(setSites(data)),
     }
 }
 

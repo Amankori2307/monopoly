@@ -1,0 +1,22 @@
+.btnContainer{
+    display: flex;
+    /* justify-content: stretch; */
+    padding: 10px 0px 0px;
+}
+.btn{
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: none;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 5px;
+}
+.buy{
+    color: white;
+    background-color: #40b03a;
+    margin-right: 10px;
+}
+.auction{
+    color: white;
+    background-color: #ffae19;
+}
