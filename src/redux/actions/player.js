@@ -15,9 +15,9 @@ export function setTotalPlayers(data){
     }
 }
 
-export function setActivePlayer(data){
+export function setActivePlayer(){
     return {
         type: SET_ACTIVE_PLAYER,
-        payload: data
+        payload: null
     }
 }
