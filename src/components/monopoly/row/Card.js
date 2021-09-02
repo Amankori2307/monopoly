@@ -1,8 +1,9 @@
 import style from '../../../assets/css/card.module.css'
 import {connect} from 'react-redux'
-import {setShowModal, setCurrentCard} from '../../../redux/actions/card'
+import {setCurrentCard} from '../../../redux/actions/card'
+import {setShowModal} from '../../../redux/actions/modal'
 import {REALM_RAILS, SITE, UTILITY, CHANCE, CHEST, TAX, SPECIAL} from '../../../utility/constants'
-
+import modalTypes from '../../../utility/modalTypes'
 
 const Card = ({data, rowNum, setShowModal, setCurrentCard}) => {
     const genClassList = () => {
@@ -11,7 +12,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard}) => {
         return classList
     }
     const onCardClick = () => {
-        setShowModal(true)
+        setShowModal(true, modalTypes.SHOW_CARD)
         setCurrentCard(data)
     }
 
@@ -77,7 +78,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard}) => {
 // }
 const mapDispatchToProps = (dispatch) => {
     return {
-        setShowModal: (payload) => dispatch(setShowModal(payload)),
+        setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
         setCurrentCard: (cardData) => dispatch(setCurrentCard(cardData)),
     }
 }

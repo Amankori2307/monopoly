@@ -1,8 +1,10 @@
 import style from '../../../assets/css/modal.module.css'
+import {connect} from 'react-redux'
+import { setShowModal } from '../../../redux/actions/modal'
 
-const ModalContainer = ({component: Component, setShow, ...rest}) => {
+const ModalContainer = ({component: Component, setShowModal, ...rest}) => {
     const hideOnClick = e => {    
-        setShow(false)
+        setShowModal(false, null)
     }
     const preventModalCloseOnClick = (e) => {
         if(e && e.stopPropagation) e.stopPropagation(); 
@@ -15,11 +17,17 @@ const ModalContainer = ({component: Component, setShow, ...rest}) => {
                 </div>
                 <div className={style.cardContent}>
 
-                    <Component hideOnClick={hideOnClick} onClick={preventModalCloseOnClick}/>
+                    <Component hideOnClick={hideOnClick} onClick={preventModalCloseOnClick} {...rest}/>
                 </div>
             </div>
         </div>
     );
 }
 
-export default ModalContainer
+const mapDispatchToProps = (dispatch) => {
+    return {
+        setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal))   
+    }
+}
+
+export default connect(null, mapDispatchToProps)(ModalContainer) 

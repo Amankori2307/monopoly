@@ -3,7 +3,6 @@ import {createStore} from "redux";
 import rootReducer from "./reducers/rootReducer";
 
 export default function configureStore(){
-    console.log(process.env.NODE_ENV)
     return createStore(
         rootReducer,
         // applyMiddleware(

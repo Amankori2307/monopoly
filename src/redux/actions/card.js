@@ -1,11 +1,4 @@
-import {SET_SHOW_MODAL, SET_CURRENT_CARD} from './actionTypes'
-
-export const setShowModal = (payload) => {
-    return {
-        type: SET_SHOW_MODAL,
-        payload: payload
-    }
-}
+import { SET_CURRENT_CARD} from './actionTypes'
 
 export const setCurrentCard = (cardData) => {
     return {
