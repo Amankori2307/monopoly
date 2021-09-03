@@ -4,6 +4,7 @@ import {connect} from 'react-redux'
 import {BrowserRouter as Router, Route, Switch} from 'react-router-dom'
 import Monopoly from "./components/monopoly/Monopoly";
 import Home from "./components/home/Home"
+import NotFound from './components/not_found/NotFound';
 function App() {
   return (
     <Router>
@@ -11,6 +12,7 @@ function App() {
         <Switch>
           <Route exact path="/" component={Home}/>
           <Route path="/monopoly" component={Monopoly}/>
+          <Route path="*" component={NotFound}/>
 
         </Switch>
       </div>
