@@ -5,10 +5,12 @@ import boardData from '../../../assets/data/boardData.json'
 import DiceContainer from "../dice/DiceContainer";
 import PlayerContainer from '../player/PlayerContainer';
 import { connect } from 'react-redux';
+import PlayerDetailsContainer from '../player/PlayerDetailsContainer';
 
 const Board = ({positions,  side, totalPlayers}) => {
    
     return (
+        <>
             <div className={style.board} style={{width: side+"px", height: side+"px"}} >
                 {positions.length &&
                     <>
@@ -23,6 +25,8 @@ const Board = ({positions,  side, totalPlayers}) => {
                     </>
                 }
             </div>
+            <PlayerDetailsContainer />
+        </>
     );
 }
 

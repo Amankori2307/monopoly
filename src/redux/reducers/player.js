@@ -1,11 +1,10 @@
 import { CREDIT_PLAYER_MONEY, DEBIT_PLAYER_MONEY, MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_TOTAL_PLAYERS } from "../actions/actionTypes";
 import {createPlayerData} from '../../utility/playerUtility'
-import { MAX_PLAYERS } from "../../utility/constants";
 
 const initialState = {
     activePlayer: 0,
     totalPlayers: null,
-    players:  createPlayerData(MAX_PLAYERS)
+    players: {} 
 }
 
 function player(state = initialState, action){
@@ -27,6 +26,7 @@ function player(state = initialState, action){
         case SET_TOTAL_PLAYERS:
             return {
                 ...state,
+                players: createPlayerData(payload),
                 totalPlayers: payload
             }
         case SET_ACTIVE_PLAYER:
