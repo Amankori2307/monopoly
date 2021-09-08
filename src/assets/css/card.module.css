@@ -4,9 +4,8 @@
     /* border-top: 1px solid black; */
     /* border-left: 1px solid black; */
     cursor: pointer;
-
     background: rgb(233,233,233);
-background: linear-gradient(0deg, rgba(233,233,233,1) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
+    background: linear-gradient(0deg, rgba(233,233,233,1) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
 }
 .specialCard{
     flex-basis: 120px;

@@ -4,4 +4,10 @@
     border-radius: 15px;
     position: absolute;
     transition: top 0.2s ease-in-out, right 0.2s ease-in-out, bottom 0.2s ease-in-out, left 0.2s ease-in-out;
+   
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+
 }
