@@ -75,10 +75,14 @@ const AuctionCardModal = ({sites, card, totalPlayers, activePlayer, players, deb
 
     // Set active bidder helper
     const setActiveBidderHelper = (playersWhoCanBid) => {
-        console.log(playersWhoCanBid)
         if(playersWhoCanBid.length === 1){
             wonAuction(playersWhoCanBid[0])
-        }else{
+        }
+        else if(playersWhoCanBid.length === 0){
+            // If current bidder bids higher then anyone can, because no as more money than current bid
+            wonAuction(activeBidder)
+        }
+        else{
             let nextBidder = getNextBidder(playersWhoCanBid);
             setActiveBidder(nextBidder)
         }
@@ -114,7 +118,6 @@ const AuctionCardModal = ({sites, card, totalPlayers, activePlayer, players, deb
         else return false;
     }
     const wonAuction = (playerId) => {
-        console.log("Won Auction "+playerId)
         debitPlayerMoney(playerId, currentBidAmount);
         buySite(playerId, sites[card]);
         setActivePlayer();

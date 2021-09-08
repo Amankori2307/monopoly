@@ -106,7 +106,6 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
         let currentSite = siteDataRef.current.sites[currentSiteId]
         if([SITE, REALM_RAILS, UTILITY].includes(currentSite.type) ){
             let money = playersDataRef.current.players[id].money
-            console.log(siteDataRef.current.boughtSites)
             if(siteDataRef.current.boughtSites.includes(currentSite.id)){ // check if site is already bought
                 // If site is already bought check if it is mortaged if not pay rent
                 setActivePlayer()
