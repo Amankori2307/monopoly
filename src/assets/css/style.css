@@ -87,6 +87,18 @@
 }
 
 
+.player-red{
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, red 50%, #000000 86%);
+}
+.player-yellow{
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, yellow 50%, #000000 86%);
+}
+.player-blue{
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, blue 50%, #000000 86%);
+}
+.player-green{
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, green 50%, #000000 86%);
+}
 
 @media screen and (min-width: 1300px) {
     .container{

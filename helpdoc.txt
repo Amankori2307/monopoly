@@ -6,3 +6,9 @@ Commands User For Herko:
 Command to setup SSL:
     - sudo certbot --nginx -d monopoly.amankori.me
     ref: https://www.nginx.com/blog/using-free-ssltls-certificates-from-lets-encrypt-with-nginx/
+
+
+Notes:
+    - Only site, station and railway relm can be bought
+    - check if site is already bought
+    - check if user has enough money to buy site else show auction modal

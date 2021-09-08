@@ -1,10 +1,11 @@
-import { MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_TOTAL_PLAYERS } from "../actions/actionTypes";
-
+import { CREDIT_PLAYER_MONEY, DEBIT_PLAYER_MONEY, MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_TOTAL_PLAYERS } from "../actions/actionTypes";
+import {createPlayerData} from '../../utility/playerUtility'
+import { MAX_PLAYERS } from "../../utility/constants";
 
 const initialState = {
     activePlayer: 0,
     totalPlayers: null,
-    players:  null
+    players:  createPlayerData(MAX_PLAYERS)
 }
 
 function player(state = initialState, action){
@@ -24,23 +25,28 @@ function player(state = initialState, action){
                 players: players,
             }
         case SET_TOTAL_PLAYERS:
-            let tempPlayers = {}
-            for(let player=0; player<payload; player++){
-                tempPlayers[player] = {
-                    site: 0,
-                    previousSite: 0,
-                    playerId: player
-                }
-            }
             return {
                 ...state,
-                players: tempPlayers,
                 totalPlayers: payload
             }
         case SET_ACTIVE_PLAYER:
             return {
                 ...state,
                 activePlayer: (state.activePlayer+1)%state.totalPlayers
+            }
+        case DEBIT_PLAYER_MONEY:
+            let _state = {...state}
+            let money = _state.players[payload.playerId].money
+            _state.players[payload.playerId].money = money - payload.amount
+            return {
+                ..._state
+            }        
+        case CREDIT_PLAYER_MONEY:
+            _state = {...state}
+            money = _state.players[payload.playerId].money
+            _state.players[payload.playerId].money = money + payload.amount
+            return {
+                ..._state
             }
         default:
             return state;

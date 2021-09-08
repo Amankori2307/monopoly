@@ -5,8 +5,10 @@ import {movePlayer} from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import { setActivePlayer } from '../../../redux/actions/player';
 import {setShowModal} from '../../../redux/actions/modal'
-import modalTypes from '../../../utility/modalTypes'
-function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setActivePlayer, setShowModal}){
+import {SITE, REALM_RAILS, UTILITY} from '../../../utility/constants'
+import modalTypes from '../../../utility/modalTypes';
+// import modalTypes from '../../../utility/modalTypes'
+function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setActivePlayer, setShowModal, siteData}){
     const isMounted = useRef(false)
     const currentPlayer = useRef(null)
     const positions = useRef(board.positions)
@@ -14,6 +16,7 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
     const playerRef = useRef(null)
     const playersDataRef = useRef(playersData)
     const currentPlayerSite = playersData.players[id].site
+    const siteDataRef = useRef(siteData)
 
 
     const checkIfLType = () => {
@@ -94,9 +97,32 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             let currentSite = sum<40?sum:(sum-40);
             let playerData = positions.current[currentSite]
             movePlayer(playerData)
-            setShowModal(true, modalTypes.BUY_CARD)
         }
     }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
+
+    // 
+    const showAppropriateModalOrChangeActivePlayer = useCallback(() => {
+        let currentSiteId = currentPlayer.current.site
+        let currentSite = siteDataRef.current.sites[currentSiteId]
+        if([SITE, REALM_RAILS, UTILITY].includes(currentSite.type) ){
+            let money = playersDataRef.current.players[id].money
+            if(siteDataRef.current.boughtSites.includes(currentSite.id)){ // check if site is already bought
+                // If site is already bought check if it is mortaged if not pay rent
+                setActivePlayer()
+            }else{
+                if(currentSite.sellingPrice <= money){
+                    setShowModal(true, modalTypes.BUY_CARD)
+                }else{
+                    setShowModal(true, modalTypes.AUCTION_CARD)
+                }
+            }
+        
+        }else{
+            // Check What action is required
+            setActivePlayer()
+        }
+    }, [setActivePlayer, id, setShowModal])
+
 
     // To render player according to the data in store
     useEffect(() => {
@@ -120,29 +146,34 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             }
             // setActivePlayer()
             console.log("useEffect1 onUpdate ID:"+ id)
+            showAppropriateModalOrChangeActivePlayer()
         }
 
-    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setActivePlayer])
+    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setActivePlayer, showAppropriateModalOrChangeActivePlayer])
 
 
     // To update playersDataRef
     useEffect(() => {
+        siteDataRef.current = siteData
         playersDataRef.current = playersData
-    }, [playersData])
+    }, [playersData, siteData])
 
     
+
     return (
-        <div className={`${style.player} ${color}`} ref={playerRef}>
-            
+        <div className={`${style.player} player-${color}`} ref={playerRef}>
+            {id}
         </div>
     );
+    
 }
 const mapStateToProps = (store) => {
     return {
         playersData: store.playersData,
         diceSum: store.dice.diceSum,
         setDiceSumCalledCount: store.dice.setDiceSumCalledCount,
-        board: store.board
+        board: store.board,
+        siteData: store.siteData,
     }
 }
 

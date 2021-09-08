@@ -4,19 +4,18 @@ import {connect} from 'react-redux'
 import { setShowModal } from '../../../redux/actions/modal'
 import modalTypes from '../../../utility/modalTypes'
 import { buySite } from '../../../redux/actions/site'
-import { setActivePlayer } from '../../../redux/actions/player'
-const BuyCardModal = ({card, setShowModal, buySite, activePlayer, sites, setActivePlayer}) => {
+import { setActivePlayer, debitPlayerMoney } from '../../../redux/actions/player'
+const BuyCardModal = ({card, setShowModal, buySite, activePlayer, sites, setActivePlayer, debitPlayerMoney}) => {
     const onBuy = () => {
-        console.log(activePlayer)
-        console.log(sites[card])
+        debitPlayerMoney(activePlayer, sites[card].sellingPrice)
         buySite(activePlayer, sites[card])
         setShowModal(false, null)
         setActivePlayer()
+
     }
     const onAuction = () => {
         setShowModal(true, modalTypes.AUCTION_CARD)
     }
-    console.log(card)
     return (
         <div>
             <CardModal card={sites[card]}/>
@@ -39,6 +38,8 @@ const mapDispatchToProps = (dispatch) => {
         setShowModal: (showModal, currentModal) =>  dispatch(setShowModal(showModal, currentModal)),
         buySite: (playerId, siteData) =>  dispatch(buySite(playerId, siteData)),
         setActivePlayer: () =>  dispatch(setActivePlayer()),
+        debitPlayerMoney: (playerId, amount) =>  dispatch(debitPlayerMoney(playerId, amount)),
+
     }
 }
 
