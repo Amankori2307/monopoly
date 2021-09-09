@@ -6,7 +6,7 @@ import colors from '../../../utility/colors';
 const PlayerDetailsContainer = ({players, activePlayer}) => {
     return (
         <div className={style.playerDetailsContainer}>
-            { Object.values(players).map((player, index) => <PlayerDetails key={index} player={player} active={activePlayer==player.playerId?true:false} color={colors[player.playerId]}/>)}
+            { Object.values(players).map((player, index) => <PlayerDetails key={index} player={player} active={activePlayer===player.playerId?true:false} color={colors[player.playerId]}/>)}
         </div>
     );
 }
