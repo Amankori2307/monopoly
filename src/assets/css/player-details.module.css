@@ -40,6 +40,16 @@
 .playerMoney{
     font-size: 12px;
 }
+.viewMyCards{
+    color: white;
+    font-size: 12px;
+    background-color: rgba(0,0,0,0.4);
+    border: none;
+    padding: 3px 7px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 5px;
+}
 
 .red {
     background-color: red;

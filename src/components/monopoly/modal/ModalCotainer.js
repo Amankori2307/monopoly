@@ -2,7 +2,7 @@ import style from '../../../assets/css/modal.module.css'
 import { connect } from 'react-redux'
 import { setShowModal } from '../../../redux/actions/modal'
 
-const ModalContainer = ({ component: Component, setShowModal, disableHideOnOuterClick, ...rest }) => {
+const ModalContainer = ({ component: Component, setShowModal, disableHideOnOuterClick, title, ...rest }) => {
     const hideOnClick = e => {
         setShowModal(false, null)
     }
@@ -14,6 +14,7 @@ const ModalContainer = ({ component: Component, setShowModal, disableHideOnOuter
             <div className={style.cardModal} onClick={preventModalCloseOnClick}>
                 {!disableHideOnOuterClick &&
                     <div className={style.closeStrip} >
+                        <span className={style.title}>{title}</span>
                         <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
                     </div>
                 }

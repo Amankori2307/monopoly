@@ -8,7 +8,6 @@ import colors from '../../../utility/colors'
 
 const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo}) => {
     const genClassList = () => {
-        console.log("CARD ROW: "+rowNum+", Card: "+data.id+", soldTo: "+soldTo)
         let classList = "";
         classList += rowNum === 1 || rowNum ===2? style.reverse+" ": ""
         classList += (rowNum === 1 || rowNum ===2) && (soldTo != null)? `${style.sold} ${style.soldRev} ${style[colors[soldTo]]} `: ""

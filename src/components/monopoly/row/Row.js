@@ -3,7 +3,6 @@ import style from '../../../assets/css/row.module.css'
 import Card from './Card'
 import {connect} from 'react-redux'
 const Row = ({rowNum, data, boughtBy}) => {
-    console.log("ROW "+rowNum)
     return (
         <div className={`${style.row} ${style["row"+rowNum]}`}>
             {data.map((data, index) => <Card key={index} data={data} rowNum={rowNum} soldTo={boughtBy[data.id]} />)}

@@ -13,6 +13,7 @@ import { calculateSitePositions, setBoardSize } from '../../redux/actions/board'
 import { setTotalPlayers } from '../../redux/actions/player';
 import { setSites } from '../../redux/actions/site';
 import sites from '../../assets/data/boardData.json'
+import MyCards from './modal/MyCards';
 
 const Monopoly = ({modalData, currentCard, playersData, setBoardSize, calculateSitePositions, setTotalPlayers, setSites}) => {
     const totalPlayers = 4;
@@ -42,6 +43,8 @@ const Monopoly = ({modalData, currentCard, playersData, setBoardSize, calculateS
                 {modalData.currentModal === modalTypes.SHOW_CARD && <ModalContainer component={CardModal} card={currentCard}/>}
                 {modalData.currentModal === modalTypes.BUY_CARD && <ModalContainer  component={BuyCardModal} card={playersData.players[playersData.activePlayer].site} disableHideOnOuterClick={true}/>}
                 {modalData.currentModal === modalTypes.AUCTION_CARD && <ModalContainer  component={AuctionCardModal} card={playersData.players[playersData.activePlayer].site} disableHideOnOuterClick={true}/>}                
+                {modalData.currentModal === modalTypes.MY_CARDS && <ModalContainer  component={MyCards} title={"My Cards"}/>}                
+      
             </>
             }
             <Footer />
