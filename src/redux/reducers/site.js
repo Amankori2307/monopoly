@@ -23,10 +23,9 @@ function site(state=initialState, action){
                 }
             }
         case SET_SITES:
-            let data = payload.sort((a,b) => a.id-b.id )
             return {
                 ...state,
-                sites: data
+                sites: payload
             }
         default:
             return state
