@@ -7,4 +7,3 @@ export const REALM_RAILS = "realm_rails"
 export const UTILITY = "utility"
 
 export const MAX_PLAYERS = 8
-

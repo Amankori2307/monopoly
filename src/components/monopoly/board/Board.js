@@ -5,25 +5,25 @@ import DiceContainer from "../dice/DiceContainer";
 import PlayerContainer from '../player/PlayerContainer';
 import { connect } from 'react-redux';
 import PlayerDetailsContainer from '../player/PlayerDetailsContainer';
+import Actions from '../modal/Actions';
+import ActionInfo from '../action/ActionInfo';
 
-const Board = ({positions,  side, totalPlayers, sites}) => {
+const Board = ({side, totalPlayers, sites, active}) => {
     return (
         <>
             <div className={style.board} style={{width: side+"px", height: side+"px"}} >
-                {positions.length &&
-                    <>
-                    {[
-                        sites.slice(0,10).reverse(),
-                        sites.slice(10,20).reverse(),
-                        sites.slice(20,30),
-                        sites.slice(30,40),
-                    ].map((data, index) => <Row key={index} data={data} rowNum={index+1}/>)}
-                    <DiceContainer />
-                    <PlayerContainer totalPlayers={totalPlayers}/>
-                    </>
-                }
+                {[
+                    sites.slice(0,10).reverse(),
+                    sites.slice(10,20).reverse(),
+                    sites.slice(20,30),
+                    sites.slice(30,40),
+                ].map((data, index) => <Row key={index} data={data} rowNum={index+1}/>)}
+                <DiceContainer />
+                <PlayerContainer totalPlayers={totalPlayers}/>
+                {active && <ActionInfo />}
             </div>
             <PlayerDetailsContainer />
+            <Actions/>
         </>
     );
 }
@@ -36,10 +36,10 @@ const mapDispatchToProps = (dispatch) => {
 
 const mapStateToProps = (store) => {
     return {
-        positions: store.board.positions,
         side: store.board.side,
         totalPlayers: store.playersData.totalPlayers,
-        sites: store.siteData.sites
+        sites: store.siteData.sites,
+        active: store.actionData.active
     }
 }
 export default connect(mapStateToProps, mapDispatchToProps)(Board)

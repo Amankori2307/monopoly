@@ -11,7 +11,6 @@ function player(state = initialState, action){
     const {type, payload} = action;
     switch(type){
         case MOVE_PLAYER:
-
             let players = state.players
             let currentPlayer = players[state.activePlayer]
             players[state.activePlayer] = {
@@ -42,11 +41,16 @@ function player(state = initialState, action){
                 ..._state
             }        
         case CREDIT_PLAYER_MONEY:
-            _state = {...state}
-            money = _state.players[payload.playerId].money
-            _state.players[payload.playerId].money = money + payload.amount
-            return {
-                ..._state
+            {
+                let _players = {...state.players}
+                let currentPlayer = {...state.players[payload.playerId]}
+                let money = currentPlayer.money
+                currentPlayer.money = money + payload.amount
+                _players[payload.playerId] = currentPlayer;
+                return {
+                    ...state,
+                    players: _players
+                }
             }
         default:
             return state;

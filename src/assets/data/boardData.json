@@ -24,7 +24,8 @@
          160,
          250
       ],
-      "subType":"brown"
+      "subType":"brown",
+      "isMortgaged":false
    },
    {
       "id":2,
@@ -51,7 +52,8 @@
          320,
          450
       ],
-      "subType":"brown"
+      "subType":"brown",
+      "isMortgaged":false
    },
    {
       "id":4,
@@ -76,7 +78,8 @@
          200
       ],
       "mortgage":100,
-      "subType":"realm_rails"
+      "subType":"realm_rails",
+      "isMortgaged":false
    },
    {
       "id":6,
@@ -95,7 +98,8 @@
       ],
       "mortgage":50,
       "construction":50,
-      "subType":"green"
+      "subType":"green",
+      "isMortgaged":false
    },
    {
       "id":7,
@@ -122,7 +126,8 @@
       ],
       "mortgage":50,
       "construction":50,
-      "subType":"green"
+      "subType":"green",
+      "isMortgaged":false
    },
    {
       "id":9,
@@ -141,7 +146,8 @@
       ],
       "mortgage":60,
       "construction":50,
-      "subType":"green"
+      "subType":"green",
+      "isMortgaged":false
    },
    {
       "id":10,
@@ -168,7 +174,8 @@
       ],
       "mortgage":70,
       "construction":100,
-      "subType":"pink"
+      "subType":"pink",
+      "isMortgaged":false
    },
    {
       "id":12,
@@ -176,7 +183,8 @@
       "color":"lightgrey",
       "name":"Windmill Hut",
       "sellingPrice":150,
-      "subType":"utility"
+      "subType":"utility",
+      "isMortgaged":false
    },
    {
       "id":13,
@@ -195,7 +203,8 @@
       ],
       "mortgage":70,
       "construction":100,
-      "subType":"pink"
+      "subType":"pink",
+      "isMortgaged":false
    },
    {
       "id":14,
@@ -214,7 +223,8 @@
       ],
       "mortgage":80,
       "construction":100,
-      "subType":"pink"
+      "subType":"pink",
+      "isMortgaged":false
    },
    {
       "id":15,
@@ -230,7 +240,8 @@
          200
       ],
       "mortgage":100,
-      "subType":"realm_rails"
+      "subType":"realm_rails",
+      "isMortgaged":false
    },
    {
       "id":16,
@@ -249,7 +260,8 @@
       ],
       "mortgage":90,
       "construction":100,
-      "subType":"orange"
+      "subType":"orange",
+      "isMortgaged":false
    },
    {
       "id":17,
@@ -276,7 +288,8 @@
       ],
       "mortgage":90,
       "construction":100,
-      "subType":"orange"
+      "subType":"orange",
+      "isMortgaged":false
    },
    {
       "id":19,
@@ -295,7 +308,8 @@
       ],
       "mortgage":100,
       "construction":100,
-      "subType":"orange"
+      "subType":"orange",
+      "isMortgaged":false
    },
    {
       "id":20,
@@ -322,7 +336,8 @@
       ],
       "mortgage":110,
       "construction":150,
-      "subType":"red"
+      "subType":"red",
+      "isMortgaged":false
    },
    {
       "id":22,
@@ -349,7 +364,8 @@
       ],
       "mortgage":110,
       "construction":150,
-      "subType":"red"
+      "subType":"red",
+      "isMortgaged":false
    },
    {
       "id":24,
@@ -368,7 +384,8 @@
       ],
       "mortgage":120,
       "construction":150,
-      "subType":"red"
+      "subType":"red",
+      "isMortgaged":false
    },
    {
       "id":25,
@@ -384,7 +401,8 @@
          200
       ],
       "mortgage":100,
-      "subType":"realm_rails"
+      "subType":"realm_rails",
+      "isMortgaged":false
    },
    {
       "id":26,
@@ -403,7 +421,8 @@
       ],
       "mortgage":130,
       "construction":150,
-      "subType":"yellow"
+      "subType":"yellow",
+      "isMortgaged":false
    },
    {
       "id":27,
@@ -422,7 +441,8 @@
       ],
       "mortgage":130,
       "construction":150,
-      "subType":"yellow"
+      "subType":"yellow",
+      "isMortgaged":false
    },
    {
       "id":28,
@@ -430,7 +450,8 @@
       "color":"lightgrey",
       "name":"Waterfall Cave",
       "sellingPrice":150,
-      "subType":"utility"
+      "subType":"utility",
+      "isMortgaged":false
    },
    {
       "id":29,
@@ -449,7 +470,8 @@
       ],
       "mortgage":140,
       "construction":150,
-      "subType":"yellow"
+      "subType":"yellow",
+      "isMortgaged":false
    },
    {
       "id":30,
@@ -476,7 +498,8 @@
       ],
       "mortgage":150,
       "construction":200,
-      "subType":"skyblue"
+      "subType":"skyblue",
+      "isMortgaged":false
    },
    {
       "id":32,
@@ -495,7 +518,8 @@
       ],
       "mortgage":150,
       "construction":200,
-      "subType":"skyblue"
+      "subType":"skyblue",
+      "isMortgaged":false
    },
    {
       "id":33,
@@ -522,7 +546,8 @@
       ],
       "mortgage":160,
       "construction":200,
-      "subType":"skyblue"
+      "subType":"skyblue",
+      "isMortgaged":false
    },
    {
       "id":35,
@@ -538,7 +563,8 @@
          200
       ],
       "mortgage":100,
-      "subType":"realm_rails"
+      "subType":"realm_rails",
+      "isMortgaged":false
    },
    {
       "id":36,
@@ -565,7 +591,8 @@
       ],
       "mortgage":175,
       "construction":200,
-      "subType":"blue"
+      "subType":"blue",
+      "isMortgaged":false
    },
    {
       "id":38,
@@ -593,6 +620,7 @@
       ],
       "mortgage":200,
       "construction":200,
-      "subType":"blue"
+      "subType":"blue",
+      "isMortgaged":false
    }
 ]

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import style from '../../../assets/css/player.module.css'
 import {connect} from 'react-redux'
 import {movePlayer} from '../../../redux/actions/player'
@@ -17,6 +17,8 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
     const playersDataRef = useRef(playersData)
     const currentPlayerSite = playersData.players[id].site
     const siteDataRef = useRef(siteData)
+    const [movedCount, setMovedCount] = useState(0)
+
 
 
     const checkIfLType = () => {
@@ -97,8 +99,9 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             let currentSite = sum<40?sum:(sum-40);
             let playerData = positions.current[currentSite]
             movePlayer(playerData)
+            setMovedCount(setDiceSumCalledCount)
         }
-    }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
+    }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal, setMovedCount]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
 
     // 
     const showAppropriateModalOrChangeActivePlayer = useCallback(() => {
@@ -123,7 +126,6 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
         }
     }, [setActivePlayer, id, setShowModal])
 
-
     // To render player according to the data in store
     useEffect(() => {
         currentPlayer.current = playersData.players[id]
@@ -144,12 +146,17 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             }else{
                 setPlayerPosition(currentPlayer.current.site, isMounted.current)
             }
-            // setActivePlayer()
             console.log("useEffect1 onUpdate ID:"+ id)
-            showAppropriateModalOrChangeActivePlayer()
         }
 
-    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setActivePlayer, showAppropriateModalOrChangeActivePlayer])
+    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setActivePlayer, ])
+
+    
+    useEffect(() => {
+        if(isMounted.current){
+            showAppropriateModalOrChangeActivePlayer()
+        }
+    },[movedCount, showAppropriateModalOrChangeActivePlayer])
 
 
     // To update playersDataRef

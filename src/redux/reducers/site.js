@@ -1,5 +1,5 @@
 import { siteDataIntialPlayersSites } from '../../utility/siteUtility';
-import {BUY_SITE, SET_SITES} from '../actions/actionTypes'
+import {BUY_SITE, MORTGAGE_SITE, SET_SITES} from '../actions/actionTypes'
 const initialState = {
     sites: [],
     boughtSites: [],
@@ -27,6 +27,24 @@ function site(state=initialState, action){
                 ...state,
                 sites: payload
             }
+        case MORTGAGE_SITE:
+            let _playersSites = {...state.playersSites}
+            let curentPlayersSites = [..._playersSites[payload.playerId]]
+            let _sites = [...state.sites]
+            _sites[payload.siteId].isMortgaged = true
+            
+            for(let i=0; i<curentPlayersSites.length; i++){
+                if(curentPlayersSites[i].id === payload.siteId){
+                    curentPlayersSites[i].isMortgaged = true;
+                }
+            }
+            _playersSites[payload.playerId] = curentPlayersSites
+            
+            return {
+                ...state,
+                sites:_sites,
+                playersSites: _playersSites
+            }  
         default:
             return state
     }

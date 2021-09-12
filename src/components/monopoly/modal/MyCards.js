@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import style from '../../../assets/css/my-cards.module.css'
 import CardModal from './CardModal'
+import Board from '../board/Board'
 const MyCards = ({playerIdForMyCardsModal, playersSites}) => {
     const [groupedCards, setGroupedCards] = useState({});
     const [activeTab, setActiveTab] = useState("all")
@@ -29,9 +30,10 @@ const MyCards = ({playerIdForMyCardsModal, playersSites}) => {
         <>
         {
             cardList.length === 0
-            ?<div className={style.noCards}>
-                <p >No cards</p>
-            </div>
+            // ?<div className={style.noCards}>
+            //     <p >No cards</p>
+            // </div>
+            ?<Board />
             :<div className={style.myCards}>
                 <div className={style.navigationContainer}>
                     <ul className={style.tabNavigation}>

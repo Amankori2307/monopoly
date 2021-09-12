@@ -20,7 +20,12 @@ export const CALC_SITE_POSITIONS = "CALC_SITE_POSITIONS"
 
 // Sites
 export const BUY_SITE = "BUY_SITE"
-export const SET_SITES = "SET_SITES" //Bring site array
+export const SET_SITES = "SET_SITES" 
+export const MORTGAGE_SITE = "MORTGAGE_SITE" 
 
 // Modal
-export const SET_PLAYER_ID_FOR_MY_CARDS_MODAL = "SET_PLAYER_ID_FOR_MY_CARDS_MODAL" //Bring site array
+export const SET_PLAYER_ID_FOR_MY_CARDS_MODAL = "SET_PLAYER_ID_FOR_MY_CARDS_MODAL" 
+
+
+// Action
+export const SET_ACTION = "SET_ACTION" 
