@@ -3,7 +3,7 @@ import {calculatePositions} from '../../utility/boardUtility'
 const initialState = {
     side: null,
     rowWidth: null,
-    positions: []
+    positions: [],
 }
 
 export default function board(state=initialState, action){

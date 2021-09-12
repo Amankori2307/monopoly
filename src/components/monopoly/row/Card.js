@@ -5,20 +5,65 @@ import {setShowModal} from '../../../redux/actions/modal'
 import {REALM_RAILS, SITE, UTILITY, CHANCE, CHEST, TAX, SPECIAL} from '../../../utility/constants'
 import modalTypes from '../../../utility/modalTypes'
 import colors from '../../../utility/colors'
+import mortgagedIcon  from '../../../assets/images/mortgaged.svg'
+import { useCallback, useEffect, useState } from 'react'
+import actionTypes from '../../../utility/actionTypes'
+import { mortgageSite } from '../../../redux/actions/site'
+import {creditPlayerMoney} from '../../../redux/actions/player'
 
-const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo}) => {
+const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, creditPlayerMoney}) => {
+    const [isMortgageable, setIsMortgageable] = useState(false)
+    const [isCardActive, setIsCardActive] = useState(false)
+    const getIsMortgageable = useCallback(() => {
+        let card = playersSites[activePlayer].filter(item => item.id===data.id)
+        return card.length?!card[0].isMortgaged:false; 
+    },[activePlayer, data.id, playersSites])
+    useEffect(() => {
+        let _isMortgageable = getIsMortgageable()
+        setIsMortgageable(_isMortgageable)
+        setIsCardActive(_isMortgageable)
+    },[getIsMortgageable])
+
     const genClassList = () => {
         let classList = "";
-        classList += rowNum === 1 || rowNum ===2? style.reverse+" ": ""
-        classList += (rowNum === 1 || rowNum ===2) && (soldTo != null)? `${style.sold} ${style.soldRev} ${style[colors[soldTo]]} `: ""
-        classList += (rowNum === 3 || rowNum ===4) && (soldTo != null)? `${style.sold} ${style[colors[soldTo]]} `: ""
+        if([SITE, REALM_RAILS, UTILITY].includes(data.type)){
+            classList += style.card+" "
+            classList += rowNum === 1 || rowNum ===2? style.reverse+" ": ""
+            classList += (rowNum === 1 || rowNum ===2) && (soldTo != null)? `${style.sold} ${style.soldRev} ${style[colors[soldTo]]} `: ""
+            classList += (rowNum === 3 || rowNum ===4) && (soldTo != null)? `${style.sold} ${style[colors[soldTo]]} `: ""
+        }
+        else if(data.type === SPECIAL){
+            classList +=  style.specialCard+" " 
+            classList += rowNum === 1 || rowNum === 2? style.reverseSpecialCard+" ": ""
+        }
+        else if([CHEST, CHANCE]){
+            classList += style.card+" "+style.chest+" "
+        }
+        classList += actionData.active && !isMortgageable ?style.inactive+" ":""
+
         return classList
     }
+
     const onCardClick = () => {
+        if(isCardActive){
+            if(actionData.currentAction === actionTypes.MORTGAGE){
+                mortgageCard()
+
+            }else{
+                showCardModal()
+            }
+        }
+    }
+    
+    const showCardModal = () => {
         setShowModal(true, modalTypes.SHOW_CARD)
         setCurrentCard(data)
     }
-
+    
+    const mortgageCard = () => {
+        mortgageSite(data.id, activePlayer)
+        creditPlayerMoney(activePlayer, data.sellingPrice/2)
+    }
     const genCard = () => {
         let UI = null;
         switch(data.type){
@@ -26,18 +71,19 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo}) => {
             case REALM_RAILS:
             case UTILITY:
                 UI = (
-                    <div className={`${style.card} ${genClassList()}`} onClick={onCardClick}>
+                    <div className={genClassList()} onClick={onCardClick}>
                         <div className={`${style.strip} ${data.color}`}></div>
                         <div className={style.details}>
                             <p className={style.sellingPrice}>${data.sellingPrice}</p>
                             <p className={style.name}>{data.name}</p>
                         </div>
+                        {data.isMortgaged && <img className={style.mortgaged} src={mortgagedIcon} alt="mortgaged"/>}
                     </div>
                 );
                 break;
             case SPECIAL:
                 UI = (
-                    <div className={`${style.specialCard} ${rowNum === 1 || rowNum === 2? style.reverseSpecialCard: ""}`}>
+                    <div className={genClassList()}>
                         <p>{data.name}</p>
                     </div>
                 );
@@ -45,7 +91,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo}) => {
             case CHEST:
             case CHANCE:
                 UI = (
-                    <div className={`${style.card} ${style.chest} ${genClassList()}`}>
+                    <div className={genClassList()}>
                         
                         <p>{data.name}</p>
                     </div>
@@ -74,15 +120,20 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo}) => {
         </>
     );
 }
-// const mapStateToProps =  (store) => {
-//     return {
 
-//     }
-// }
 const mapDispatchToProps = (dispatch) => {
     return {
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
         setCurrentCard: (cardData) => dispatch(setCurrentCard(cardData)),
+        mortgageSite: (siteId, playerId) => dispatch(mortgageSite(siteId, playerId)),
+        creditPlayerMoney: (playerId, amount) => dispatch(creditPlayerMoney(playerId, amount)),
     }
 }
-export default connect(null, mapDispatchToProps)(Card) 
+const mapStateToProps = (store) => {
+    return {
+        actionData: store.actionData,
+        playersSites: store.siteData.playersSites,
+        activePlayer: store.playersData.activePlayer,
+    }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(Card) 

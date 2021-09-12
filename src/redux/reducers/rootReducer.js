@@ -5,11 +5,13 @@ import dice from './dice'
 import board from './board'
 import modal from './modal'
 import site from './site'
+import action from './action'
 export default combineReducers({
     card,
     playersData: player,
     dice,
     board,
     modalData: modal,
-    siteData: site
+    siteData: site,
+    actionData: action
 })

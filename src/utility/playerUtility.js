@@ -1,3 +1,4 @@
+
 export const createPlayerData = (totalPlayers) => {
     let players = {}
     for(let player=0; player<totalPlayers; player++){
@@ -8,5 +9,9 @@ export const createPlayerData = (totalPlayers) => {
             money: 1000
         }
     }
+
     return players
 }
+
+
+
