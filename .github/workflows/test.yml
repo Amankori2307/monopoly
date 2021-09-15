@@ -3,8 +3,8 @@ name: Deploy Test
 on:
   push:
     branches: [ test ]
-  pull_request:
-    branches: [ test ]
+  # pull_request:
+  #   branches: [ test ]
 
 jobs:
   build:
