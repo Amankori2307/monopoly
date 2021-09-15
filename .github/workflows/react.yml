@@ -69,8 +69,8 @@ jobs:
         PORT: ${{ secrets.PORT }}
         KEY: ${{ secrets.SSHKEY }}
       with:
-        source: "."
-        target: "/home/amankori2307/Monopoly/prod"
+        source: "./build"
+        target: "/home/amankori2307/Monopoly/prod/build"
 
     - name: Executing remote command
       uses: appleboy/ssh-action@master
