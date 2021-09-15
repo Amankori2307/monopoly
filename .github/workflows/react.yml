@@ -70,7 +70,7 @@ jobs:
         KEY: ${{ secrets.SSHKEY }}
       with:
         source: "./build/"
-        target: "/home/amankori2307/Monopoly/prod/build"
+        target: "/home/amankori2307/Monopoly/prod/"
 
     - name: Executing remote command
       uses: appleboy/ssh-action@master
