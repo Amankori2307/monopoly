@@ -69,7 +69,7 @@ jobs:
         PORT: ${{ secrets.PORT }}
         KEY: ${{ secrets.SSHKEY }}
       with:
-        source: "./build"
+        source: "./build/"
         target: "/home/amankori2307/Monopoly/prod/build"
 
     - name: Executing remote command
