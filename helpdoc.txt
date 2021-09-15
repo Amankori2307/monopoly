@@ -5,6 +5,7 @@ Commands User For Herko:
 
 Command to setup SSL:
     - sudo certbot --nginx -d monopoly.amankori.me
+    - sudo certbot --nginx -d test.monopoly.amankori.me
     ref: https://www.nginx.com/blog/using-free-ssltls-certificates-from-lets-encrypt-with-nginx/
 
 
