@@ -110,5 +110,6 @@
 
 /* inactive Card */
 .inactive{
-    filter: brightness(0.7)
+    filter: brightness(0.7);
+    cursor: default;
 }

@@ -19,10 +19,18 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
         return card.length?!card[0].isMortgaged:false; 
     },[activePlayer, data.id, playersSites])
     useEffect(() => {
-        let _isMortgageable = getIsMortgageable()
+        let _isMortgageable;
+        switch(actionData.currentAction){
+            case actionTypes.MORTGAGE:
+                _isMortgageable = getIsMortgageable()
+                console.log("Mortgage")
+                break;
+            default:
+                console.log("nothing")
+        }
         setIsMortgageable(_isMortgageable)
         setIsCardActive(_isMortgageable)
-    },[getIsMortgageable])
+    },[getIsMortgageable, actionData.currentAction])
 
     const genClassList = () => {
         let classList = "";
@@ -45,13 +53,13 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
     }
 
     const onCardClick = () => {
-        if(isCardActive){
+        if(actionData.active && isCardActive){
             if(actionData.currentAction === actionTypes.MORTGAGE){
                 mortgageCard()
 
-            }else{
-                showCardModal()
             }
+        }else if(!actionData.active){ //
+            showCardModal()
         }
     }
     
