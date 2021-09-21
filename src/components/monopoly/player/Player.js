@@ -3,13 +3,14 @@ import style from '../../../assets/css/player.module.css'
 import {connect} from 'react-redux'
 import {movePlayer} from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
-import { setActivePlayer } from '../../../redux/actions/player';
 import {setShowModal} from '../../../redux/actions/modal'
 import {SITE, REALM_RAILS, UTILITY} from '../../../utility/constants'
 import modalTypes from '../../../utility/modalTypes';
+import {setIsDone} from '../../../redux/actions/board'
 // import modalTypes from '../../../utility/modalTypes'
-function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setActivePlayer, setShowModal, siteData}){
+function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone}){
     const isMounted = useRef(false)
+    const firstRender = useRef(true)
     const currentPlayer = useRef(null)
     const positions = useRef(board.positions)
     const playerMoveAudio = useMemo(() => new Audio(audio1),[])
@@ -105,26 +106,33 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
 
     // 
     const showAppropriateModalOrChangeActivePlayer = useCallback(() => {
-        let currentSiteId = currentPlayer.current.site
-        let currentSite = siteDataRef.current.sites[currentSiteId]
-        if([SITE, REALM_RAILS, UTILITY].includes(currentSite.type) ){
-            let money = playersDataRef.current.players[id].money
-            if(siteDataRef.current.boughtSites.includes(currentSite.id)){ // check if site is already bought
-                // If site is already bought check if it is mortaged if not pay rent
-                setActivePlayer()
-            }else{
-                if(currentSite.sellingPrice <= money){
-                    setShowModal(true, modalTypes.BUY_CARD)
+        if(!firstRender.current){
+            let currentSiteId = currentPlayer.current.site
+            let currentSite = siteDataRef.current.sites[currentSiteId]
+            if([SITE, REALM_RAILS, UTILITY].includes(currentSite.type) ){
+                let money = playersDataRef.current.players[id].money
+                if(siteDataRef.current.boughtSites.includes(currentSite.id)){ // check if site is already bought
+                    // If site is already bought check if it is mortaged if not pay rent
+                    setIsDone(true)
                 }else{
-                    setShowModal(true, modalTypes.AUCTION_CARD)
+                    if(currentSite.sellingPrice <= money){
+                        setShowModal(true, modalTypes.BUY_CARD)
+                    }else{
+                        setShowModal(true, modalTypes.AUCTION_CARD)
+                    }
                 }
+            
+            }else{
+                // Check What action is required
+                console.log("SET IS DONE 2")
+                console.log(setDiceSumCalledCount)
+                
+                setIsDone(true)
             }
-        
         }else{
-            // Check What action is required
-            setActivePlayer()
+            firstRender.current = false
         }
-    }, [setActivePlayer, id, setShowModal])
+    }, [setIsDone, id, setShowModal])
 
     // To render player according to the data in store
     useEffect(() => {
@@ -149,7 +157,7 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             console.log("useEffect1 onUpdate ID:"+ id)
         }
 
-    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setActivePlayer, ])
+    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setIsDone, ])
 
     
     useEffect(() => {
@@ -187,8 +195,8 @@ const mapStateToProps = (store) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         movePlayer: (data) => dispatch(movePlayer(data)),
-        setActivePlayer: () => dispatch(setActivePlayer()),
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
+        setIsDone: (isDone) => dispatch(setIsDone(isDone)),
     }
 }
 

@@ -1,4 +1,4 @@
-import {SET_BOARD_SIZE, CALC_SITE_POSITIONS} from './actionTypes'
+import {SET_BOARD_SIZE, CALC_SITE_POSITIONS, SET_IS_DONE} from './actionTypes'
 
 export function setBoardSize(data){
     return ({
@@ -11,5 +11,12 @@ export function calculateSitePositions(data){
     return {
         type: CALC_SITE_POSITIONS,
         payload: data
+    }
+}
+
+export function setIsDone(isDone){
+    return {
+        type: SET_IS_DONE,
+        payload: isDone
     }
 }

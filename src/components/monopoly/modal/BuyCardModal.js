@@ -4,13 +4,14 @@ import {connect} from 'react-redux'
 import { setShowModal } from '../../../redux/actions/modal'
 import modalTypes from '../../../utility/modalTypes'
 import { buySite } from '../../../redux/actions/site'
-import { setActivePlayer, debitPlayerMoney } from '../../../redux/actions/player'
-const BuyCardModal = ({card, setShowModal, buySite, activePlayer, sites, setActivePlayer, debitPlayerMoney}) => {
+import { debitPlayerMoney } from '../../../redux/actions/player'
+import {setIsDone} from '../../../redux/actions/board'
+const BuyCardModal = ({card, setShowModal, buySite, activePlayer, sites, debitPlayerMoney, setIsDone}) => {
     const onBuy = () => {
         debitPlayerMoney(activePlayer, sites[card].sellingPrice)
         buySite(activePlayer, sites[card])
         setShowModal(false, null)
-        setActivePlayer()
+        setIsDone(true)
 
     }
     const onAuction = () => {
@@ -37,8 +38,8 @@ const mapDispatchToProps = (dispatch) => {
     return {
         setShowModal: (showModal, currentModal) =>  dispatch(setShowModal(showModal, currentModal)),
         buySite: (playerId, siteData) =>  dispatch(buySite(playerId, siteData)),
-        setActivePlayer: () =>  dispatch(setActivePlayer()),
         debitPlayerMoney: (playerId, amount) =>  dispatch(debitPlayerMoney(playerId, amount)),
+        setIsDone: (isDone) =>  dispatch(setIsDone(isDone)),
 
     }
 }
