@@ -124,9 +124,6 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
             
             }else{
                 // Check What action is required
-                console.log("SET IS DONE 2")
-                console.log(setDiceSumCalledCount)
-                
                 setIsDone(true)
             }
         }else{

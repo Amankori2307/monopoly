@@ -8,11 +8,8 @@ const DoneButton = ({isDone, setActivePlayer, setIsDone}) => {
         if(isDone){
             setActivePlayer();
             setIsDone(false);
-            console.log("clicked")
         }
-        console.log("clicked2")
     }
-    console.log(isDone)
     return (
         <button onClick={done} className={`${style.doneButton} ${!isDone?style.inactive:""}`}>Done</button>
     );
