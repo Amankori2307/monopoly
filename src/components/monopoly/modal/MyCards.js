@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import style from '../../../assets/css/my-cards.module.css'
 import CardModal from './CardModal'
-import Board from '../board/Board'
 const MyCards = ({playerIdForMyCardsModal, playersSites}) => {
     const [groupedCards, setGroupedCards] = useState({});
     const [activeTab, setActiveTab] = useState("all")
