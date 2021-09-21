@@ -5,7 +5,7 @@ import rollDiceAudio from '../../../assets/audio/rolldice2.wav'
 import {connect} from 'react-redux' 
 import {rollDice} from '../../../redux/actions/dice'
 
-const DiceContainer = ({rollDice})=>{
+const DiceContainer = ({rollDice, isDone})=>{
     const [disabled, setDisabled] = useState(false)
     const audioElement = new Audio(rollDiceAudio)
     const [number, setNumber] = useState({
@@ -26,7 +26,7 @@ const DiceContainer = ({rollDice})=>{
         return diceData
     }
     const onClick = () => {
-        if(!disabled){
+        if(!disabled && !isDone){
             setDisabled(true) // Disable Dice When Dice Is Rolling
             let interval = setInterval(rollDiceHelper, 50)
             setTimeout(() => {
@@ -40,7 +40,7 @@ const DiceContainer = ({rollDice})=>{
         }        
     }
     return (
-        <div className={style.diceContainer} onClick={onClick}>
+        <div className={`${style.diceContainer} ${isDone?style.inactive:""}`} onClick={onClick}>
             <Dice number={number.dice1}/>
             <Dice number={number.dice2}/>
         </div>
@@ -49,6 +49,7 @@ const DiceContainer = ({rollDice})=>{
 
 const mapStateToProps = (store) => {
     return {
+        isDone: store.board.isDone
     }
 }
 
