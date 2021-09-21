@@ -20,6 +20,9 @@
 .btn:hover{
     filter: brightness(0.9);
 }
+.btn:disabled{
+    cursor: not-allowed;
+}
 .build{
     background-color: green;
     color: white;

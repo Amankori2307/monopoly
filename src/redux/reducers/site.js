@@ -1,5 +1,5 @@
 import { siteDataIntialPlayersSites } from '../../utility/siteUtility';
-import {BUY_SITE, MORTGAGE_SITE, SET_SITES} from '../actions/actionTypes'
+import {BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SET_SITES} from '../actions/actionTypes'
 const initialState = {
     sites: [],
     boughtSites: [],
@@ -28,14 +28,15 @@ function site(state=initialState, action){
                 sites: payload
             }
         case MORTGAGE_SITE:
+        case REDEEM_SITE:
             let _playersSites = {...state.playersSites}
             let curentPlayersSites = [..._playersSites[payload.playerId]]
             let _sites = [...state.sites]
-            _sites[payload.siteId].isMortgaged = true
+            _sites[payload.siteId].isMortgaged = payload.isMortgaged
             
             for(let i=0; i<curentPlayersSites.length; i++){
                 if(curentPlayersSites[i].id === payload.siteId){
-                    curentPlayersSites[i].isMortgaged = true;
+                    curentPlayersSites[i].isMortgaged = payload.isMortgaged;
                 }
             }
             _playersSites[payload.playerId] = curentPlayersSites

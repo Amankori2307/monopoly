@@ -3,7 +3,7 @@ import style from '../../../assets/css/actions.module.css'
 import {setAction} from '../../../redux/actions/action'
 import actionTypes from '../../../utility/actionTypes'
 
-const Actions = ({setAction, active}) => {
+const Actions = ({setAction, active: disabled}) => {
     const setActionHelper = (e) => {
         let el = e.target
         let actionType = el.getAttribute("action-type")
@@ -11,10 +11,10 @@ const Actions = ({setAction, active}) => {
     }
     return (
         <div className={style.actions}>
-            <button disabled={active} className={`${style.build} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.BUILD}>Build</button>
-            <button disabled={active} className={`${style.sell} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.SELL}>Sell</button>
-            <button disabled={active} className={`${style.mortgage} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.MORTGAGE}>Mortgage</button>
-            <button disabled={active} className={`${style.redeem} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.REDEEM}>Redeem</button>
+            <button disabled={disabled} className={`${style.build} ${style.btn} `} onClick={setActionHelper} action-type={actionTypes.BUILD}>Build</button>
+            <button disabled={disabled} className={`${style.sell} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.SELL}>Sell</button>
+            <button disabled={disabled} className={`${style.mortgage} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.MORTGAGE}>Mortgage</button>
+            <button disabled={disabled} className={`${style.redeem} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.REDEEM}>Redeem</button>
         </div>
     )
 }
