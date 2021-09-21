@@ -30,10 +30,9 @@ const MyCards = ({playerIdForMyCardsModal, playersSites}) => {
         <>
         {
             cardList.length === 0
-            // ?<div className={style.noCards}>
-            //     <p >No cards</p>
-            // </div>
-            ?<Board />
+            ?<div className={style.noCards}>
+                <p >No cards</p>
+            </div>
             :<div className={style.myCards}>
                 <div className={style.navigationContainer}>
                     <ul className={style.tabNavigation}>

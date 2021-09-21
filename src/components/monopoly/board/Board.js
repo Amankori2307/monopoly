@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import PlayerDetailsContainer from '../player/PlayerDetailsContainer';
 import Actions from '../modal/Actions';
 import ActionInfo from '../action/ActionInfo';
+import DoneButton from '../donebutton/DoneButton';
 
 const Board = ({side, totalPlayers, sites, active}) => {
     return (
@@ -19,6 +20,7 @@ const Board = ({side, totalPlayers, sites, active}) => {
                     sites.slice(30,40),
                 ].map((data, index) => <Row key={index} data={data} rowNum={index+1}/>)}
                 <DiceContainer />
+                <DoneButton />
                 <PlayerContainer totalPlayers={totalPlayers}/>
                 {active && <ActionInfo />}
             </div>
