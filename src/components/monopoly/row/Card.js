@@ -8,29 +8,29 @@ import colors from '../../../utility/colors'
 import mortgagedIcon  from '../../../assets/images/mortgaged.svg'
 import { useCallback, useEffect, useState } from 'react'
 import actionTypes from '../../../utility/actionTypes'
-import { mortgageSite } from '../../../redux/actions/site'
-import {creditPlayerMoney} from '../../../redux/actions/player'
+import { mortgageSite, redeemSite } from '../../../redux/actions/site'
+import {creditPlayerMoney, debitPlayerMoney} from '../../../redux/actions/player'
 
-const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, creditPlayerMoney}) => {
-    const [isMortgageable, setIsMortgageable] = useState(false)
-    const [isCardActive, setIsCardActive] = useState(false)
-    const getIsMortgageable = useCallback(() => {
+const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney}) => {
+    const [isActionable, setIsActionable] = useState(false)
+ 
+    const getIsActionable = useCallback(() => {
         let card = playersSites[activePlayer].filter(item => item.id===data.id)
-        return card.length?!card[0].isMortgaged:false; 
-    },[activePlayer, data.id, playersSites])
-    useEffect(() => {
-        let _isMortgageable;
+
         switch(actionData.currentAction){
             case actionTypes.MORTGAGE:
-                _isMortgageable = getIsMortgageable()
-                console.log("Mortgage")
-                break;
+                return card.length?!card[0].isMortgaged:false;
+            case actionTypes.REDEEM:
+                return card.length?card[0].isMortgaged:false;
             default:
-                console.log("nothing")
+                return false; 
         }
-        setIsMortgageable(_isMortgageable)
-        setIsCardActive(_isMortgageable)
-    },[getIsMortgageable, actionData.currentAction])
+    },[activePlayer, data.id, playersSites, actionData.currentAction])
+
+    useEffect(() => {
+        let _isActionable = getIsActionable();
+        setIsActionable(_isActionable)
+    },[getIsActionable])
 
     const genClassList = () => {
         let classList = "";
@@ -47,15 +47,22 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
         else if([CHEST, CHANCE]){
             classList += style.card+" "+style.chest+" "
         }
-        classList += actionData.active && !isMortgageable ?style.inactive+" ":""
+        classList += actionData.active && !isActionable ?style.inactive+" ":""
 
         return classList
     }
 
     const onCardClick = () => {
-        if(actionData.active && isCardActive){
-            if(actionData.currentAction === actionTypes.MORTGAGE){
-                mortgageCard()
+        if(actionData.active && isActionable){
+            switch(actionData.currentAction){
+                case actionTypes.MORTGAGE:
+                    mortgageCard();
+                    break;
+                case actionTypes.REDEEM:
+                    redeemCard();
+                    break;
+                default:
+                    console.log("Invalid Action")
 
             }
         }else if(!actionData.active){ //
@@ -70,7 +77,11 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
     
     const mortgageCard = () => {
         mortgageSite(data.id, activePlayer)
-        creditPlayerMoney(activePlayer, data.sellingPrice/2)
+        creditPlayerMoney(activePlayer, (data.sellingPrice*50)/100)
+    }
+    const redeemCard = () => {
+        redeemSite(data.id, activePlayer)
+        debitPlayerMoney(activePlayer, (data.sellingPrice*55)/100)
     }
     const genCard = () => {
         let UI = null;
@@ -134,7 +145,9 @@ const mapDispatchToProps = (dispatch) => {
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
         setCurrentCard: (cardData) => dispatch(setCurrentCard(cardData)),
         mortgageSite: (siteId, playerId) => dispatch(mortgageSite(siteId, playerId)),
+        redeemSite: (siteId, playerId) => dispatch(redeemSite(siteId, playerId)),
         creditPlayerMoney: (playerId, amount) => dispatch(creditPlayerMoney(playerId, amount)),
+        debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
     }
 }
 const mapStateToProps = (store) => {

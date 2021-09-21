@@ -1,4 +1,4 @@
-import { BUY_SITE, MORTGAGE_SITE, SET_SITES } from './actionTypes'
+import { BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SET_SITES } from './actionTypes'
 
 export const buySite = (playerId, siteData) => {
     return {
@@ -22,7 +22,19 @@ export const mortgageSite = (siteId, playerId) => {
         type: MORTGAGE_SITE,
         payload: {
             siteId: siteId,
-            playerId: playerId
+            playerId: playerId,
+            isMortgaged: true
+        }
+    }
+}
+
+export const redeemSite = (siteId, playerId) => {
+    return {
+        type: REDEEM_SITE,
+        payload: {
+            siteId: siteId,
+            playerId: playerId,
+            isMortgaged: false
         }
     }
 }
