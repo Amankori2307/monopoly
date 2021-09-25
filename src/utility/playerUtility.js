@@ -10,6 +10,7 @@ export const createPlayerData = (totalPlayers) => {
         }
     }
 
+
     return players
 }
 
