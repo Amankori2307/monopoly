@@ -1,11 +1,13 @@
 import { siteDataIntialPlayersSites } from '../../utility/siteUtility';
-import {BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SET_SITES} from '../actions/actionTypes'
-const initialState = {
+import {BUILD_ON_SITE, BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SET_SITES} from '../actions/actionTypes'
+var initialState = {
     sites: [],
     boughtSites: [],
     boughtBy: Array(40).fill(null),
-    playersSites: siteDataIntialPlayersSites()
+    playersSites: siteDataIntialPlayersSites(),
+    noOfCardsInCategory: {}
 }
+
 
 function site(state=initialState, action){
     const {type, payload} = action;
@@ -23,9 +25,16 @@ function site(state=initialState, action){
                 }
             }
         case SET_SITES:
+            let _noOfCardsInCategory = {};
+            for(let i=0; i<payload.length; i++){
+                let subType = payload[i].subType
+                if(_noOfCardsInCategory[subType]) _noOfCardsInCategory[subType]++;
+                else _noOfCardsInCategory[subType] = 1;
+            }
             return {
                 ...state,
-                sites: payload
+                sites: payload,
+                noOfCardsInCategory: _noOfCardsInCategory
             }
         case MORTGAGE_SITE:
         case REDEEM_SITE:
@@ -46,6 +55,27 @@ function site(state=initialState, action){
                 sites:_sites,
                 playersSites: _playersSites
             }  
+        case BUILD_ON_SITE:
+            {
+            let _playersSites = {...state.playersSites}
+            let curentPlayersSites = [..._playersSites[payload.playerId]]
+            let _sites = [...state.sites]
+            let _built = _sites[payload.siteId].built
+            _sites[payload.siteId].built = _built+1;
+            
+            for(let i=0; i<curentPlayersSites.length; i++){
+                if(curentPlayersSites[i].id === payload.siteId){
+                    curentPlayersSites[i].built = _built+1;
+                }
+            }
+            _playersSites[payload.playerId] = curentPlayersSites
+            
+            return {
+                ...state,
+                sites:_sites,
+                playersSites: _playersSites
+            }  
+            }
         default:
             return state
     }

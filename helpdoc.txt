@@ -13,3 +13,17 @@ Notes:
     - Only site, station and railway relm can be bought
     - check if site is already bought
     - check if user has enough money to buy site else show auction modal
+
+Unit Test:
+    - https://medium.com/javascript-scene/unit-testing-react-components-aeda9a44aae2
+    - https://medium.com/@nathanpatnam/what-is-unit-testing-code-coverage-and-how-to-implement-and-use-them-in-python-a8f029558fe7
+    - https://www.bullseye.com/minimum.html#:~:text=Code%20coverage%20of%2070%2D80,higher%20than%20for%20system%20testing.
+
+Leading Screen Resolutions:
+    - 480×800
+    - 640×1136
+    - 720×1280
+    - 750×1334
+    - 1080×1920
+    - 1440×2560
+    - 2160×3840

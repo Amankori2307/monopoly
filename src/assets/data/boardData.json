@@ -25,7 +25,8 @@
          250
       ],
       "subType":"brown",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":2,
@@ -53,7 +54,8 @@
          450
       ],
       "subType":"brown",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":4,
@@ -99,7 +101,8 @@
       "mortgage":50,
       "construction":50,
       "subType":"green",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":7,
@@ -127,7 +130,8 @@
       "mortgage":50,
       "construction":50,
       "subType":"green",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":9,
@@ -147,7 +151,8 @@
       "mortgage":60,
       "construction":50,
       "subType":"green",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":10,
@@ -175,7 +180,8 @@
       "mortgage":70,
       "construction":100,
       "subType":"pink",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":12,
@@ -204,7 +210,8 @@
       "mortgage":70,
       "construction":100,
       "subType":"pink",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":14,
@@ -224,7 +231,8 @@
       "mortgage":80,
       "construction":100,
       "subType":"pink",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":15,
@@ -261,7 +269,8 @@
       "mortgage":90,
       "construction":100,
       "subType":"orange",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":17,
@@ -289,7 +298,8 @@
       "mortgage":90,
       "construction":100,
       "subType":"orange",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":19,
@@ -309,7 +319,8 @@
       "mortgage":100,
       "construction":100,
       "subType":"orange",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":20,
@@ -337,7 +348,8 @@
       "mortgage":110,
       "construction":150,
       "subType":"red",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":22,
@@ -365,7 +377,8 @@
       "mortgage":110,
       "construction":150,
       "subType":"red",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":24,
@@ -385,7 +398,8 @@
       "mortgage":120,
       "construction":150,
       "subType":"red",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":25,
@@ -422,7 +436,8 @@
       "mortgage":130,
       "construction":150,
       "subType":"yellow",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":27,
@@ -442,7 +457,8 @@
       "mortgage":130,
       "construction":150,
       "subType":"yellow",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":28,
@@ -471,7 +487,8 @@
       "mortgage":140,
       "construction":150,
       "subType":"yellow",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":30,
@@ -499,7 +516,8 @@
       "mortgage":150,
       "construction":200,
       "subType":"skyblue",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":32,
@@ -519,7 +537,8 @@
       "mortgage":150,
       "construction":200,
       "subType":"skyblue",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":33,
@@ -547,7 +566,8 @@
       "mortgage":160,
       "construction":200,
       "subType":"skyblue",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":35,
@@ -592,7 +612,8 @@
       "mortgage":175,
       "construction":200,
       "subType":"blue",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    },
    {
       "id":38,
@@ -621,6 +642,7 @@
       "mortgage":200,
       "construction":200,
       "subType":"blue",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "built":0
    }
 ]

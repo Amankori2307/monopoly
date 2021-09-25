@@ -1,4 +1,4 @@
-import { BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SET_SITES } from './actionTypes'
+import { BUILD_ON_SITE, BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SET_SITES } from './actionTypes'
 
 export const buySite = (playerId, siteData) => {
     return {
@@ -38,3 +38,14 @@ export const redeemSite = (siteId, playerId) => {
         }
     }
 }
+
+export const buildOnSite = (siteId, playerId) => {
+    return {
+        type: BUILD_ON_SITE,
+        payload: {
+            siteId: siteId,
+            playerId: playerId,
+        }
+    }
+}
+
