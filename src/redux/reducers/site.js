@@ -1,5 +1,5 @@
 import { siteDataIntialPlayersSites } from '../../utility/siteUtility';
-import {BUILD_ON_SITE, BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SET_SITES} from '../actions/actionTypes'
+import {BUILD_ON_SITE, BUY_SITE, MORTGAGE_SITE, REDEEM_SITE, SELL_BUILD, SET_SITES} from '../actions/actionTypes'
 var initialState = {
     sites: [],
     boughtSites: [],
@@ -7,6 +7,8 @@ var initialState = {
     playersSites: siteDataIntialPlayersSites(),
     noOfCardsInCategory: {}
 }
+initialState.boughtBy[1] = 0
+initialState.boughtBy[3] = 0
 
 
 function site(state=initialState, action){
@@ -56,16 +58,20 @@ function site(state=initialState, action){
                 playersSites: _playersSites
             }  
         case BUILD_ON_SITE:
+        case SELL_BUILD:
             {
             let _playersSites = {...state.playersSites}
             let curentPlayersSites = [..._playersSites[payload.playerId]]
             let _sites = [...state.sites]
             let _built = _sites[payload.siteId].built
-            _sites[payload.siteId].built = _built+1;
+            let buildFactor = 0;
+            if(type===SELL_BUILD) buildFactor = -1;
+            if(type===BUILD_ON_SITE) buildFactor = 1;
+            _sites[payload.siteId].built = _built+buildFactor;
             
             for(let i=0; i<curentPlayersSites.length; i++){
                 if(curentPlayersSites[i].id === payload.siteId){
-                    curentPlayersSites[i].built = _built+1;
+                    curentPlayersSites[i].built = _built+buildFactor;
                 }
             }
             _playersSites[payload.playerId] = curentPlayersSites

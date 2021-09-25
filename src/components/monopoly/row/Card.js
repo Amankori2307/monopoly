@@ -8,13 +8,12 @@ import colors from '../../../utility/colors'
 import mortgagedIcon  from '../../../assets/images/mortgaged.svg'
 import { useCallback, useEffect, useState } from 'react'
 import actionTypes from '../../../utility/actionTypes'
-import { mortgageSite, redeemSite, buildOnSite } from '../../../redux/actions/site'
+import { mortgageSite, redeemSite, buildOnSite, sellBuild } from '../../../redux/actions/site'
 import {creditPlayerMoney, debitPlayerMoney} from '../../../redux/actions/player'
 import HouseAndHotel from './HouseAndHotel'
 
-const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite}) => {
+const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild}) => {
     const [isActionable, setIsActionable] = useState(false)
-    console.log(rowNum)
     const isBuildable =  useCallback((mySites, currentCard) => {
         let _isActionable = false;
         if(currentCard.type === SITE){ 
@@ -33,6 +32,20 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
         return _isActionable;
     }, [noOfCardsInCategory])
 
+    const isSellable =  useCallback((mySites, currentCard) => {
+        let _isActionable = false;
+        if(currentCard.built){ // Check if any construction on the current site/card 
+            let subType = currentCard.subType;
+            let mySitesInGivenCategory = mySites.filter(item => item.subType === subType)
+            let i = 0;
+            for(; i<mySitesInGivenCategory.length; i++){ // checking if any site is mortgaged
+                if(currentCard.built < mySitesInGivenCategory[i].built) break;
+            }
+            if(i === noOfCardsInCategory[subType]) _isActionable = true;
+        }
+        return _isActionable;
+    }, [noOfCardsInCategory])
+
     const getIsActionable = useCallback(() => {
         let card = playersSites[activePlayer].filter(item => item.id===data.id)
 
@@ -43,10 +56,12 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                 return card.length?card[0].isMortgaged:false;
             case actionTypes.BUILD:
                 return isBuildable(playersSites[activePlayer], data);
+            case actionTypes.SELL:
+                return isSellable(playersSites[activePlayer], data);
             default:
                 return false; 
         }
-    },[activePlayer, data, playersSites, actionData.currentAction, isBuildable])
+    },[activePlayer, data, playersSites, actionData.currentAction, isBuildable, isSellable])
 
     useEffect(() => {
         let _isActionable = getIsActionable();
@@ -85,6 +100,9 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                 case actionTypes.BUILD:
                     build();
                     break;
+                case actionTypes.SELL:
+                    sell();
+                    break;
                 default:
                     console.log("Invalid Action")
 
@@ -107,10 +125,13 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
         redeemSite(data.id, activePlayer)
         debitPlayerMoney(activePlayer, (data.sellingPrice*55)/100)
     }
-
     const build = () => {
         buildOnSite(data.id, activePlayer)
         debitPlayerMoney(activePlayer, data.construction)
+    }
+    const sell = () => {
+        sellBuild (data.id, activePlayer)
+        creditPlayerMoney(activePlayer, data.construction/2)
     }
     const genCard = () => {
         let UI = null;
@@ -178,6 +199,7 @@ const mapDispatchToProps = (dispatch) => {
         mortgageSite: (siteId, playerId) => dispatch(mortgageSite(siteId, playerId)),
         redeemSite: (siteId, playerId) => dispatch(redeemSite(siteId, playerId)),
         buildOnSite: (siteId, playerId) => dispatch(buildOnSite(siteId, playerId)),
+        sellBuild: (siteId, playerId) => dispatch(sellBuild(siteId, playerId)),
         creditPlayerMoney: (playerId, amount) => dispatch(creditPlayerMoney(playerId, amount)),
         debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
     }

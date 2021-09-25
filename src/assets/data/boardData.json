@@ -26,7 +26,7 @@
       ],
       "subType":"brown",
       "isMortgaged":false,
-      "built":0
+      "built":5
    },
    {
       "id":2,
@@ -55,7 +55,7 @@
       ],
       "subType":"brown",
       "isMortgaged":false,
-      "built":0
+      "built":5
    },
    {
       "id":4,
