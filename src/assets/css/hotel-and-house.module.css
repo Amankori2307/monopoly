@@ -7,7 +7,7 @@
 
 }
 .houseAndHotel{
-    height: 25px;
+    height: 22px;
     display: flex;
     flex-wrap: wrap;
     flex-direction: column;
@@ -25,9 +25,8 @@
 .house img{
     width: 15px;
     height: 12px;
-    transform: rotate(90deg);
 }
-.hotelIcon{
+.rotate{
     transform: rotate(90deg);
 }
 .house1{

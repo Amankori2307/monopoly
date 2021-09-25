@@ -14,7 +14,7 @@ import HouseAndHotel from './HouseAndHotel'
 
 const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite}) => {
     const [isActionable, setIsActionable] = useState(false)
- 
+    console.log(rowNum)
     const isBuildable =  useCallback((mySites, currentCard) => {
         let _isActionable = false;
         if(currentCard.type === SITE){ 
@@ -121,7 +121,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                 UI = (
                     <div className={genClassList()} onClick={onCardClick}>
                         <div className={`${style.strip} ${data.color}`}>
-                            <HouseAndHotel built={data.built?data.built:0}/>
+                            <HouseAndHotel built={data.built?data.built:0} odd={rowNum%2!==0}/>
                         </div>
                         <div className={style.details}>
                             <p className={style.sellingPrice}>${data.sellingPrice}</p>
