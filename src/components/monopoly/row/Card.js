@@ -8,12 +8,31 @@ import colors from '../../../utility/colors'
 import mortgagedIcon  from '../../../assets/images/mortgaged.svg'
 import { useCallback, useEffect, useState } from 'react'
 import actionTypes from '../../../utility/actionTypes'
-import { mortgageSite, redeemSite } from '../../../redux/actions/site'
+import { mortgageSite, redeemSite, buildOnSite } from '../../../redux/actions/site'
 import {creditPlayerMoney, debitPlayerMoney} from '../../../redux/actions/player'
+import HouseAndHotel from './HouseAndHotel'
 
-const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney}) => {
+const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite}) => {
     const [isActionable, setIsActionable] = useState(false)
  
+    const isBuildable =  useCallback((mySites, currentCard) => {
+        let _isActionable = false;
+        if(currentCard.type === SITE){ 
+            let subType = currentCard.subType;
+            let mySitesInGivenCategory = mySites.filter(item => item.subType === subType)
+            if(mySitesInGivenCategory.length === noOfCardsInCategory[subType]){ // checking is all the sites of this subType belongs to the current user 
+                let i = 0;
+                for(; i<mySitesInGivenCategory.length; i++){ // checking if any site is mortgaged
+                    if(mySitesInGivenCategory[i].isMortgaged) break;
+                    if(currentCard.built > mySitesInGivenCategory[i].built) break;
+                    if(currentCard.built === 5) break;
+                }
+                if(i === noOfCardsInCategory[subType]) _isActionable = true;
+            }
+        }
+        return _isActionable;
+    }, [noOfCardsInCategory])
+
     const getIsActionable = useCallback(() => {
         let card = playersSites[activePlayer].filter(item => item.id===data.id)
 
@@ -22,10 +41,12 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                 return card.length?!card[0].isMortgaged:false;
             case actionTypes.REDEEM:
                 return card.length?card[0].isMortgaged:false;
+            case actionTypes.BUILD:
+                return isBuildable(playersSites[activePlayer], data);
             default:
                 return false; 
         }
-    },[activePlayer, data.id, playersSites, actionData.currentAction])
+    },[activePlayer, data, playersSites, actionData.currentAction, isBuildable])
 
     useEffect(() => {
         let _isActionable = getIsActionable();
@@ -61,6 +82,9 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                 case actionTypes.REDEEM:
                     redeemCard();
                     break;
+                case actionTypes.BUILD:
+                    build();
+                    break;
                 default:
                     console.log("Invalid Action")
 
@@ -83,6 +107,11 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
         redeemSite(data.id, activePlayer)
         debitPlayerMoney(activePlayer, (data.sellingPrice*55)/100)
     }
+
+    const build = () => {
+        buildOnSite(data.id, activePlayer)
+        debitPlayerMoney(activePlayer, data.construction)
+    }
     const genCard = () => {
         let UI = null;
         switch(data.type){
@@ -91,7 +120,9 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
             case UTILITY:
                 UI = (
                     <div className={genClassList()} onClick={onCardClick}>
-                        <div className={`${style.strip} ${data.color}`}></div>
+                        <div className={`${style.strip} ${data.color}`}>
+                            <HouseAndHotel built={data.built?data.built:0}/>
+                        </div>
                         <div className={style.details}>
                             <p className={style.sellingPrice}>${data.sellingPrice}</p>
                             <p className={style.name}>{data.name}</p>
@@ -146,6 +177,7 @@ const mapDispatchToProps = (dispatch) => {
         setCurrentCard: (cardData) => dispatch(setCurrentCard(cardData)),
         mortgageSite: (siteId, playerId) => dispatch(mortgageSite(siteId, playerId)),
         redeemSite: (siteId, playerId) => dispatch(redeemSite(siteId, playerId)),
+        buildOnSite: (siteId, playerId) => dispatch(buildOnSite(siteId, playerId)),
         creditPlayerMoney: (playerId, amount) => dispatch(creditPlayerMoney(playerId, amount)),
         debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
     }
@@ -155,6 +187,7 @@ const mapStateToProps = (store) => {
         actionData: store.actionData,
         playersSites: store.siteData.playersSites,
         activePlayer: store.playersData.activePlayer,
+        noOfCardsInCategory: store.siteData.noOfCardsInCategory,
     }
 }
 export default connect(mapStateToProps, mapDispatchToProps)(Card) 

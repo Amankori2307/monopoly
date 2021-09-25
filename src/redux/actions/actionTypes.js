@@ -24,6 +24,7 @@ export const BUY_SITE = "BUY_SITE"
 export const SET_SITES = "SET_SITES" 
 export const MORTGAGE_SITE = "MORTGAGE_SITE" 
 export const REDEEM_SITE = "REDEEM_SITE" 
+export const BUILD_ON_SITE = "BUILD_ON_SITE" 
 
 // Modal
 export const SET_PLAYER_ID_FOR_MY_CARDS_MODAL = "SET_PLAYER_ID_FOR_MY_CARDS_MODAL" 
