@@ -1,14 +1,14 @@
 import { useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import style from '../../../assets/css/player.module.css'
 import {connect} from 'react-redux'
-import {movePlayer} from '../../../redux/actions/player'
+import {debitPlayerMoney, movePlayer} from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import {setShowModal} from '../../../redux/actions/modal'
-import {SITE, REALM_RAILS, UTILITY} from '../../../utility/constants'
+import {SITE, REALM_RAILS, UTILITY, SPECIAL} from '../../../utility/constants'
 import modalTypes from '../../../utility/modalTypes';
 import {setIsDone} from '../../../redux/actions/board'
 // import modalTypes from '../../../utility/modalTypes'
-function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone}){
+function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney}){
     const isMounted = useRef(false)
     const firstRender = useRef(true)
     const currentPlayer = useRef(null)
@@ -105,7 +105,7 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
     }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal, setMovedCount]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
 
     // 
-    const showAppropriateModalOrChangeActivePlayer = useCallback(() => {
+    const showAppropriateModalOrDoAppropriateAction = useCallback(() => {
         if(!firstRender.current){
             let currentSiteId = currentPlayer.current.site
             let currentSite = siteDataRef.current.sites[currentSiteId]
@@ -122,6 +122,13 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
                     }
                 }
             
+            }
+            else if(currentSite.type === SPECIAL){
+                // If current site is jail
+                if(currentSite.id === 10){
+                    debitPlayerMoney(id, 100);
+                    setIsDone(true);
+                }
             }else{
                 // Check What action is required
                 setIsDone(true)
@@ -129,7 +136,7 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
         }else{
             firstRender.current = false
         }
-    }, [setIsDone, id, setShowModal])
+    }, [setIsDone, id, setShowModal, debitPlayerMoney])
 
     // To render player according to the data in store
     useEffect(() => {
@@ -159,9 +166,9 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
     
     useEffect(() => {
         if(isMounted.current){
-            showAppropriateModalOrChangeActivePlayer()
+            showAppropriateModalOrDoAppropriateAction()
         }
-    },[movedCount, showAppropriateModalOrChangeActivePlayer])
+    },[movedCount, showAppropriateModalOrDoAppropriateAction])
 
 
     // To update playersDataRef
@@ -194,6 +201,7 @@ const mapDispatchToProps = (dispatch) => {
         movePlayer: (data) => dispatch(movePlayer(data)),
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
         setIsDone: (isDone) => dispatch(setIsDone(isDone)),
+        debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
     }
 }
 
