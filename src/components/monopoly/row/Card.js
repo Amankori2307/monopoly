@@ -11,6 +11,17 @@ import actionTypes from '../../../utility/actionTypes'
 import { mortgageSite, redeemSite, buildOnSite, sellBuild } from '../../../redux/actions/site'
 import {creditPlayerMoney, debitPlayerMoney} from '../../../redux/actions/player'
 import HouseAndHotel from './HouseAndHotel'
+import startBG from '../../../assets/images/start.png'
+import jailBG from '../../../assets/images/jail.png'
+import resortBG from '../../../assets/images/resort.png'
+import goToJailBG from '../../../assets/images/go-to-jail.png'
+
+const SpecialCardBG = {
+    1: startBG,
+    2: jailBG,
+    3: resortBG,
+    4: goToJailBG
+}
 
 const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild}) => {
     const [isActionable, setIsActionable] = useState(false)
@@ -154,8 +165,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                 break;
             case SPECIAL:
                 UI = (
-                    <div className={genClassList()}>
-                        <p>{data.name}</p>
+                    <div className={genClassList()} style={{backgroundImage: `url(${SpecialCardBG[rowNum]})`}}>
                     </div>
                 );
                 break;
