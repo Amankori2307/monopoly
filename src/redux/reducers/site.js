@@ -7,8 +7,7 @@ var initialState = {
     playersSites: siteDataIntialPlayersSites(),
     noOfCardsInCategory: {}
 }
-initialState.boughtBy[1] = 0
-initialState.boughtBy[3] = 0
+
 
 
 function site(state=initialState, action){
