@@ -18,6 +18,7 @@ Unit Test:
     - https://medium.com/javascript-scene/unit-testing-react-components-aeda9a44aae2
     - https://medium.com/@nathanpatnam/what-is-unit-testing-code-coverage-and-how-to-implement-and-use-them-in-python-a8f029558fe7
     - https://www.bullseye.com/minimum.html#:~:text=Code%20coverage%20of%2070%2D80,higher%20than%20for%20system%20testing.
+    - https://www.guru99.com/software-testing-introduction-importance.html
 
 Leading Screen Resolutions:
     - 480×800
