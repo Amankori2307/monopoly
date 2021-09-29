@@ -1,6 +1,6 @@
 import style from '../../../assets/css/card-modal.module.css'
 import { connect } from 'react-redux';
-import {REALM_RAILS, SITE, UTILITY, TAX} from '../../../utility/constants'
+import {cardTypes} from '../../../utility/constants'
 
 const CardModal = ({card}) => {
     const SITE_INFO = "if a player owns all the sites of any color group the rent is doubled on unimproved sites in that group."
@@ -12,7 +12,7 @@ const CardModal = ({card}) => {
     const renderUI = () => {
         let UI = null;
         switch(card.type){
-            case SITE:
+            case cardTypes.SITE:
                 UI = (
                     <div className={style.card}>
                         <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
@@ -31,7 +31,7 @@ const CardModal = ({card}) => {
                     </div>
                 )
                 break;
-            case REALM_RAILS:
+            case cardTypes.REALM_RAILS:
                 UI = (
                     <div className={style.card}>
                         <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
@@ -48,7 +48,7 @@ const CardModal = ({card}) => {
                 )
                 break;
         
-            case UTILITY:    
+            case cardTypes.UTILITY:    
                 UI = (
                     <div className={style.card}>
                         <p className={`${style.name} ${card.color} ${"c-"+card.textColorOnShow}`}>{card.name}</p>                
@@ -60,7 +60,7 @@ const CardModal = ({card}) => {
                 )
                 break;
             
-            case TAX:    
+            case cardTypes.TAX:    
                 UI = (
                         <div className={`${style.card} ${style.centerWrapper} ${style.radialBackground}`}>
                             <div className={`${style.circle} ${style.centerWrapper} ${style.column}`}>

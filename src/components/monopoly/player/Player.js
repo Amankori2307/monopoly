@@ -4,7 +4,7 @@ import {connect} from 'react-redux'
 import {movePlayer} from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import {setShowModal} from '../../../redux/actions/modal'
-import {SITE, REALM_RAILS, UTILITY} from '../../../utility/constants'
+import {cardTypes} from '../../../utility/constants'
 import modalTypes from '../../../utility/modalTypes';
 import {setIsDone} from '../../../redux/actions/board'
 // import modalTypes from '../../../utility/modalTypes'
@@ -109,7 +109,7 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
         if(!firstRender.current){
             let currentSiteId = currentPlayer.current.site
             let currentSite = siteDataRef.current.sites[currentSiteId]
-            if([SITE, REALM_RAILS, UTILITY].includes(currentSite.type) ){
+            if([cardTypes.SITE, cardTypes.REALM_RAILS, cardTypes.UTILITY].includes(currentSite.type) ){
                 let money = playersDataRef.current.players[id].money
                 if(siteDataRef.current.boughtSites.includes(currentSite.id)){ // check if site is already bought
                     // If site is already bought check if it is mortaged if not pay rent

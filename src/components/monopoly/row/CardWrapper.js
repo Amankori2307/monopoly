@@ -2,7 +2,7 @@ import style from '../../../assets/css/card.module.css'
 import {connect} from 'react-redux'
 import {setCurrentCard} from '../../../redux/actions/card'
 import {setShowModal} from '../../../redux/actions/modal'
-import {REALM_RAILS, SITE, UTILITY, CHANCE, CHEST, TAX, SPECIAL} from '../../../utility/constants'
+import {cardTypes} from '../../../utility/constants'
 import modalTypes from '../../../utility/modalTypes'
 import colors from '../../../utility/colors'
 import mortgagedIcon  from '../../../assets/images/mortgaged.svg'
@@ -23,11 +23,11 @@ const SpecialCardBG = {
     4: goToJailBG
 }
 
-const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild}) => {
+const CardWrapper = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild}) => {
     const [isActionable, setIsActionable] = useState(false)
     const isBuildable =  useCallback((mySites, currentCard) => {
         let _isActionable = false;
-        if(currentCard.type === SITE){ 
+        if(currentCard.type === cardTypes.SITE){ 
             let subType = currentCard.subType;
             let mySitesInGivenCategory = mySites.filter(item => item.subType === subType)
             if(mySitesInGivenCategory.length === noOfCardsInCategory[subType]){ // checking is all the sites of this subType belongs to the current user 
@@ -81,17 +81,17 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
 
     const genClassList = () => {
         let classList = "";
-        if([SITE, REALM_RAILS, UTILITY].includes(data.type)){
+        if([cardTypes.SITE, cardTypes.REALM_RAILS, cardTypes.UTILITY].includes(data.type)){
             classList += style.card+" "
             classList += rowNum === 1 || rowNum ===2? style.reverse+" ": ""
             classList += (rowNum === 1 || rowNum ===2) && (soldTo != null)? `${style.sold} ${style.soldRev} ${style[colors[soldTo]]} `: ""
             classList += (rowNum === 3 || rowNum ===4) && (soldTo != null)? `${style.sold} ${style[colors[soldTo]]} `: ""
         }
-        else if(data.type === SPECIAL){
+        else if(data.type === cardTypes.SPECIAL){
             classList +=  style.specialCard+" " 
             classList += rowNum === 1 || rowNum === 2? style.reverseSpecialCard+" ": ""
         }
-        else if([CHEST, CHANCE]){
+        else if([cardTypes.CHEST, cardTypes.CHANCE]){
             classList += style.card+" "+style.chest+" "
         }
         classList += actionData.active && !isActionable ?style.inactive+" ":""
@@ -147,9 +147,9 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
     const genCard = () => {
         let UI = null;
         switch(data.type){
-            case SITE:
-            case REALM_RAILS:
-            case UTILITY:
+            case cardTypes.SITE:
+            case cardTypes.REALM_RAILS:
+            case cardTypes.UTILITY:
                 UI = (
                     <div className={genClassList()} onClick={onCardClick}>
                         <div className={`${style.strip} ${data.color}`}>
@@ -163,14 +163,14 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                     </div>
                 );
                 break;
-            case SPECIAL:
+            case cardTypes.SPECIAL:
                 UI = (
                     <div className={genClassList()} style={{backgroundImage: `url(${SpecialCardBG[rowNum]})`}}>
                     </div>
                 );
                 break;
-            case CHEST:
-            case CHANCE:
+            case cardTypes.CHEST:
+            case cardTypes.CHANCE:
                 UI = (
                     <div className={genClassList()}>
                         
@@ -178,7 +178,7 @@ const Card = ({data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, p
                     </div>
                 );
                 break;
-            case TAX:
+            case cardTypes.TAX:
                 UI = (
                     <div className={`${style.card} ${genClassList()}`} onClick={onCardClick}>
                         <div className={style.details}>
@@ -222,4 +222,4 @@ const mapStateToProps = (store) => {
         noOfCardsInCategory: store.siteData.noOfCardsInCategory,
     }
 }
-export default connect(mapStateToProps, mapDispatchToProps)(Card) 
+export default connect(mapStateToProps, mapDispatchToProps)(CardWrapper) 
