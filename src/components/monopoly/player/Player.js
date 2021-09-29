@@ -4,8 +4,7 @@ import { connect } from 'react-redux'
 import { movePlayer } from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
-import { cardTypes } from '../../../utility/constants'
-import { modalTypes } from '../../../utility/constants';
+import { modalTypes, cardTypes } from '../../../utility/constants';
 import { setIsDone } from '../../../redux/actions/board'
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone }) {
     const isMounted = useRef(false)

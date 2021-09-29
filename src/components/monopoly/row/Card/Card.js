@@ -1,58 +1,37 @@
-// import {} from '../../.'
+import { cardTypes } from '../../../../utility/constants'
+import SiteOrRealmRailsOrUtilityCard from './SiteOrRealmRailsOrUtilityCard'
+import SpecialCard from './SpecialCard'
+import ChestOrChanceCard from './ChestOrChanceCard'
+import TaxCard from './TaxCard'
 
-// const Card = () => {
-//     const genCard = () => {
-//         let UI = null;
-//         switch(data.type){
-//             case SITE:
-//             case REALM_RAILS:
-//             case UTILITY:
-//                 UI = (
-//                     <div className={genClassList()} onClick={onCardClick}>
-//                         <div className={`${style.strip} ${data.color}`}>
-//                             <HouseAndHotel built={data.built?data.built:0} odd={rowNum%2!==0}/>
-//                         </div>
-//                         <div className={style.details}>
-//                             <p className={style.sellingPrice}>${data.sellingPrice}</p>
-//                             <p className={style.name}>{data.name}</p>
-//                         </div>
-//                         {data.isMortgaged && <img className={style.mortgaged} src={mortgagedIcon} alt="mortgaged"/>}
-//                     </div>
-//                 );
-//                 break;
-//             case SPECIAL:
-//                 UI = (
-//                     <div className={genClassList()} style={{backgroundImage: `url(${SpecialCardBG[rowNum]})`}}>
-//                     </div>
-//                 );
-//                 break;
-//             case CHEST:
-//             case CHANCE:
-//                 UI = (
-//                     <div className={genClassList()}>
-                        
-//                         <p>{data.name}</p>
-//                     </div>
-//                 );
-//                 break;
-//             case TAX:
-//                 UI = (
-//                     <div className={`${style.card} ${genClassList()}`} onClick={onCardClick}>
-//                         <div className={style.details}>
-//                             <p className={style.debit}>Pay ${data.debit}</p>
-//                             <p className={style.name}>{data.name}</p>
-//                         </div>
-//                     </div>
-//                 );
-//                 break;
-//             default:
-//                 UI = null
-//                 break;
-//         }
-//         return UI        
-//     }
+const Card = ({onCardClick, data, rowNum, active, soldTo}) => {
+    
+    const genCard = () => {
+        let UI = null;
+        switch (data.type) {
+            case cardTypes.SITE:
+            case cardTypes.REALM_RAILS:
+            case cardTypes.UTILITY:
+                UI = <SiteOrRealmRailsOrUtilityCard data={data} rowNum={rowNum} onCardClick={onCardClick} active={active} soldTo={soldTo}/>
+                break;
+            case cardTypes.SPECIAL:
+                UI = <SpecialCard rowNum={rowNum} active={active}/>
+                break;
+            case cardTypes.CHEST:
+            case cardTypes.CHANCE:
+                UI = <ChestOrChanceCard data={data} active={active}/>
+                break;
+            case cardTypes.TAX:
+                UI = <TaxCard data={data} active={active} onCardClick={onCardClick}/>
+                break;
+            default:
+                UI = null
+                break;
+        }
+        return UI
+    }
 
-//     return genCard()
-// }
+    return genCard();
+}
 
-// export default Card
+export default Card

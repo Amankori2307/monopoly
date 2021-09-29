@@ -1,6 +1,6 @@
-import style from '../../../assets/css/hotel-and-house.module.css'
-import houseIcon from '../../../assets/images/house-icon.svg'
-import hotelIcon from '../../../assets/images/hotel-icon.svg'
+import style from '../../../../assets/css/hotel-and-house.module.css'
+import houseIcon from '../../../../assets/images/house-icon.svg'
+import hotelIcon from '../../../../assets/images/hotel-icon.svg'
 const HouseAndHotel = ({built, odd}) => {
     
     return (

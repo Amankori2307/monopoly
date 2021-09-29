@@ -1,8 +1,7 @@
 import { connect } from 'react-redux';
 import style from '../../../assets/css/player-details.module.css'
 import { setShowModal, setPlayerIdForMyCardsModal } from '../../../redux/actions/modal'
-import { colors } from '../../../utility/constants';
-import { modalTypes } from '../../../utility/constants';
+import { modalTypes, colors } from '../../../utility/constants';
 const PlayerDetails = ({ playersData, playerId, setShowModal, setPlayerIdForMyCardsModal }) => {
     const player = playersData.players[playerId]
     const active = (playersData.activePlayer === playerId)
