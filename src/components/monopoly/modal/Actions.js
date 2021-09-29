@@ -1,7 +1,7 @@
 import { connect } from 'react-redux'
 import style from '../../../assets/css/actions.module.css'
 import {setAction} from '../../../redux/actions/action'
-import actionTypes from '../../../utility/actionTypes'
+import {actionTypes} from '../../../utility/constants'
 
 const Actions = ({setAction, active: disabled}) => {
     const setActionHelper = (e) => {
