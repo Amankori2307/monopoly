@@ -1,9 +1,8 @@
 import { connect } from 'react-redux';
 import style from '../../../assets/css/player-details.module.css'
-import {setShowModal, setPlayerIdForMyCardsModal} from '../../../redux/actions/modal'
-import colors from '../../../utility/colors';
-import modalTypes from '../../../utility/modalTypes';
-const PlayerDetails = ({playersData, playerId, setShowModal, setPlayerIdForMyCardsModal}) => {
+import { setShowModal, setPlayerIdForMyCardsModal } from '../../../redux/actions/modal'
+import { modalTypes, colors } from '../../../utility/constants';
+const PlayerDetails = ({ playersData, playerId, setShowModal, setPlayerIdForMyCardsModal }) => {
     const player = playersData.players[playerId]
     const active = (playersData.activePlayer === playerId)
     const color = colors[playerId]
@@ -13,7 +12,7 @@ const PlayerDetails = ({playersData, playerId, setShowModal, setPlayerIdForMyCar
     }
 
     return (
-        <div className={`${style.playerDetails} ${style[color]} ${active? style.active: ""}`}>
+        <div className={`${style.playerDetails} ${style[color]} ${active ? style.active : ""}`}>
             <div className={style.header}>
                 <p className={style.playerName}>Player {player.playerId}</p>
                 <div className={style.overley}></div>
@@ -25,7 +24,7 @@ const PlayerDetails = ({playersData, playerId, setShowModal, setPlayerIdForMyCar
         </div>
     );
 }
-const mapStateToProps =  (store) => {
+const mapStateToProps = (store) => {
     return {
         playersData: store.playersData,
         // activePlayer: store.playersData.activePlayer

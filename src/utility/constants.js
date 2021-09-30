@@ -1,9 +1,36 @@
-export const SPECIAL = "special"
-export const SITE = "site"
-export const CHANCE = "chance"
-export const CHEST = "chest"
-export const TAX = "tax"
-export const REALM_RAILS = "realm_rails"
-export const UTILITY = "utility"
+
+export const cardTypes = {
+    SPECIAL: "special",
+    SITE: "site",
+    CHANCE: "chance",
+    CHEST: "chest",
+    TAX: "tax",
+    REALM_RAILS: "realm_rails",
+    UTILITY: "utility"
+}
+
+export const modalTypes = {
+    SHOW_CARD: "SHOW_CARD",
+    BUY_CARD: "BUY_CARD",
+    AUCTION_CARD: "AUCTION_CARD",
+    MY_CARDS: "MY_CARDS",
+}
+
+export const colors = {
+    0: 'red', 
+    1: 'yellow', 
+    2: 'blue', 
+    3: 'green', 
+    4: 'orange', 
+    5: 'pink'
+}
+
+export const actionTypes = {
+    MORTGAGE: "MORTGAGE",
+    BUILD: "BUILD",
+    SELL: "SELL",
+    REDEEM: "REDEEM",
+}
+
 
 export const MAX_PLAYERS = 8

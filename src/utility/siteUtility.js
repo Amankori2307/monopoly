@@ -1,4 +1,4 @@
-import { MAX_PLAYERS } from "./constants"
+import {MAX_PLAYERS} from "./constants"
 
 export const siteDataIntialPlayersSites = () => {
     let player = {}

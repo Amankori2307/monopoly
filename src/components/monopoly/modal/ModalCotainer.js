@@ -1,6 +1,7 @@
 import style from '../../../assets/css/modal.module.css'
 import { connect } from 'react-redux'
 import { setShowModal } from '../../../redux/actions/modal'
+import closeIcon from '../../../assets/images/times-solid.svg'
 
 const ModalContainer = ({ component: Component, setShowModal, disableHideOnOuterClick, title, ...rest }) => {
     const hideOnClick = e => {
@@ -15,7 +16,7 @@ const ModalContainer = ({ component: Component, setShowModal, disableHideOnOuter
                 {!disableHideOnOuterClick &&
                     <div className={style.closeStrip} >
                         <span className={style.title}>{title}</span>
-                        <i className={`fas fa-times ${style.close}`} onClick={hideOnClick}></i>
+                        <img src={closeIcon} className={style.close} onClick={hideOnClick} alt="close-icon"/>
                     </div>
                 }
 

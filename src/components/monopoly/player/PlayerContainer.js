@@ -1,5 +1,5 @@
 import Player from "./Player"
-import colors from "../../../utility/colors";
+import {colors} from "../../../utility/constants";
 const PlayerContainer = ({totalPlayers}) => {
     return (
         <div className="playerContainer">

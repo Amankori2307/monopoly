@@ -1,11 +1,11 @@
 import React from 'react'
 import style from '../../../assets/css/row.module.css'
-import Card from './Card'
+import CardWrapper from './CardWrapper';
 import {connect} from 'react-redux'
 const Row = ({rowNum, data, boughtBy}) => {
     return (
         <div className={`${style.row} ${style["row"+rowNum]}`}>
-            {data.map((data, index) => <Card key={index} data={data} rowNum={rowNum} soldTo={boughtBy[data.id]} />)}
+            {data.map((data, index) => <CardWrapper key={index} data={data} rowNum={rowNum} boughtBy={boughtBy[data.id]} />)}
         </div>
     );
 }
