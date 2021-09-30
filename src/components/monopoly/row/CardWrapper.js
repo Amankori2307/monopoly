@@ -1,46 +1,31 @@
 import { connect } from 'react-redux'
 import { setCurrentCard } from '../../../redux/actions/card'
 import { setShowModal } from '../../../redux/actions/modal'
-import { cardTypes, actionTypes, modalTypes } from '../../../utility/constants'
+import { actionTypes, modalTypes } from '../../../utility/constants'
 import { useCallback, useEffect, useState } from 'react'
 import { mortgageSite, redeemSite, buildOnSite, sellBuild } from '../../../redux/actions/site'
 import { creditPlayerMoney, debitPlayerMoney } from '../../../redux/actions/player'
 import Card from './Card/Card'
-
+import { isBuildable, isSellable } from '../../../utility/cardUtilities' 
 
 const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild }) => {
     const [isActionable, setIsActionable] = useState(false)
-    const isBuildable = useCallback((mySites, currentCard) => {
-        let _isActionable = false;
-        if (currentCard.type === cardTypes.SITE) {
-            let subType = currentCard.subType;
-            let mySitesInGivenCategory = mySites.filter(item => item.subType === subType)
-            if (mySitesInGivenCategory.length === noOfCardsInCategory[subType]) { // checking is all the sites of this subType belongs to the current user 
-                let i = 0;
-                for (; i < mySitesInGivenCategory.length; i++) { // checking if any site is mortgaged
-                    if (mySitesInGivenCategory[i].isMortgaged) break;
-                    if (currentCard.built > mySitesInGivenCategory[i].built) break;
-                    if (currentCard.built === 5) break;
-                }
-                if (i === noOfCardsInCategory[subType]) _isActionable = true;
-            }
-        }
-        return _isActionable;
-    }, [noOfCardsInCategory])
+  
 
-    const isSellable = useCallback((mySites, currentCard) => {
-        let _isActionable = false;
-        if (currentCard.built) { // Check if any construction on the current site/card 
-            let subType = currentCard.subType;
-            let mySitesInGivenCategory = mySites.filter(item => item.subType === subType)
-            let i = 0;
-            for (; i < mySitesInGivenCategory.length; i++) { // checking if any site is mortgaged
-                if (currentCard.built < mySitesInGivenCategory[i].built) break;
-            }
-            if (i === noOfCardsInCategory[subType]) _isActionable = true;
-        }
-        return _isActionable;
-    }, [noOfCardsInCategory])
+
+    // const isSellable = useCallback((mySites, currentCard) => {
+    //     let _isActionable = false;
+    //     if (currentCard.built) { // Check if any construction on the current site/card 
+    //         let subType = currentCard.subType;
+    //         let mySitesInGivenCategory = mySites.filter(item => item.subType === subType)
+    //         let i = 0;
+    //         for (; i < mySitesInGivenCategory.length; i++) { // checking if any site is mortgaged
+    //             if (currentCard.built < mySitesInGivenCategory[i].built) break;
+    //         }
+    //         if (i === noOfCardsInCategory[subType]) _isActionable = true;
+    //     }
+    //     return _isActionable;
+    // }, [noOfCardsInCategory])
 
     const getIsActionable = useCallback(() => {
         let card = playersSites[activePlayer].filter(item => item.id === data.id)
@@ -53,13 +38,13 @@ const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actio
             case actionTypes.REDEEM:
                 return card.length ? card[0].isMortgaged : false;
             case actionTypes.BUILD:
-                return isBuildable(playersSites[activePlayer], data);
+                return isBuildable(playersSites[activePlayer], data, noOfCardsInCategory);
             case actionTypes.SELL:
-                return isSellable(playersSites[activePlayer], data);
+                return isSellable(playersSites[activePlayer], data, noOfCardsInCategory);
             default:
                 return false;
         }
-    }, [activePlayer, data, playersSites, actionData.currentAction, isBuildable, isSellable])
+    }, [activePlayer, data, playersSites, actionData.currentAction, noOfCardsInCategory])
 
 
     const onCardClick = () => {
