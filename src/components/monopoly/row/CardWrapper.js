@@ -11,22 +11,6 @@ import { isBuildable, isSellable } from '../../../utility/cardUtilities'
 const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild }) => {
     const [isActionable, setIsActionable] = useState(false)
   
-
-
-    // const isSellable = useCallback((mySites, currentCard) => {
-    //     let _isActionable = false;
-    //     if (currentCard.built) { // Check if any construction on the current site/card 
-    //         let subType = currentCard.subType;
-    //         let mySitesInGivenCategory = mySites.filter(item => item.subType === subType)
-    //         let i = 0;
-    //         for (; i < mySitesInGivenCategory.length; i++) { // checking if any site is mortgaged
-    //             if (currentCard.built < mySitesInGivenCategory[i].built) break;
-    //         }
-    //         if (i === noOfCardsInCategory[subType]) _isActionable = true;
-    //     }
-    //     return _isActionable;
-    // }, [noOfCardsInCategory])
-
     const getIsActionable = useCallback(() => {
         let card = playersSites[activePlayer].filter(item => item.id === data.id)
 
@@ -45,7 +29,6 @@ const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actio
                 return false;
         }
     }, [activePlayer, data, playersSites, actionData.currentAction, noOfCardsInCategory])
-
 
     const onCardClick = () => {
         if (actionData.active && isActionable) {
@@ -70,6 +53,7 @@ const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actio
             showCardModal()
         }
     }
+
     const showCardModal = () => {
         setShowModal(true, modalTypes.SHOW_CARD)
         setCurrentCard(data)
@@ -79,14 +63,17 @@ const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actio
         mortgageSite(data.id, activePlayer)
         creditPlayerMoney(activePlayer, (data.sellingPrice * 50) / 100)
     }
+
     const redeemCard = () => {
         redeemSite(data.id, activePlayer)
         debitPlayerMoney(activePlayer, (data.sellingPrice * 55) / 100)
     }
+
     const build = () => {
         buildOnSite(data.id, activePlayer)
         debitPlayerMoney(activePlayer, data.construction)
     }
+    
     const sell = () => {
         sellBuild(data.id, activePlayer)
         creditPlayerMoney(activePlayer, data.construction / 2)
