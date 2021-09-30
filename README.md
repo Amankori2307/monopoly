@@ -58,5 +58,6 @@
     - [React Testing Guide](https://www.freecodecamp.org/news/testing-react-hooks/)
     - [What all things needs to be tested in a static website](https://www.softwaretestinghelp.com/web-application-testing/)
     - [Unit Testing Redux Connected Components](https://hackernoon.com/unit-testing-redux-connected-components-692fa3c4441c)
+    - [Integration Testing In React](https://medium.com/expedia-group-tech/integration-testing-in-react-21f92a55a894)
 - **README**
     - [Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
