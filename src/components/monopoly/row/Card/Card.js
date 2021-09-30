@@ -4,14 +4,14 @@ import SpecialCard from './SpecialCard'
 import ChestOrChanceCard from './ChestOrChanceCard'
 import TaxCard from './TaxCard'
 
-const Card = ({onCardClick, data, rowNum, active, soldTo}) => {
+const Card = ({onCardClick, data, rowNum, active, boughtBy}) => {
     
     const genCard = () => {
         switch (data.type) {
             case cardTypes.SITE:
             case cardTypes.REALM_RAILS:
             case cardTypes.UTILITY:
-                return <SiteOrRealmRailsOrUtilityCard data={data} rowNum={rowNum} onCardClick={onCardClick} active={active} soldTo={soldTo}/>
+                return <SiteOrRealmRailsOrUtilityCard data={data} rowNum={rowNum} onCardClick={onCardClick} active={active} boughtBy={boughtBy}/>
             case cardTypes.SPECIAL:
                 return <SpecialCard rowNum={rowNum} active={active}/>
             case cardTypes.CHEST:

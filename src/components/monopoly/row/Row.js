@@ -5,7 +5,7 @@ import {connect} from 'react-redux'
 const Row = ({rowNum, data, boughtBy}) => {
     return (
         <div className={`${style.row} ${style["row"+rowNum]}`}>
-            {data.map((data, index) => <CardWrapper key={index} data={data} rowNum={rowNum} soldTo={boughtBy[data.id]} />)}
+            {data.map((data, index) => <CardWrapper key={index} data={data} rowNum={rowNum} boughtBy={boughtBy[data.id]} />)}
         </div>
     );
 }

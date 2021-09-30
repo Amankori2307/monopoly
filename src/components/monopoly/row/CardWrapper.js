@@ -8,7 +8,7 @@ import { creditPlayerMoney, debitPlayerMoney } from '../../../redux/actions/play
 import Card from './Card/Card'
 import { isBuildable, isSellable } from '../../../utility/cardUtilities' 
 
-const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild }) => {
+const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, boughtBy, actionData, playersSites, activePlayer, mortgageSite, redeemSite, creditPlayerMoney, debitPlayerMoney, noOfCardsInCategory, buildOnSite, sellBuild }) => {
     const [isActionable, setIsActionable] = useState(false)
   
     const getIsActionable = useCallback(() => {
@@ -73,7 +73,7 @@ const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actio
         buildOnSite(data.id, activePlayer)
         debitPlayerMoney(activePlayer, data.construction)
     }
-    
+
     const sell = () => {
         sellBuild(data.id, activePlayer)
         creditPlayerMoney(activePlayer, data.construction / 2)
@@ -84,7 +84,7 @@ const CardWrapper = ({ data, rowNum, setShowModal, setCurrentCard, soldTo, actio
         setIsActionable(_isActionable)
     }, [getIsActionable])
 
-    return <Card  onCardClick={onCardClick} data={data} rowNum={rowNum} active={isActionable} soldTo={soldTo}/>
+    return <Card  onCardClick={onCardClick} data={data} rowNum={rowNum} active={isActionable} boughtBy={boughtBy}/>
 }
 
 const mapDispatchToProps = (dispatch) => {
