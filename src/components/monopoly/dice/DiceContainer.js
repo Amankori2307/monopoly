@@ -20,7 +20,7 @@ const DiceContainer = ({rollDice, isDone})=>{
         let num2 = genNumber()
         let diceData = {
             dice1: num1,
-            dice2: num2
+            dice2: num2,
         }
         setNumber(diceData)
         return diceData
