@@ -7,28 +7,21 @@ import TaxCard from './TaxCard'
 const Card = ({onCardClick, data, rowNum, active, soldTo}) => {
     
     const genCard = () => {
-        let UI = null;
         switch (data.type) {
             case cardTypes.SITE:
             case cardTypes.REALM_RAILS:
             case cardTypes.UTILITY:
-                UI = <SiteOrRealmRailsOrUtilityCard data={data} rowNum={rowNum} onCardClick={onCardClick} active={active} soldTo={soldTo}/>
-                break;
+                return <SiteOrRealmRailsOrUtilityCard data={data} rowNum={rowNum} onCardClick={onCardClick} active={active} soldTo={soldTo}/>
             case cardTypes.SPECIAL:
-                UI = <SpecialCard rowNum={rowNum} active={active}/>
-                break;
+                return <SpecialCard rowNum={rowNum} active={active}/>
             case cardTypes.CHEST:
             case cardTypes.CHANCE:
-                UI = <ChestOrChanceCard data={data} active={active}/>
-                break;
+                return <ChestOrChanceCard data={data} active={active}/>
             case cardTypes.TAX:
-                UI = <TaxCard data={data} active={active} onCardClick={onCardClick}/>
-                break;
+                return <TaxCard data={data} active={active} onCardClick={onCardClick}/>
             default:
-                UI = null
-                break;
+                return null
         }
-        return UI
     }
 
     return genCard();
