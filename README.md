@@ -61,3 +61,8 @@
     - [Integration Testing In React](https://medium.com/expedia-group-tech/integration-testing-in-react-21f92a55a894)
 - **README**
     - [Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+
+--
+## Copyright
+
+Licensed under **MIT License**
