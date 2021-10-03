@@ -59,6 +59,7 @@
     - [What all things needs to be tested in a static website](https://www.softwaretestinghelp.com/web-application-testing/)
     - [Unit Testing Redux Connected Components](https://hackernoon.com/unit-testing-redux-connected-components-692fa3c4441c)
     - [Integration Testing In React](https://medium.com/expedia-group-tech/integration-testing-in-react-21f92a55a894)
+    - [Youtuve Video(Redux connected component testing)](https://www.youtube.com/watch?v=o71kkw9Kjik&t=0s)
 - **README**
     - [Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
 
