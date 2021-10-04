@@ -59,7 +59,13 @@
     - [What all things needs to be tested in a static website](https://www.softwaretestinghelp.com/web-application-testing/)
     - [Unit Testing Redux Connected Components](https://hackernoon.com/unit-testing-redux-connected-components-692fa3c4441c)
     - [Integration Testing In React](https://medium.com/expedia-group-tech/integration-testing-in-react-21f92a55a894)
-    - [Youtuve Video(Redux connected component testing)](https://www.youtube.com/watch?v=o71kkw9Kjik&t=0s)
+    - [Test Redux Connected Components](https://www.robinwieruch.de/react-connected-component-test)
+    - [Youtube video 1(For Testing Redux Connected Components)](https://www.youtube.com/watch?v=o71kkw9Kjik&t=0s)
+    - [Youtube video 2(For Testing Redux Connected Components)](https://www.youtube.com/watch?v=vbvQzWDCuXU)
+    - [Integration Testing](https://www.youtube.com/watch?v=is83bEK3n5A)
+    - [Kent C. Dodds - Why not to test implementation deatils](https://kentcdodds.com/blog/testing-implementation-details)
+    - [React Testing Library FAQs](https://testing-library.com/docs/dom-testing-library/faq)
+    - [Querying in react testing library](https://testing-library.com/docs/queries/about/#priority)
 - **README**
     - [Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
 

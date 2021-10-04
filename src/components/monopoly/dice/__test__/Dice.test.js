@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react"
+import { render } from "../../../../utility/test/testUtils"
 import Dice from "../Dice"
 
 
