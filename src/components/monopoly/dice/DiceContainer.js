@@ -40,7 +40,7 @@ const DiceContainer = ({rollDice, isDone})=>{
         }        
     }
     return (
-        <div className={`${style.diceContainer} ${isDone?style.inactive:""}`} onClick={onClick}>
+        <div className={`${style.diceContainer} ${isDone?style.inactive:""}`} onClick={onClick} data-testid="dice-container">
             <Dice number={number.dice1}/>
             <Dice number={number.dice2}/>
         </div>
