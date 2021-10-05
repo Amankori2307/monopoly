@@ -70,8 +70,9 @@
     - [Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
 - **Deploy**
     - [Deploy React Site On Github](https://www.freecodecamp.org/news/deploy-a-react-app-to-github-pages/)
+    - [Configure github action to push code to gh-pages on push to master](https://dev.to/pierresaid/deploy-node-projects-to-github-pages-with-github-actions-4jco)
 
---
+---
 ## Copyright
 
 Licensed under **MIT License**
