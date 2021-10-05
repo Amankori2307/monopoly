@@ -1,7 +1,7 @@
 import './assets/css/style.css';
 import {connect} from 'react-redux'
 
-import {BrowserRouter as Router, Route, Switch} from 'react-router-dom'
+import {HashRouter as Router, Route, Switch} from 'react-router-dom'
 import Monopoly from "./components/monopoly/Monopoly";
 import Home from "./components/home/Home"
 import NotFound from './components/not_found/NotFound';
