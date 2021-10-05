@@ -1,17 +1,17 @@
 {
   "files": {
     "main.css": "/monopoly/static/css/main.0940d464.chunk.css",
-    "main.js": "/monopoly/static/js/main.d6f8eaf8.chunk.js",
-    "main.js.map": "/monopoly/static/js/main.d6f8eaf8.chunk.js.map",
+    "main.js": "/monopoly/static/js/main.33a9a190.chunk.js",
+    "main.js.map": "/monopoly/static/js/main.33a9a190.chunk.js.map",
     "runtime-main.js": "/monopoly/static/js/runtime-main.97a32214.js",
     "runtime-main.js.map": "/monopoly/static/js/runtime-main.97a32214.js.map",
-    "static/js/2.a156fa7a.chunk.js": "/monopoly/static/js/2.a156fa7a.chunk.js",
-    "static/js/2.a156fa7a.chunk.js.map": "/monopoly/static/js/2.a156fa7a.chunk.js.map",
+    "static/js/2.d2f3c1d7.chunk.js": "/monopoly/static/js/2.d2f3c1d7.chunk.js",
+    "static/js/2.d2f3c1d7.chunk.js.map": "/monopoly/static/js/2.d2f3c1d7.chunk.js.map",
     "static/js/3.a4d6189f.chunk.js": "/monopoly/static/js/3.a4d6189f.chunk.js",
     "static/js/3.a4d6189f.chunk.js.map": "/monopoly/static/js/3.a4d6189f.chunk.js.map",
     "index.html": "/monopoly/index.html",
     "static/css/main.0940d464.chunk.css.map": "/monopoly/static/css/main.0940d464.chunk.css.map",
-    "static/js/2.a156fa7a.chunk.js.LICENSE.txt": "/monopoly/static/js/2.a156fa7a.chunk.js.LICENSE.txt",
+    "static/js/2.d2f3c1d7.chunk.js.LICENSE.txt": "/monopoly/static/js/2.d2f3c1d7.chunk.js.LICENSE.txt",
     "static/media/banner.b1b5a245.gif": "/monopoly/static/media/banner.b1b5a245.gif",
     "static/media/go-to-jail.ea93a729.png": "/monopoly/static/media/go-to-jail.ea93a729.png",
     "static/media/hotel-icon.84fc867f.svg": "/monopoly/static/media/hotel-icon.84fc867f.svg",
@@ -27,8 +27,8 @@
   },
   "entrypoints": [
     "static/js/runtime-main.97a32214.js",
-    "static/js/2.a156fa7a.chunk.js",
+    "static/js/2.d2f3c1d7.chunk.js",
     "static/css/main.0940d464.chunk.css",
-    "static/js/main.d6f8eaf8.chunk.js"
+    "static/js/main.33a9a190.chunk.js"
   ]
 }
