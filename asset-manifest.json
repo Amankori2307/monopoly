@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/Monopoly/static/css/main.0940d464.chunk.css",
-    "main.js": "/Monopoly/static/js/main.dadef737.chunk.js",
-    "main.js.map": "/Monopoly/static/js/main.dadef737.chunk.js.map",
+    "main.js": "/Monopoly/static/js/main.5ad33582.chunk.js",
+    "main.js.map": "/Monopoly/static/js/main.5ad33582.chunk.js.map",
     "runtime-main.js": "/Monopoly/static/js/runtime-main.cbfda648.js",
     "runtime-main.js.map": "/Monopoly/static/js/runtime-main.cbfda648.js.map",
     "static/js/2.a156fa7a.chunk.js": "/Monopoly/static/js/2.a156fa7a.chunk.js",
@@ -29,6 +29,6 @@
     "static/js/runtime-main.cbfda648.js",
     "static/js/2.a156fa7a.chunk.js",
     "static/css/main.0940d464.chunk.css",
-    "static/js/main.dadef737.chunk.js"
+    "static/js/main.5ad33582.chunk.js"
   ]
 }
