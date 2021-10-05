@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/Monopoly/static/css/main.0f692148.chunk.css",
-    "main.js": "/Monopoly/static/js/main.4ad7cce7.chunk.js",
-    "main.js.map": "/Monopoly/static/js/main.4ad7cce7.chunk.js.map",
+    "main.css": "/Monopoly/static/css/main.0940d464.chunk.css",
+    "main.js": "/Monopoly/static/js/main.dadef737.chunk.js",
+    "main.js.map": "/Monopoly/static/js/main.dadef737.chunk.js.map",
     "runtime-main.js": "/Monopoly/static/js/runtime-main.cbfda648.js",
     "runtime-main.js.map": "/Monopoly/static/js/runtime-main.cbfda648.js.map",
     "static/js/2.a156fa7a.chunk.js": "/Monopoly/static/js/2.a156fa7a.chunk.js",
@@ -10,15 +10,15 @@
     "static/js/3.a4d6189f.chunk.js": "/Monopoly/static/js/3.a4d6189f.chunk.js",
     "static/js/3.a4d6189f.chunk.js.map": "/Monopoly/static/js/3.a4d6189f.chunk.js.map",
     "index.html": "/Monopoly/index.html",
-    "static/css/main.0f692148.chunk.css.map": "/Monopoly/static/css/main.0f692148.chunk.css.map",
+    "static/css/main.0940d464.chunk.css.map": "/Monopoly/static/css/main.0940d464.chunk.css.map",
     "static/js/2.a156fa7a.chunk.js.LICENSE.txt": "/Monopoly/static/js/2.a156fa7a.chunk.js.LICENSE.txt",
     "static/media/banner.b1b5a245.gif": "/Monopoly/static/media/banner.b1b5a245.gif",
     "static/media/go-to-jail.ea93a729.png": "/Monopoly/static/media/go-to-jail.ea93a729.png",
-    "static/media/hotel-icon.c5a0886c.svg": "/Monopoly/static/media/hotel-icon.c5a0886c.svg",
-    "static/media/house-icon.a8a52361.svg": "/Monopoly/static/media/house-icon.a8a52361.svg",
+    "static/media/hotel-icon.84fc867f.svg": "/Monopoly/static/media/hotel-icon.84fc867f.svg",
+    "static/media/house-icon.930a0a86.svg": "/Monopoly/static/media/house-icon.930a0a86.svg",
     "static/media/jail.9704b076.png": "/Monopoly/static/media/jail.9704b076.png",
-    "static/media/logo.75c9eceb.svg": "/Monopoly/static/media/logo.75c9eceb.svg",
-    "static/media/mortgaged.9b99b52e.svg": "/Monopoly/static/media/mortgaged.9b99b52e.svg",
+    "static/media/logo.6801a562.svg": "/Monopoly/static/media/logo.6801a562.svg",
+    "static/media/mortgaged.26b6ee48.svg": "/Monopoly/static/media/mortgaged.26b6ee48.svg",
     "static/media/playermove.793e5199.wav": "/Monopoly/static/media/playermove.793e5199.wav",
     "static/media/resort.2fdbea47.png": "/Monopoly/static/media/resort.2fdbea47.png",
     "static/media/rolldice2.4fcd2707.wav": "/Monopoly/static/media/rolldice2.4fcd2707.wav",
@@ -28,7 +28,7 @@
   "entrypoints": [
     "static/js/runtime-main.cbfda648.js",
     "static/js/2.a156fa7a.chunk.js",
-    "static/css/main.0f692148.chunk.css",
-    "static/js/main.4ad7cce7.chunk.js"
+    "static/css/main.0940d464.chunk.css",
+    "static/js/main.dadef737.chunk.js"
   ]
 }
