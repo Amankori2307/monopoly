@@ -68,6 +68,8 @@
     - [Querying in react testing library](https://testing-library.com/docs/queries/about/#priority)
 - **README**
     - [Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+- **Deploy**
+    - [Deploy React Site On Github](https://www.freecodecamp.org/news/deploy-a-react-app-to-github-pages/)
 
 --
 ## Copyright
