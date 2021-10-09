@@ -13,6 +13,7 @@ Notes:
     - Only site, station and railway relm can be bought
     - check if site is already bought
     - check if user has enough money to buy site else show auction modal
+    -
 
 Unit Test:
     - https://medium.com/javascript-scene/unit-testing-react-components-aeda9a44aae2
