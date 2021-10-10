@@ -111,8 +111,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                         setShowModal(true, modalTypes.AUCTION_CARD)
                     }
                 }
-            }
-            else if (currentSite.type === cardTypes.SPECIAL) {
+            } else if (currentSite.type === cardTypes.SPECIAL) {
                 // If current site is jail
                 if (currentSite.id === 10) {
                     debitPlayerMoney(id, 100);
@@ -122,11 +121,14 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                 }else{
                     setIsDone(true)
                 }
+            } else if (currentSite.type === cardTypes.TAX) {
+                debitPlayerMoney(id, currentSite.debit)
+                setIsDone(true)
             } else {    
                 setIsDone(true)
             }
             // Check if user crossed start(siteId === 0), if YES then add $200 credit 
-            if(ps <= 39 && cs >= 0) creditPlayerMoney(id, 200)
+            if(ps <= 39 && cs >= 0 && ps > cs) creditPlayerMoney(id, 200)
         } else {
             firstRender.current = false
         }
