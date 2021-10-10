@@ -4,7 +4,7 @@ export const createPlayerData = (totalPlayers) => {
     let players = {}
     for(let player=0; player<totalPlayers; player++){
         players[player] = {
-            site: 0,
+            site: 39,
             previousSite: 0,
             playerId: player,
             money: 1000,
@@ -12,7 +12,6 @@ export const createPlayerData = (totalPlayers) => {
             direction: directions.FORWARD
         }
     }
-
     return players
 }
 
@@ -41,9 +40,7 @@ export const getAllTurningPoints = (ps, cs, direction) => {
         if(cs !== 0) turningPoints.push(0)
         turningPoints.push(...calcTurningPoints(0, cs))
     }
-    console.log(turningPoints)
     if(direction === directions.BACKWARD) turningPoints.reverse()
-    console.log(turningPoints)
     return turningPoints;
 }
 
