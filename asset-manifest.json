@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/monopoly/static/css/main.0940d464.chunk.css",
-    "main.js": "/monopoly/static/js/main.8d321667.chunk.js",
-    "main.js.map": "/monopoly/static/js/main.8d321667.chunk.js.map",
+    "main.js": "/monopoly/static/js/main.c07c7c81.chunk.js",
+    "main.js.map": "/monopoly/static/js/main.c07c7c81.chunk.js.map",
     "runtime-main.js": "/monopoly/static/js/runtime-main.de9a7e9b.js",
     "runtime-main.js.map": "/monopoly/static/js/runtime-main.de9a7e9b.js.map",
     "static/js/2.7ef13f2a.chunk.js": "/monopoly/static/js/2.7ef13f2a.chunk.js",
@@ -29,6 +29,6 @@
     "static/js/runtime-main.de9a7e9b.js",
     "static/js/2.7ef13f2a.chunk.js",
     "static/css/main.0940d464.chunk.css",
-    "static/js/main.8d321667.chunk.js"
+    "static/js/main.c07c7c81.chunk.js"
   ]
 }
