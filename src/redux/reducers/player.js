@@ -1,4 +1,4 @@
-import { CREDIT_PLAYER_MONEY, DEBIT_PLAYER_MONEY, MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_TOTAL_PLAYERS } from "../actions/actionTypes";
+import { CREDIT_PLAYER_MONEY, DEBIT_PLAYER_MONEY, MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_IS_MOVING, SET_TOTAL_PLAYERS } from "../actions/actionTypes";
 import {createPlayerData} from '../../utility/playerUtility'
 
 const initialState = {
@@ -12,11 +12,13 @@ function player(state = initialState, action){
     switch(type){
         case MOVE_PLAYER:
             let players = state.players
-            let currentPlayer = players[state.activePlayer]
-            players[state.activePlayer] = {
+            let currentPlayer = players[payload.playerId]
+            players[payload.playerId] = {
                 ...currentPlayer,
                 previousSite: currentPlayer.site,
-                site: payload.site,
+                site: payload.currentSite,
+                isMoving: true,
+                direction: payload.direction
             }
             return {
                 ...state,
@@ -50,6 +52,14 @@ function player(state = initialState, action){
                 return {
                     ...state,
                     players: _players
+                }
+            }
+        case SET_IS_MOVING:
+            {
+                let _state = {...state}
+                _state.players[payload.playerId].isMoving = payload.isMoving;
+                return {
+                    ..._state
                 }
             }
         default:

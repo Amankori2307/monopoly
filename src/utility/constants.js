@@ -32,5 +32,9 @@ export const actionTypes = {
     REDEEM: "REDEEM",
 }
 
+export const directions = {
+    FORWARD: true,
+    BACKWARD: false,
+}
 
 export const MAX_PLAYERS = 8

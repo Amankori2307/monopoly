@@ -1,10 +1,14 @@
-import {CREDIT_PLAYER_MONEY, DEBIT_PLAYER_MONEY, MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_TOTAL_PLAYERS} from './actionTypes'
+import {CREDIT_PLAYER_MONEY, DEBIT_PLAYER_MONEY, MOVE_PLAYER, SET_ACTIVE_PLAYER, SET_IS_MOVING, SET_TOTAL_PLAYERS} from './actionTypes'
 
 
-export function movePlayer(data){
+export function movePlayer(playerId, currentSite, direction){
     return {
         type: MOVE_PLAYER,
-        payload: data
+        payload: {
+            playerId,
+            currentSite,
+            direction
+        }
     }
 }
 
@@ -37,6 +41,16 @@ export function creditPlayerMoney(playerId, amount){
         payload: {
             playerId,
             amount
+        }
+    }
+}
+
+export function setIsMoving(playerId, isMoving){
+    return {
+        type: SET_IS_MOVING,
+        payload: {
+            playerId: playerId,
+            isMoving: isMoving
         }
     }
 }
