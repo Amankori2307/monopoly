@@ -19,8 +19,8 @@ const DiceContainer = ({rollDice, isDone})=>{
         // let num1 =  genNumber() 
         // let num2 = genNumber()
         let diceData = {
-            dice1: 6,
-            dice2: 6,
+            dice1: 15,
+            dice2: 15,
         }
         setNumber(diceData)
         return diceData
