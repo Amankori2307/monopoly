@@ -6,11 +6,11 @@ import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
-import { getAllTurningPoints, delay } from '../../../utility/playerUtility';
+import { getAllTurningPoints, delay, calcRent } from '../../../utility/playerUtility';
 // import modalTypes from '../../../utility/modalTypes'
 
 
-function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving }) {
+function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
     const firstRender = useRef(true)
     const currentPlayer = useRef(null)
@@ -102,7 +102,14 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
             if ([cardTypes.SITE, cardTypes.REALM_RAILS, cardTypes.UTILITY].includes(currentSite.type)) {
                 let money = playersDataRef.current.players[id].money
                 if (siteDataRef.current.boughtSites.includes(currentSite.id)) { // check if site is already bought
-                    // If site is already bought check if it is mortaged if not pay rent
+                    // If site is already bought check if it is mortaged and who owns it if some other user owns it pay rent
+                    let boughtBy = siteDataRef.current.boughtBy[currentSiteId]
+                    if(!currentSite.isMortgaged && boughtBy !== id){
+                        let rent = calcRent(currentSite, siteDataRef.current.playersSites[boughtBy], diceSum, noOfCardsInCategory);
+                        debitPlayerMoney(id, rent);
+                        creditPlayerMoney(boughtBy, rent);
+                    }
+                    
                     setIsDone(true)
                 } else {
                     if (currentSite.sellingPrice <= money) {
@@ -132,7 +139,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         } else {
             firstRender.current = false
         }
-    }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer, creditPlayerMoney])
+    }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer, creditPlayerMoney, diceSum, noOfCardsInCategory])
 
     // To move player when there are multple turns
     const setPlayerPositionRecursive = useCallback(async (turningPoints) => {
@@ -197,6 +204,7 @@ const mapStateToProps = (store) => {
         setDiceSumCalledCount: store.dice.setDiceSumCalledCount,
         board: store.board,
         siteData: store.siteData,
+        noOfCardsInCategory: store.siteData.noOfCardsInCategory,
     }
 }
 

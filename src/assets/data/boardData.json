@@ -190,7 +190,8 @@
       "name":"Windmill Hut",
       "sellingPrice":150,
       "subType":"utility",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "mortgage":75
    },
    {
       "id":13,
@@ -467,7 +468,8 @@
       "name":"Waterfall Cave",
       "sellingPrice":150,
       "subType":"utility",
-      "isMortgaged":false
+      "isMortgaged":false,
+      "mortgage": 75
    },
    {
       "id":29,
