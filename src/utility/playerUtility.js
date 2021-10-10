@@ -74,8 +74,8 @@ export const calcRentForRealmRails = (sites) => {
 
 export const calcRentForUtility = (sites, diceSum) => {
     let utility = sites.filter(site => site.type === cardTypes.UTILITY)
-    if(utility.length == 1) return 4*diceSum;
-    else if(utility.length == 2) return 10*diceSum
+    if(utility.length === 1) return 4*diceSum;
+    else if(utility.length === 2) return 10*diceSum
 }
 
 export const calcRent = (cs, otherPlayerSites, diceSum, noOfCardsInCategory) => {
