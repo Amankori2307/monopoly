@@ -25,7 +25,14 @@ export const calcTurningPoints = (ps, cs) => {
     }
     return turningPoints
 }
-export const checkIfLType = (ps, cs) => {
+
+
+export const getAllTurningPoints = (ps, cs, direction) => {
+    if(direction === directions.BACKWARD){
+        let temp = ps;
+        ps = cs;
+        cs = temp;
+    }
     let turningPoints = []
     if(ps < cs){
         turningPoints.push(...calcTurningPoints(ps, cs))
@@ -34,6 +41,9 @@ export const checkIfLType = (ps, cs) => {
         if(cs !== 0) turningPoints.push(0)
         turningPoints.push(...calcTurningPoints(0, cs))
     }
+    console.log(turningPoints)
+    if(direction === directions.BACKWARD) turningPoints.reverse()
+    console.log(turningPoints)
     return turningPoints;
 }
 

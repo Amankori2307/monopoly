@@ -12,15 +12,15 @@ const DiceContainer = ({rollDice, isDone})=>{
         dice1: 6,
         dice2: 6
     })
-    // const genNumber = () => {
-    //     return Math.floor(Math.random()*6) + 1
-    // }
+    const genNumber = () => {
+        return Math.floor(Math.random()*6) + 1
+    }
     const rollDiceHelper = () =>{
-        // let num1 =  genNumber() 
-        // let num2 = genNumber()
+        let num1 =  genNumber() 
+        let num2 = genNumber()
         let diceData = {
-            dice1: 15,
-            dice2: 15,
+            dice1: num1,
+            dice2: num2,
         }
         setNumber(diceData)
         return diceData

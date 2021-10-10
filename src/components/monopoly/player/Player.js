@@ -6,7 +6,7 @@ import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
-import { checkIfLType as getAllTurningPoints, delay } from '../../../utility/playerUtility';
+import { getAllTurningPoints, delay } from '../../../utility/playerUtility';
 // import modalTypes from '../../../utility/modalTypes'
 
 
@@ -117,8 +117,9 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                     debitPlayerMoney(id, 100);
                     setIsDone(true);
                 } else if (currentSite.id === 30) {
-                    console.log("GO TO JAIL || showAppropriateModalOrDoAppropriateAction")
                     movePlayer(id, 10, directions.BACKWARD)                    
+                }else{
+                    setIsDone(true)
                 }
             } else {    
                 setIsDone(true)
@@ -153,7 +154,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         }
         // Called every on time on player move
         else if (playersDataRef.current.activePlayer === id) {
-            let turningPoints = getAllTurningPoints(currentPlayer.current.previousSite, currentPlayer.current.site);
+            let turningPoints = getAllTurningPoints(currentPlayer.current.previousSite, currentPlayer.current.site, currentPlayer.current.direction);
             setPlayerPositionRecursive(turningPoints)            
             console.log("useEffect1 onUpdate ID:" + id)
         }
@@ -163,7 +164,6 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
 
     useEffect(() => {
         if (isMounted.current && isMoving === false) {
-            console.log("showAppropriateModalOrDoAppropriateAction || useEffect ")
             showAppropriateModalOrDoAppropriateAction()
         }
     }, [isMoving, showAppropriateModalOrDoAppropriateAction])
