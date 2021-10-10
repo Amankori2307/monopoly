@@ -6,6 +6,7 @@ import audio1 from '../../../assets/audio/playermove.wav'
 import {setShowModal} from '../../../redux/actions/modal'
 import {cardTypes, modalTypes} from '../../../utility/constants'
 import {setIsDone} from '../../../redux/actions/board'
+import { checkIfLType, delay } from '../../../utility/playerUtility';
 // import modalTypes from '../../../utility/modalTypes'
 function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney}){
     const isMounted = useRef(false)
@@ -18,17 +19,6 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
     const currentPlayerSite = playersData.players[id].site
     const siteDataRef = useRef(siteData)
     const [movedCount, setMovedCount] = useState(0)
-
-
-
-    const checkIfLType = () => {
-        let { previousSite: ps, site: cs } = currentPlayer.current
-        if (ps < 10 && cs > 10) return 10;
-        else if (ps < 20 && cs > 20) return 20;
-        else if (ps < 30 && cs > 30) return 30;
-        else if (ps >= 29 && ps <= 39 && cs > 0 && cs <= 11) return 0;
-        else return null;
-    }
 
     const calculatePlayersOnCurrentSite = (site) => {
         let players = playersDataRef.current.players;
@@ -138,6 +128,20 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
     }, [setIsDone, id, setShowModal, debitPlayerMoney])
 
     // To render player according to the data in store
+
+    const setPlayerPositionRecursive = useCallback( async(turningPoints) => {
+        if(turningPoints.length === 0){
+            setPlayerPosition(currentPlayer.current.site, isMounted.current)
+            return;
+        }
+
+        setPlayerPosition(turningPoints[0], isMounted.current)  
+        await delay(400)
+        turningPoints.shift()
+        setPlayerPositionRecursive(turningPoints)
+
+    }, [setPlayerPosition])
+
     useEffect(() => {
         currentPlayer.current = playersData.players[id]
         // Called on mount || first render
@@ -148,19 +152,16 @@ function Player({playersData, diceSum, movePlayer, board, setDiceSumCalledCount,
         }
         // Called every on time on player move
         else if (playersDataRef.current.activePlayer === id) {
-            let isLtype = checkIfLType();
-            if (isLtype != null) {
-                setPlayerPosition(isLtype, isMounted.current)
-                setTimeout(() => {
-                    setPlayerPosition(currentPlayer.current.site, isMounted.current)
-                }, 400)
+            let turningPoints = checkIfLType(currentPlayer.current.previousSite, currentPlayer.current.site);
+            if (turningPoints.length) {
+                setPlayerPositionRecursive(turningPoints)
             } else {
                 setPlayerPosition(currentPlayer.current.site, isMounted.current)
             }
             console.log("useEffect1 onUpdate ID:" + id)
         }
 
-    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setIsDone,])
+    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setIsDone, setPlayerPositionRecursive])
 
 
     useEffect(() => {
