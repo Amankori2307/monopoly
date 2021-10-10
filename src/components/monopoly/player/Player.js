@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { debitPlayerMoney, movePlayer, setIsMoving } from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
-import { cardTypes, modalTypes } from '../../../utility/constants'
+import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
 import { checkIfLType as getAllTurningPoints, delay } from '../../../utility/playerUtility';
 // import modalTypes from '../../../utility/modalTypes'
@@ -89,8 +89,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
             console.log("useEffect2 ID:" + id)
             let sum = diceSum + currentPlayer.current.site;
             let currentSite = sum < 40 ? sum : (sum - 40);
-            let playerData = positions.current[currentSite]
-            movePlayer(playerData)
+            movePlayer(id, currentSite, directions.FORWARD)
         }
     }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
 
@@ -119,8 +118,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                     setIsDone(true);
                 } else if (currentSite.id === 30) {
                     console.log("GO TO JAIL || showAppropriateModalOrDoAppropriateAction")
-                    let playerData = positions.current[10]
-                    movePlayer(playerData)                    
+                    movePlayer(id, 10, directions.BACKWARD)                    
                 }
             } else {    
                 setIsDone(true)
@@ -198,7 +196,7 @@ const mapStateToProps = (store) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        movePlayer: (data) => dispatch(movePlayer(data)),
+        movePlayer: (playerId, currentSite, direction) => dispatch(movePlayer(playerId, currentSite, direction)),
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
         setIsDone: (isDone) => dispatch(setIsDone(isDone)),
         debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),

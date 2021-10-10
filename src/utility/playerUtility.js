@@ -1,3 +1,4 @@
+import { directions } from "./constants"
 
 export const createPlayerData = (totalPlayers) => {
     let players = {}
@@ -7,7 +8,8 @@ export const createPlayerData = (totalPlayers) => {
             previousSite: 0,
             playerId: player,
             money: 1000,
-            isMoving: false
+            isMoving: false,
+            direction: directions.FORWARD
         }
     }
 

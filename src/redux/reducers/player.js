@@ -12,12 +12,13 @@ function player(state = initialState, action){
     switch(type){
         case MOVE_PLAYER:
             let players = state.players
-            let currentPlayer = players[state.activePlayer]
-            players[state.activePlayer] = {
+            let currentPlayer = players[payload.playerId]
+            players[payload.playerId] = {
                 ...currentPlayer,
                 previousSite: currentPlayer.site,
-                site: payload.site,
-                isMoving: true
+                site: payload.currentSite,
+                isMoving: true,
+                direction: payload.direction
             }
             return {
                 ...state,
