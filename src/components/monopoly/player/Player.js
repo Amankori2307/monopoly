@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo, useCallback } from 'react';
 import style from '../../../assets/css/player.module.css'
 import { connect } from 'react-redux'
-import { debitPlayerMoney, movePlayer, setIsMoving } from '../../../redux/actions/player'
+import { creditPlayerMoney, debitPlayerMoney, movePlayer, setIsMoving } from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
@@ -10,7 +10,7 @@ import { getAllTurningPoints, delay } from '../../../utility/playerUtility';
 // import modalTypes from '../../../utility/modalTypes'
 
 
-function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, setIsMoving }) {
+function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving }) {
     const isMounted = useRef(false)
     const firstRender = useRef(true)
     const currentPlayer = useRef(null)
@@ -98,6 +98,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         if (!firstRender.current) {
             let currentSiteId = currentPlayer.current.site
             let currentSite = siteDataRef.current.sites[currentSiteId]
+            let {site: cs, previousSite: ps} = currentPlayer.current;
             if ([cardTypes.SITE, cardTypes.REALM_RAILS, cardTypes.UTILITY].includes(currentSite.type)) {
                 let money = playersDataRef.current.players[id].money
                 if (siteDataRef.current.boughtSites.includes(currentSite.id)) { // check if site is already bought
@@ -124,10 +125,12 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
             } else {    
                 setIsDone(true)
             }
+            // Check if user crossed start(siteId === 0), if YES then add $200 credit 
+            if(ps <= 39 && cs >= 0) creditPlayerMoney(id, 200)
         } else {
             firstRender.current = false
         }
-    }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer])
+    }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer, creditPlayerMoney])
 
     // To move player when there are multple turns
     const setPlayerPositionRecursive = useCallback(async (turningPoints) => {
@@ -145,21 +148,22 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
 
     // To move player
     useEffect(() => {
-        currentPlayer.current = playersData.players[id]
-        // Called on mount || first render
-        if (!isMounted.current || playersDataRef.current.activePlayer !== id) {
-            setPlayerPosition(currentPlayer.current.site, isMounted.current)
-            isMounted.current = true;
-            console.log("useEffect1 onMount ID:" + id)
+        if(isMoving || isMounted.current === false){
+            currentPlayer.current = playersDataRef.current.players[id]
+            // Called on mount || first render
+            if (!isMounted.current || playersDataRef.current.activePlayer !== id) {
+                setPlayerPosition(currentPlayer.current.site, isMounted.current)
+                isMounted.current = true;
+                console.log("useEffect1 onMount ID:" + id)
+            }
+            // Called every on time on player move
+            else if (playersDataRef.current.activePlayer === id) {
+                let turningPoints = getAllTurningPoints(currentPlayer.current.previousSite, currentPlayer.current.site, currentPlayer.current.direction);
+                setPlayerPositionRecursive(turningPoints)            
+                console.log("useEffect1 onUpdate ID:" + id)
+            }
         }
-        // Called every on time on player move
-        else if (playersDataRef.current.activePlayer === id) {
-            let turningPoints = getAllTurningPoints(currentPlayer.current.previousSite, currentPlayer.current.site, currentPlayer.current.direction);
-            setPlayerPositionRecursive(turningPoints)            
-            console.log("useEffect1 onUpdate ID:" + id)
-        }
-
-    }, [playersData.players, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setIsDone, setPlayerPositionRecursive, setIsMoving])
+    }, [isMoving, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setIsDone, setPlayerPositionRecursive, setIsMoving])
 
 
     useEffect(() => {
@@ -200,6 +204,7 @@ const mapDispatchToProps = (dispatch) => {
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
         setIsDone: (isDone) => dispatch(setIsDone(isDone)),
         debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
+        creditPlayerMoney: (playerId, amount) => dispatch(creditPlayerMoney(playerId, amount)),
         setIsMoving: (playerId, isMoving) => dispatch(setIsMoving(playerId, isMoving)),
     }
 }
