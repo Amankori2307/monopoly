@@ -8,8 +8,6 @@ var initialState = {
     noOfCardsInCategory: {}
 }
 
-
-
 function site(state=initialState, action){
     const {type, payload} = action;
     switch(type){
