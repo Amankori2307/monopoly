@@ -104,9 +104,10 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                 if (siteDataRef.current.boughtSites.includes(currentSite.id)) { // check if site is already bought
                     // If site is already bought check if it is mortaged and who owns it if some other user owns it pay rent
                     let boughtBy = siteDataRef.current.boughtBy[currentSiteId]
+                    console.log("Bought By: ",boughtBy)
                     if(!currentSite.isMortgaged && boughtBy !== id){
                         let rent = calcRent(currentSite, siteDataRef.current.playersSites[boughtBy], diceSum, noOfCardsInCategory);
-                        debitPlayerMoney(id, rent);
+                        debitPlayerMoney(playersDataRef.current.activePlayer, rent);
                         creditPlayerMoney(boughtBy, rent);
                     }
                     

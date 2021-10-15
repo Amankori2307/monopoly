@@ -37,7 +37,7 @@ const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculate
         <>
             {isMounted.current &&
                 <div className={style.monopoly} >
-                    <Header />
+                    {/* <Header /> */}
                     <Board />
                     {modalData.showModal && <>
                         {modalData.currentModal === modalTypes.SHOW_CARD && <ModalContainer component={CardModal} card={currentCard} />}
@@ -46,7 +46,7 @@ const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculate
                         {modalData.currentModal === modalTypes.MY_CARDS && <ModalContainer component={MyCards} title={"My Cards"} />}
                     </>
                     }
-                    <Footer />
+                    {/* <Footer /> */}
                 </div>
             }
         </>
