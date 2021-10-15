@@ -6,10 +6,8 @@ import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
-import { getAllTurningPoints, delay, calcRent } from '../../../utility/playerUtility';
-import { calculatePlayersOnCurrentSite } from '../../../utility/player/playerPositionUtility';
-// import modalTypes from '../../../utility/modalTypes'
-
+import { getAllTurningPoints, calcRent, delay } from '../../../utility/playerUtility';
+import { setPlayerPositionHelper } from '../../../utility/player/playerPositionUtility';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
@@ -23,52 +21,9 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const siteDataRef = useRef(siteData)
     const isMoving = playersData.players[id].isMoving
 
-    
-    const adjustHelper = useCallback((playersOnCurrentSite) => {
-        let { count, playerIds } = playersOnCurrentSite;
-        if (count > 0) {
-            playerIds = playerIds.sort(function (a, b) {
-                return a - b;
-            })
-            let idx = playerIds.indexOf(id)
-            let gap = 10;
-            return [(idx * gap) - (((count - 1) / 2) * gap), idx]
-        } else {
-            return [0, 1]
-        }
-
-    }, [id])
-
-    const updatePostionDataAccoringToPlayersOnThatSite = useCallback((positionData) => {
-        let site = positionData.site
-        let playersOnCurrentSite = calculatePlayersOnCurrentSite(site, playersDataRef.current.players, playersDataRef.current.totalPlayers)
-        let [adjust, zIndex] = adjustHelper(playersOnCurrentSite)
-        positionData.zIndex = zIndex
-        if ((site >= 0 && site <= 9) || (site >= 20 && site <= 29)) {
-            positionData.top -= adjust
-            positionData.bottom += adjust
-        }
-        else if ((site >= 10 && site <= 19) || (site >= 30 && site <= 39)) {
-            positionData.left -= adjust
-            positionData.right += adjust
-
-        }
-        return positionData
-    }, [adjustHelper])
-
     const setPlayerPosition = useCallback((site, playAudio) => {
-        if (playAudio) {
-            playerMoveAudio.load()
-            playerMoveAudio.play()
-        }
-        let positionData = JSON.parse(JSON.stringify(positions.current[site]));
-        positionData = updatePostionDataAccoringToPlayersOnThatSite(positionData)
-        playerRef.current.style.zIndex = positionData.zIndex;
-        playerRef.current.style.top = positionData.top != null ? positionData.top + "px" : "unset";
-        playerRef.current.style.right = positionData.right != null ? positionData.right + "px" : "unset";
-        playerRef.current.style.bottom = positionData.bottom != null ? positionData.bottom + "px" : "unset";
-        playerRef.current.style.left = positionData.left != null ? positionData.left + "px" : "unset";
-    }, [playerMoveAudio, updatePostionDataAccoringToPlayersOnThatSite])
+        setPlayerPositionHelper({...positions.current[site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, playAudio)
+    }, [playerMoveAudio, id])
 
     // To update player position in state(redux store) 
     useEffect(() => {
@@ -143,7 +98,9 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         await delay(400)
         turningPoints.shift()
         setPlayerPositionRecursive(turningPoints)
-    }, [setPlayerPosition, setIsMoving, id])
+
+        // setPlayerPositionRecursiveHelper(turningPoints, {...positions.current[currentPlayer.current.site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
+    }, [setIsMoving, id, playerMoveAudio])
 
     // To move player
     useEffect(() => {
