@@ -6,7 +6,7 @@ import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
-import { getAllTurningPoints, delay, calcRent } from '../../../utility/playerUtility';
+import { getAllTurningPoints, delay, calcRent, findChestAndExec } from '../../../utility/playerUtility';
 // import modalTypes from '../../../utility/modalTypes'
 
 
@@ -132,7 +132,8 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                 debitPlayerMoney(id, currentSite.debit)
                 setIsDone(true)
             } else if (currentSite.type === cardTypes.CHEST) {
-                
+                findChestAndExec(diceSum)
+                // setIsDone(true)
             } else {    
                 setIsDone(true)
             }

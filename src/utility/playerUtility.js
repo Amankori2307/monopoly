@@ -1,4 +1,5 @@
 import { cardTypes, directions } from "./constants"
+import chestData from '../assets/data/chestData.json'
 
 export const createPlayerData = (totalPlayers) => {
     let players = {}
@@ -82,4 +83,8 @@ export const calcRent = (cs, otherPlayerSites, diceSum, noOfCardsInCategory) => 
     if(cs.type === cardTypes.SITE) return calcRentForSite(cs, otherPlayerSites, noOfCardsInCategory);
     else if(cs.type === cardTypes.REALM_RAILS) return calcRentForRealmRails(otherPlayerSites);
     else if(cs.type === cardTypes.UTILITY) return calcRentForUtility(otherPlayerSites, diceSum);
+}
+
+export const findChestAndExec = (diceSum) => {
+    console.log(chestData[diceSum])
 }
