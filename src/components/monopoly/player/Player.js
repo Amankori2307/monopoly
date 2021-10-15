@@ -131,6 +131,8 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
             } else if (currentSite.type === cardTypes.TAX) {
                 debitPlayerMoney(id, currentSite.debit)
                 setIsDone(true)
+            } else if (currentSite.type === cardTypes.CHEST) {
+                
             } else {    
                 setIsDone(true)
             }
