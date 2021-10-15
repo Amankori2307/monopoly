@@ -7,7 +7,7 @@ import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
 import { getAllTurningPoints, calcRent, delay } from '../../../utility/playerUtility';
-import { setPlayerPositionHelper } from '../../../utility/player/playerPositionUtility';
+import { setPlayerPositionHelper, setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
@@ -79,19 +79,8 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
 
     // To move player when there are multple turns
     const setPlayerPositionRecursive = useCallback(async (turningPoints) => {
-        if (turningPoints.length === 0) {
-            setPlayerPosition(currentPlayer.current.site, isMounted.current)
-            await delay(400)
-            setIsMoving(id, false)
-            return;
-        }
-        setPlayerPosition(turningPoints[0], isMounted.current)
-        await delay(400)
-        turningPoints.shift()
-        setPlayerPositionRecursive(turningPoints)
-
-        // setPlayerPositionRecursiveHelper(turningPoints, {...positions.current[currentPlayer.current.site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
-    }, [setIsMoving, id, setPlayerPosition])
+        setPlayerPositionRecursiveHelper(turningPoints, currentPlayer.current.site, positions.current,  playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
+    }, [setIsMoving, id, playerMoveAudio])
 
     // To update player position in state(redux store) 
     useEffect(() => {

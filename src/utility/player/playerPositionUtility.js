@@ -1,5 +1,7 @@
 // import { delay } from "../playerUtility";
 
+import { delay } from "../playerUtility";
+
 export const calculatePlayersOnCurrentSite = (site, players, totalPlayers) => {
     let playersOnCurrentSite = {
         playerIds: [],
@@ -64,17 +66,20 @@ export const setPlayerPositionHelper = (positionData, players, totalPlayers, cur
     playerRef.style.left = positionData.left != null ? positionData.left + "px" : "unset";
 }
 
-// const setPlayerPositionRecursive = async (turningPoints) => {
-//     if (turningPoints.length === 0) {
-//         setPlayerPosition(currentPlayer.current.site, isMounted.current)
-//         await delay(400)
-//         setIsMoving(id, false)
-//         return;
-//     }
-//     setPlayerPosition(turningPoints[0], isMounted.current)
-//     await delay(400)
-//     turningPoints.shift()
-//     setPlayerPositionRecursive(turningPoints)
+export const setPlayerPosition = (site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio) => {
+    let positionData = {...positions[site]}
+    setPlayerPositionHelper(positionData, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio)
+}
 
-//     // setPlayerPositionRecursiveHelper(turningPoints, {...positions.current[currentPlayer.current.site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
-// }
+export const setPlayerPositionRecursiveHelper = async (turningPoints, site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio, setIsMoving) => {
+    if (turningPoints.length === 0) {
+        setPlayerPosition(site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio)
+        await delay(400)
+        setIsMoving(currentPlayerId, false)
+        return;
+    }
+    setPlayerPosition(turningPoints[0], positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio)
+    await delay(400)
+    turningPoints.shift()
+    setPlayerPositionRecursiveHelper(turningPoints, site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio, setIsMoving)
+}
