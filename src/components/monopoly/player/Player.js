@@ -6,7 +6,7 @@ import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
-import { getAllTurningPoints, calcRent, delay } from '../../../utility/playerUtility';
+import { getAllTurningPoints, calcRent } from '../../../utility/playerUtility';
 import { setPlayerPositionHelper, setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
@@ -72,7 +72,6 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         }
     }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer, creditPlayerMoney, diceSum, noOfCardsInCategory])
 
-
     const setPlayerPosition = useCallback((site, playAudio) => {
         setPlayerPositionHelper({...positions.current[site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, playAudio)
     }, [playerMoveAudio, id])
@@ -82,16 +81,14 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         setPlayerPositionRecursiveHelper(turningPoints, currentPlayer.current.site, positions.current,  playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
     }, [setIsMoving, id, playerMoveAudio])
 
-    // To update player position in state(redux store) 
+    // Update active players position of dice roll
     useEffect(() => {
         if (isMounted.current && (playersDataRef.current.activePlayer === id)) {
-
             console.log("useEffect2 ID:" + id)
-            let sum = diceSum + currentPlayer.current.site;
-            let currentSite = sum < 40 ? sum : (sum - 40);
+            let currentSite = (currentPlayer.current.site + diceSum) % 40
             movePlayer(id, currentSite, directions.FORWARD)
         }
-    }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
+    }, [diceSum, id, movePlayer, setDiceSumCalledCount]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
     
     // To move player
     useEffect(() => {
@@ -124,8 +121,6 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         siteDataRef.current = siteData
         playersDataRef.current = playersData
     }, [playersData, siteData])
-
-
 
     return (
         <div className={`${style.player} player-${color}`} ref={playerRef}>
