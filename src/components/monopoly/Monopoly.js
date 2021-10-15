@@ -16,7 +16,7 @@ import sites from '../../assets/data/boardData.json'
 import MyCards from './modal/MyCards';
 
 const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculateSitePositions, setTotalPlayers, setSites }) => {
-    const totalPlayers = 2;
+    const totalPlayers = 4;
     const isMounted = useRef(false)
     useEffect(() => {
         let w = window.innerWidth;

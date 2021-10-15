@@ -7,6 +7,7 @@ import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
 import { getAllTurningPoints, delay, calcRent } from '../../../utility/playerUtility';
+import { calculatePlayersOnCurrentSite } from '../../../utility/player/playerPositionUtility';
 // import modalTypes from '../../../utility/modalTypes'
 
 
@@ -22,20 +23,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const siteDataRef = useRef(siteData)
     const isMoving = playersData.players[id].isMoving
 
-    const calculatePlayersOnCurrentSite = (site) => {
-        let players = playersDataRef.current.players;
-        let playersOnCurrentSite = {
-            playerIds: [],
-            count: 0
-        };
-        for (let playerId = 0; playerId < playersDataRef.current.totalPlayers; playerId++) {
-            if (players[playerId].site === site) {
-                playersOnCurrentSite.count++;
-                playersOnCurrentSite.playerIds.push(playerId)
-            }
-        }
-        return playersOnCurrentSite;
-    }
+    
     const adjustHelper = useCallback((playersOnCurrentSite) => {
         let { count, playerIds } = playersOnCurrentSite;
         if (count > 0) {
@@ -53,7 +41,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
 
     const updatePostionDataAccoringToPlayersOnThatSite = useCallback((positionData) => {
         let site = positionData.site
-        let playersOnCurrentSite = calculatePlayersOnCurrentSite(site)
+        let playersOnCurrentSite = calculatePlayersOnCurrentSite(site, playersDataRef.current.players, playersDataRef.current.totalPlayers)
         let [adjust, zIndex] = adjustHelper(playersOnCurrentSite)
         positionData.zIndex = zIndex
         if ((site >= 0 && site <= 9) || (site >= 20 && site <= 29)) {
