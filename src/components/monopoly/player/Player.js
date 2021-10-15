@@ -88,7 +88,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
             let currentSite = (currentPlayer.current.site + diceSum) % 40
             movePlayer(id, currentSite, directions.FORWARD)
         }
-    }, [diceSum, id, movePlayer, setDiceSumCalledCount]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
+    }, [diceSum, id, movePlayer, setDiceSumCalledCount]) // Adding 'setDiceSumCalledCount' because if previous 'diceSUm' is equal to current 'diceSum' it does not get called
     
     // To move player
     useEffect(() => {
