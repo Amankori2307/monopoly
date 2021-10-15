@@ -95,7 +95,8 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
 
     // To Show Approprate modal or do appropriate action
     const showAppropriateModalOrDoAppropriateAction = useCallback(() => {
-        if (!firstRender.current) {
+        if (!firstRender.current && id === playersDataRef.current.activePlayer) {
+            console.log("SHOW APPRO: ", id)
             let currentSiteId = currentPlayer.current.site
             let currentSite = siteDataRef.current.sites[currentSiteId]
             let {site: cs, previousSite: ps} = currentPlayer.current;
@@ -137,7 +138,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
             }
             // Check if user crossed start(siteId === 0), if YES then add $200 credit 
             if(ps <= 39 && cs >= 0 && ps > cs && currentPlayer.current.direction === directions.FORWARD ) creditPlayerMoney(id, 200)
-        } else {
+        } else if(firstRender.current === true){
             firstRender.current = false
         }
     }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer, creditPlayerMoney, diceSum, noOfCardsInCategory])
