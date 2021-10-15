@@ -81,10 +81,10 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         setPlayerPositionRecursiveHelper(turningPoints, currentPlayer.current.site, positions.current,  playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
     }, [setIsMoving, id, playerMoveAudio])
 
-    // Update active players position of dice roll
+    // Update active players position in redux on dice roll
     useEffect(() => {
         if (isMounted.current && (playersDataRef.current.activePlayer === id)) {
-            console.log("useEffect2 ID:" + id)
+            console.log("useEffect1 ID(Update activePlayer postion in redux):" + id)
             let currentSite = (currentPlayer.current.site + diceSum) % 40
             movePlayer(id, currentSite, directions.FORWARD)
         }
