@@ -135,7 +135,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                 setIsDone(true)
             }
             // Check if user crossed start(siteId === 0), if YES then add $200 credit 
-            if(ps <= 39 && cs >= 0 && ps > cs) creditPlayerMoney(id, 200)
+            if(ps <= 39 && cs >= 0 && ps > cs && currentPlayer.current.direction === directions.FORWARD ) creditPlayerMoney(id, 200)
         } else {
             firstRender.current = false
         }
