@@ -21,20 +21,6 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const siteDataRef = useRef(siteData)
     const isMoving = playersData.players[id].isMoving
 
-    const setPlayerPosition = useCallback((site, playAudio) => {
-        setPlayerPositionHelper({...positions.current[site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, playAudio)
-    }, [playerMoveAudio, id])
-
-    // To update player position in state(redux store) 
-    useEffect(() => {
-        if (isMounted.current && (playersDataRef.current.activePlayer === id)) {
-
-            console.log("useEffect2 ID:" + id)
-            let sum = diceSum + currentPlayer.current.site;
-            let currentSite = sum < 40 ? sum : (sum - 40);
-            movePlayer(id, currentSite, directions.FORWARD)
-        }
-    }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
 
     // To Show Approprate modal or do appropriate action
     const showAppropriateModalOrDoAppropriateAction = useCallback(() => {
@@ -86,6 +72,11 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         }
     }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer, creditPlayerMoney, diceSum, noOfCardsInCategory])
 
+
+    const setPlayerPosition = useCallback((site, playAudio) => {
+        setPlayerPositionHelper({...positions.current[site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, playAudio)
+    }, [playerMoveAudio, id])
+
     // To move player when there are multple turns
     const setPlayerPositionRecursive = useCallback(async (turningPoints) => {
         if (turningPoints.length === 0) {
@@ -100,8 +91,19 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         setPlayerPositionRecursive(turningPoints)
 
         // setPlayerPositionRecursiveHelper(turningPoints, {...positions.current[currentPlayer.current.site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
-    }, [setIsMoving, id, playerMoveAudio])
+    }, [setIsMoving, id, setPlayerPosition])
 
+    // To update player position in state(redux store) 
+    useEffect(() => {
+        if (isMounted.current && (playersDataRef.current.activePlayer === id)) {
+
+            console.log("useEffect2 ID:" + id)
+            let sum = diceSum + currentPlayer.current.site;
+            let currentSite = sum < 40 ? sum : (sum - 40);
+            movePlayer(id, currentSite, directions.FORWARD)
+        }
+    }, [diceSum, id, movePlayer, setDiceSumCalledCount, setShowModal]) // Adding setDiceSum because if precious set dice sum is equal to current dice sum it does not re render
+    
     // To move player
     useEffect(() => {
         if(isMoving || isMounted.current === false){
@@ -121,13 +123,12 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         }
     }, [isMoving, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setIsDone, setPlayerPositionRecursive, setIsMoving])
 
-
+    // Show Appropriate modal or do appropriate action
     useEffect(() => {
         if (isMounted.current && isMoving === false) {
             showAppropriateModalOrDoAppropriateAction()
         }
     }, [isMoving, showAppropriateModalOrDoAppropriateAction])
-
 
     // To update playersDataRef and siteDateRef
     useEffect(() => {
