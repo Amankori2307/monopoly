@@ -10,10 +10,12 @@ Command to setup SSL:
 
 
 Notes:
-    - Only site, station and railway relm can be bought
-    - check if site is already bought
-    - check if user has enough money to buy site else show auction modal
-    -
+    - Trade
+    - Chance
+    - Chest
+    - We should now deduct rent on own sites
+    - Fix whatever is going wrong(sometimes player doesn't move, sometimes amount gets add up, sometimes amount get deduct)
+    - implement bankruptcy/repay dept modal
 
 Unit Test:
     - https://medium.com/javascript-scene/unit-testing-react-components-aeda9a44aae2
