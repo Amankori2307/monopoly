@@ -18,6 +18,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const positionsRef = useRef(board.positions)
     const playersDataRef = useRef(playersData)
     const currentPlayerRef = useRef(null)
+    const diceSumRef = useRef(diceSum)
     const isMoving = playersData.players[currentPlayerId].isMoving
 
 
@@ -26,8 +27,8 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         let currentSiteId = currentPlayerRef.current.site
         let currentSite = siteDataRef.current.sites[currentSiteId]
         let activePlayer = playersDataRef.current.activePlayer
-        appropriateActionHelper(currentSite, currentPlayerRef.current, activePlayer, siteDataRef.current, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer)
-    }, [creditPlayerMoney, debitPlayerMoney, diceSum, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
+        appropriateActionHelper(currentSite, currentPlayerRef.current, activePlayer, siteDataRef.current, diceSumRef.current, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer)
+    }, [creditPlayerMoney, debitPlayerMoney, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
 
     // To move player when there are multple turns
     const setPlayerPositionRecursive = useCallback(async (turningPoints) => {
@@ -61,13 +62,14 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         } else if (isMountedRef.current === false) {
             isMountedRef.current = true;
         }
-    }, [isMoving, appropriateAction, currentPlayerId])
+    }, [ isMoving, appropriateAction, currentPlayerId])
 
     // To update playersDataRef and siteDateRef
     useEffect(() => {
         siteDataRef.current = siteData
         playersDataRef.current = playersData
-    }, [playersData, siteData])
+        diceSumRef.current = diceSum
+    }, [playersData, siteData, diceSum])
 
     return (
         <div className={`${style.player} player-${color}`} ref={playerRef}>
