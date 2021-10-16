@@ -9,7 +9,7 @@ import * as board from '../../../redux/actions/board'
 import { getAllTurningPoints, calcRent } from '../../../utility/playerUtility';
 import { setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
 
-function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
+function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, currentPlayerId, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
     const currentPlayer = useRef(null)
     const positions = useRef(board.positions)
@@ -17,7 +17,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const playerRef = useRef(null)
     const playersDataRef = useRef(playersData)
     const siteDataRef = useRef(siteData)
-    const isMoving = playersData.players[id].isMoving
+    const isMoving = playersData.players[currentPlayerId].isMoving
 
 
     // To show appropriate modal or do appropriate action
@@ -26,12 +26,12 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         let currentSite = siteDataRef.current.sites[currentSiteId]
         let { site: cs, previousSite: ps } = currentPlayer.current;
         if ([cardTypes.SITE, cardTypes.REALM_RAILS, cardTypes.UTILITY].includes(currentSite.type)) {
-            let money = playersDataRef.current.players[id].money
+            let money = playersDataRef.current.players[currentPlayerId].money
             if (siteDataRef.current.boughtSites.includes(currentSite.id)) { // check if site is already bought
                 // If site is already bought check if it is mortaged and who owns it if some other user owns it pay rent
                 let boughtBy = siteDataRef.current.boughtBy[currentSiteId]
                 console.log(`"${currentSite.name}" belongs to Player${boughtBy}`)
-                if (!currentSite.isMortgaged && boughtBy !== id) {
+                if (!currentSite.isMortgaged && boughtBy !== currentPlayerId) {
                     let rent = calcRent(currentSite, siteDataRef.current.playersSites[boughtBy], diceSum, noOfCardsInCategory);
                     debitPlayerMoney(playersDataRef.current.activePlayer, rent);
                     creditPlayerMoney(boughtBy, rent);
@@ -48,57 +48,57 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         } else if (currentSite.type === cardTypes.SPECIAL) {
             // If current site is jail
             if (currentSite.id === 10) {
-                debitPlayerMoney(id, 100);
+                debitPlayerMoney(currentPlayerId, 100);
                 setIsDone(true);
             } else if (currentSite.id === 30) {
-                movePlayer(id, 10, directions.BACKWARD)
+                movePlayer(currentPlayerId, 10, directions.BACKWARD)
             } else {
                 setIsDone(true)
             }
         } else if (currentSite.type === cardTypes.TAX) {
-            debitPlayerMoney(id, currentSite.debit)
+            debitPlayerMoney(currentPlayerId, currentSite.debit)
             setIsDone(true)
         } else {
             setIsDone(true)
         }
         // Check if user crossed start(siteId === 0), if YES then add $200 credit 
-        if (ps <= 39 && cs >= 0 && ps > cs && currentPlayer.current.direction === directions.FORWARD) creditPlayerMoney(id, 200)
+        if (ps <= 39 && cs >= 0 && ps > cs && currentPlayer.current.direction === directions.FORWARD) creditPlayerMoney(currentPlayerId, 200)
 
-    }, [creditPlayerMoney, debitPlayerMoney, diceSum, id, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
+    }, [creditPlayerMoney, debitPlayerMoney, diceSum, currentPlayerId, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
 
     // To move player when there are multple turns
     const setPlayerPositionRecursive = useCallback(async (turningPoints) => {
-        setPlayerPositionRecursiveHelper(turningPoints, currentPlayer.current.site, positions.current, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
-    }, [setIsMoving, id, playerMoveAudio])
+        setPlayerPositionRecursiveHelper(turningPoints, currentPlayer.current.site, positions.current, playersDataRef.current.players, playersDataRef.current.totalPlayers, currentPlayerId, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
+    }, [setIsMoving, currentPlayerId, playerMoveAudio])
 
     // Update active players position in redux on dice roll
     useEffect(() => {
-        if (isMounted.current && (playersDataRef.current.activePlayer === id)) {
-            console.log("useEffect1 ID(Update activePlayer postion in redux) Player" + id)
+        if (isMounted.current && (playersDataRef.current.activePlayer === currentPlayerId)) {
+            console.log("useEffect1 ID(Update activePlayer postion in redux) Player" + currentPlayerId)
             let currentSite = (currentPlayer.current.site + diceSum) % 40
-            movePlayer(id, currentSite, directions.FORWARD)
+            movePlayer(currentPlayerId, currentSite, directions.FORWARD)
         }
-    }, [diceSum, id, movePlayer, setDiceSumCalledCount]) // Adding 'setDiceSumCalledCount' because if previous 'diceSUm' is equal to current 'diceSum' it does not get called
+    }, [diceSum, currentPlayerId, movePlayer, setDiceSumCalledCount]) // Adding 'setDiceSumCalledCount' because if previous 'diceSUm' is equal to current 'diceSum' it does not get called
 
     // To move player(actually move player on board in UI[Brower Window])
     useEffect(() => {
         if (isMoving || isMounted.current === false) {
-            currentPlayer.current = playersDataRef.current.players[id]
+            currentPlayer.current = playersDataRef.current.players[currentPlayerId]
             let turningPoints = getAllTurningPoints(currentPlayer.current.previousSite, currentPlayer.current.site, currentPlayer.current.direction);
             setPlayerPositionRecursive(turningPoints)
-            console.log(`useEffect2(Move Player In UI) Player${id}`)
+            console.log(`useEffect2(Move Player In UI) Player${currentPlayerId}`)
         }
-    }, [setPlayerPositionRecursive, id, isMoving])
+    }, [setPlayerPositionRecursive, currentPlayerId, isMoving])
 
     // Show Appropriate modal or do appropriate action
     useEffect(() => {
-        if (isMounted.current && isMoving === false && (playersDataRef.current.activePlayer === id)) {
-            console.log(`useEffect3(Appropriate action) Player${id}`)
+        if (isMounted.current && isMoving === false && (playersDataRef.current.activePlayer === currentPlayerId)) {
+            console.log(`useEffect3(Appropriate action) Player${currentPlayerId}`)
             appropriateAction()
         } else if (isMounted.current === false) {
             isMounted.current = true;
         }
-    }, [isMoving, appropriateAction, id])
+    }, [isMoving, appropriateAction, currentPlayerId])
 
     // To update playersDataRef and siteDateRef
     useEffect(() => {
@@ -108,7 +108,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
 
     return (
         <div className={`${style.player} player-${color}`} ref={playerRef}>
-            {id}
+            {currentPlayerId}
         </div>
     );
 
