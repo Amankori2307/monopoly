@@ -8,7 +8,7 @@ import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import * as board from '../../../redux/actions/board'
 import { getAllTurningPoints, calcRent } from '../../../utility/playerUtility';
 import { setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
-import { checkIfUserCrossedStart } from '../../../utility/player/playerAppropriateActionUtils';
+import { checkIfUserCrossedStart, ifCurrentSiteIsOfSubTypeTAX } from '../../../utility/player/playerAppropriateActionUtils';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, currentPlayerId, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
@@ -57,8 +57,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                 setIsDone(true)
             }
         } else if (currentSite.type === cardTypes.TAX) {
-            debitPlayerMoney(currentPlayerId, currentSite.debit)
-            setIsDone(true)
+            ifCurrentSiteIsOfSubTypeTAX(currentSite, currentPlayerId, debitPlayerMoney, setIsDone)
         } else {
             setIsDone(true)
         }
