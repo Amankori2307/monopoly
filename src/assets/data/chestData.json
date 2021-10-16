@@ -1,0 +1,91 @@
+{
+    "2":  {
+        "type": "DEDUCT",
+        "amount": 200,
+        "description": "Loss in share market of $200",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "3":  {
+        "type": "MOVE",
+        "amount": null,
+        "description": "Go to Jail",
+        "to": 10,
+        "direction": false,
+        "logicalId": null
+    },
+    "4":  {
+        "type": "DEDUCT",
+        "amount": 100,
+        "description": "Fine of $100 for the accident due to driving under liquor influence of",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "5":  {
+        "type": "DEDUCT",
+        "amount": 100,
+        "description": "School and medical fees, $100",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "6":  {
+        "type": "DEDUCT",
+        "amount": 150,
+        "description": "House repairs of $150",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "7":  {
+        "type": "DEDUCT",
+        "amount": 200,
+        "description": "Marriage celebration $200",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "8":  {
+        "type": "DEDUCT",
+        "amount": 300,
+        "description": "Loss of $300 due to fire in godown",
+        "to": 0,
+        "direction": "",
+        "logicalId": null
+    },
+    "9":  {
+        "type": "LOGICAL",
+        "amount": null,
+        "description": "Make general repairs on all your properties, For each house pay $20, For each hotel pay $20",
+        "to": null,
+        "direction": null,
+        "logicalId": 1
+    },
+    "10":  {
+        "type": "MOVE",
+        "amount": null,
+        "description": "Go to jail",
+        "to": 10,
+        "direction": false,
+        "logicalId": null
+    },
+    "11":  {
+        "type": "DEDUCT",
+        "amount": 150,
+        "description": "Pay insurance premium of $150",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "12":  {
+        "type": "MOVE",
+        "amount": null,
+        "description": "Go to resort",
+        "to": 20,
+        "direction": true,
+        "logicalId": null
+    }
+}
+    

@@ -33,6 +33,17 @@ Leading Screen Resolutions:
     - 1440×2560
     - 2160×3840
 
+
+Chest/Chance data structure
+Info: Mainly three actions are happening deduct money, credit money or move player
+DATA fields:
+    - type: DEDUCT, CREDIT, MOVE
+    - amount: amount
+    - description: description why of the action
+    - to: site id
+    - direction: FORWARD/BACKWARD
+
+Started chest on 11:33
 Findings:
     - Problem is that Appropriate Action Use Effect Is Bieng Called Twice
     

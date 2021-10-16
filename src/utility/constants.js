@@ -38,3 +38,12 @@ export const directions = {
 }
 
 export const MAX_PLAYERS = 8
+
+
+
+export const chestOrChanceActionTypes = {
+    DEDUCT: "DEDUCT",
+    CREDIT: "CREDIT",
+    MOVE: "MOVE",
+    LOGICAL: "LOGICAL",
+}
