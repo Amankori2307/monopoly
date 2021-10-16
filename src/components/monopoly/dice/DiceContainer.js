@@ -35,7 +35,6 @@ const DiceContainer = ({rollDice, isDone})=>{
                 clearInterval(interval)
                 let diceData = rollDiceHelper()
                 rollDice(diceData)
-                // setDiceSum()
                 setDisabled(false) // Enable Dice When Dice has finished Rolling
             }, 450)
             audioElement.play()

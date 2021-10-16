@@ -44,3 +44,6 @@ DATA fields:
     - direction: FORWARD/BACKWARD
 
 Started chest on 11:33
+Findings:
+    - Problem is that Appropriate Action Use Effect Is Bieng Called Twice
+    

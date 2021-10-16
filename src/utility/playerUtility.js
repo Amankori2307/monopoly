@@ -55,15 +55,17 @@ export const calcRentForSite = (cs, sites, noOfCardsInCategory) => {
     if(cs.built > 0) return cs.rentWithHouse[cs.built-1];
     // check if all
     let totalSites = sites.filter(site => site.subType === cs.subType)
-    let isDouble = true;
+    let isDouble = false;
     if(totalSites.length === noOfCardsInCategory[cs.subType]){
         // If none of the site is morgaged then take double rent else take single rent
-        for(let i=0; i<totalSites.length; i++){
+        let i = 0;
+        for(; i<totalSites.length; i++){
             if(totalSites[i].isMortgaged){
                 isDouble = false;
                 break;
             } 
         }
+        if(i === noOfCardsInCategory[cs.subType]) isDouble = true;
     }
     return isDouble?2*cs.rent:cs.rent; 
 }
