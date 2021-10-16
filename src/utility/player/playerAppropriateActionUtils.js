@@ -1,5 +1,7 @@
-import { directions, modalTypes, cardTypes } from "../constants"
+import { directions, modalTypes, cardTypes, chestOrChanceActionTypes } from "../constants"
 import { calcRent } from "../playerUtility"
+import chestData from '../../assets/data/chestData.json'
+import chestOrChanceLogicalFunctions from "./chestOrChanceLogicalFunctions"
 
 export const checkIfUserCrossedStart = (cs, ps, direction, currentPlayerId, creditPlayerMoney) => {
     // Check if user crossed start(siteId === 0), if YES then add $200 credit 
@@ -9,12 +11,12 @@ export const checkIfUserCrossedStart = (cs, ps, direction, currentPlayerId, cred
     }
 }
 
-export const ifCurrentSiteIsOfSubTypeIsTax = (currentSite, currentPlayerId, debitPlayerMoney, setIsDone) => {
+export const ifCurrentSiteIsOfTypeIsTax = (currentSite, currentPlayerId, debitPlayerMoney, setIsDone) => {
     debitPlayerMoney(currentPlayerId, currentSite.debit)
     setIsDone(true)
 }
 
-export const ifCurrentSiteIsOfSubTypeIsSpecial = (currentSiteId, currentPlayerId, debitPlayerMoney, setIsDone, movePlayer) => {
+export const ifCurrentSiteIsOfTypeIsSpecial = (currentSiteId, currentPlayerId, debitPlayerMoney, setIsDone, movePlayer) => {
     if (currentSiteId === 10) { // If current site is jail
         debitPlayerMoney(currentPlayerId, 100);
         setIsDone(true);
@@ -25,7 +27,7 @@ export const ifCurrentSiteIsOfSubTypeIsSpecial = (currentSiteId, currentPlayerId
     }
 }
 
-export const ifCurrentSiteIsOfSubTypeIsSiteOrUtilityOrRealmRails = (currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal) => {
+export const ifCurrentSiteIsOfTypeIsSiteOrUtilityOrRealmRails = (currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal) => {
     let money = currentPlayer.money
     if (siteData.boughtSites.includes(currentSite.id)) {         let boughtBy = siteData.boughtBy[currentSite.id]
         if (!currentSite.isMortgaged && boughtBy !== currentPlayer.playerId) {
@@ -43,13 +45,39 @@ export const ifCurrentSiteIsOfSubTypeIsSiteOrUtilityOrRealmRails = (currentSite,
     }
 }
 
+
+export const performAction = (action, currentPlayer, siteData, debitPlayerMoney, movePlayer, setIsDone) => {
+    if(action.type === chestOrChanceActionTypes.DEDUCT){
+        debitPlayerMoney(currentPlayer.playerId, action.amount)
+        setIsDone(true)
+    } else if(action.type === chestOrChanceActionTypes.MOVE) {
+        movePlayer(currentPlayer.playerId, action.to, action.direction)
+    } else if(action.type === chestOrChanceActionTypes.LOGICAL) {
+        let logicalFunc = chestOrChanceLogicalFunctions[action.logicalId]
+        logicalFunc(currentPlayer, siteData.playersSites[currentPlayer.playerId], debitPlayerMoney, setIsDone)
+        
+    }
+}
+
+export const ifCurrentSiteIsOfTypeIsChestOrChance = (currentPlayer, currentSite, diceSum, siteData, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone) => {
+    let action = {}
+    diceSum = 12
+    if(currentSite.type === cardTypes.CHEST) action = chestData[diceSum]
+
+    performAction(action, currentPlayer, siteData, debitPlayerMoney, movePlayer, setIsDone)    
+    console.log(action)
+
+}
+
 export const appropriateActionHelper = (currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer) => {
-    if ([cardTypes.SITE, cardTypes.REALM_RAILS, cardTypes.UTILITY].includes(currentSite.type)) {
-        ifCurrentSiteIsOfSubTypeIsSiteOrUtilityOrRealmRails(currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal)
+    if (currentSite.type === cardTypes.SITE || currentSite.type === cardTypes.REALM_RAILS || currentSite.type === cardTypes.UTILITY) {
+        ifCurrentSiteIsOfTypeIsSiteOrUtilityOrRealmRails(currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal)
     } else if (currentSite.type === cardTypes.SPECIAL) {
-        ifCurrentSiteIsOfSubTypeIsSpecial(currentSite.id, currentPlayer.playerId, debitPlayerMoney, setIsDone, movePlayer)
+        ifCurrentSiteIsOfTypeIsSpecial(currentSite.id, currentPlayer.playerId, debitPlayerMoney, setIsDone, movePlayer)
     } else if (currentSite.type === cardTypes.TAX) {
-        ifCurrentSiteIsOfSubTypeIsTax(currentSite, currentPlayer.playerId, debitPlayerMoney, setIsDone)
+        ifCurrentSiteIsOfTypeIsTax(currentSite, currentPlayer.playerId, debitPlayerMoney, setIsDone)
+    } else if (currentSite.type === cardTypes.CHEST || currentSite.type === cardTypes.CHANCE) {
+        ifCurrentSiteIsOfTypeIsChestOrChance(currentPlayer, currentSite, diceSum, siteData, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone)
     }
     checkIfUserCrossedStart(currentPlayer.site, currentPlayer.previousSite, currentPlayer.direction, currentPlayer.playerId, creditPlayerMoney)
 }

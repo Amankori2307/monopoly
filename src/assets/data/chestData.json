@@ -40,7 +40,7 @@
         "logicalId": null
     },
     "7":  {
-        "type": "DUDUCT",
+        "type": "DEDUCT",
         "amount": 200,
         "description": "Marriage celebration $200",
         "to": null,
