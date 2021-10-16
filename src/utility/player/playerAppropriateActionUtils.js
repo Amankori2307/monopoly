@@ -9,3 +9,13 @@ export const ifCurrentSiteIsOfSubTypeIsTAX = (currentSite, currentPlayerId, debi
     debitPlayerMoney(currentPlayerId, currentSite.debit)
     setIsDone(true)
 }
+export const ifCurrentSiteIsOfSubTypeIsSPECIAL = (currentSiteId, currentPlayerId, debitPlayerMoney, setIsDone, movePlayer) => {
+    if (currentSiteId === 10) { // If current site is jail
+        debitPlayerMoney(currentPlayerId, 100);
+        setIsDone(true);
+    } else if (currentSiteId === 30) {
+        movePlayer(currentPlayerId, 10, directions.BACKWARD)
+    } else {
+        setIsDone(true)
+    }
+}

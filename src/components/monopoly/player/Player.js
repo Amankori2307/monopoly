@@ -8,7 +8,7 @@ import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import * as board from '../../../redux/actions/board'
 import { getAllTurningPoints, calcRent } from '../../../utility/playerUtility';
 import { setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
-import { checkIfUserCrossedStart, ifCurrentSiteIsOfSubTypeIsTAX } from '../../../utility/player/playerAppropriateActionUtils';
+import { checkIfUserCrossedStart, ifCurrentSiteIsOfSubTypeIsSPECIAL, ifCurrentSiteIsOfSubTypeIsTAX } from '../../../utility/player/playerAppropriateActionUtils';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, currentPlayerId, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
@@ -47,19 +47,9 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                 }
             }
         } else if (currentSite.type === cardTypes.SPECIAL) {
-            // If current site is jail
-            if (currentSite.id === 10) {
-                debitPlayerMoney(currentPlayerId, 100);
-                setIsDone(true);
-            } else if (currentSite.id === 30) {
-                movePlayer(currentPlayerId, 10, directions.BACKWARD)
-            } else {
-                setIsDone(true)
-            }
+            ifCurrentSiteIsOfSubTypeIsSPECIAL(currentSiteId, currentPlayerId, debitPlayerMoney, setIsDone, movePlayer)
         } else if (currentSite.type === cardTypes.TAX) {
             ifCurrentSiteIsOfSubTypeIsTAX(currentSite, currentPlayerId, debitPlayerMoney, setIsDone)
-        } else {
-            setIsDone(true)
         }
         checkIfUserCrossedStart(cs, ps, currentPlayer.current.direction, currentPlayerId, creditPlayerMoney)
     }, [creditPlayerMoney, debitPlayerMoney, diceSum, currentPlayerId, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
