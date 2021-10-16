@@ -4,8 +4,8 @@ import CardModal from "./modal/CardModal";
 import ModalContainer from "./modal/ModalCotainer";
 import Board from './board/Board';
 import style from '../../assets/css/monopoly.module.css'
-import Header from '../home/header/Header';
-import Footer from '../home/footer/Footer';
+// import Header from '../home/header/Header';
+// import Footer from '../home/footer/Footer';
 import BuyCardModal from './modal/BuyCardModal';
 import { modalTypes } from '../../utility/constants';
 import AuctionCardModal from './modal/AuctionCardModal';

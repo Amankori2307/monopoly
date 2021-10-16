@@ -7,7 +7,7 @@ import { setShowModal } from '../../../redux/actions/modal'
 import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import { setIsDone } from '../../../redux/actions/board'
 import { getAllTurningPoints, calcRent } from '../../../utility/playerUtility';
-import { setPlayerPositionHelper, setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
+import { setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, id, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
@@ -17,7 +17,6 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const playerMoveAudio = useMemo(() => new Audio(audio1), [])
     const playerRef = useRef(null)
     const playersDataRef = useRef(playersData)
-    const currentPlayerSite = playersData.players[id].site
     const siteDataRef = useRef(siteData)
     const isMoving = playersData.players[id].isMoving
 
@@ -25,7 +24,6 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     // To Show Approprate modal or do appropriate action
     const showAppropriateModalOrDoAppropriateAction = useCallback(() => {
         if (!firstRender.current && id === playersDataRef.current.activePlayer) {
-            console.log("SHOW APPRO: ", id)
             let currentSiteId = currentPlayer.current.site
             let currentSite = siteDataRef.current.sites[currentSiteId]
             let {site: cs, previousSite: ps} = currentPlayer.current;
@@ -34,7 +32,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
                 if (siteDataRef.current.boughtSites.includes(currentSite.id)) { // check if site is already bought
                     // If site is already bought check if it is mortaged and who owns it if some other user owns it pay rent
                     let boughtBy = siteDataRef.current.boughtBy[currentSiteId]
-                    console.log("Bought By: ",boughtBy)
+                    console.log(`"${currentSite.name}" belongs to Player${boughtBy}`)
                     if(!currentSite.isMortgaged && boughtBy !== id){
                         let rent = calcRent(currentSite, siteDataRef.current.playersSites[boughtBy], diceSum, noOfCardsInCategory);
                         debitPlayerMoney(playersDataRef.current.activePlayer, rent);
@@ -72,10 +70,6 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         }
     }, [setIsDone, id, setShowModal, debitPlayerMoney, movePlayer, creditPlayerMoney, diceSum, noOfCardsInCategory])
 
-    const setPlayerPosition = useCallback((site, playAudio) => {
-        setPlayerPositionHelper({...positions.current[site]}, playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, playAudio)
-    }, [playerMoveAudio, id])
-
     // To move player when there are multple turns
     const setPlayerPositionRecursive = useCallback(async (turningPoints) => {
         setPlayerPositionRecursiveHelper(turningPoints, currentPlayer.current.site, positions.current,  playersDataRef.current.players, playersDataRef.current.totalPlayers, id, playerRef.current, playerMoveAudio, isMounted.current, setIsMoving)
@@ -84,37 +78,31 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     // Update active players position in redux on dice roll
     useEffect(() => {
         if (isMounted.current && (playersDataRef.current.activePlayer === id)) {
-            console.log("useEffect1 ID(Update activePlayer postion in redux):" + id)
+            console.log("useEffect1 ID(Update activePlayer postion in redux) Player" + id)
             let currentSite = (currentPlayer.current.site + diceSum) % 40
             movePlayer(id, currentSite, directions.FORWARD)
         }
     }, [diceSum, id, movePlayer, setDiceSumCalledCount]) // Adding 'setDiceSumCalledCount' because if previous 'diceSUm' is equal to current 'diceSum' it does not get called
     
-    // To move player
+    // To move player(actually move player on board in UI[Brower Window])
     useEffect(() => {
         if(isMoving || isMounted.current === false){
             currentPlayer.current = playersDataRef.current.players[id]
-            // Called on mount || first render
-            if (!isMounted.current || playersDataRef.current.activePlayer !== id) {
-                setPlayerPosition(currentPlayer.current.site, isMounted.current)
-                isMounted.current = true;
-                console.log("useEffect1 onMount ID:" + id)
-            }
-            // Called every on time on player move
-            else if (playersDataRef.current.activePlayer === id) {
-                let turningPoints = getAllTurningPoints(currentPlayer.current.previousSite, currentPlayer.current.site, currentPlayer.current.direction);
-                setPlayerPositionRecursive(turningPoints)            
-                console.log("useEffect1 onUpdate ID:" + id)
-            }
+            let turningPoints = getAllTurningPoints(currentPlayer.current.previousSite, currentPlayer.current.site, currentPlayer.current.direction);
+            setPlayerPositionRecursive(turningPoints)            
+            console.log(`useEffect2(Move Player In UI) Player${id}`)
         }
-    }, [isMoving, currentPlayerSite, playerMoveAudio, id, setPlayerPosition, setIsDone, setPlayerPositionRecursive, setIsMoving])
+    }, [setPlayerPositionRecursive, id, isMoving])
 
     // Show Appropriate modal or do appropriate action
     useEffect(() => {
         if (isMounted.current && isMoving === false) {
+            console.log(`useEffect3(Appropriate action) Player${id}`)
             showAppropriateModalOrDoAppropriateAction()
+        }else if(isMounted.current === false){
+            isMounted.current = true;
         }
-    }, [isMoving, showAppropriateModalOrDoAppropriateAction])
+    }, [isMoving, showAppropriateModalOrDoAppropriateAction, id])
 
     // To update playersDataRef and siteDateRef
     useEffect(() => {
