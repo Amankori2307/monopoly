@@ -53,7 +53,6 @@ export const calcRentForSite = (cs, sites, noOfCardsInCategory) => {
     // check if built
     if(cs.built > 0) return cs.rentWithHouse[cs.built-1];
     // check if all
-    console.log(sites)
     let totalSites = sites.filter(site => site.subType === cs.subType)
     let isDouble = false;
     if(totalSites.length === noOfCardsInCategory[cs.subType]){

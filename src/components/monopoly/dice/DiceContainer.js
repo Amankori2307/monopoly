@@ -22,8 +22,8 @@ const DiceContainer = ({rollDice, isDone})=>{
             dice1: num1,
             dice2: num2,
         }
-        diceData.dice1 = 5
-        diceData.dice2 = 5
+        // diceData.dice1 = 5
+        // diceData.dice2 = 5
         setNumber(diceData)
         return diceData
     }
@@ -35,7 +35,6 @@ const DiceContainer = ({rollDice, isDone})=>{
                 clearInterval(interval)
                 let diceData = rollDiceHelper()
                 rollDice(diceData)
-                // setDiceSum()
                 setDisabled(false) // Enable Dice When Dice has finished Rolling
             }, 450)
             audioElement.play()
