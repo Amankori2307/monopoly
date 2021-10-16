@@ -4,8 +4,8 @@ import CardModal from "./modal/CardModal";
 import ModalContainer from "./modal/ModalCotainer";
 import Board from './board/Board';
 import style from '../../assets/css/monopoly.module.css'
-// import Header from '../home/header/Header';
-// import Footer from '../home/footer/Footer';
+import Header from '../home/header/Header';
+import Footer from '../home/footer/Footer';
 import BuyCardModal from './modal/BuyCardModal';
 import { modalTypes } from '../../utility/constants';
 import AuctionCardModal from './modal/AuctionCardModal';
@@ -16,7 +16,7 @@ import sites from '../../assets/data/boardData.json'
 import MyCards from './modal/MyCards';
 
 const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculateSitePositions, setTotalPlayers, setSites }) => {
-    const totalPlayers = 1;
+    const totalPlayers = 2;
     const isMounted = useRef(false)
     useEffect(() => {
         let w = window.innerWidth;
@@ -37,7 +37,7 @@ const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculate
         <>
             {isMounted.current &&
                 <div className={style.monopoly} >
-                    {/* <Header /> */}
+                    <Header />
                     <Board />
                     {modalData.showModal && <>
                         {modalData.currentModal === modalTypes.SHOW_CARD && <ModalContainer component={CardModal} card={currentCard} />}
@@ -46,7 +46,7 @@ const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculate
                         {modalData.currentModal === modalTypes.MY_CARDS && <ModalContainer component={MyCards} title={"My Cards"} />}
                     </>
                     }
-                    {/* <Footer /> */}
+                    <Footer />
                 </div>
             }
         </>

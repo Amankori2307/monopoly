@@ -22,8 +22,8 @@ const DiceContainer = ({rollDice, isDone})=>{
             dice1: num1,
             dice2: num2,
         }
-        diceData.dice1 = 4
-        diceData.dice2 = 4
+        // diceData.dice1 = 10
+        // diceData.dice2 = 20
         setNumber(diceData)
         return diceData
     }
