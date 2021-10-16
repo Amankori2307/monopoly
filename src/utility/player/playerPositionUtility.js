@@ -49,15 +49,15 @@ export const updatePostionDataAccoringToPlayersOnThatSite = (positionData, playe
     return positionData
 }
 
-export const playPlayerMoveAudio = (playerMoveAudio, playAudio) => {
-    if (playAudio) {
+export const playPlayerMoveAudio = (playerMoveAudio, isMounted) => {
+    if (isMounted) {
         playerMoveAudio.load()
         playerMoveAudio.play()
     }
 }
 
-export const setPlayerPositionHelper = (positionData, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio) => {
-    playPlayerMoveAudio(playerMoveAudio, playAudio)
+export const setPlayerPositionHelper = (positionData, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, isMounted) => {
+    playPlayerMoveAudio(playerMoveAudio, isMounted)
     positionData = updatePostionDataAccoringToPlayersOnThatSite(positionData, players, totalPlayers, currentPlayerId)
     playerRef.style.zIndex = positionData.zIndex;
     playerRef.style.top = positionData.top != null ? positionData.top + "px" : "unset";
@@ -66,20 +66,20 @@ export const setPlayerPositionHelper = (positionData, players, totalPlayers, cur
     playerRef.style.left = positionData.left != null ? positionData.left + "px" : "unset";
 }
 
-export const setPlayerPosition = (site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio) => {
+export const setPlayerPosition = (site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, isMounted) => {
     let positionData = {...positions[site]}
-    setPlayerPositionHelper(positionData, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio)
+    setPlayerPositionHelper(positionData, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, isMounted)
 }
 
-export const setPlayerPositionRecursiveHelper = async (turningPoints, site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio, setIsMoving) => {
+export const setPlayerPositionRecursiveHelper = async (turningPoints, site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, isMounted, setIsMoving) => {
     if (turningPoints.length === 0) {
-        setPlayerPosition(site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio)
+        setPlayerPosition(site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, isMounted)
         await delay(400)
-        setIsMoving(currentPlayerId, false)
+        if(isMounted) setIsMoving(currentPlayerId, false)
         return;
     }
-    setPlayerPosition(turningPoints[0], positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio)
+    setPlayerPosition(turningPoints[0], positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, isMounted)
     await delay(400)
     turningPoints.shift()
-    setPlayerPositionRecursiveHelper(turningPoints, site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, playAudio, setIsMoving)
+    setPlayerPositionRecursiveHelper(turningPoints, site, positions, players, totalPlayers, currentPlayerId, playerRef, playerMoveAudio, isMounted, setIsMoving)
 }

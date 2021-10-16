@@ -32,3 +32,7 @@ Leading Screen Resolutions:
     - 1080×1920
     - 1440×2560
     - 2160×3840
+
+Findings:
+    - Problem is that Appropriate Action Use Effect Is Bieng Called Twice
+    
