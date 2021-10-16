@@ -3,7 +3,10 @@ import { calcRent } from "../playerUtility"
 
 export const checkIfUserCrossedStart = (cs, ps, direction, currentPlayerId, creditPlayerMoney) => {
     // Check if user crossed start(siteId === 0), if YES then add $200 credit 
-    if (ps <= 39 && cs >= 0 && ps > cs && direction === directions.FORWARD) creditPlayerMoney(currentPlayerId, 200)
+    if (ps <= 39 && cs >= 0 && ps > cs && direction === directions.FORWARD){
+        creditPlayerMoney(currentPlayerId, 200)
+        console.log("+++++++++|Crossed START|++++++++")
+    }
 }
 
 export const ifCurrentSiteIsOfSubTypeIsTax = (currentSite, currentPlayerId, debitPlayerMoney, setIsDone) => {
@@ -25,7 +28,7 @@ export const ifCurrentSiteIsOfSubTypeIsSpecial = (currentSiteId, currentPlayerId
 export const ifCurrentSiteIsOfSubTypeIsSiteOrUtilityOrRealmRails = (currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal) => {
     let money = currentPlayer.money
     if (siteData.boughtSites.includes(currentSite.id)) {         let boughtBy = siteData.boughtBy[currentSite.id]
-        if (!currentSite.isMortgaged && boughtBy !== currentPlayer.id) {
+        if (!currentSite.isMortgaged && boughtBy !== currentPlayer.playerId) {
             let rent = calcRent(currentSite, siteData.playersSites[boughtBy], diceSum, noOfCardsInCategory);
             debitPlayerMoney(activePlayer, rent);
             creditPlayerMoney(boughtBy, rent);
@@ -44,9 +47,9 @@ export const appropriateActionHelper = (currentSite, currentPlayer, activePlayer
     if ([cardTypes.SITE, cardTypes.REALM_RAILS, cardTypes.UTILITY].includes(currentSite.type)) {
         ifCurrentSiteIsOfSubTypeIsSiteOrUtilityOrRealmRails(currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal)
     } else if (currentSite.type === cardTypes.SPECIAL) {
-        ifCurrentSiteIsOfSubTypeIsSpecial(currentSite.id, currentPlayer.id, debitPlayerMoney, setIsDone, movePlayer)
+        ifCurrentSiteIsOfSubTypeIsSpecial(currentSite.id, currentPlayer.playerId, debitPlayerMoney, setIsDone, movePlayer)
     } else if (currentSite.type === cardTypes.TAX) {
-        ifCurrentSiteIsOfSubTypeIsTax(currentSite, currentPlayer.id, debitPlayerMoney, setIsDone)
+        ifCurrentSiteIsOfSubTypeIsTax(currentSite, currentPlayer.playerId, debitPlayerMoney, setIsDone)
     }
-    checkIfUserCrossedStart(currentPlayer.site, currentPlayer.previousSite, currentPlayer.direction, currentPlayer.id, creditPlayerMoney)
+    checkIfUserCrossedStart(currentPlayer.site, currentPlayer.previousSite, currentPlayer.direction, currentPlayer.playerId, creditPlayerMoney)
 }
