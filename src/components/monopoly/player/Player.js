@@ -8,6 +8,7 @@ import { cardTypes, directions, modalTypes } from '../../../utility/constants'
 import * as board from '../../../redux/actions/board'
 import { getAllTurningPoints, calcRent } from '../../../utility/playerUtility';
 import { setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
+import { checkIfUserCrossedStart } from '../../../utility/player/playerAppropriateActionUtils';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, currentPlayerId, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const isMounted = useRef(false)
@@ -61,9 +62,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         } else {
             setIsDone(true)
         }
-        // Check if user crossed start(siteId === 0), if YES then add $200 credit 
-        if (ps <= 39 && cs >= 0 && ps > cs && currentPlayer.current.direction === directions.FORWARD) creditPlayerMoney(currentPlayerId, 200)
-
+        checkIfUserCrossedStart(cs, ps, currentPlayer.current.direction, currentPlayerId, creditPlayerMoney)
     }, [creditPlayerMoney, debitPlayerMoney, diceSum, currentPlayerId, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
 
     // To move player when there are multple turns
