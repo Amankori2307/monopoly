@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/monopoly/static/css/main.0940d464.chunk.css",
-    "main.js": "/monopoly/static/js/main.857d6c5e.chunk.js",
-    "main.js.map": "/monopoly/static/js/main.857d6c5e.chunk.js.map",
+    "main.css": "/monopoly/static/css/main.d555bff1.chunk.css",
+    "main.js": "/monopoly/static/js/main.bf5e3215.chunk.js",
+    "main.js.map": "/monopoly/static/js/main.bf5e3215.chunk.js.map",
     "runtime-main.js": "/monopoly/static/js/runtime-main.cc25a1bc.js",
     "runtime-main.js.map": "/monopoly/static/js/runtime-main.cc25a1bc.js.map",
     "static/js/2.ce50bd5b.chunk.js": "/monopoly/static/js/2.ce50bd5b.chunk.js",
@@ -10,7 +10,7 @@
     "static/js/3.25b2466e.chunk.js": "/monopoly/static/js/3.25b2466e.chunk.js",
     "static/js/3.25b2466e.chunk.js.map": "/monopoly/static/js/3.25b2466e.chunk.js.map",
     "index.html": "/monopoly/index.html",
-    "static/css/main.0940d464.chunk.css.map": "/monopoly/static/css/main.0940d464.chunk.css.map",
+    "static/css/main.d555bff1.chunk.css.map": "/monopoly/static/css/main.d555bff1.chunk.css.map",
     "static/js/2.ce50bd5b.chunk.js.LICENSE.txt": "/monopoly/static/js/2.ce50bd5b.chunk.js.LICENSE.txt",
     "static/media/banner.b1b5a245.gif": "/monopoly/static/media/banner.b1b5a245.gif",
     "static/media/go-to-jail.ea93a729.png": "/monopoly/static/media/go-to-jail.ea93a729.png",
@@ -28,7 +28,7 @@
   "entrypoints": [
     "static/js/runtime-main.cc25a1bc.js",
     "static/js/2.ce50bd5b.chunk.js",
-    "static/css/main.0940d464.chunk.css",
-    "static/js/main.857d6c5e.chunk.js"
+    "static/css/main.d555bff1.chunk.css",
+    "static/js/main.bf5e3215.chunk.js"
   ]
 }
