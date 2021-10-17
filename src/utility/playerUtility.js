@@ -86,7 +86,3 @@ export const calcRent = (cs, otherPlayerSites, diceSum, noOfCardsInCategory) => 
     else if(cs.type === cardTypes.REALM_RAILS) return calcRentForRealmRails(otherPlayerSites);
     else if(cs.type === cardTypes.UTILITY) return calcRentForUtility(otherPlayerSites, diceSum);
 }
-
-export const findChestAndExec = (diceSum) => {
-    console.log(chestData[diceSum])
-}

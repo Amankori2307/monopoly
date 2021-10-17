@@ -51,6 +51,9 @@ export const performAction = (action, currentPlayer, siteData, totalPlayers, deb
     if(action.type === chestOrChanceActionTypes.DEBIT){
         debitPlayerMoney(currentPlayer.playerId, action.amount)
         setIsDone(true)
+    } else if(action.type === chestOrChanceActionTypes.CREDIT) {
+        creditPlayerMoney(currentPlayer.playerId, action.amount)
+        setIsDone(true)
     } else if(action.type === chestOrChanceActionTypes.MOVE) {
         movePlayer(currentPlayer.playerId, action.to, action.direction)
     } else if(action.type === chestOrChanceActionTypes.LOGICAL) {
@@ -62,12 +65,10 @@ export const performAction = (action, currentPlayer, siteData, totalPlayers, deb
 
 export const ifCurrentSiteIsOfTypeIsChestOrChance = (currentPlayer, currentSite, diceSum, siteData, totalPlayers, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone) => {
     let action = {}
-    diceSum = 2
     if(currentSite.type === cardTypes.CHEST) action = chestData[diceSum]
     else if(currentSite.type === cardTypes.CHANCE) action = chanceData[diceSum]
 
     performAction(action, currentPlayer, siteData, totalPlayers, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone)    
-    console.log(action)
 
 }
 
