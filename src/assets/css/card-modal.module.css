@@ -84,3 +84,12 @@
 .radialBackground{
     background: radial-gradient(black, grey, lightgrey, white);
 }
+
+.mortgageIcon{
+    opacity: 30%;
+    width: 50%;
+    height: auto;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
