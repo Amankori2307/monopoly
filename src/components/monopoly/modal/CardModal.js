@@ -1,6 +1,7 @@
 import style from '../../../assets/css/card-modal.module.css'
 import { connect } from 'react-redux';
 import {cardTypes} from '../../../utility/constants'
+import mortgagedIcon from '../../../assets/images/mortgaged.svg'
 
 const CardModal = ({card}) => {
     const SITE_INFO = "if a player owns all the sites of any color group the rent is doubled on unimproved sites in that group."
@@ -28,6 +29,7 @@ const CardModal = ({card}) => {
                         <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
                         <p className={style.construction}>Construction ${card.construction} Each</p>
                         <p className={style.info}>{SITE_INFO}</p>
+                        {card.isMortgaged && <img src={mortgagedIcon} className={style.mortgageIcon} alt="mortgaged icon" />}
                     </div>
                 )
                 break;
@@ -44,6 +46,7 @@ const CardModal = ({card}) => {
                             </tbody>
                         </table>
                         <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
+                        {card.isMortgaged && <img src={mortgagedIcon} className={style.mortgageIcon} alt="mortgaged icon" />}
                     </div>
                 )
                 break;
@@ -56,6 +59,7 @@ const CardModal = ({card}) => {
                             {UTILITY_INFO.map((data, index) => <p key={index}>{data}</p>)}
                         </div>
                         <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
+                        {card.isMortgaged && <img src={mortgagedIcon} className={style.mortgageIcon} alt="mortgaged icon" />}
                     </div>
                 )
                 break;
