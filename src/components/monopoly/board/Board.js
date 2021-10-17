@@ -5,7 +5,7 @@ import DiceContainer from "../dice/DiceContainer";
 import PlayerContainer from '../player/PlayerContainer';
 import { connect } from 'react-redux';
 import PlayerDetailsContainer from '../player/PlayerDetailsContainer';
-import Actions from '../modal/Actions';
+import Actions from '../action/Actions';
 import ActionInfo from '../action/ActionInfo';
 import DoneButton from '../donebutton/DoneButton';
 
