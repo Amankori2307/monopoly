@@ -12,6 +12,15 @@ const chestOrChanceLogicalFunctions = {
         let amount = noOfHotelAndHouses*20;
         debitPlayerMoney(currentPlayer.playerId, amount)
         setIsDone(true)
+    },
+    "2": function(currentPlayer, totalPlayers, debitPlayerMoney, creditPlayerMoney, setIsDone){
+        creditPlayerMoney(currentPlayer.playerId, (totalPlayers-1)*10)
+        Array.from(Array(totalPlayers).keys()).forEach(playerId => {
+            if(playerId !== currentPlayer.playerId){
+                debitPlayerMoney(playerId, 10)
+            }
+        })
+        setIsDone(true)
     }
 }
 

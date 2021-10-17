@@ -42,7 +42,7 @@ export const MAX_PLAYERS = 8
 
 
 export const chestOrChanceActionTypes = {
-    DEDUCT: "DEDUCT",
+    DEBIT: "DEBIT",
     CREDIT: "CREDIT",
     MOVE: "MOVE",
     LOGICAL: "LOGICAL",

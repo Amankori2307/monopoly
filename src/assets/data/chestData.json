@@ -1,6 +1,6 @@
 {
     "2":  {
-        "type": "DEDUCT",
+        "type": "DEBIT",
         "amount": 200,
         "description": "Loss in share market of $200",
         "to": null,
@@ -16,7 +16,7 @@
         "logicalId": null
     },
     "4":  {
-        "type": "DEDUCT",
+        "type": "DEBIT",
         "amount": 100,
         "description": "Fine of $100 for the accident due to driving under liquor influence of",
         "to": null,
@@ -24,7 +24,7 @@
         "logicalId": null
     },
     "5":  {
-        "type": "DEDUCT",
+        "type": "DEBIT",
         "amount": 100,
         "description": "School and medical fees, $100",
         "to": null,
@@ -32,7 +32,7 @@
         "logicalId": null
     },
     "6":  {
-        "type": "DEDUCT",
+        "type": "DEBIT",
         "amount": 150,
         "description": "House repairs of $150",
         "to": null,
@@ -40,7 +40,7 @@
         "logicalId": null
     },
     "7":  {
-        "type": "DEDUCT",
+        "type": "DEBIT",
         "amount": 200,
         "description": "Marriage celebration $200",
         "to": null,
@@ -48,7 +48,7 @@
         "logicalId": null
     },
     "8":  {
-        "type": "DEDUCT",
+        "type": "DEBIT",
         "amount": 300,
         "description": "Loss of $300 due to fire in godown",
         "to": 0,
@@ -72,7 +72,7 @@
         "logicalId": null
     },
     "11":  {
-        "type": "DEDUCT",
+        "type": "DEBIT",
         "amount": 150,
         "description": "Pay insurance premium of $150",
         "to": null,

@@ -1,0 +1,91 @@
+{
+    "2":  {
+        "type": "LOGICAL",
+        "amount": null,
+        "description": "It is your birthday collect $10 from each player",
+        "to": null,
+        "direction": null,
+        "logicalId": 2
+    },
+    "3":  {
+        "type": "CREDIT",
+        "amount": 250,
+        "description": "Won $250 lottery",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "4":  {
+        "type": "CREDIT",
+        "amount": 150,
+        "description": "First prize in beauty contest $150",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "5":  {
+        "type": "CREDIT",
+        "amount": 100,
+        "description": "You have won a crossword competition prize of $100",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "6":  {
+        "type": "CREDIT",
+        "amount": 200,
+        "description": "Income tax refund $200",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "7":  {
+        "type": "CREDIT",
+        "amount": 100,
+        "description": "You have won a jackpot of $100",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "8":  {
+        "type": "MOVE",
+        "amount": null,
+        "description": "Go to start",
+        "to": 0,
+        "direction": true,
+        "logicalId": null
+    },
+    "9":  {
+        "type": "MOVE",
+        "amount": null,
+        "description": "Go back to Minish Woods.",
+        "to": 1,
+        "direction": false,
+        "logicalId": null
+    },
+    "10":  {
+        "type": "CREDIT",
+        "amount": 150,
+        "description": "Receive interest of shares $150",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "11":  {
+        "type": "CREDIT",
+        "amount": 300,
+        "description": "Price of best performance in export, $300",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    },
+    "12":  {
+        "type": "CREDIT",
+        "amount": 300,
+        "description": "Sale of stocks collect $300",
+        "to": null,
+        "direction": null,
+        "logicalId": null
+    }
+}
+    

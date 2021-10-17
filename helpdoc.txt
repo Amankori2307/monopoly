@@ -35,9 +35,9 @@ Leading Screen Resolutions:
 
 
 Chest/Chance data structure
-Info: Mainly three actions are happening deduct money, credit money or move player
+Info: Mainly three actions are happening debit money, credit money or move player
 DATA fields:
-    - type: DEDUCT, CREDIT, MOVE
+    - type: DEBIT, CREDIT, MOVE
     - amount: amount
     - description: description why of the action
     - to: site id
