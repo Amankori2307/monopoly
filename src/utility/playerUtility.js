@@ -1,5 +1,4 @@
 import { cardTypes, directions } from "./constants"
-import chestData from '../assets/data/chestData.json'
 
 export const createPlayerData = (totalPlayers) => {
     let players = {}
