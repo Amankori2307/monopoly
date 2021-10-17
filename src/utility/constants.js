@@ -14,6 +14,7 @@ export const modalTypes = {
     BUY_CARD: "BUY_CARD",
     AUCTION_CARD: "AUCTION_CARD",
     MY_CARDS: "MY_CARDS",
+    TRADE: "TRADE",
 }
 
 export const colors = {
@@ -30,7 +31,6 @@ export const actionTypes = {
     BUILD: "BUILD",
     SELL: "SELL",
     REDEEM: "REDEEM",
-    TRADE: "TRADE",
 }
 
 export const directions = {
