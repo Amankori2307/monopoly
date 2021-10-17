@@ -26,8 +26,8 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const appropriateAction = useCallback(() => {
         let currentSiteId = currentPlayerRef.current.site
         let currentSite = siteDataRef.current.sites[currentSiteId]
-        let activePlayer = playersDataRef.current.activePlayer
-        appropriateActionHelper(currentSite, currentPlayerRef.current, activePlayer, siteDataRef.current, diceSumRef.current, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer)
+        let {activePlayer, totalPlayers} = playersDataRef.current
+        appropriateActionHelper(currentSite, currentPlayerRef.current, activePlayer, totalPlayers, siteDataRef.current, diceSumRef.current, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer)
     }, [creditPlayerMoney, debitPlayerMoney, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
 
     // To move player when there are multple turns

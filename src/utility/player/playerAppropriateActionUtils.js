@@ -1,6 +1,7 @@
 import { directions, modalTypes, cardTypes, chestOrChanceActionTypes } from "../constants"
 import { calcRent } from "../playerUtility"
 import chestData from '../../assets/data/chestData.json'
+import chanceData from '../../assets/data/chanceData.json'
 import chestOrChanceLogicalFunctions from "./chestOrChanceLogicalFunctions"
 
 export const checkIfUserCrossedStart = (cs, ps, direction, currentPlayerId, creditPlayerMoney) => {
@@ -46,7 +47,7 @@ export const ifCurrentSiteIsOfTypeIsSiteOrUtilityOrRealmRails = (currentSite, cu
 }
 
 
-export const performAction = (action, currentPlayer, siteData, debitPlayerMoney, movePlayer, setIsDone) => {
+export const performAction = (action, currentPlayer, siteData, totalPlayers, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone) => {
     if(action.type === chestOrChanceActionTypes.DEBIT){
         debitPlayerMoney(currentPlayer.playerId, action.amount)
         setIsDone(true)
@@ -54,22 +55,23 @@ export const performAction = (action, currentPlayer, siteData, debitPlayerMoney,
         movePlayer(currentPlayer.playerId, action.to, action.direction)
     } else if(action.type === chestOrChanceActionTypes.LOGICAL) {
         let logicalFunc = chestOrChanceLogicalFunctions[action.logicalId]
-        logicalFunc(currentPlayer, siteData.playersSites[currentPlayer.playerId], debitPlayerMoney, setIsDone)
-        
+        if(action.logicalId===1) logicalFunc(currentPlayer, siteData.playersSites[currentPlayer.playerId], debitPlayerMoney, setIsDone)
+        else if(action.logicalId===2) logicalFunc(currentPlayer, totalPlayers, debitPlayerMoney, creditPlayerMoney, setIsDone)
     }
 }
 
-export const ifCurrentSiteIsOfTypeIsChestOrChance = (currentPlayer, currentSite, diceSum, siteData, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone) => {
+export const ifCurrentSiteIsOfTypeIsChestOrChance = (currentPlayer, currentSite, diceSum, siteData, totalPlayers, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone) => {
     let action = {}
-    diceSum = 12
+    diceSum = 2
     if(currentSite.type === cardTypes.CHEST) action = chestData[diceSum]
+    else if(currentSite.type === cardTypes.CHANCE) action = chanceData[diceSum]
 
-    performAction(action, currentPlayer, siteData, debitPlayerMoney, movePlayer, setIsDone)    
+    performAction(action, currentPlayer, siteData, totalPlayers, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone)    
     console.log(action)
 
 }
 
-export const appropriateActionHelper = (currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer) => {
+export const appropriateActionHelper = (currentSite, currentPlayer, activePlayer, totalPlayers, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer) => {
     if (currentSite.type === cardTypes.SITE || currentSite.type === cardTypes.REALM_RAILS || currentSite.type === cardTypes.UTILITY) {
         ifCurrentSiteIsOfTypeIsSiteOrUtilityOrRealmRails(currentSite, currentPlayer, activePlayer, siteData, diceSum, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal)
     } else if (currentSite.type === cardTypes.SPECIAL) {
@@ -77,7 +79,7 @@ export const appropriateActionHelper = (currentSite, currentPlayer, activePlayer
     } else if (currentSite.type === cardTypes.TAX) {
         ifCurrentSiteIsOfTypeIsTax(currentSite, currentPlayer.playerId, debitPlayerMoney, setIsDone)
     } else if (currentSite.type === cardTypes.CHEST || currentSite.type === cardTypes.CHANCE) {
-        ifCurrentSiteIsOfTypeIsChestOrChance(currentPlayer, currentSite, diceSum, siteData, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone)
+        ifCurrentSiteIsOfTypeIsChestOrChance(currentPlayer, currentSite, diceSum, siteData, totalPlayers, debitPlayerMoney, creditPlayerMoney, movePlayer, setIsDone)
     }
     checkIfUserCrossedStart(currentPlayer.site, currentPlayer.previousSite, currentPlayer.direction, currentPlayer.playerId, creditPlayerMoney)
 }
