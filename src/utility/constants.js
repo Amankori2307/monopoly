@@ -30,6 +30,7 @@ export const actionTypes = {
     BUILD: "BUILD",
     SELL: "SELL",
     REDEEM: "REDEEM",
+    TRADE: "TRADE",
 }
 
 export const directions = {

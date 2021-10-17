@@ -15,6 +15,7 @@ const Actions = ({setAction, active: disabled}) => {
             <button disabled={disabled} className={`${style.sell} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.SELL}>Sell</button>
             <button disabled={disabled} className={`${style.mortgage} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.MORTGAGE}>Mortgage</button>
             <button disabled={disabled} className={`${style.redeem} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.REDEEM}>Redeem</button>
+            <button disabled={disabled} className={`${style.trade} ${style.btn}`} onClick={setActionHelper} action-type={actionTypes.TRADE}>Trade</button>
         </div>
     )
 }
