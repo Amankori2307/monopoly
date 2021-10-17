@@ -47,7 +47,7 @@ export const ifCurrentSiteIsOfTypeIsSiteOrUtilityOrRealmRails = (currentSite, cu
 
 
 export const performAction = (action, currentPlayer, siteData, debitPlayerMoney, movePlayer, setIsDone) => {
-    if(action.type === chestOrChanceActionTypes.DEDUCT){
+    if(action.type === chestOrChanceActionTypes.DEBIT){
         debitPlayerMoney(currentPlayer.playerId, action.amount)
         setIsDone(true)
     } else if(action.type === chestOrChanceActionTypes.MOVE) {
