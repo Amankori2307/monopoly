@@ -1,9 +1,21 @@
+
+.playerDropdownContainer{
+    display: flex;
+    justify-content: center;
+    /* background-color: dodgerblue; */
+    padding: 10px;
+}
+.playerDropdown{
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
 .cardListsContainer{
     display: flex;
     flex-direction: row;
 }
 .cardList{
-    height: 350px;
+    height: 315px;
     overflow-y: scroll;
     cursor: pointer;
 }
@@ -25,10 +37,13 @@
     margin-right: 20px;
 }
 .cardWrapper{
-    margin: 20px 15px;
+    margin: 0px 15px 20px;
     position: relative;
     border-radius: 15px;
     overflow: hidden;
+}
+.cardWrapper:last-child{
+    margin-bottom: 0px;
 }
 .overlay{
     position: absolute;
@@ -47,4 +62,10 @@
 }
 .rotate{
     transform: rotate(180deg);
+}
+.tradeInfo{
+    width: calc(100% - 30px);
+    text-align: center;
+    font-size: 13px;
+    color: #aaaaaa;
 }

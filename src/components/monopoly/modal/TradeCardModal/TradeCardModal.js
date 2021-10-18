@@ -23,17 +23,30 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         setPlayersDropdown(Array.from(Array(totalPlayers).keys()).filter(playerID => playerID!==activePlayer))
     }, [siteData.sites, activePlayer, totalPlayers])
 
+    const onSelect = (id, listName) => {
+        console.log(id, listName)
+        let cardList = [...cardLists[listName]]
+        for(let i=0; i<cardList.length;i++){
+            if(cardList[i].site.id === id){
+                cardList[i].selected = !cardList[i].selected
+            }
+        }
+        setCardLists({
+            ...cardLists,
+            listName: cardList
+        })
+    }
 
     return (
         <div className={style.tradeCardModal}>
-            <div>
-                <select name="cars" id="cars">
+            <div className={style.playerDropdownContainer}>
+                <select name="cars" id="cars" className={style.playerDropdown}>
                     {playersDropdown.map(playerId => <option key={playerId}>Player{playerId}</option>)}
                 </select>
             </div>
             <div className={style.cardListsContainer}>
-                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"}/>            
-                <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}/>            
+                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect}/>            
+                <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect}/>            
             </div>
         </div>
     );
