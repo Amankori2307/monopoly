@@ -10,6 +10,10 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         currentPlayer: [],
         otherPlayer: [],
     })
+    const [noOfSelectedCards, setNoOfSelectedCards] = useState({
+        currentPlayer: 0,
+        otherPlayer: 0,
+    })
     const [playersDropdown, setPlayersDropdown] = useState([])
     useEffect(() => {
         let sites = siteData.sites.filter(site => site.type === cardTypes.SITE || site.type === cardTypes.REALM_RAILS || site.type === cardTypes.UTILITY )
@@ -26,14 +30,20 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
     const onSelect = (id, listName) => {
         console.log(id, listName)
         let cardList = [...cardLists[listName]]
+        let selectedCards = noOfSelectedCards[listName]
         for(let i=0; i<cardList.length;i++){
             if(cardList[i].site.id === id){
+                selectedCards =  cardList[i].selected? selectedCards-1: selectedCards+1;
                 cardList[i].selected = !cardList[i].selected
             }
         }
         setCardLists({
             ...cardLists,
             listName: cardList
+        })
+        setNoOfSelectedCards({
+            ...noOfSelectedCards,
+            [listName]:  selectedCards
         })
     }
 
@@ -45,8 +55,8 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
                 </select>
             </div>
             <div className={style.cardListsContainer}>
-                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect}/>            
-                <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect}/>            
+                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect} selectedCards={noOfSelectedCards.currentPlayer}/>            
+                <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer}/>            
             </div>
         </div>
     );
