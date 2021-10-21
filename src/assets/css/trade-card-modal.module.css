@@ -73,33 +73,45 @@
     display: flex;
     width: 100%;
     flex-direction: row;
+    margin:15px 0px;
 }
 .col{
     flex: 0 0 50%;
-
 }
-.inputContainer{
+.wrapper{
     margin-left: 15px;
-    padding: 4px 0px;
-    border-radius: 4px;
-    background-color: #fafafa;
     width: 255px;
+}
+.btnContainer{
+    margin-top: 10px;
     display: flex;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: space-around;
 }
-.inputContainer > .label > span {
-    margin-left: 10px;
-    padding:0px 0px 0px 5px;
-    background-color: white;
-    font-weight: normal;
-}
-.label{
-    font-size: 12px;
-    font-weight: 700;
-}
-.inputContainer > .label > span > .amount {
-    width: 100px;
+.btn{
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
     border: none;
-    outline: none !important;
-    font-size: inherit;
+    border-radius: 5px;
+    font-size: 13px;
+    padding: 4px 10px;
+    cursor: pointer;
+    box-shadow: 2px 3px 3px 0px rgba(0,0,0,0.4);
+    transition: filter 0.2s;
+}
+.btn:hover{
+    filter: brightness(0.9);
+}
+.btn:disabled{
+    cursor: not-allowed;
+}
+.offer{
+    background-color: green;
+    color: white;
+}
+.cancel{
+    background-color: red;
+    color: white;
 }

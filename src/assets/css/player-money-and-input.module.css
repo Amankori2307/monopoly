@@ -1,0 +1,38 @@
+.amount{
+    font-size: 12px;
+    font-weight: bold;
+    background-color: #fafafa;
+    border-radius: 4px;
+    padding: 4px 10px;
+    margin-bottom: 5px;
+    display: flex;
+
+}
+.amount input, .amount label{
+    width: 50%;
+}
+.amount input{
+    border: none !important;
+    outline: none !important;
+}
+.bWhite{
+    background-color: white;
+}
+.playerMoney{
+    font-size: 12px;
+    font-weight: bold;
+    background-color: #fafafa;
+    border-radius: 4px;
+    padding: 4px 10px;
+}
+.actualMoney{
+    color: red;
+    background-color:#fbe2e2;
+    padding: 4px 0px;
+}
+.moneyAfterBidDeuction{
+    color: #00aa00;
+    padding: 4px 0px;
+    background-color: #e2ffe2;
+    text-decoration: none;
+}

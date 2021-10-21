@@ -4,7 +4,7 @@ import { cardTypes } from '../../../../utility/constants';
 import CardList from './CardList';
 import style from '../../../../assets/css/trade-card-modal.module.css'
 import { genCardList } from '../../../../utility/tradeCardModalUtils';
-import AmountInput from './AskOrSendMoney/AmountInput';
+import PlayerMoneyAndInput from './AskOrSendMoney/PlayerMoneyAndInput';
 
 const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
     const [cardLists, setCardLists] = useState({
@@ -70,8 +70,28 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
                 <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer}/>            
             </div>
             <div className={style.askOrSendMoney}>
-                <AmountInput labelText="Send Money" amount={askOrSendMoney.send} type="send" setAmount={setAskOrSendMoneyHelper}/>
-                <AmountInput labelText="Ask Money" amount={askOrSendMoney.ask} type="ask" setAmount={setAskOrSendMoneyHelper}/>
+                <div className={style.col}>
+                    <div className={style.wrapper}>
+                        <PlayerMoneyAndInput />
+                    </div>
+                </div>
+                <div className={style.col}>
+                    <div className={style.wrapper}>
+                        <PlayerMoneyAndInput />
+                    </div>
+                </div>
+            </div>
+            <div className={`${style.btnContainer} ${style.row}`}>
+            <div className={style.col}>
+                    <div className={style.wrapper}>
+                        <button className={`${style.btn} ${style.offer}`} >Offer</button>
+                    </div>
+                </div>
+                <div className={style.col}>
+                    <div className={style.wrapper}>
+                        <button className={`${style.btn} ${style.cancel}`} >Cancel</button>
+                    </div>
+                </div>
             </div>
         </div>
     );

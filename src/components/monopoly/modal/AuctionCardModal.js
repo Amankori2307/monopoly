@@ -21,7 +21,6 @@ const AuctionCardModal = ({sites, card, totalPlayers, activePlayer, players, deb
     })
     const [currentBidAmount, setCurrentBidAmount] = useState(1) 
 
-
     const genBiddingHistory = (playerId, action) => {
         let statement = ""
         if(action === BID) statement = `Player${playerId} bids $${currentBidAmount}`
