@@ -68,8 +68,10 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
                 <select name="cars" id="cars" className={style.playerDropdown}>
                     {playersDropdown.map(playerId => <option key={playerId}>Player{playerId}</option>)}
                 </select>
-                <PlayerMoneyAndInput />
-                <PlayerMoneyAndInput />
+                <div className={style.askOrSendMoney}>
+                    <PlayerMoneyAndInput />
+                    <PlayerMoneyAndInput />
+                </div>
                 <div className={`${style.btnContainer} ${style.row}`}>
                     <button className={`${style.btn} ${style.offer}`} >Offer</button>
                     <button className={`${style.btn} ${style.cancel}`} >Cancel</button>
