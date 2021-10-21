@@ -73,7 +73,6 @@
 .playerDropdown{
     margin: 0px 0px 12px 0px;
     padding: 5px;
-    border-radius: 10px;
     text-align: center;
     font-weight: bold;
     background: limegreen;
@@ -82,6 +81,12 @@
     outline: none !important;
     border:none;
 }
+
+.playerDropdown option{
+    background-color: white;
+    color: black;
+}
+
 .askOrSendMoney{
     height: 285px;
 }
