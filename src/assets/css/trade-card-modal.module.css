@@ -69,3 +69,37 @@
     font-size: 13px;
     color: #aaaaaa;
 }
+.askOrSendMoney{
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+}
+.col{
+    flex: 0 0 50%;
+
+}
+.inputContainer{
+    margin-left: 15px;
+    padding: 4px 0px;
+    border-radius: 4px;
+    background-color: #fafafa;
+    width: 255px;
+    display: flex;
+    justify-content: center;
+}
+.inputContainer > .label > span {
+    margin-left: 10px;
+    padding:0px 0px 0px 5px;
+    background-color: white;
+    font-weight: normal;
+}
+.label{
+    font-size: 12px;
+    font-weight: 700;
+}
+.inputContainer > .label > span > .amount {
+    width: 100px;
+    border: none;
+    outline: none !important;
+    font-size: inherit;
+}

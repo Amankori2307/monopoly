@@ -4,6 +4,7 @@ import { cardTypes } from '../../../../utility/constants';
 import CardList from './CardList';
 import style from '../../../../assets/css/trade-card-modal.module.css'
 import { genCardList } from '../../../../utility/tradeCardModalUtils';
+import AmountInput from './AskOrSendMoney/AmountInput';
 
 const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
     const [cardLists, setCardLists] = useState({
@@ -15,6 +16,10 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         otherPlayer: 0,
     })
     const [playersDropdown, setPlayersDropdown] = useState([])
+    const [askOrSendMoney, setAskOrSendMoney] = useState({
+        ask: 0,
+        send: 0,
+    })
     useEffect(() => {
         let sites = siteData.sites.filter(site => site.type === cardTypes.SITE || site.type === cardTypes.REALM_RAILS || site.type === cardTypes.UTILITY )
         let currentPlayerCardList, otherPlayerCardList;
@@ -47,6 +52,12 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         })
     }
 
+    const setAskOrSendMoneyHelper = (type, value) => {
+        setAskOrSendMoney({
+            ...askOrSendMoney,
+            [type]: value
+        })
+    }
     return (
         <div className={style.tradeCardModal}>
             <div className={style.playerDropdownContainer}>
@@ -57,6 +68,10 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
             <div className={style.cardListsContainer}>
                 <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect} selectedCards={noOfSelectedCards.currentPlayer}/>            
                 <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer}/>            
+            </div>
+            <div className={style.askOrSendMoney}>
+                <AmountInput labelText="Send Money" amount={askOrSendMoney.send} type="send" setAmount={setAskOrSendMoneyHelper}/>
+                <AmountInput labelText="Ask Money" amount={askOrSendMoney.ask} type="ask" setAmount={setAskOrSendMoneyHelper}/>
             </div>
         </div>
     );
