@@ -4,10 +4,11 @@ import CardListItem from './CardListItem'
 const CardList = ({cardList, listName, onSelect, selectedCards}) => {
     return (
         <div className={style.cardListContainer}>
+            <p className={style.cardListInfo}>{listName==="otherPlayer"?"Asking":"Giving"} {selectedCards}/{cardList.length} cards</p>
             <div className={style.cardList}>
                 {cardList.map(cardData => <CardListItem key={cardData.site.id} cardData={cardData} listName={listName} onSelect={onSelect}/>)}  
             </div>
-            <p className={style.tradeInfo}>{listName==="otherPlayer"?"Asking":"Giving"} {selectedCards}/{cardList.length} cards</p>
+
         </div>
     ) 
 }

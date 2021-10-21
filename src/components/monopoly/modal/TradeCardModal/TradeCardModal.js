@@ -59,38 +59,20 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         })
     }
     return (
-        <div className={style.tradeCardModal}>
-            <div className={style.playerDropdownContainer}>
-                <select name="cars" id="cars" className={style.playerDropdown}>
-                    {playersDropdown.map(playerId => <option key={playerId}>Player{playerId}</option>)}
-                </select>
-            </div>
-            <div className={style.cardListsContainer}>
+        <div className={`${style.tradeCardModal} ${style.row}`}>
+            <div className={`${style.cardLists} ${style.row}`}>
                 <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect} selectedCards={noOfSelectedCards.currentPlayer}/>            
                 <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer}/>            
             </div>
-            <div className={style.askOrSendMoney}>
-                <div className={style.col}>
-                    <div className={style.wrapper}>
-                        <PlayerMoneyAndInput />
-                    </div>
-                </div>
-                <div className={style.col}>
-                    <div className={style.wrapper}>
-                        <PlayerMoneyAndInput />
-                    </div>
-                </div>
-            </div>
-            <div className={`${style.btnContainer} ${style.row}`}>
-            <div className={style.col}>
-                    <div className={style.wrapper}>
-                        <button className={`${style.btn} ${style.offer}`} >Offer</button>
-                    </div>
-                </div>
-                <div className={style.col}>
-                    <div className={style.wrapper}>
-                        <button className={`${style.btn} ${style.cancel}`} >Cancel</button>
-                    </div>
+            <div className={style.controls}>
+                <select name="cars" id="cars" className={style.playerDropdown}>
+                    {playersDropdown.map(playerId => <option key={playerId}>Player{playerId}</option>)}
+                </select>
+                <PlayerMoneyAndInput />
+                <PlayerMoneyAndInput />
+                <div className={`${style.btnContainer} ${style.row}`}>
+                    <button className={`${style.btn} ${style.offer}`} >Offer</button>
+                    <button className={`${style.btn} ${style.cancel}`} >Cancel</button>
                 </div>
             </div>
         </div>

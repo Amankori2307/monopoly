@@ -1,19 +1,19 @@
-
-.playerDropdownContainer{
-    display: flex;
-    justify-content: center;
-    /* background-color: dodgerblue; */
-    padding: 10px;
-}
-.playerDropdown{
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-.cardListsContainer{
+.row{
     display: flex;
     flex-direction: row;
 }
+
+/* Card List */
+.cardListInfo{
+    margin: 0px 25px 12px 15px;
+    padding: 5px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    border: 1px solid black;
+}
+
 .cardList{
     height: 315px;
     overflow-y: scroll;
@@ -63,31 +63,24 @@
 .rotate{
     transform: rotate(180deg);
 }
-.tradeInfo{
-    width: calc(100% - 30px);
+/* Controls */
+.controls{
+    padding-left: 15px;
+}
+.playerDropdown{
+    margin: 0px 0px 12px 0px;
+    padding: 5px;
+    border-radius: 10px;
     text-align: center;
-    font-size: 13px;
-    color: #aaaaaa;
-}
-.askOrSendMoney{
-    display: flex;
+    font-weight: bold;
+    background: limegreen;
+    color: white;
     width: 100%;
-    flex-direction: row;
-    margin:15px 0px;
+    outline: none !important;
+    border:none;
 }
-.col{
-    flex: 0 0 50%;
-}
-.wrapper{
-    margin-left: 15px;
-    width: 255px;
-}
-.btnContainer{
-    margin-top: 10px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-}
+
+/* Buttons */
 .btn{
     display: block;
     width: 100%;
@@ -100,6 +93,10 @@
     cursor: pointer;
     box-shadow: 2px 3px 3px 0px rgba(0,0,0,0.4);
     transition: filter 0.2s;
+    margin-right: 10px;
+}
+.btn:last-child{
+    margin-right: unset;
 }
 .btn:hover{
     filter: brightness(0.9);
