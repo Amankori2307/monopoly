@@ -23,7 +23,7 @@ import style from '../../../../../assets/css/player-money-and-input.module.css'
                 <input id="currentBidAmount" type="number" value={amount}  onChange={onBidAmountChange} onBlur={checkIfValidBid}/>
             </p>
             <p className={style.playerMoney}>
-                Money: <del className={style.actualMoney}>${money}</del>
+                Player{playerId} Money: <del className={style.actualMoney}>${money}</del>
                 <ins className={style.moneyAfterBidDeuction}>${money-(amount?amount:0)}</ins>
             </p>
         </div>

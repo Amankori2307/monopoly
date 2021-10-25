@@ -76,6 +76,10 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
     }
     const onPlayerChange = (e) => {
         setSelectedPlayerFromDropdown(parseInt(e.target.value))
+        setAskOrSendMoney({
+            ask: 0,
+            send: 0,
+        })
     }
     return (
         <div className={`${style.tradeCardModal} ${style.row}`}>
