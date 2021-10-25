@@ -1,31 +1,30 @@
-import React, {useState} from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import style from '../../../../../assets/css/player-money-and-input.module.css'
 
- const PlayerMoneyAndInput = ({players}) => {
-    const [currentBidAmount, setCurrentBidAmount] = useState(0)
-    const playerId = 0
-    const money = players[playerId].money
-    // Called When Bid Amount Changes
+ const PlayerMoneyAndInput = ({players, text, playerId, setAmount, type, amount}) => {
+    const money =players[playerId].money;
+
     const onBidAmountChange = (e) => {
-        setCurrentBidAmountHelper(e.target.value)
+        setAmount(type, e.target.value)
     }
 
-    // To ensure bid amount is of int type
-    const setCurrentBidAmountHelper = (bidAmount) => {
-        setCurrentBidAmount(parseInt(bidAmount))
+    const checkIfValidBid = (e) => {
+        let _amount = amount? parseInt(amount): 0;
+        if(_amount >money){
+            setAmount(type, 0)
+        }
     }
-
     return (
         <div className={style.playerMoneyAndInput}>
             <p className={style.amount}>
-                <label htmlFor="currentBidAmount">Bid Amount:</label>
+                <label htmlFor="currentBidAmount">{text}:</label>
                 <span className={style.bgWhite}>$</span>
-                <input id="currentBidAmount" type="number" value={currentBidAmount}  onChange={onBidAmountChange}/>
+                <input id="currentBidAmount" type="number" value={amount}  onChange={onBidAmountChange} onBlur={checkIfValidBid}/>
             </p>
             <p className={style.playerMoney}>
                 Money: <del className={style.actualMoney}>${money}</del>
-                <ins className={style.moneyAfterBidDeuction}>${money-(currentBidAmount?currentBidAmount:0)}</ins>
+                <ins className={style.moneyAfterBidDeuction}>${money-(amount?amount:0)}</ins>
             </p>
         </div>
     )

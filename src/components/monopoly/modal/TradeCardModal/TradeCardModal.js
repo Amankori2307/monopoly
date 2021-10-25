@@ -16,24 +16,29 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         otherPlayer: 0,
     })
     const [playersDropdown, setPlayersDropdown] = useState([])
+    const [selectedPlayerFromDropdown, setSelectedPlayerFromDropdown] = useState(activePlayer)
     const [askOrSendMoney, setAskOrSendMoney] = useState({
         ask: 0,
         send: 0,
     })
+    useEffect(() => {       
+        let players = Array.from(Array(totalPlayers).keys()).filter(playerID => playerID!==activePlayer)
+        setSelectedPlayerFromDropdown(players[0])
+        setPlayersDropdown(players)
+    }, [totalPlayers, activePlayer])
+
     useEffect(() => {
         let sites = siteData.sites.filter(site => site.type === cardTypes.SITE || site.type === cardTypes.REALM_RAILS || site.type === cardTypes.UTILITY )
         let currentPlayerCardList, otherPlayerCardList;
         currentPlayerCardList = genCardList(sites.slice(0,5))
-        otherPlayerCardList = genCardList(sites.slice(5,10))
+        otherPlayerCardList = genCardList(sites.slice(5*selectedPlayerFromDropdown,5*(selectedPlayerFromDropdown+1)))
         setCardLists({
             "currentPlayer": currentPlayerCardList,
             "otherPlayer": otherPlayerCardList
         })
-        setPlayersDropdown(Array.from(Array(totalPlayers).keys()).filter(playerID => playerID!==activePlayer))
-    }, [siteData.sites, activePlayer, totalPlayers])
 
+    }, [selectedPlayerFromDropdown, siteData.sites])
     const onSelect = (id, listName) => {
-        console.log(id, listName)
         let cardList = [...cardLists[listName]]
         let selectedCards = noOfSelectedCards[listName]
         for(let i=0; i<cardList.length;i++){
@@ -53,10 +58,24 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
     }
 
     const setAskOrSendMoneyHelper = (type, value) => {
+        let data = {}
+        if(type === "ask"){
+            data = {
+                "ask": value,
+                "send": 0,
+            }
+        } else if(type === "send"){
+            data = {
+                "send": value,
+                "ask": 0,
+            }
+        }
         setAskOrSendMoney({
-            ...askOrSendMoney,
-            [type]: value
+            ...data
         })
+    }
+    const onPlayerChange = (e) => {
+        setSelectedPlayerFromDropdown(parseInt(e.target.value))
     }
     return (
         <div className={`${style.tradeCardModal} ${style.row}`}>
@@ -65,12 +84,13 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
                 <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer}/>            
             </div>
             <div className={style.controls}>
-                <select name="cars" id="cars" className={style.playerDropdown}>
-                    {playersDropdown.map(playerId => <option key={playerId}>Player{playerId}</option>)}
+                <select name="cars" id="cars" className={style.playerDropdown} value={selectedPlayerFromDropdown} onChange={onPlayerChange}>
+                    {playersDropdown.map(playerId => <option key={playerId} value={playerId}>Player{playerId}</option>)}
                 </select>
                 <div className={style.askOrSendMoney}>
-                    <PlayerMoneyAndInput />
-                    <PlayerMoneyAndInput />
+                    <PlayerMoneyAndInput text="Snding" playerId={activePlayer} setAmount={setAskOrSendMoneyHelper} type="send" amount={askOrSendMoney.send}/>
+                    <div className={style.or}><div /><span>or</span><div /></div>
+                    <PlayerMoneyAndInput text="Asking" playerId={selectedPlayerFromDropdown} setAmount={setAskOrSendMoneyHelper} type="ask" amount={askOrSendMoney.ask}/>
                 </div>
                 <div className={`${style.btnContainer} ${style.row}`}>
                     <button className={`${style.btn} ${style.offer}`} >Offer</button>

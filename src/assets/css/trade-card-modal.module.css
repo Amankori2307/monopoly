@@ -38,6 +38,7 @@
 }
 .cardWrapper{
     margin: 0px 15px;
+    margin-bottom: 15px;
     position: relative;
     border-radius: 15px;
     overflow: hidden;
@@ -81,7 +82,19 @@
     outline: none !important;
     border:none;
 }
+.or{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    color: #707070;
+}
+.or div{
+    width: calc(50%  - 20px);
+    height: 1px;
+    background-color: #cacaca;
 
+}
 .playerDropdown option{
     background-color: white;
     color: black;
