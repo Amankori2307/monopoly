@@ -84,8 +84,8 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
     return (
         <div className={`${style.tradeCardModal} ${style.row}`}>
             <div className={`${style.cardLists} ${style.row}`}>
-                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect} selectedCards={noOfSelectedCards.currentPlayer}/>            
-                <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer}/>            
+                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect} selectedCards={noOfSelectedCards.currentPlayer} playerId={0}/>            
+                <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer} playerId={selectedPlayerFromDropdown}/>            
             </div>
             <div className={style.controls}>
                 <select name="cars" id="cars" className={style.playerDropdown} value={selectedPlayerFromDropdown} onChange={onPlayerChange}>

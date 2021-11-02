@@ -4,7 +4,7 @@
 }
 
 /* Card List */
-.cardListInfo{
+.cardListHeading{
     margin: 0px 25px 12px 15px;
     padding: 5px;
     border-radius: 8px;
@@ -12,6 +12,13 @@
     font-weight: bold;
     font-size: 14px;
     border: 1px solid black;
+}
+.cardListInfo{
+    margin-bottom: 0px;
+    border: none;
+    color: #808080;
+    font-weight: normal;
+    font-size: 0.9rem;
 }
 
 .cardList{
@@ -90,7 +97,7 @@
     color: #707070;
 }
 .or div{
-    width: calc(50%  - 20px);
+    width: calc(50%  - 15px);
     height: 1px;
     background-color: #cacaca;
 
