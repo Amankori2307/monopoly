@@ -8,6 +8,36 @@ var initialState = {
     noOfCardsInCategory: {}
 }
 
+initialState.boughtBy[1] = 0;
+initialState.boughtBy[3] = 1; 
+initialState.boughtBy[5] = 2; 
+initialState.boughtBy[6] = 3; 
+initialState.boughtBy[8] = 0; 
+initialState.boughtBy[9] = 1; 
+initialState.boughtBy[11] = 2;
+initialState.boughtBy[12] = 3;
+initialState.boughtBy[13] = 0;
+initialState.boughtBy[14] = 1;
+initialState.boughtBy[15] = 2;
+initialState.boughtBy[16] = 3;
+initialState.boughtBy[18] = 0;
+initialState.boughtBy[19] = 1;
+initialState.boughtBy[21] = 2;
+initialState.boughtBy[23] = 3;
+initialState.boughtBy[24] = 0;
+initialState.boughtBy[25] = 1;
+initialState.boughtBy[26] = 2;
+initialState.boughtBy[27] = 3;
+initialState.boughtBy[28] = 0;
+initialState.boughtBy[29] = 1;
+initialState.boughtBy[31] = 2;
+initialState.boughtBy[32] = 3;
+initialState.boughtBy[34] = 0;
+initialState.boughtBy[35] = 1;
+initialState.boughtBy[37] = 2;
+initialState.boughtBy[39] = 3;
+initialState.boughtSites = [1,3,5,6,8,9,11,12,13,14,15,16,18,19,21,23,24,25,26,27,28,29,31,32,34,35,37,39];
+
 function site(state=initialState, action){
     const {type, payload} = action;
     switch(type){

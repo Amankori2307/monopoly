@@ -1,7 +1,7 @@
 import {SET_PLAYER_ID_FOR_MY_CARDS_MODAL, SET_SHOW_MODAL} from '../actions/actionTypes'
 const initialState = {
-    showModal: true,
-    currentModal: "TRADE",
+    showModal: false,
+    currentModal: null,
     playerIdForMyCardsModal: null
 }
 

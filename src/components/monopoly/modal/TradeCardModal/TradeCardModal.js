@@ -1,12 +1,12 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import { connect } from 'react-redux';
-import { cardTypes } from '../../../../utility/constants';
 import CardList from './CardList';
 import style from '../../../../assets/css/trade-card-modal.module.css'
 import { genCardList } from '../../../../utility/tradeCardModalUtils';
 import PlayerMoneyAndInput from './AskOrSendMoney/PlayerMoneyAndInput';
 
 const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
+    const isMounted = useRef(false)
     const [cardLists, setCardLists] = useState({
         currentPlayer: [],
         otherPlayer: [],
@@ -16,28 +16,28 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         otherPlayer: 0,
     })
     const [playersDropdown, setPlayersDropdown] = useState([])
-    const [selectedPlayerFromDropdown, setSelectedPlayerFromDropdown] = useState(activePlayer)
+    const [selectedPlayerFromDropdown, setSelectedPlayerFromDropdown] = useState(null)
     const [askOrSendMoney, setAskOrSendMoney] = useState({
         ask: 0,
         send: 0,
     })
-    useEffect(() => {       
-        let players = Array.from(Array(totalPlayers).keys()).filter(playerID => playerID!==activePlayer)
-        setSelectedPlayerFromDropdown(players[0])
-        setPlayersDropdown(players)
-    }, [totalPlayers, activePlayer])
+
 
     useEffect(() => {
-        let sites = siteData.sites.filter(site => site.type === cardTypes.SITE || site.type === cardTypes.REALM_RAILS || site.type === cardTypes.UTILITY )
-        let currentPlayerCardList, otherPlayerCardList;
-        currentPlayerCardList = genCardList(sites.slice(0,5))
-        otherPlayerCardList = genCardList(sites.slice(5*selectedPlayerFromDropdown,5*(selectedPlayerFromDropdown+1)))
+        if(!isMounted.current){
+            var _playersDropdown = Array.from(Array(totalPlayers).keys()).filter(playerID => playerID!==activePlayer)
+            setSelectedPlayerFromDropdown(_playersDropdown[0])
+            setPlayersDropdown(_playersDropdown)
+            isMounted.current = true
+        }
+        let currentPlayerCardList =  genCardList(siteData.playersSites[activePlayer])
+        let otherPlayerCardList = genCardList(siteData.playersSites[selectedPlayerFromDropdown?selectedPlayerFromDropdown:_playersDropdown[0]])
         setCardLists({
             "currentPlayer": currentPlayerCardList,
             "otherPlayer": otherPlayerCardList
         })
+    }, [activePlayer, selectedPlayerFromDropdown, siteData.playersSites, totalPlayers])
 
-    }, [selectedPlayerFromDropdown, siteData.sites])
     const onSelect = (id, listName) => {
         let cardList = [...cardLists[listName]]
         let selectedCards = noOfSelectedCards[listName]
@@ -74,6 +74,7 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
             ...data
         })
     }
+
     const onPlayerChange = (e) => {
         setSelectedPlayerFromDropdown(parseInt(e.target.value))
         setAskOrSendMoney({
@@ -81,10 +82,13 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
             send: 0,
         })
     }
+
     return (
+        
         <div className={`${style.tradeCardModal} ${style.row}`}>
+            { isMounted.current && <>
             <div className={`${style.cardLists} ${style.row}`}>
-                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect} selectedCards={noOfSelectedCards.currentPlayer} playerId={0}/>            
+                <CardList cardList={cardLists["currentPlayer"]} listName={"currentPlayer"} onSelect={onSelect} selectedCards={noOfSelectedCards.currentPlayer} playerId={activePlayer}/>            
                 <CardList cardList={cardLists["otherPlayer"]} listName={"otherPlayer"}  onSelect={onSelect} selectedCards={noOfSelectedCards.otherPlayer} playerId={selectedPlayerFromDropdown}/>            
             </div>
             <div className={style.controls}>
@@ -101,6 +105,7 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
                     <button className={`${style.btn} ${style.cancel}`} >Cancel</button>
                 </div>
             </div>
+            </>}   
         </div>
     );
 }
