@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import CardModal from "./modal/CardModal";
-import ModalContainer from "./modal/ModalCotainer";
+import ModalContainer from "./modal/ModalContainer";
 import Board from './board/Board';
 import style from '../../assets/css/monopoly.module.css'
 import Header from '../home/header/Header';

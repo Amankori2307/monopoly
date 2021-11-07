@@ -5,7 +5,7 @@ import style from '../../../../assets/css/trade-card-modal.module.css'
 import { genCardList } from '../../../../utility/tradeCardModalUtils';
 import PlayerMoneyAndInput from './AskOrSendMoney/PlayerMoneyAndInput';
 
-const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
+const TradeCardModal = ({siteData, totalPlayers, activePlayer, hideOnClick}) => {
     const isMounted = useRef(false)
     const [cardLists, setCardLists] = useState({
         currentPlayer: [],
@@ -49,7 +49,7 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
         }
         setCardLists({
             ...cardLists,
-            listName: cardList
+            [listName]: cardList
         })
         setNoOfSelectedCards({
             ...noOfSelectedCards,
@@ -82,6 +82,10 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
             send: 0,
         })
     }
+    const onOffer = (e) => {
+        console.log(cardLists)
+        console.log(askOrSendMoney)
+    }
 
     return (
         
@@ -101,8 +105,8 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer}) => {
                     <PlayerMoneyAndInput text="Asking" playerId={selectedPlayerFromDropdown} setAmount={setAskOrSendMoneyHelper} type="ask" amount={askOrSendMoney.ask}/>
                 </div>
                 <div className={`${style.btnContainer} ${style.row}`}>
-                    <button className={`${style.btn} ${style.offer}`} >Offer</button>
-                    <button className={`${style.btn} ${style.cancel}`} >Cancel</button>
+                    <button className={`${style.btn} ${style.offer}`} onClick={onOffer} >Offer</button>
+                    <button className={`${style.btn} ${style.cancel}`} onClick={hideOnClick}>Cancel</button>
                 </div>
             </div>
             </>}   

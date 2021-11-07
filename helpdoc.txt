@@ -47,3 +47,19 @@ Started chest on 11:33
 Findings:
     - Problem is that Appropriate Action Use Effect Is Bieng Called Twice
     
+
+Trade Card:-
+    - while testing, test scenerio where user have one card X and he offers that card to multiple players and all the players accept the trade what should happend in that certificates
+    - only active player can offer the trade
+    - offer structure
+        offered player id: {
+            from: playerId,
+            receiving: {
+                cards: {cardId1, cardId2, card ....},
+                amount: 0
+            },
+            senging: {
+                cards: {cardId1, cardId2, card ....},
+                amount: 23
+            }
+        }
