@@ -1,7 +1,8 @@
+import { modalTypes } from '../../utility/constants';
 import {SET_PLAYER_ID_FOR_MY_CARDS_MODAL, SET_SHOW_MODAL} from '../actions/actionTypes'
 const initialState = {
-    showModal: false,
-    currentModal: null,
+    showModal: true,
+    currentModal: modalTypes.TRADE_CARDS_OFFER,
     playerIdForMyCardsModal: null
 }
 

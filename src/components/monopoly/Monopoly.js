@@ -14,7 +14,8 @@ import { setTotalPlayers } from '../../redux/actions/player';
 import { setSites } from '../../redux/actions/site';
 import sites from '../../assets/data/boardData.json'
 import MyCards from './modal/MyCards';
-import TradeCardModal from './modal/TradeCardModal/TradeCardModal';
+import TradeCardModal from './modal/TradeCardModals/TradeCardModal';
+import TradeCardOfferModal from './modal/TradeCardModals/TradeCardOfferModal';
 const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculateSitePositions, setTotalPlayers, setSites }) => {
     const totalPlayers = 4;
     const isMounted = useRef(false)
@@ -45,6 +46,7 @@ const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculate
                         {modalData.currentModal === modalTypes.AUCTION_CARD && <ModalContainer component={AuctionCardModal} card={playersData.players[playersData.activePlayer].site} disableHideOnOuterClick={true} />}
                         {modalData.currentModal === modalTypes.MY_CARDS && <ModalContainer component={MyCards} title={"My Cards"} />}
                         {modalData.currentModal === modalTypes.TRADE_CARDS && <ModalContainer component={TradeCardModal}  disableHideOnOuterClick={true} />}
+                        {modalData.currentModal === modalTypes.TRADE_CARDS_OFFER && <ModalContainer component={TradeCardOfferModal}  disableHideOnOuterClick={true} />}
                     </>
                     }
                     <Footer />

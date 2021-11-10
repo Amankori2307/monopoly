@@ -15,5 +15,5 @@ export default combineReducers({
     modalData: modal,
     siteData: site,
     actionData: action,
-    tradeDate: trade
+    tradeData: trade
 })

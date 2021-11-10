@@ -8,7 +8,7 @@ import { offerTrade } from '../../../../redux/actions/trade';
 import { setShowModal } from '../../../../redux/actions/modal';
 import { modalTypes } from '../../../../utility/constants';
 
-const TradeCardModal = ({siteData, totalPlayers, activePlayer, hideOnClick, offerTrade, setShowModal}) => {
+const TradeCardOfferModal = ({siteData, totalPlayers, activePlayer, hideOnClick, offerTrade, setShowModal}) => {
     const isMounted = useRef(false)
     const [cardLists, setCardLists] = useState({
         currentPlayer: [],
@@ -133,4 +133,4 @@ const mapDispatchToProps = (dispatch) => {
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(TradeCardModal)
+export default connect(mapStateToProps, mapDispatchToProps)(TradeCardOfferModal)
