@@ -63,3 +63,7 @@ Trade Card:-
                 amount: 23
             }
         }
+
+Issues:
+    - Add validation in trade card modal
+    - 

@@ -44,7 +44,7 @@ const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculate
                         {modalData.currentModal === modalTypes.BUY_CARD && <ModalContainer component={BuyCardModal} card={playersData.players[playersData.activePlayer].site} disableHideOnOuterClick={true} />}
                         {modalData.currentModal === modalTypes.AUCTION_CARD && <ModalContainer component={AuctionCardModal} card={playersData.players[playersData.activePlayer].site} disableHideOnOuterClick={true} />}
                         {modalData.currentModal === modalTypes.MY_CARDS && <ModalContainer component={MyCards} title={"My Cards"} />}
-                        {modalData.currentModal === modalTypes.TRADE && <ModalContainer component={TradeCardModal}  disableHideOnOuterClick={true} />}
+                        {modalData.currentModal === modalTypes.TRADE_CARDS && <ModalContainer component={TradeCardModal}  disableHideOnOuterClick={true} />}
                     </>
                     }
                     <Footer />

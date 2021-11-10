@@ -6,6 +6,7 @@ import board from './board'
 import modal from './modal'
 import site from './site'
 import action from './action'
+import trade from './trade'
 export default combineReducers({
     card,
     playersData: player,
@@ -13,5 +14,6 @@ export default combineReducers({
     board,
     modalData: modal,
     siteData: site,
-    actionData: action
+    actionData: action,
+    tradeDate: trade
 })

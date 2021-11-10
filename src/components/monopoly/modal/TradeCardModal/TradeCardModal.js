@@ -2,10 +2,13 @@ import {useEffect, useRef, useState} from 'react'
 import { connect } from 'react-redux';
 import CardList from './CardList';
 import style from '../../../../assets/css/trade-card-modal.module.css'
-import { genCardList } from '../../../../utility/tradeCardModalUtils';
+import { genCardList, genCardListToOffer } from '../../../../utility/tradeCardModalUtils';
 import PlayerMoneyAndInput from './AskOrSendMoney/PlayerMoneyAndInput';
+import { offerTrade } from '../../../../redux/actions/trade';
+import { setShowModal } from '../../../../redux/actions/modal';
+import { modalTypes } from '../../../../utility/constants';
 
-const TradeCardModal = ({siteData, totalPlayers, activePlayer, hideOnClick}) => {
+const TradeCardModal = ({siteData, totalPlayers, activePlayer, hideOnClick, offerTrade, setShowModal}) => {
     const isMounted = useRef(false)
     const [cardLists, setCardLists] = useState({
         currentPlayer: [],
@@ -83,8 +86,10 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer, hideOnClick}) => 
         })
     }
     const onOffer = (e) => {
-        console.log(cardLists)
-        console.log(askOrSendMoney)
+        let data = genCardListToOffer(cardLists)
+        console.log(data)
+        offerTrade(selectedPlayerFromDropdown, activePlayer, cardLists, askOrSendMoney.ask, askOrSendMoney.send)
+        setShowModal(true, modalTypes.TRADE_CARDS_OFFER)
     }
 
     return (
@@ -123,7 +128,8 @@ const mapStateToProps = (store) => {
 } 
 const mapDispatchToProps = (dispatch) => {
     return {
-
+        offerTrade: (to, from, cardLists, ask, send) => dispatch(offerTrade(to, from, cardLists, ask, send)),
+        setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal))
     }
 }
 

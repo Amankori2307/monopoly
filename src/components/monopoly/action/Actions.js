@@ -11,7 +11,7 @@ const Actions = ({setAction, active: disabled, setShowModal}) => {
         setAction(true, actionType)
     }
     const tradeCard = () => {
-        setShowModal(true, modalTypes.TRADE)
+        setShowModal(true, modalTypes.TRADE_CARDS)
     }
     return (
         <div className={style.actions}>

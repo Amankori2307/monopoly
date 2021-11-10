@@ -6,3 +6,19 @@ export const genCardList = (data) => {
         }
     })
 }
+
+function genCardListToOfferHelper(list){
+    let finalList = []
+    for(let i = 0; i<list.length; i++){
+        if(list[i].selected === true){
+            finalList.push(list[i].site)
+        }
+    }
+    return finalList
+}
+export const genCardListToOffer = (cardLists) => {
+    return {
+        currentPlayer: genCardListToOfferHelper(cardLists.currentPlayer),
+        otherPlayer: genCardListToOfferHelper(cardLists.otherPlayer),
+    }
+}

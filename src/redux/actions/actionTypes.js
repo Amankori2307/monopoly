@@ -34,3 +34,6 @@ export const SET_PLAYER_ID_FOR_MY_CARDS_MODAL = "SET_PLAYER_ID_FOR_MY_CARDS_MODA
 
 // Action
 export const SET_ACTION = "SET_ACTION" 
+
+// Trade
+export const OFFER_TRADE = "OFFER_TRADE"
