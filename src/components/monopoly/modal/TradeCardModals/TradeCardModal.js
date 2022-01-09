@@ -87,7 +87,6 @@ const TradeCardModal = ({siteData, totalPlayers, activePlayer, hideOnClick, offe
     }
     const onOffer = (e) => {
         let data = genCardListToOffer(cardLists)
-        console.log(data)
         offerTrade(selectedPlayerFromDropdown, activePlayer, data, askOrSendMoney.ask, askOrSendMoney.send)
         setShowModal(true, modalTypes.TRADE_CARDS_OFFER)
     }
