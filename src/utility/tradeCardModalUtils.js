@@ -18,7 +18,7 @@ function genCardListToOfferHelper(list){
 }
 export const genCardListToOffer = (cardLists) => {
     return {
-        currentPlayer: genCardListToOfferHelper(cardLists.currentPlayer),
-        otherPlayer: genCardListToOfferHelper(cardLists.otherPlayer),
+        recieving: genCardListToOfferHelper(cardLists.currentPlayer),
+        sending: genCardListToOfferHelper(cardLists.otherPlayer),
     }
 }

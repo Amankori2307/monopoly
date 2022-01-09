@@ -1,0 +1,95 @@
+.tradeCardOfferModal{
+    display: flex;
+    flex-direction: row;
+}
+.cardListContainer:nth-child(2), .tradeInfoContainer{ 
+    margin-left: 15px;
+}
+.cardListHeading{
+    margin: 0px 25px 12px 0px;
+    padding: 5px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    border: 1px solid black;
+}
+.cardList{
+    height: 314px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.cardList > div {
+    margin-bottom: 20px;
+    margin-right: 15px;
+}
+.cardList > div:last-child {
+    margin-bottom: 0px !important;
+}
+.cardList::-webkit-scrollbar {
+    width: 10px;
+}
+.cardList::-webkit-scrollbar-track {
+    background-color: #e4e4e4;
+    border-radius: 100px;
+} 
+.cardList::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 100px;
+}
+.tradeInfoContainer{
+    width: 255px;
+}
+.tradeInfoContainer .cardListHeading{
+    margin-right: 0px;
+}
+.tradeInfo{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: calc(100% - 32px);
+}
+.tradeInfo table tbody tr{
+    font-size: 14px;
+}
+
+.tradeInfo table tbody tr th{
+    text-align: left;
+}
+/* Buttons */
+.btnContainer{
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 16px;
+}
+.btn{
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    padding: 4px 10px;
+    cursor: pointer;
+    box-shadow: 2px 3px 3px 0px rgba(0,0,0,0.4);
+    transition: filter 0.2s;
+    margin-right: 10px;
+}
+.btn:last-child{
+    margin-right: unset;
+}
+.btn:hover{
+    filter: brightness(0.9);
+}
+.btn:disabled{
+    cursor: not-allowed;
+}
+.accept{
+    background-color: green;
+    color: white;
+}
+.decline{
+    background-color: red;
+    color: white;
+}

@@ -12,7 +12,7 @@ initialState = {
     from: 0,
     to: 1,
     cardLists: {
-        currentPlayer: [
+        receiving: [
             {
                 id: 6,
                 type: 'site',
@@ -65,7 +65,7 @@ initialState = {
                 built: 0
             }
         ],
-        otherPlayer: [
+        sending: [
             {
                 id: 28,
                 type: 'utility',
