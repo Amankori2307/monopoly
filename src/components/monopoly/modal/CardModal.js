@@ -9,10 +9,20 @@ const CardModal = ({card}) => {
         "If one \"Utility\" is owned rent is 4 times amount shown on dice.",
         "If both \"Utilities\" are owned rent is 10 times shown on dice."
     ]
+    console.log("CARD", card)
         
     const renderUI = () => {
         let UI = null;
         switch(card.type){
+            case undefined:
+                UI = ( 
+                    <div className={`${style.card} ${style.centerWrapper} ${style.radialBackground}`}>
+                        <div className={`${style.circle} ${style.centerWrapper} ${style.column}`}>
+                            <p className={style.heading}>No Cards</p>
+                        </div>
+                    </div>
+                )
+                break;
             case cardTypes.SITE:
                 UI = (
                     <div className={style.card}>
@@ -49,8 +59,7 @@ const CardModal = ({card}) => {
                         {card.isMortgaged && <img src={mortgagedIcon} className={style.mortgageIcon} alt="mortgaged icon" />}
                     </div>
                 )
-                break;
-        
+                break;   
             case cardTypes.UTILITY:    
                 UI = (
                     <div className={style.card}>
@@ -62,8 +71,7 @@ const CardModal = ({card}) => {
                         {card.isMortgaged && <img src={mortgagedIcon} className={style.mortgageIcon} alt="mortgaged icon" />}
                     </div>
                 )
-                break;
-            
+                break; 
             case cardTypes.TAX:    
                 UI = (
                         <div className={`${style.card} ${style.centerWrapper} ${style.radialBackground}`}>

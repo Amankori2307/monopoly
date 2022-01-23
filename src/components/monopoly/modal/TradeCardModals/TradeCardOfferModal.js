@@ -17,13 +17,15 @@ const TradeCardOffer = ({tradeData, setShowModal}) => {
             <div className={style.cardListContainer}>
                 <p className={style.cardListHeading}>Receiving</p>
                 <div className={style.cardList}>
-                    {tradeData.cardLists.recieving.map(card => <CardModal key={card.id} card={card}/>)}
+                    {tradeData.cardLists.receiving && tradeData.cardLists.receiving.map(card => <CardModal key={card.id} card={card}/>)}
+                    {!tradeData.cardLists.receiving && <CardModal card={{}}/>}
                 </div>
             </div>
             <div className={style.cardListContainer}>
                 <p className={style.cardListHeading}>Sending</p>
                 <div className={style.cardList}>
-                    {tradeData.cardLists.sending.map(card => <CardModal key={card.id} card={card}/>)}
+                    {tradeData.cardLists.sending && tradeData.cardLists.sending.map(card => <CardModal key={card.id} card={card}/>)}
+                    {!tradeData.cardLists.sending && <CardModal card={{}}/>}
                 </div>
             </div>
             <div className={style.tradeInfoContainer}>

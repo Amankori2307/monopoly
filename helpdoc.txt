@@ -67,4 +67,5 @@ Trade Card:-
 Issues:
     - Add validation in trade card modal
     - Add headings in trade card and tradecardsoffer modal
+    - Is trade offer card list is empty show no cards text
     
