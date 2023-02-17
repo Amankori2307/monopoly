@@ -1,27 +1,30 @@
-.noCards{
+.noCards {
     width: 300px;
     height: 400px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-.noCards p{
+
+.noCards p {
     font-size: 50px;
     font-weight: bold;
-    color: rgba(0,0,0,0.3);
+    color: rgba(0, 0, 0, 0.3);
     transform: rotate(-20deg);
 }
-.navigationContainer{
+
+.navigationContainer {
     width: 100%;
     background-color: #333;
 }
-.tabNavigation{
+
+.tabNavigation {
     list-style-type: none;
     display: flex;
     margin-bottom: 20px;
 }
 
-.tabNavigation li button{
+.tabNavigation li button {
     width: 100%;
     text-transform: capitalize;
     font-family: sans-serif;
@@ -33,30 +36,36 @@
     cursor: pointer;
     transition: background-color 0.3s;
 }
-.activeTab{
+
+.activeTab {
     background-color: dodgerblue !important;
 }
 
-.myCards{
+.myCards {
     /* height: 400px; */
     width: 80vw;
 }
-.cardList{
+
+.cardList {
     display: flex;
     overflow-x: auto;
     flex-wrap: nowrap;
 }
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .cardList::-webkit-scrollbar {
-    display: none;
+    // display: none;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .cardList {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
 }
-.cardList div{
+
+.cardList div {
     flex-shrink: 0;
     margin: 0px 10px;
 }
