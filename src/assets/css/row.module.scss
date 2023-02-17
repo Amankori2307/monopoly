@@ -4,8 +4,8 @@
 .row {
     display: flex;
     position: absolute;
-    width: $desktopRowWidth;
-    height: calc(100% - $desktopRowWidth);
+    width: $rowWidth;
+    height: calc(100% - $rowWidth);
     flex-direction: column;
     box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.3);
 
@@ -24,7 +24,7 @@
 
     &.row3 {
         left: 0;
-        top: $desktopRowWidth;
+        top: $rowWidth;
         transform: rotate(-90deg);
         transform-origin: 0% 0%;
     }
@@ -37,12 +37,5 @@
 }
 
 @media screen and (max-width: 600px) {
-    .row {
-        width: $mobileRowWidth;
-        height: calc(100% - $mobileRowWidth);
-
-        &.row3 {
-            top: $desktopRowWidth;
-        }
-    }
+    .row {}
 }
