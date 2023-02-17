@@ -1,36 +1,41 @@
-.notFound{
+.notFound {
     background-color: #cacaca;
     height: 90vh;
     display: flex;
     justify-content: center;
     color: #5e5e5e;
 }
-.text{
+
+.text {
     text-align: center;
-    margin-top: 150px;
-}
-.heading{
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: bold;
-    font-size: 150px;
-    line-height: 150px;
-
-}
-.subHeading{
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: bold;
-    font-size: 40px;
-    margin-bottom: 10px;
+    margin-top: 15rem;
 }
 
-@media screen and (max-width: 600px) {
-    .heading{
-        font-size: 100px;
+.heading {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 15rem;
+    line-height: 15rem;
+
+}
+
+.subHeading {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+@media screen and (max-width: 60rem) {
+    .heading {
+        font-size: 10rem;
     }
-    .subHeading{
-        font-size: 20px;
+
+    .subHeading {
+        font-size: 2rem;
     }
-    .description{
-        font-size: 10px;
+
+    .description {
+        font-size: 1rem;
     }
 }

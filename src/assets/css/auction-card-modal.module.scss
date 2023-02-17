@@ -1,33 +1,35 @@
-
-.row{
+.row {
     display: flex;
-    /* justify-content: stretch; */
-    padding: 10px 0px 0px;
+    padding: 1rem 0rem 0rem;
 }
-.btn{
+
+.btn {
     flex-grow: 1;
     flex-basis: 0;
     background-color: none;
     border: none;
-    padding: 4px 10px;
+    padding: 0.4rem 1rem;
     border-radius: 5px;
     cursor: pointer;
     outline: none !important;
 }
-.bid{
+
+.bid {
     color: white;
     background-color: #40b03a;
     margin-right: 10px;
 }
-.fold{
+
+.fold {
     color: white;
     background-color: #ffae19;
 }
-.mr{
+
+.mr {
     margin-right: 20px;
 }
 
-.auctionDetails{
+.auctionDetails {
     width: 255px;
     /* height: 100%; */
     height: 310px;
@@ -38,7 +40,8 @@
     flex-direction: column;
     justify-content: space-between;
 }
-.heading{
+
+.heading {
     color: white;
     background-color: red;
     font-weight: bold;
@@ -46,14 +49,16 @@
     border-radius: 5px;
     padding: 4px 0px;
 }
-.biddingHistory{
+
+.biddingHistory {
     list-style-type: none;
     font-size: 12px;
     padding: 10px 15px;
     color: #aaa;
     font-weight: normal;
 }
-.bidAmount{
+
+.bidAmount {
     font-size: 12px;
     font-weight: bold;
     background-color: #fafafa;
@@ -63,29 +68,36 @@
     display: flex;
 
 }
-.bidAmount input, .bidAmount label{
+
+.bidAmount input,
+.bidAmount label {
     width: 50%;
 }
-.bidAmount input{
+
+.bidAmount input {
     border: none !important;
     outline: none !important;
 }
-.bWhite{
+
+.bWhite {
     background-color: white;
 }
-.playerMoney{
+
+.playerMoney {
     font-size: 12px;
     font-weight: bold;
     background-color: #fafafa;
     border-radius: 4px;
     padding: 4px 10px;
 }
-.actualMoney{
+
+.actualMoney {
     color: red;
-    background-color:#fbe2e2;
+    background-color: #fbe2e2;
     padding: 4px 0px;
 }
-.moneyAfterBidDeuction{
+
+.moneyAfterBidDeuction {
     color: #00aa00;
     padding: 4px 0px;
     background-color: #e2ffe2;
