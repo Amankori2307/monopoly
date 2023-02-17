@@ -1,3 +1,5 @@
+@import "./variables";
+
 .card{
     flex: 1 1 0px;
     display: flex;
@@ -11,7 +13,7 @@
 }
 
 .specialCard{
-    flex-basis: 120px;
+    flex-basis: $desktopRowWidth;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -19,7 +21,6 @@
     font-style: italic;
     background: linear-gradient(0deg, rgba(233,233,233,1) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
     transition: filter 0.3s;
-    /* border-left: 1px solid black; */
 }
 .chest{
     justify-content: center;
@@ -30,7 +31,6 @@
     height: 100%;
     width: 20px;
     opacity: 0.6;
-    /* background-blend-mode: lighten; */
 }
 .details{
     text-align: center;
@@ -49,15 +49,12 @@
 .reverse{
     flex-direction: row-reverse;
     border-left: none;
-    /* border-right: 1px solid black; */
     border-top: none;
-    /* border-bottom: 1px solid black; */
 }   
 
 
 .reverseSpecialCard{
     border-left: none;
-    /* border-right: 1px solid black; */
 }
 
 
@@ -71,7 +68,6 @@
     border-right: 12px solid transparent;
     border-top: 12px solid transparent;
     border-bottom: 12px solid transparent;    
-    /* filter: brightness(90%); */
 }
 
 .soldRev::before{

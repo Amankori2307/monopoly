@@ -1,18 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
-import CardModal from "./modal/CardModal";
-import ModalContainer from "./modal/ModalCotainer";
-import Board from './board/Board';
-import style from '../../assets/css/monopoly.module.scss'
-import Header from '../home/header/Header';
-import Footer from '../home/footer/Footer';
-import BuyCardModal from './modal/BuyCardModal';
-import { modalTypes } from '../../utility/constants';
-import AuctionCardModal from './modal/AuctionCardModal';
+import style from '../../assets/css/monopoly.module.scss';
+import sites from '../../assets/data/boardData.json';
 import { calculateSitePositions, setBoardSize } from '../../redux/actions/board';
 import { setTotalPlayers } from '../../redux/actions/player';
 import { setSites } from '../../redux/actions/site';
-import sites from '../../assets/data/boardData.json'
+import { modalTypes } from '../../utility/constants';
+import Footer from '../home/footer/Footer';
+import Header from '../home/header/Header';
+import Board from './board/Board';
+import AuctionCardModal from './modal/AuctionCardModal';
+import BuyCardModal from './modal/BuyCardModal';
+import CardModal from "./modal/CardModal";
+import ModalContainer from "./modal/ModalCotainer";
 import MyCards from './modal/MyCards';
 
 const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculateSitePositions, setTotalPlayers, setSites }) => {
@@ -21,9 +21,10 @@ const Monopoly = ({ modalData, currentCard, playersData, setBoardSize, calculate
     useEffect(() => {
         let w = window.innerWidth;
         let h = window.innerHeight;
-        let side = (Math.min(w, h) - 100)
+        let boardSize = Math.min(w, h)
+        const margin = boardSize > 600 ? 100 : 40;
         let boardData = {
-            side: side,
+            side: boardSize - margin,
             rowWidth: 120
         }
         setBoardSize(boardData)
