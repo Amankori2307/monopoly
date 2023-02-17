@@ -1,14 +1,14 @@
-.diceContainer{
-    padding:5px;
+.diceContainer {
+    padding: 5px;
     border-radius: 10px;
     position: absolute;
-    bottom:0px;
+    bottom: 0px;
     right: -130px;
     display: flex;
     cursor: pointer;
 }
 
-.dice{
+.dice {
     width: 50px;
     height: 50px;
     border-radius: 10px;
@@ -19,13 +19,21 @@
     color: white;
     font-weight: bold;
 }
-.dice:first-child{
+
+.dice:first-child {
     margin-right: 5px;
 }
 
 .inactive {
-    cursor:not-allowed;
+    cursor: not-allowed;
 }
-.inactive .dice{
+
+.inactive .dice {
     background-color: #888;
+}
+
+@media screen and (max-width: 600px) {
+    .diceContainer {
+        display: none;
+    }
 }

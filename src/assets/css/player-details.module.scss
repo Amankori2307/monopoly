@@ -1,49 +1,57 @@
-.playerDetailsContainer{
+.playerDetailsContainer {
     position: absolute;
     top: 80px;
     right: 10px;
     width: 250px;
 }
-.playerDetails{
-   width: 100%;
-   border-radius: 10px;
-   overflow: hidden !important;
-   margin-bottom: 10px;
-   box-shadow: 2px 3px 3px 0px rgba(0,0,0,0.3);
-   transition: transform 0.3s;
+
+.playerDetails {
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden !important;
+    margin-bottom: 10px;
+    box-shadow: 2px 3px 3px 0px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s;
 }
-.active{
+
+.active {
     transform-origin: 100% 100%;
     transform: scale(1.1);
 }
-.header{
+
+.header {
     position: relative;
 }
-.overley{
-    background-color: rgba(0,0,0,0.2);
+
+.overley {
+    background-color: rgba(0, 0, 0, 0.2);
     position: absolute;
     width: 100%;
     height: 100%;
     top: 0;
     right: 0;
 }
-.playerName{
+
+.playerName {
     font-weight: bold;
     padding: 4px 10px;
     font-size: 14px;
     position: relative;
     z-index: 1;
 }
-.details{
+
+.details {
     padding: 4px 10px 10px;
 }
-.playerMoney{
+
+.playerMoney {
     font-size: 12px;
 }
-.viewMyCards{
+
+.viewMyCards {
     color: white;
     font-size: 12px;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
     border: none;
     padding: 3px 7px;
     border-radius: 3px;
@@ -55,17 +63,25 @@
     background-color: red;
     color: white;
 }
+
 .yellow {
     background-color: yellow;
     color: black;
 }
+
 .green {
     background-color: green;
     color: white;
 }
+
 .blue {
     background-color: blue;
     color: white;
 }
 
 
+@media screen and (max-width: 600px) {
+    .playerDetailsContainer {
+        display: none;
+    }
+}

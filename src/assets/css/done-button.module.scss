@@ -1,4 +1,4 @@
-.doneButton{
+.doneButton {
     position: absolute;
     right: -125px;
     bottom: 60px;
@@ -11,7 +11,14 @@
     color: white;
     cursor: pointer;
 }
-.inactive{
+
+.inactive {
     background-color: #888;
     cursor: not-allowed;
+}
+
+@media screen and (max-width: 600px) {
+    .doneButton {
+        display: none;
+    }
 }
