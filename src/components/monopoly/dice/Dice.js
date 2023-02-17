@@ -1,6 +1,6 @@
-import style from '../../../assets/css/dice.module.css'
+import style from '../../../assets/css/dice.module.scss'
 
-const Dice = ({number}) => {
+const Dice = ({ number }) => {
     return (
         <div className={style.dice}>
             {number}

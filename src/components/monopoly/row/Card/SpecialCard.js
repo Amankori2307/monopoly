@@ -1,4 +1,4 @@
-import style from '../../../../assets/css/card.module.css'
+import style from '../../../../assets/css/card.module.scss'
 import startBG from '../../../../assets/images/start.png'
 import jailBG from '../../../../assets/images/jail.png'
 import resortBG from '../../../../assets/images/resort.png'
@@ -12,7 +12,7 @@ const SpecialCardBG = {
 }
 
 
-const SpecialCard = ({rowNum, active}) => {
+const SpecialCard = ({ rowNum, active }) => {
     const genClassList = () => {
         let classList = "";
         classList += style.specialCard + " "

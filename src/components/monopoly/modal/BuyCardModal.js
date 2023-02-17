@@ -1,4 +1,4 @@
-import style from '../../../assets/css/buy-card-modal.module.css'
+import style from '../../../assets/css/buy-card-modal.module.scss'
 import CardModal from './CardModal'
 import { connect } from 'react-redux'
 import { setShowModal } from '../../../redux/actions/modal'

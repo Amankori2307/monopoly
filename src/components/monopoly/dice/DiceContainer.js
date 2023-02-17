@@ -1,11 +1,11 @@
 import Dice from './Dice'
-import style from '../../../assets/css/dice.module.css'
+import style from '../../../assets/css/dice.module.scss'
 import { useState } from 'react'
 import rollDiceAudio from '../../../assets/audio/rolldice2.wav'
-import {connect} from 'react-redux' 
-import {rollDice} from '../../../redux/actions/dice'
+import { connect } from 'react-redux'
+import { rollDice } from '../../../redux/actions/dice'
 
-const DiceContainer = ({rollDice, isDone})=>{
+const DiceContainer = ({ rollDice, isDone }) => {
     const [disabled, setDisabled] = useState(false)
     const audioElement = new Audio(rollDiceAudio)
     const [number, setNumber] = useState({
@@ -13,10 +13,10 @@ const DiceContainer = ({rollDice, isDone})=>{
         dice2: 6
     })
     const genNumber = () => {
-        return Math.floor(Math.random()*6) + 1
+        return Math.floor(Math.random() * 6) + 1
     }
-    const rollDiceHelper = () =>{
-        let num1 =  genNumber() 
+    const rollDiceHelper = () => {
+        let num1 = genNumber()
         let num2 = genNumber()
         let diceData = {
             dice1: num1,
@@ -28,7 +28,7 @@ const DiceContainer = ({rollDice, isDone})=>{
         return diceData
     }
     const onClick = () => {
-        if(!disabled && !isDone){
+        if (!disabled && !isDone) {
             setDisabled(true) // Disable Dice When Dice Is Rolling
             let interval = setInterval(rollDiceHelper, 50)
             setTimeout(() => {
@@ -38,12 +38,12 @@ const DiceContainer = ({rollDice, isDone})=>{
                 setDisabled(false) // Enable Dice When Dice has finished Rolling
             }, 450)
             audioElement.play()
-        }        
+        }
     }
     return (
-        <div className={`${style.diceContainer} ${isDone?style.inactive:""}`} onClick={onClick} data-testid="dice-container">
-            <Dice number={number.dice1}/>
-            <Dice number={number.dice2}/>
+        <div className={`${style.diceContainer} ${isDone ? style.inactive : ""}`} onClick={onClick} data-testid="dice-container">
+            <Dice number={number.dice1} />
+            <Dice number={number.dice2} />
         </div>
     );
 }

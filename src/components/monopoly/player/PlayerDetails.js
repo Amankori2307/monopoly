@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import style from '../../../assets/css/player-details.module.css'
+import style from '../../../assets/css/player-details.module.scss'
 import { setShowModal, setPlayerIdForMyCardsModal } from '../../../redux/actions/modal'
 import { modalTypes, colors } from '../../../utility/constants';
 const PlayerDetails = ({ playersData, playerId, setShowModal, setPlayerIdForMyCardsModal }) => {

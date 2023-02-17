@@ -1,9 +1,9 @@
-import style from '../../../../assets/css/card.module.css'
-import {colors} from '../../../../utility/constants'
+import style from '../../../../assets/css/card.module.scss'
+import { colors } from '../../../../utility/constants'
 import HouseAndHotel from './HouseAndHotel'
 import mortgagedIcon from '../../../../assets/images/mortgaged.svg'
 
-const SiteOrRealmRailsOrUtilityCard = ({data, rowNum, boughtBy, onCardClick, active}) => {
+const SiteOrRealmRailsOrUtilityCard = ({ data, rowNum, boughtBy, onCardClick, active }) => {
     const genClassList = () => {
         let classList = ""
         classList += style.card + " "

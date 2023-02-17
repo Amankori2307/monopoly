@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import CardModal from "./modal/CardModal";
 import ModalContainer from "./modal/ModalCotainer";
 import Board from './board/Board';
-import style from '../../assets/css/monopoly.module.css'
+import style from '../../assets/css/monopoly.module.scss'
 import Header from '../home/header/Header';
 import Footer from '../home/footer/Footer';
 import BuyCardModal from './modal/BuyCardModal';

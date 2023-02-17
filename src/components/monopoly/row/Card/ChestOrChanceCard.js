@@ -1,6 +1,6 @@
-import style from '../../../../assets/css/card.module.css'
+import style from '../../../../assets/css/card.module.scss'
 
-const ChestOrChanceCard = ({data, active}) => {
+const ChestOrChanceCard = ({ data, active }) => {
     const genClassList = () => {
         let classList = "";
         classList += style.card + " " + style.chest + " "

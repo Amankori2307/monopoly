@@ -1,4 +1,4 @@
-import style from '../../../assets/css/home/footer.module.css'
+import style from '../../../assets/css/home/footer.module.scss'
 const Footer = () => {
     return (
         <div className={`${style.footerContainer} parentContainer`}>

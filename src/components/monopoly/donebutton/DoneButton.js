@@ -1,17 +1,17 @@
 import { connect } from 'react-redux';
-import style from '../../../assets/css/done-button.module.css'
-import {setActivePlayer} from '../../../redux/actions/player'
-import {setIsDone} from '../../../redux/actions/board'
+import style from '../../../assets/css/done-button.module.scss'
+import { setActivePlayer } from '../../../redux/actions/player'
+import { setIsDone } from '../../../redux/actions/board'
 
-const DoneButton = ({isDone, setActivePlayer, setIsDone}) => {
+const DoneButton = ({ isDone, setActivePlayer, setIsDone }) => {
     const done = () => {
-        if(isDone){
+        if (isDone) {
             setActivePlayer();
             setIsDone(false);
         }
     }
     return (
-        <button onClick={done} className={`${style.doneButton} ${!isDone?style.inactive:""}`}>Done</button>
+        <button onClick={done} className={`${style.doneButton} ${!isDone ? style.inactive : ""}`}>Done</button>
     );
 }
 

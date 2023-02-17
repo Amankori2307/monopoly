@@ -1,13 +1,13 @@
-import style from '../../../assets/css/home/main.module.css'
+import style from '../../../assets/css/home/main.module.scss'
 import banner from '../../../assets/images/banner.gif'
 const Main = () => {
     return (
         <div className={style.main}>
             <div className={`${style.bannerContainer} parentContainer`}>
                 <div className={style.banner}>
-                    <img src={banner} alt="banner"/>
+                    <img src={banner} alt="banner" />
                 </div>
-                
+
                 <div className={`${style.bannerText} container`}>
                     <p className={style.title}>Monopoly - Board Game</p>
                     <p className={style.shortDesc}>A real-estate board board game</p>
@@ -22,7 +22,7 @@ const Main = () => {
                 </div>
 
             </div>
-            
+
         </div>
     );
 }

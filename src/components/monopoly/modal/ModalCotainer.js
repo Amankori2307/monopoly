@@ -1,4 +1,4 @@
-import style from '../../../assets/css/modal.module.css'
+import style from '../../../assets/css/modal.module.scss'
 import { connect } from 'react-redux'
 import { setShowModal } from '../../../redux/actions/modal'
 import closeIcon from '../../../assets/images/times-solid.svg'
@@ -16,7 +16,7 @@ const ModalContainer = ({ component: Component, setShowModal, disableHideOnOuter
                 {!disableHideOnOuterClick &&
                     <div className={style.closeStrip} >
                         <span className={style.title}>{title}</span>
-                        <img src={closeIcon} className={style.close} onClick={hideOnClick} alt="close-icon"/>
+                        <img src={closeIcon} className={style.close} onClick={hideOnClick} alt="close-icon" />
                     </div>
                 }
 

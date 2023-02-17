@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useCallback } from 'react';
-import style from '../../../assets/css/player.module.css'
+import style from '../../../assets/css/player.module.scss'
 import { connect } from 'react-redux'
 import { creditPlayerMoney, debitPlayerMoney, movePlayer, setIsMoving } from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
@@ -8,7 +8,7 @@ import { directions } from '../../../utility/constants'
 import * as board from '../../../redux/actions/board'
 import { getAllTurningPoints } from '../../../utility/playerUtility';
 import { setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
-import { appropriateActionHelper} from '../../../utility/player/playerAppropriateActionUtils';
+import { appropriateActionHelper } from '../../../utility/player/playerAppropriateActionUtils';
 
 function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, currentPlayerId, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
     const playerRef = useRef(null) // Player <div> reference
@@ -26,7 +26,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
     const appropriateAction = useCallback(() => {
         let currentSiteId = currentPlayerRef.current.site
         let currentSite = siteDataRef.current.sites[currentSiteId]
-        let {activePlayer, totalPlayers} = playersDataRef.current
+        let { activePlayer, totalPlayers } = playersDataRef.current
         appropriateActionHelper(currentSite, currentPlayerRef.current, activePlayer, totalPlayers, siteDataRef.current, diceSumRef.current, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer)
     }, [creditPlayerMoney, debitPlayerMoney, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
 
@@ -62,7 +62,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         } else if (isMountedRef.current === false) {
             isMountedRef.current = true;
         }
-    }, [ isMoving, appropriateAction, currentPlayerId])
+    }, [isMoving, appropriateAction, currentPlayerId])
 
     // To update playersDataRef and siteDateRef
     useEffect(() => {

@@ -1,12 +1,12 @@
 import { connect } from 'react-redux';
-import {setAction} from '../../../redux/actions/action'
-import style from '../../../assets/css/action-info.module.css'
-const ActionInfo = ({setAction, actionData}) => {
+import { setAction } from '../../../redux/actions/action'
+import style from '../../../assets/css/action-info.module.scss'
+const ActionInfo = ({ setAction, actionData }) => {
     const onClose = () => {
         setAction(false, null)
     }
     return (
-        
+
         <div className={style.actionInfo}>
             <div className={style.header}>
                 <p className={style.title}>{actionData.currentAction}</p>

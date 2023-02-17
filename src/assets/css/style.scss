@@ -1,0 +1,137 @@
+/* {"Capri":"30c5ff","Cerulean Blue":"2b59c3","Paradise Pink":"ef476f","Malachite":"04e762","Orange Yellow Crayola":"efcb68"} */
+
+* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+    font-family: cursive;
+}
+
+.App {
+    width: 100%;
+}
+
+.parentContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+}
+
+.brown {
+    background-color: brown;
+}
+
+.green {
+    background-color: green;
+}
+
+.pink {
+    background-color: pink;
+}
+
+.orange {
+    background-color: orange;
+}
+
+.red {
+    background-color: red;
+}
+
+.yellow {
+    background-color: yellow;
+}
+
+.skyblue {
+    background-color: skyblue;
+}
+
+.blue {
+    background-color: blue;
+}
+
+.grey {
+    background-color: grey;
+}
+
+.lightgrey {
+    background-color: lightgrey;
+}
+
+.black {
+    background-color: black;
+}
+
+.c-white {
+    color: white;
+}
+
+.c-black {
+    color: black;
+}
+
+.linearGradientBrown {
+    background: linear-gradient(0deg, brown 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientGreen {
+    background: linear-gradient(0deg, green 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientPink {
+    background: linear-gradient(0deg, pink 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientOrange {
+    background: linear-gradient(0deg, orange 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientRed {
+    background: linear-gradient(0deg, red 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientYellow {
+    background: linear-gradient(0deg, yellow 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientSkyBlue {
+    background: linear-gradient(0deg, skyblue 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientBlue {
+    background: linear-gradient(0deg, blue 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientGrey {
+    background: linear-gradient(0deg, grey 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+.linearGradientLightGrey {
+    background: linear-gradient(0deg, lightgrey 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 1) 100%);
+}
+
+
+.player-red {
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, red 50%, #000000 86%);
+}
+
+.player-yellow {
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, yellow 50%, #000000 86%);
+}
+
+.player-blue {
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, blue 50%, #000000 86%);
+}
+
+.player-green {
+    background: radial-gradient(circle at 35% 35%, #fcfcfc, #efeff1 4%, green 50%, #000000 86%);
+}
+
+@media screen and (min-width: 1300px) {
+    .container {
+        width: 1300px;
+    }
+}

@@ -1,6 +1,6 @@
 import Footer from "./footer/Footer"
 import Header from "./header/Header"
-import style from '../../assets/css/home/home.module.css'
+import style from '../../assets/css/home/home.module.scss'
 import Main from "./main/Main";
 
 const Home = () => {
