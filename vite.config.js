@@ -7,7 +7,7 @@ export default defineConfig({
     outDir: './dist/monopoly'
   },
   server: {
-    port: 4200,
+    port: 3000,
     open: true,
   },
   test: {

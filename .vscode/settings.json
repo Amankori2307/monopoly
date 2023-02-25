@@ -3,5 +3,9 @@
         "source.fixAll": true,
         "source.organizeImports": true
     },
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "Buildable",
+        "nrwl"
+    ]
 }
