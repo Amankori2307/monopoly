@@ -1,5 +1,8 @@
 {
   "name": "@monopoly/lib//core",
   "version": "0.0.1",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "redux": "^4.2.1"
+  }
 }

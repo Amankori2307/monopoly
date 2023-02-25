@@ -1,16 +1,17 @@
 import { useEffect, useRef, useMemo, useCallback } from 'react';
 import style from '../../../assets/css/player.module.scss'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
 import { creditPlayerMoney, debitPlayerMoney, movePlayer, setIsMoving } from '../../../redux/actions/player'
 import audio1 from '../../../assets/audio/playermove.wav'
 import { setShowModal } from '../../../redux/actions/modal'
 import { directions } from '../../../utility/constants'
-import * as board from '../../../redux/actions/board'
+import { setIsDone } from '@monopoly/lib//core';
 import { getAllTurningPoints } from '../../../utility/playerUtility';
 import { setPlayerPositionRecursiveHelper } from '../../../utility/player/playerPositionUtility';
 import { appropriateActionHelper } from '../../../utility/player/playerAppropriateActionUtils';
 
-function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, currentPlayerId, setShowModal, siteData, setIsDone, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
+function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount, color, currentPlayerId, setShowModal, siteData, debitPlayerMoney, creditPlayerMoney, setIsMoving, noOfCardsInCategory }) {
+    const dispatch = useDispatch();
     const playerRef = useRef(null) // Player <div> reference
     const isMountedRef = useRef(false) // To check if the component has mounted or not
     const playerMoveAudio = useMemo(() => new Audio(audio1), [])
@@ -27,7 +28,7 @@ function Player({ playersData, diceSum, movePlayer, board, setDiceSumCalledCount
         let currentSiteId = currentPlayerRef.current.site
         let currentSite = siteDataRef.current.sites[currentSiteId]
         let { activePlayer, totalPlayers } = playersDataRef.current
-        appropriateActionHelper(currentSite, currentPlayerRef.current, activePlayer, totalPlayers, siteDataRef.current, diceSumRef.current, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, setIsDone, setShowModal, movePlayer)
+        appropriateActionHelper(currentSite, currentPlayerRef.current, activePlayer, totalPlayers, siteDataRef.current, diceSumRef.current, noOfCardsInCategory, debitPlayerMoney, creditPlayerMoney, () => dispatch(setIsDone()), setShowModal, movePlayer)
     }, [creditPlayerMoney, debitPlayerMoney, movePlayer, noOfCardsInCategory, setIsDone, setShowModal])
 
     // To move player when there are multple turns
@@ -93,7 +94,6 @@ const mapDispatchToProps = (dispatch) => {
     return {
         movePlayer: (playerId, currentSite, direction) => dispatch(movePlayer(playerId, currentSite, direction)),
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
-        setIsDone: (isDone) => dispatch(board.setIsDone(isDone)),
         debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
         creditPlayerMoney: (playerId, amount) => dispatch(creditPlayerMoney(playerId, amount)),
         setIsMoving: (playerId, isMoving) => dispatch(setIsMoving(playerId, isMoving)),

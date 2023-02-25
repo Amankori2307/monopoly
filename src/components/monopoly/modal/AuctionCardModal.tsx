@@ -1,17 +1,17 @@
 import style from '../../../assets/css/auction-card-modal.module.scss'
 import CardModal from './CardModal'
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import { useState } from 'react';
 import { debitPlayerMoney } from '../../../redux/actions/player';
-import { setIsDone } from '../../../redux/actions/board'
+import { setIsDone } from '@monopoly/lib//core'
 import { setShowModal } from '../../../redux/actions/modal'
 import { buySite } from '../../../redux/actions/site'
 
 const BID = "BID"
 const FOLD = "FOLD"
 
-const AuctionCardModal = ({ sites, card, totalPlayers, activePlayer, players, debitPlayerMoney, setShowModal, buySite, setIsDone }) => {
-
+const AuctionCardModal = ({ sites, card, totalPlayers, activePlayer, players, debitPlayerMoney, setShowModal, buySite }) => {
+    const dispatch = useDispatch()
     const [playersFoldStatus, setPlayersFoldStatus] = useState(Array(totalPlayers).fill(false))
     const [biddingHistory, setBiddingHistory] = useState([])
     const [activeBidder, setActiveBidder] = useState(activePlayer)
@@ -121,7 +121,7 @@ const AuctionCardModal = ({ sites, card, totalPlayers, activePlayer, players, de
     const wonAuction = (playerId) => {
         debitPlayerMoney(playerId, currentBidAmount);
         buySite(playerId, sites[card]);
-        setIsDone(true);
+        dispatch(setIsDone(true));
         setShowModal(false, null);
     }
     return (
@@ -173,7 +173,6 @@ const mapDispatchToProps = (dispatch) => {
         debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
         setShowModal: (showModal, currentModal) => dispatch(setShowModal(showModal, currentModal)),
         buySite: (playerId, siteData) => dispatch(buySite(playerId, siteData)),
-        setIsDone: (isDone) => dispatch(setIsDone(isDone)),
     }
 }
 

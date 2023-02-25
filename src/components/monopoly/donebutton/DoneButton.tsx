@@ -1,13 +1,14 @@
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import style from '../../../assets/css/done-button.module.scss'
 import { setActivePlayer } from '../../../redux/actions/player'
-import { setIsDone } from '../../../redux/actions/board'
+import { setIsDone } from '@monopoly/lib//core'
 
-const DoneButton = ({ isDone, setActivePlayer, setIsDone }) => {
+const DoneButton = ({ isDone, setActivePlayer }) => {
+    const dispatch = useDispatch()
     const done = () => {
         if (isDone) {
             setActivePlayer();
-            setIsDone(false);
+            dispatch(setIsDone(false));
         }
     }
     return (
@@ -24,7 +25,6 @@ const mapStateToProps = (store) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         setActivePlayer: () => dispatch(setActivePlayer()),
-        setIsDone: (isDone) => dispatch(setIsDone(isDone)),
     }
 }
 
