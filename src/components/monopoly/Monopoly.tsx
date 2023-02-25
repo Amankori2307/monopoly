@@ -1,17 +1,17 @@
-import { useEffect, useRef } from "react";
-import { connect } from "react-redux";
-import style from "../../assets/css/monopoly.module.scss";
-import sites from "../../assets/data/boardData.json";
+import { useEffect, useRef } from 'react';
+import { connect } from 'react-redux';
+import style from '../../assets/css/monopoly.module.scss';
+import sites from '../../assets/data/boardData.json';
 import {
   calculateSitePositions,
-  setBoardSize
-} from "../../redux/actions/board";
-import { setTotalPlayers } from "../../redux/actions/player";
-import { setSites } from "../../redux/actions/site";
-import Footer from "../home/footer/Footer";
-import Header from "../home/header/Header";
-import Board from "./board/Board";
-import ModalWrapper from "./modal/ModalWrapper";
+  setBoardSize,
+} from '../../redux/actions/board';
+import { setTotalPlayers } from '../../redux/actions/player';
+import { setSites } from '../../redux/actions/site';
+import Footer from '../home/footer/Footer';
+import Header from '../home/header/Header';
+import Board from './board/Board';
+import ModalWrapper from './modal/ModalWrapper';
 
 const Monopoly = ({
   setBoardSize,
@@ -38,16 +38,16 @@ const Monopoly = ({
   }, [setBoardSize, calculateSitePositions, setTotalPlayers, setSites]);
 
   return (
-    <>
+    <div className={style.monopoly}>
       {isMounted.current && (
-        <div className={style.monopoly}>
+        <>
           <Header />
           <Board />
           <ModalWrapper />
           <Footer />
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 };
 
