@@ -1,5 +1,5 @@
-import style from '../../../assets/css/home/main.module.scss'
-import banner from '../../../assets/images/banner.gif'
+import style from '../../../assets/css/home/main.module.scss';
+import banner from '../../../assets/images/banner.gif';
 const Main = () => {
     return (
         <div className={style.main}>

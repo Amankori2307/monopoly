@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { connect } from "react-redux";
 import style from "../../assets/css/monopoly.module.scss";
 import sites from "../../assets/data/boardData.json";
 import {
   calculateSitePositions,
-  setBoardSize,
+  setBoardSize
 } from "../../redux/actions/board";
 import { setTotalPlayers } from "../../redux/actions/player";
 import { setSites } from "../../redux/actions/site";
@@ -22,11 +22,11 @@ const Monopoly = ({
   const totalPlayers = 2;
   const isMounted = useRef(false);
   useEffect(() => {
-    let w = window.innerWidth;
-    let h = window.innerHeight;
-    let boardSize = Math.min(w, h);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const boardSize = Math.min(w, h);
     const margin = boardSize > 600 ? 100 : 40;
-    let boardData = {
+    const boardData = {
       side: boardSize - margin,
       rowWidth: 120,
     };
