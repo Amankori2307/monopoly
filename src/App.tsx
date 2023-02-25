@@ -2,7 +2,7 @@ import React from "react";
 import { Route, Routes } from "react-router-dom";
 import "./assets/css/style.scss";
 import Home from "./components/home/Home";
-import Monopoly from "./components/monopoly/Monopoly";
+import Monopoly from "./components/monopoly/monopoly";
 import NotFound from "./components/not_found/NotFound";
 
 function App() {

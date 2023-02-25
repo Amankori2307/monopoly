@@ -1,9 +1,4 @@
-import {
-  calcRowWidth,
-  IBoard,
-  IPositions,
-  PLAYER_SIZE,
-} from 'lib/core/src/lib';
+import { IPositions, PLAYER_SIZE } from 'lib/core/src/lib';
 
 export const calculateSimilarPositions = ({
   site,
@@ -48,6 +43,10 @@ export const calcSiteLength = (side: number): number => {
   return side / 15;
 };
 
+export const calcRowWidth = (side: number): number => {
+  return side / 5;
+};
+
 const calculateSitePostion = (side: number, site: number): IPositions => {
   let right;
   const siteLength = calcSiteLength(side);
@@ -70,8 +69,7 @@ const calculateSitePostion = (side: number, site: number): IPositions => {
   };
 };
 
-export const calculatePositions = (board: IBoard) => {
-  const { side } = board;
+export const calculatePositions = (side: number): IPositions[] => {
   const positions = Array(40);
   for (let site = 0; site < 10; site++) {
     const sitePosition = calculateSitePostion(side, site);
