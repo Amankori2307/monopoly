@@ -28,8 +28,8 @@ const Board = () => {
           sites.slice(10, 20).reverse(),
           sites.slice(20, 30),
           sites.slice(30, 40),
-        ].map((data, index) => (
-          <Row key={index} data={data} rowNum={index + 1} />
+        ].map((sitesInRow, index) => (
+          <Row key={index} sitesInRow={sitesInRow} rowNum={index + 1} />
         ))}
         <DiceContainer />
         <DoneButton />
