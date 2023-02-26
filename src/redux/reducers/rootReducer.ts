@@ -3,6 +3,7 @@ import {
   diceReducer,
   IActionState,
   IBoardState,
+  ICardState,
   IDiceState,
   IModalState,
   IPlayerState,
@@ -10,7 +11,7 @@ import {
 } from '@monopoly/lib//core';
 import { combineReducers } from 'redux';
 import actionReducer from './action';
-import card from './card';
+import cardReducer from './card';
 import modalReducer from './modal';
 import playerReducer from './player';
 import siteReducer from './site';
@@ -22,6 +23,7 @@ export interface IState {
   modalData: IModalState;
   actionData: IActionState;
   siteData: ISiteState;
+  card: ICardState;
 }
 
 export default combineReducers({
@@ -31,5 +33,5 @@ export default combineReducers({
   modalData: modalReducer,
   actionData: actionReducer,
   siteData: siteReducer,
-  card,
+  card: cardReducer,
 });

@@ -87,3 +87,8 @@ export interface ISiteState {
   playersSites: IPlayersSites;
   noOfCardsInCategory: INoOfCardsInCategory;
 }
+
+export interface ICardState {
+  showModal: boolean,
+  currentCard?: ISite
+}
