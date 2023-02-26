@@ -1,4 +1,4 @@
-import { CARD_TYPES, SITE_SUB_TYPE } from '../enums';
+import { CARD_TYPES, MODAL_TYPES, SITE_SUB_TYPE } from '../enums';
 
 export type IActionType = string;
 export type IPlayerSites = ISiteState[];
@@ -67,4 +67,10 @@ export interface IPlayerState {
   activePlayer: number;
   totalPlayers: number;
   players: IPlayer[];
+}
+
+export interface IModalState {
+  showModal: boolean;
+  currentModal: MODAL_TYPES | null;
+  playerIdForMyCardsModal: number | null;
 }
