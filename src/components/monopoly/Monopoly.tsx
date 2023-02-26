@@ -1,7 +1,6 @@
-import { initBoard } from '@monopoly/lib//core';
+import { initBoard, IState } from '@monopoly/lib//core';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { IState } from '../../redux/reducers/rootReducer';
 import style from '../../assets/css/monopoly.module.scss';
 import sites from '../../assets/data/boardData.json';
 import { setTotalPlayers } from '../../redux/actions/player';
@@ -15,7 +14,7 @@ const Monopoly = () => {
   const totalPlayers = 4;
   const isMounted = useRef(false);
   const dispatch = useDispatch();
-  const isDone = useSelector((state:IState) => state.board.isDone);
+  const isDone = useSelector((state: IState) => state.board.isDone);
 
   useEffect(() => {
     if (!isMounted.current) {

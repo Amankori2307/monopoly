@@ -1,4 +1,4 @@
-import { ISite } from 'lib/core/src/lib';
+import { ISite, IState } from 'lib/core/src/lib';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCurrentCard } from '../../../redux/actions/card';
@@ -13,7 +13,6 @@ import {
   redeemSite,
   sellBuild,
 } from '../../../redux/actions/site';
-import { IState } from '../../../redux/reducers/rootReducer';
 import { isBuildable, isSellable } from '../../../utility/cardUtilities';
 import { actionTypes, modalTypes } from '../../../utility/constants';
 import Card from './Card/Card';

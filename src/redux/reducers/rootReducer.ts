@@ -16,15 +16,7 @@ import modalReducer from './modal';
 import playerReducer from './player';
 import siteReducer from './site';
 
-export interface IState {
-  board: IBoardState;
-  dice: IDiceState;
-  playersData: IPlayerState;
-  modalData: IModalState;
-  actionData: IActionState;
-  siteData: ISiteState;
-  card: ICardState;
-}
+
 
 export default combineReducers({
   playersData: playerReducer,

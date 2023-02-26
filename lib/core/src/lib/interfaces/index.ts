@@ -89,6 +89,16 @@ export interface ISiteState {
 }
 
 export interface ICardState {
-  showModal: boolean,
-  currentCard?: ISite
+  showModal: boolean;
+  currentCard?: ISite;
+}
+
+export interface IState {
+  board: IBoardState;
+  dice: IDiceState;
+  playersData: IPlayerState;
+  modalData: IModalState;
+  actionData: IActionState;
+  siteData: ISiteState;
+  card: ICardState;
 }

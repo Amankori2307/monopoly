@@ -1,7 +1,7 @@
+import { IState } from 'lib/core/src/lib';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../../assets/css/action-info.module.scss';
 import { setAction } from '../../../redux/actions/action';
-import { IState } from '../../../redux/reducers/rootReducer';
 const ActionInfo = () => {
   const actionData = useSelector((store: IState) => store.actionData);
   const dispatch = useDispatch();

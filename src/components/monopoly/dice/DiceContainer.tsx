@@ -1,9 +1,8 @@
-import { IDiceState, rollDice } from '@monopoly/lib//core';
+import { IDiceState, IState, rollDice } from '@monopoly/lib//core';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import rollDiceAudio from '../../../assets/audio/rolldice2.wav';
 import style from '../../../assets/css/dice.module.scss';
-import { IState } from '../../../redux/reducers/rootReducer';
 import Dice from './Dice';
 const DiceContainer = () => {
   const isDone = useSelector((state: IState) => state.board.isDone);

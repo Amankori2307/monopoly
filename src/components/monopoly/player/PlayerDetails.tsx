@@ -1,10 +1,10 @@
+import { IState } from 'lib/core/src/lib';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../../assets/css/player-details.module.scss';
 import {
   setPlayerIdForMyCardsModal,
   setShowModal,
 } from '../../../redux/actions/modal';
-import { IState } from '../../../redux/reducers/rootReducer';
 import { colors, modalTypes } from '../../../utility/constants';
 
 interface PlayerDetailsPropsType {

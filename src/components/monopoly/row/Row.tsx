@@ -1,6 +1,5 @@
-import { ISite } from 'lib/core/src/lib';
+import { ISite, IState } from 'lib/core/src/lib';
 import { useSelector } from 'react-redux';
-import { IState } from '../../../../src/redux/reducers/rootReducer';
 import style from '../../../assets/css/row.module.scss';
 import CardWrapper from './CardWrapper';
 

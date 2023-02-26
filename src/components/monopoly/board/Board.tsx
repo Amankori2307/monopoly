@@ -1,6 +1,6 @@
+import { IState } from 'lib/core/src/lib';
 import { useSelector } from 'react-redux';
 import style from '../../../assets/css/board.module.scss';
-import { IState } from '../../../redux/reducers/rootReducer';
 import ActionInfo from '../action/ActionInfo';
 import DiceContainer from '../dice/DiceContainer';
 import DoneButton from '../donebutton/DoneButton';
