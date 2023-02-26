@@ -1,14 +1,17 @@
-import React from "react";
-import { connect } from "react-redux";
+import { IState } from 'lib/core/src/lib';
+import { useSelector } from 'react-redux';
 
-import { modalTypes } from "../../../utility/constants";
-import AuctionCardModal from "./AuctionCardModal";
-import BuyCardModal from "./BuyCardModal";
-import CardModal from "./CardModal";
-import ModalContainer from "./ModalContainer";
-import MyCards from "./MyCards";
+import { modalTypes } from '../../../utility/constants';
+import AuctionCardModal from './AuctionCardModal';
+import BuyCardModal from './BuyCardModal';
+import CardModal from './CardModal';
+import ModalContainer from './ModalContainer';
+import MyCards from './MyCards';
 
-function ModalWrapper({ modalData, currentCard, playersData }) {
+function ModalWrapper() {
+  const modalData = useSelector((store: IState) => store.modalData);
+  const currentCard = useSelector((store: IState) => store.card.currentCard);
+  const playersData = useSelector((store: IState) => store.playersData);
   return (
     <>
       {modalData.showModal && (
@@ -31,7 +34,7 @@ function ModalWrapper({ modalData, currentCard, playersData }) {
             />
           )}
           {modalData.currentModal === modalTypes.MY_CARDS && (
-            <ModalContainer component={MyCards} title={"My Cards"} />
+            <ModalContainer component={MyCards} title={'My Cards'} />
           )}
         </>
       )}
@@ -39,12 +42,4 @@ function ModalWrapper({ modalData, currentCard, playersData }) {
   );
 }
 
-const mapStateToProps = (store) => {
-  return {
-    modalData: store.modalData,
-    currentCard: store.card.currentCard,
-    playersData: store.playersData,
-  };
-};
-
-export default connect(mapStateToProps)(ModalWrapper);
+export default ModalWrapper;
