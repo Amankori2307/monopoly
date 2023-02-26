@@ -1,6 +1,6 @@
 import {
   calcRowWidth,
-  IBoard,
+  IBoardState,
   IPositions,
   PLAYER_SIZE,
 } from 'lib/core/src/lib';
@@ -70,7 +70,7 @@ const calculateSitePostion = (side: number, site: number): IPositions => {
   };
 };
 
-export const calculatePositions = (board: IBoard) => {
+export const calculatePositions = (board: IBoardState) => {
   const { side } = board;
   const positions = Array(40);
   for (let site = 0; site < 10; site++) {

@@ -1,9 +1,9 @@
 import { Board } from '../../../entities';
-import { IBoard } from '../../../interfaces';
+import { IBoardState } from '../../../interfaces';
 import { Action } from '../../../types';
 import { INIT_BOARD, SET_IS_DONE } from './board.actions';
 
-type BoardStateSliceType = IBoard;
+type BoardStateSliceType = IBoardState;
 const initialState: BoardStateSliceType = {
   side: 0,
   rowWidth: 0,

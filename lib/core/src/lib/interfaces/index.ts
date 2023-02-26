@@ -1,20 +1,13 @@
 import { ACTION_TYPES, CARD_TYPES, MODAL_TYPES, SITE_SUB_TYPE } from '../enums';
 
 export type IActionType = string;
-export type IPlayerSites = ISiteState[];
+export type IPlayerSites = ISite[];
 export type IPlayersSites = IPlayerSites[];
 export type IBoughtBy = Array<number | null>;
-
+export type IBoughtSites = Array<number | null>;
 export interface IAction {
   type: IActionType;
   payload: any;
-}
-
-export interface IBoard {
-  side: number;
-  rowWidth: number;
-  positions: IPositions[];
-  isDone: boolean;
 }
 
 export interface IPositions {
@@ -46,7 +39,7 @@ export interface IDiceState {
   setDiceSumCalledCount: number; // To identify if if SET_DICE_SUM was triggered
 }
 
-export interface ISiteState {
+export interface ISite {
   id: number;
   type: CARD_TYPES;
   color: string;
@@ -63,6 +56,13 @@ export interface ISiteState {
   debit?: number;
 }
 
+export interface IBoardState {
+  side: number;
+  rowWidth: number;
+  positions: IPositions[];
+  isDone: boolean;
+}
+
 export interface IPlayerState {
   activePlayer: number;
   totalPlayers: number;
@@ -76,6 +76,14 @@ export interface IModalState {
 }
 
 export interface IActionState {
-  active: boolean,
-  currentAction: ACTION_TYPES | null
+  active: boolean;
+  currentAction: ACTION_TYPES | null;
+}
+
+export interface ISiteState {
+  sites: ISite[];
+  boughtSites: number[];
+  boughtBy: IBoughtBy;
+  playersSites: IPlayersSites;
+  noOfCardsInCategory: INoOfCardsInCategory;
 }
