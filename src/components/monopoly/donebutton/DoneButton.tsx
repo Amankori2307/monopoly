@@ -1,31 +1,25 @@
-import { connect, useDispatch } from 'react-redux';
-import style from '../../../assets/css/done-button.module.scss'
-import { setActivePlayer } from '../../../redux/actions/player'
-import { setIsDone } from '@monopoly/lib//core'
+import { IState, setIsDone } from '@monopoly/lib//core';
+import { useDispatch, useSelector } from 'react-redux';
+import style from '../../../assets/css/done-button.module.scss';
+import { setActivePlayer } from '../../../redux/actions/player';
 
-const DoneButton = ({ isDone, setActivePlayer }) => {
-    const dispatch = useDispatch()
-    const done = () => {
-        if (isDone) {
-            setActivePlayer();
-            dispatch(setIsDone(false));
-        }
+const DoneButton = () => {
+  const isDone = useSelector((store: IState) => store.board.isDone);
+  const dispatch = useDispatch();
+  const done = () => {
+    if (isDone) {
+      dispatch(setActivePlayer());
+      dispatch(setIsDone(false));
     }
-    return (
-        <button onClick={done} className={`${style.doneButton} ${!isDone ? style.inactive : ""}`}>Done</button>
-    );
-}
+  };
+  return (
+    <button
+      onClick={done}
+      className={`${style.doneButton} ${!isDone ? style.inactive : ''}`}
+    >
+      Done
+    </button>
+  );
+};
 
-const mapStateToProps = (store) => {
-    return {
-        isDone: store.board.isDone
-    }
-}
-
-const mapDispatchToProps = (dispatch) => {
-    return {
-        setActivePlayer: () => dispatch(setActivePlayer()),
-    }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(DoneButton)
+export default DoneButton;
