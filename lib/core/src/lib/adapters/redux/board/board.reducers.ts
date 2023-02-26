@@ -3,8 +3,8 @@ import { IBoard } from '../../../interfaces';
 import { Action } from '../../../types';
 import { INIT_BOARD, SET_IS_DONE } from './board.actions';
 
-type StateSliceType = IBoard;
-const initialState: StateSliceType = {
+type BoardStateSliceType = IBoard;
+const initialState: BoardStateSliceType = {
   side: 0,
   rowWidth: 0,
   positions: [],

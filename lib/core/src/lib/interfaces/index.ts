@@ -13,3 +13,9 @@ export interface IPositions {
   site: number;
 }
 
+export interface IDice {
+  dice1: number;
+  dice2: number;
+  diceSum: number | null;
+  setDiceSumCalledCount: number; // To identify if if SET_DICE_SUM was triggered
+}

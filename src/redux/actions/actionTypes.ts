@@ -12,8 +12,6 @@ export const CREDIT_PLAYER_MONEY: ActionType = 'CREDIT_PLAYER_MONEY';
 export const SET_IS_MOVING: ActionType = 'SET_IS_MOVING';
 
 // Dice
-export const ROLL_DICE: ActionType = 'ROLL_DICE';
-export const SET_DICE_SUM: ActionType = 'SET_DICE_SUM';
 
 
 // Sites
