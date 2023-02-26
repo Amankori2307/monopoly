@@ -1,4 +1,4 @@
-import { IDice, rollDice } from '@monopoly/lib//core';
+import { IDiceState, rollDice } from '@monopoly/lib//core';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import rollDiceAudio from '../../../assets/audio/rolldice2.wav';
@@ -36,7 +36,7 @@ const DiceContainer = () => {
       setTimeout(() => {
         clearInterval(interval);
         const diceData = rollDiceHelper();
-        dispatch(rollDice(diceData as IDice));
+        dispatch(rollDice(diceData as IDiceState));
         setDisabled(false); // Enable Dice When Dice has finished Rolling
       }, 450);
       audioElement.play();

@@ -1,16 +1,21 @@
+import { IPlayer } from "lib/core/src/lib"
 import { cardTypes, directions } from "./constants"
 
-export const createPlayerData = (totalPlayers) => {
-    let players = {}
-    for(let player=0; player<totalPlayers; player++){
-        players[player] = {
-            site: 0,
-            previousSite: 0,
-            playerId: player,
-            money: 1000,
-            isMoving: false,
-            direction: directions.FORWARD
-        }
+export const initPlayer = (playerId: number):IPlayer => {
+    return {
+        site: 0,
+        previousSite: 0,
+        playerId: playerId,
+        money: 1000,
+        isMoving: false,
+        direction: directions.FORWARD
+    }
+}
+
+export const createPlayerData = (totalPlayers: number): IPlayer[] => {
+    const players:IPlayer[] = Array(totalPlayers)
+    for(let playerId=0; playerId<totalPlayers; playerId++){
+        players[playerId] = initPlayer(playerId)
     }
     return players
 }

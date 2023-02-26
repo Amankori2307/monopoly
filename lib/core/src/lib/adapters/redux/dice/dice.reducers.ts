@@ -1,16 +1,16 @@
-import { IDice } from '../../../interfaces';
+import { IDiceState } from '../../../interfaces';
 import { Action } from '../../../types';
 import { ROLL_DICE, SET_DICE_SUM } from './dice.actions';
 
-const initialState: IDice = {
+const initialState: IDiceState = {
   dice1: 6,
   dice2: 6,
   diceSum: null,
   setDiceSumCalledCount: 1, // to identify if if SET_DICE_SUM was triggered
 };
 
-const rollDiceReducer = (state: IDice, payload: any): IDice => {
-  payload = payload as IDice;
+const rollDiceReducer = (state: IDiceState, payload: any): IDiceState => {
+  payload = payload as IDiceState;
   return {
     ...state,
     dice1: payload.dice1,
@@ -20,7 +20,7 @@ const rollDiceReducer = (state: IDice, payload: any): IDice => {
   };
 };
 
-const setDiceSumReducer = (state: IDice) => {
+const setDiceSumReducer = (state: IDiceState) => {
   return {
     ...state,
     setDiceSumCalledCount: state.setDiceSumCalledCount + 1,
@@ -28,7 +28,7 @@ const setDiceSumReducer = (state: IDice) => {
   };
 };
 
-export function diceReducer(state = initialState, action: Action): IDice {
+export function diceReducer(state = initialState, action: Action): IDiceState {
   const { type, payload } = action;
 
   switch (type) {

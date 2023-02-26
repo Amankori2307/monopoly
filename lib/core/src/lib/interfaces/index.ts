@@ -1,12 +1,12 @@
 import { CARD_TYPES, SITE_SUB_TYPE } from '../enums';
 
-export type TActionType = string;
-export type TPlayerSites = ISite[];
-export type TPlayersSites = TPlayerSites[];
-export type TBoughtBy = Array<number | null>;
+export type IActionType = string;
+export type IPlayerSites = ISiteState[];
+export type IPlayersSites = IPlayerSites[];
+export type IBoughtBy = Array<number | null>;
 
-export interface Action {
-  type: TActionType;
+export interface IAction {
+  type: IActionType;
   payload: any;
 }
 
@@ -25,14 +25,28 @@ export interface IPositions {
   site: number;
 }
 
-export interface IDice {
+export type INoOfCardsInCategory = {
+  [key in SITE_SUB_TYPE]: number;
+};
+
+export interface IPlayer {
+  site: number;
+  previousSite: number;
+  playerId: number;
+  money: number;
+  isMoving: boolean;
+  direction: boolean;
+}
+
+// Reducer State Interfaces
+export interface IDiceState {
   dice1: number;
   dice2: number;
   diceSum: number | null;
   setDiceSumCalledCount: number; // To identify if if SET_DICE_SUM was triggered
 }
 
-export interface ISite {
+export interface ISiteState {
   id: number;
   type: CARD_TYPES;
   color: string;
@@ -49,6 +63,8 @@ export interface ISite {
   debit?: number;
 }
 
-export type TNoOfCardsInCategory = {
-  [key in SITE_SUB_TYPE]: number;
-};
+export interface IPlayerState {
+  activePlayer: number;
+  totalPlayers: number;
+  players: IPlayer[];
+}
