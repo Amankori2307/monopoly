@@ -1,3 +1,9 @@
+import {
+  buildOnSite,
+  mortgageSite,
+  redeemSite,
+  sellBuild,
+} from '@monopoly/lib//core';
 import { ISite, IState } from 'lib/core/src/lib';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,12 +13,6 @@ import {
   creditPlayerMoney,
   debitPlayerMoney,
 } from '../../../redux/actions/player';
-import {
-  buildOnSite,
-  mortgageSite,
-  redeemSite,
-  sellBuild,
-} from '../../../redux/actions/site';
 import { isBuildable, isSellable } from '../../../utility/cardUtilities';
 import { actionTypes, modalTypes } from '../../../utility/constants';
 import Card from './Card/Card';

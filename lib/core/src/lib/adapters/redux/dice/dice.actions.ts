@@ -1,8 +1,7 @@
-import { IDiceState } from '../../../interfaces';
-import { ActionType } from '../../../types';
+import { IActionType, IDiceState } from '../../../interfaces';
 
-export const ROLL_DICE: ActionType = 'ROLL_DICE';
-export const SET_DICE_SUM: ActionType = 'SET_DICE_SUM';
+export const ROLL_DICE: IActionType = 'ROLL_DICE';
+export const SET_DICE_SUM: IActionType = 'SET_DICE_SUM';
 
 export function rollDice(diceData: IDiceState) {
   return {

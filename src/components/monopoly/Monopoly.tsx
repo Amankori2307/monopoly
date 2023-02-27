@@ -1,10 +1,9 @@
-import { initBoard, IState } from '@monopoly/lib//core';
+import { initBoard, IState, setSites } from '@monopoly/lib//core';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../assets/css/monopoly.module.scss';
 import sites from '../../assets/data/boardData.json';
 import { setTotalPlayers } from '../../redux/actions/player';
-import { setSites } from '../../redux/actions/site';
 import Footer from '../home/footer/Footer';
 import Header from '../home/header/Header';
 import Board from './board/Board';

@@ -1,5 +1,4 @@
-import { IDiceState } from '../../../interfaces';
-import { Action } from '../../../types';
+import { IAction, IDiceState } from '../../../interfaces';
 import { ROLL_DICE, SET_DICE_SUM } from './dice.actions';
 
 const initialState: IDiceState = {
@@ -28,7 +27,7 @@ const setDiceSumReducer = (state: IDiceState) => {
   };
 };
 
-export function diceReducer(state = initialState, action: Action): IDiceState {
+export function diceReducer(state = initialState, action: IAction): IDiceState {
   const { type, payload } = action;
 
   switch (type) {

@@ -1,6 +1,5 @@
 import { Board } from '../../../entities';
-import { IBoardState } from '../../../interfaces';
-import { Action } from '../../../types';
+import { IAction, IBoardState } from '../../../interfaces';
 import { INIT_BOARD, SET_IS_DONE } from './board.actions';
 
 type BoardStateSliceType = IBoardState;
@@ -11,7 +10,7 @@ const initialState: BoardStateSliceType = {
   isDone: false,
 };
 
-export const boardReducer = (state = initialState, action: Action) => {
+export const boardReducer = (state = initialState, action: IAction) => {
   const { type, payload } = action;
   const board = new Board();
 

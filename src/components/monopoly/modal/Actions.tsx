@@ -1,13 +1,13 @@
 import { IState } from 'lib/core/src/lib';
 import { useDispatch, useSelector } from 'react-redux';
-import { setAction } from 'src/redux/actions/action';
 import style from '../../../assets/css/actions.module.scss';
+import { setAction } from '../../../redux/actions/action';
 import { actionTypes } from '../../../utility/constants';
 
 const Actions = () => {
   const active = useSelector((store: IState) => store.actionData.active);
   const dispatch = useDispatch();
-  const setActionHelper = (e: MouseEvent<HTMLElement> ) => {
+  const setActionHelper = (e: MouseEvent<HTMLElement>) => {
     const elem = e.target;
     const actionType = elem.getAttribute('action-type');
     dispatch(setAction(true, actionType));

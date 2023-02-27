@@ -14,13 +14,6 @@ export const SET_IS_MOVING: ActionType = 'SET_IS_MOVING';
 // Dice
 
 
-// Sites
-export const BUY_SITE: ActionType = 'BUY_SITE';
-export const SET_SITES: ActionType = 'SET_SITES';
-export const MORTGAGE_SITE: ActionType = 'MORTGAGE_SITE';
-export const REDEEM_SITE: ActionType = 'REDEEM_SITE';
-export const BUILD_ON_SITE: ActionType = 'BUILD_ON_SITE';
-export const SELL_BUILD: ActionType = 'SELL_BUILD';
 
 // Modal
 export const SET_PLAYER_ID_FOR_MY_CARDS_MODAL: ActionType =
