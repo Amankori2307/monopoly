@@ -2,7 +2,7 @@ import { buySite, debitPlayerMoney, setIsDone } from '@monopoly/lib//core';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../../assets/css/auction-card-modal.module.scss';
-import { setShowModal } from '../../../redux/actions/modal';
+import { setShowModal } from '@monopoly/lib//core';
 import CardModal from './CardModal';
 
 const BID = 'BID';

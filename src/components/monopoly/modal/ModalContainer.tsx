@@ -1,7 +1,7 @@
-import { connect } from "react-redux";
-import style from "../../../assets/css/modal.module.scss";
-import closeIcon from "../../../assets/images/times-solid.svg";
-import { setShowModal } from "../../../redux/actions/modal";
+import { setShowModal } from '@monopoly/lib//core';
+import { connect } from 'react-redux';
+import style from '../../../assets/css/modal.module.scss';
+import closeIcon from '../../../assets/images/times-solid.svg';
 
 const ModalContainer = ({
   component: Component,
@@ -19,7 +19,7 @@ const ModalContainer = ({
   return (
     <div
       className={style.modalContainer}
-      onClick={() => (disableHideOnOuterClick ? "" : hideOnClick())}
+      onClick={() => (disableHideOnOuterClick ? '' : hideOnClick())}
     >
       <div className={style.cardModal} onClick={preventModalCloseOnClick}>
         {!disableHideOnOuterClick && (

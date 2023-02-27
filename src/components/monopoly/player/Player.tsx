@@ -7,12 +7,12 @@ import {
   setIsDone,
   setIsMoving,
   setPlayerPositionRecursiveHelper,
+  setShowModal,
 } from '@monopoly/lib//core';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { connect, useDispatch } from 'react-redux';
 import audio1 from '../../../assets/audio/playermove.wav';
 import style from '../../../assets/css/player.module.scss';
-import { setShowModal } from '../../../redux/actions/modal';
 import { directions } from '../../../utility/constants';
 
 function Player({

@@ -6,11 +6,11 @@ import {
   redeemSite,
   sellBuild,
   setCurrentCard,
+  setShowModal,
 } from '@monopoly/lib//core';
 import { ISite, IState } from 'lib/core/src/lib';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setShowModal } from '../../../redux/actions/modal';
 import { isBuildable, isSellable } from '../../../utility/cardUtilities';
 import { actionTypes, modalTypes } from '../../../utility/constants';
 import Card from './Card/Card';

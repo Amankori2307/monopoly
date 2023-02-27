@@ -1,10 +1,7 @@
+import { setPlayerIdForMyCardsModal, setShowModal } from '@monopoly/lib//core';
 import { IState } from 'lib/core/src/lib';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../../assets/css/player-details.module.scss';
-import {
-  setPlayerIdForMyCardsModal,
-  setShowModal,
-} from '../../../redux/actions/modal';
 import { colors, modalTypes } from '../../../utility/constants';
 
 interface PlayerDetailsPropsType {
