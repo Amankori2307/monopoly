@@ -1,8 +1,7 @@
-import { buySite, setIsDone } from '@monopoly/lib//core';
+import { buySite, debitPlayerMoney, setIsDone } from '@monopoly/lib//core';
 import { connect, useDispatch } from 'react-redux';
 import style from '../../../assets/css/buy-card-modal.module.scss';
 import { setShowModal } from '../../../redux/actions/modal';
-import { debitPlayerMoney } from '../../../redux/actions/player';
 import { modalTypes } from '../../../utility/constants';
 import CardModal from './CardModal';
 const BuyCardModal = ({

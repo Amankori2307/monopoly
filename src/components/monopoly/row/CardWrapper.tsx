@@ -1,5 +1,7 @@
 import {
   buildOnSite,
+  creditPlayerMoney,
+  debitPlayerMoney,
   mortgageSite,
   redeemSite,
   sellBuild,
@@ -9,10 +11,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCurrentCard } from '../../../redux/actions/card';
 import { setShowModal } from '../../../redux/actions/modal';
-import {
-  creditPlayerMoney,
-  debitPlayerMoney,
-} from '../../../redux/actions/player';
 import { isBuildable, isSellable } from '../../../utility/cardUtilities';
 import { actionTypes, modalTypes } from '../../../utility/constants';
 import Card from './Card/Card';

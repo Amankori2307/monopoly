@@ -28,7 +28,7 @@ export interface IPlayer {
   playerId: number;
   money: number;
   isMoving: boolean;
-  direction: boolean;
+  direction: number;
 }
 
 // Reducer State Interfaces

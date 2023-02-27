@@ -1,16 +1,10 @@
-import {
-  Action,
-  ISite,
-  TActionType,
-  TBoughtBy,
-  TNoOfCardsInCategory,
-  TPlayersSites,
-} from '../../../interfaces';
+import { IAction, IActionType, ISiteState } from '../../../interfaces';
 import {
   calcNoOfCardsInCategory,
   initNoOfCardsInCategory,
   initPlayersSites,
 } from '../../../utils/site.utils';
+
 import {
   BUILD_ON_SITE,
   BUY_SITE,
@@ -19,14 +13,6 @@ import {
   SELL_BUILD,
   SET_SITES,
 } from './site.actions';
-
-export interface ISiteState {
-  sites: ISite[];
-  boughtSites: number[];
-  boughtBy: TBoughtBy;
-  playersSites: TPlayersSites;
-  noOfCardsInCategory: TNoOfCardsInCategory;
-}
 
 const initialState: ISiteState = {
   sites: [],
@@ -87,7 +73,7 @@ const redeemOrMortgageReducer = (
 const sellBuildOrBuildOnSiteReducer = (
   state: ISiteState,
   payload: any,
-  type: TActionType
+  type: IActionType
 ): ISiteState => {
   const _playersSites = { ...state.playersSites };
   const curentPlayersSites = [..._playersSites[payload.playerId]];
@@ -114,7 +100,7 @@ const sellBuildOrBuildOnSiteReducer = (
 
 export const siteReducer = (
   state = initialState,
-  action: Action
+  action: IAction
 ): ISiteState => {
   const { type, payload } = action;
   switch (type) {

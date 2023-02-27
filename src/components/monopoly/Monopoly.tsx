@@ -1,9 +1,13 @@
-import { initBoard, IState, setSites } from '@monopoly/lib//core';
+import {
+  BOARD_DATA,
+  initBoard,
+  IState,
+  setSites,
+  setTotalPlayers,
+} from '@monopoly/lib//core';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../assets/css/monopoly.module.scss';
-import sites from '../../assets/data/boardData.json';
-import { setTotalPlayers } from '../../redux/actions/player';
 import Footer from '../home/footer/Footer';
 import Header from '../home/header/Header';
 import Board from './board/Board';
@@ -19,7 +23,7 @@ const Monopoly = () => {
     if (!isMounted.current) {
       dispatch(initBoard(600));
       dispatch(setTotalPlayers(totalPlayers));
-      dispatch(setSites([...sites]));
+      dispatch(setSites([...BOARD_DATA]));
       isMounted.current = true;
     }
   }, [dispatch, isDone]);
