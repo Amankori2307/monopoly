@@ -1,7 +1,7 @@
+import { setAction } from '@monopoly/lib//core';
 import { IState } from 'lib/core/src/lib';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../../assets/css/actions.module.scss';
-import { setAction } from '../../../redux/actions/action';
 import { actionTypes } from '../../../utility/constants';
 
 const Actions = () => {
