@@ -1,7 +1,7 @@
 import { IActionType } from 'lib/core/src/lib';
 
 // Modal
-export const SET_CURRENT_CARD: IActionType = 'SET_CURRENT_CARD';
+
 
 // Dice
 

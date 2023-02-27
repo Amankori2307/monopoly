@@ -5,11 +5,11 @@ import {
   mortgageSite,
   redeemSite,
   sellBuild,
+  setCurrentCard,
 } from '@monopoly/lib//core';
 import { ISite, IState } from 'lib/core/src/lib';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCurrentCard } from '../../../redux/actions/card';
 import { setShowModal } from '../../../redux/actions/modal';
 import { isBuildable, isSellable } from '../../../utility/cardUtilities';
 import { actionTypes, modalTypes } from '../../../utility/constants';

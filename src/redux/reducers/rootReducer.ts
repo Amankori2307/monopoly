@@ -1,12 +1,12 @@
 import {
   boardReducer,
+  cardReducer,
   diceReducer,
   playerReducer,
   siteReducer,
 } from '@monopoly/lib//core';
 import { combineReducers } from 'redux';
 import actionReducer from './action';
-import cardReducer from './card';
 import modalReducer from './modal';
 
 export default combineReducers({
