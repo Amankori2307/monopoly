@@ -16,7 +16,7 @@ const initialState: IPlayerState = {
 };
 
 const movePlayerReducer = (state: IPlayerState, payload: any): IPlayerState => {
-  const players = state.players;
+  const players = [...state.players];
   const currentPlayer = players[payload.playerId];
   players[payload.playerId] = {
     ...currentPlayer,
@@ -79,10 +79,11 @@ const setIsMovingReducer = (
   state: IPlayerState,
   payload: any
 ): IPlayerState => {
-  const _state = { ...state };
-  _state.players[payload.playerId].isMoving = payload.isMoving;
+  const players = [...state.players];
+  players[payload.playerId].isMoving = payload.isMoving;
   return {
-    ..._state,
+    ...state,
+    ...players,
   };
 };
 

@@ -1,13 +1,29 @@
-import { createStore } from 'redux';
-// import thunk from "redux-thunk";
-import rootReducer from './reducers/rootReducer';
+import {
+  actionReducer,
+  boardReducer,
+  cardReducer,
+  diceReducer,
+  modalReducer,
+  playerReducer,
+  siteReducer,
+} from '@monopoly/lib//core';
+import { configureStore } from '@reduxjs/toolkit';
 
-export default function configureStore() {
-  return createStore(
-    rootReducer,
-    process.env.NODE_ENV === 'development'
-      ? window.__REDUX_DEVTOOLS_EXTENSION__ &&
-          window.__REDUX_DEVTOOLS_EXTENSION__()
-      : ''
-  );
-}
+const rootReducer = {
+  playersData: playerReducer,
+  dice: diceReducer,
+  board: boardReducer,
+  modalData: modalReducer,
+  actionData: actionReducer,
+  siteData: siteReducer,
+  card: cardReducer,
+};
+
+const store = configureStore({
+  reducer: rootReducer,
+  devTools: true,
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+export default store;
