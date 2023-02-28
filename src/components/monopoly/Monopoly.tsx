@@ -1,12 +1,12 @@
 import {
   BOARD_DATA,
   initBoard,
-  IState,
   setSites,
   setTotalPlayers,
 } from '@monopoly/lib//core';
 import { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../assets/css/monopoly.module.scss';
 import Footer from '../home/footer/Footer';
 import Header from '../home/header/Header';
@@ -16,8 +16,8 @@ import ModalWrapper from './modal/ModalWrapper';
 const Monopoly = () => {
   const totalPlayers = 4;
   const isMounted = useRef(false);
-  const dispatch = useDispatch();
-  const isDone = useSelector((state: IState) => state.board.isDone);
+  const dispatch = useAppDispatch();
+  const isDone = useAppSelector((state) => state.board.isDone);
 
   useEffect(() => {
     if (!isMounted.current) {

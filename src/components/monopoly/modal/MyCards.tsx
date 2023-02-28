@@ -1,15 +1,12 @@
-import { IState } from 'lib/core/src/lib';
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/my-cards.module.scss';
 import CardModal from './CardModal';
 
 const MyCards = () => {
-  const playersSites = useSelector(
-    (store: IState) => store.siteData.playersSites
-  );
-  const playerIdForMyCardsModal = useSelector(
-    (store: IState) => store.modalData.playerIdForMyCardsModal
+  const playersSites = useAppSelector((store) => store.siteData.playersSites);
+  const playerIdForMyCardsModal = useAppSelector(
+    (store) => store.modalData.playerIdForMyCardsModal
   );
 
   const [groupedCards, setGroupedCards] = useState({});

@@ -1,5 +1,5 @@
-import { IState, MODAL_TYPES } from 'lib/core/src/lib';
-import { useSelector } from 'react-redux';
+import { MODAL_TYPES } from 'lib/core/src/lib';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 
 import AuctionCardModal from './AuctionCardModal';
 import BuyCardModal from './BuyCardModal';
@@ -8,9 +8,9 @@ import ModalContainer from './ModalContainer';
 import MyCards from './MyCards';
 
 function ModalWrapper() {
-  const modalData = useSelector((store: IState) => store.modalData);
-  const currentCard = useSelector((store: IState) => store.card.currentCard);
-  const playersData = useSelector((store: IState) => store.playersData);
+  const modalData = useAppSelector((store) => store.modalData);
+  const currentCard = useAppSelector((store) => store.card.currentCard);
+  const playersData = useAppSelector((store) => store.playersData);
   return (
     <>
       {modalData.showModal && (

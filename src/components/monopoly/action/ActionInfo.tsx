@@ -1,10 +1,11 @@
 import { setAction } from '@monopoly/lib//core';
-import { IState } from 'lib/core/src/lib';
-import { useDispatch, useSelector } from 'react-redux';
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/action-info.module.scss';
+
 const ActionInfo = () => {
-  const actionData = useSelector((store: IState) => store.actionData);
-  const dispatch = useDispatch();
+  const actionData = useAppSelector((store) => store.actionData);
+  const dispatch = useAppDispatch();
   const onClose = () => {
     dispatch(setAction(false, null));
   };

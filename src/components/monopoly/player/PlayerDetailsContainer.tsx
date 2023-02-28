@@ -1,11 +1,10 @@
-import { IState } from 'lib/core/src/lib';
-import { useSelector } from 'react-redux';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/player-details.module.scss';
 import PlayerDetails from './PlayerDetails';
 
 const PlayerDetailsContainer = () => {
-  const totalPlayers = useSelector(
-    (store: IState) => store.playersData.totalPlayers
+  const totalPlayers = useAppSelector(
+    (store) => store.playersData.totalPlayers
   );
   return (
     <div className={style.playerDetailsContainer}>

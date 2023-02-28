@@ -13,3 +13,6 @@ export const colorsMapping = {
   [COLORS.ORANGE]: 'orange',
   [COLORS.PINK]: 'pink',
 };
+
+export const BID = 'BID';
+export const FOLD = 'FOLD';

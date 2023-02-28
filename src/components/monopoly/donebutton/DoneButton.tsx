@@ -1,10 +1,11 @@
-import { IState, setActivePlayer, setIsDone } from '@monopoly/lib//core';
-import { useDispatch, useSelector } from 'react-redux';
+import { setActivePlayer, setIsDone } from '@monopoly/lib//core';
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/done-button.module.scss';
 
 const DoneButton = () => {
-  const isDone = useSelector((store: IState) => store.board.isDone);
-  const dispatch = useDispatch();
+  const isDone = useAppSelector((store) => store.board.isDone);
+  const dispatch = useAppDispatch();
   const done = () => {
     if (isDone) {
       dispatch(setActivePlayer());

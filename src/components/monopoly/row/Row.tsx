@@ -1,5 +1,5 @@
-import { ISite, IState } from 'lib/core/src/lib';
-import { useSelector } from 'react-redux';
+import { ISite } from 'lib/core/src/lib';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/row.module.scss';
 import CardWrapper from './CardWrapper';
 
@@ -10,7 +10,7 @@ interface RowPropsType {
 
 const Row = (props: RowPropsType) => {
   const { rowNum, sitesInRow } = props;
-  const boughtBy = useSelector((store: IState) => store.siteData.boughtBy);
+  const boughtBy = useAppSelector((store) => store.siteData.boughtBy);
   return (
     <div className={`${style.row} ${style['row' + rowNum]}`}>
       {sitesInRow.map((site, index) => (

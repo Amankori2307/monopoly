@@ -1,12 +1,14 @@
 import { IDiceState, IState, rollDice } from '@monopoly/lib//core';
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import rollDiceAudio from '../../../assets/audio/rolldice2.wav';
 import style from '../../../assets/css/dice.module.scss';
 import Dice from './Dice';
+
 const DiceContainer = () => {
-  const isDone = useSelector((state: IState) => state.board.isDone);
-  const dispatch = useDispatch();
+  const isDone = useAppSelector((state: IState) => state.board.isDone);
+  const dispatch = useAppDispatch();
   const [disabled, setDisabled] = useState(false);
   const audioElement = new Audio(rollDiceAudio);
   const [number, setNumber] = useState({

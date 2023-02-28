@@ -1,5 +1,4 @@
-import { IState } from 'lib/core/src/lib';
-import { useSelector } from 'react-redux';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/board.module.scss';
 import ActionInfo from '../action/ActionInfo';
 import DiceContainer from '../dice/DiceContainer';
@@ -10,12 +9,12 @@ import PlayerDetailsContainer from '../player/PlayerDetailsContainer';
 import Row from '../row/Row';
 
 const Board = () => {
-  const side = useSelector((store: IState) => store.board.side);
-  const totalPlayers = useSelector(
-    (store: IState) => store.playersData.totalPlayers
+  const side = useAppSelector((store) => store.board.side);
+  const totalPlayers = useAppSelector(
+    (store) => store.playersData.totalPlayers
   );
-  const sites = useSelector((store: IState) => store.siteData.sites);
-  const active = useSelector((store: IState) => store.actionData.active);
+  const sites = useAppSelector((store) => store.siteData.sites);
+  const active = useAppSelector((store) => store.actionData.active);
 
   return (
     <>

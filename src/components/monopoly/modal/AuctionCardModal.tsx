@@ -1,21 +1,27 @@
-import { buySite, debitPlayerMoney, setIsDone } from '@monopoly/lib//core';
+import {
+  BID,
+  buySite,
+  debitPlayerMoney,
+  FOLD,
+  setIsDone,
+  setShowModal,
+} from '@monopoly/lib//core';
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/auction-card-modal.module.scss';
-import { setShowModal } from '@monopoly/lib//core';
 import CardModal from './CardModal';
 
-const BID = 'BID';
-const FOLD = 'FOLD';
-
-// debitPlayerMoney, setShowModal, buySite
-
 const AuctionCardModal = ({ card }) => {
-  const sites = useSelector((store) => store.siteData.sites);
-  const totalPlayers = useSelector((store) => store.playersData.totalPlayers);
-  const activePlayer = useSelector((store) => store.playersData.activePlayer);
-  const players = useSelector((store) => store.playersData.players);
-  const dispatch = useDispatch();
+  const sites = useAppSelector((store) => store.siteData.sites);
+  const totalPlayers = useAppSelector(
+    (store) => store.playersData.totalPlayers
+  );
+  const activePlayer = useAppSelector(
+    (store) => store.playersData.activePlayer
+  );
+  const players = useAppSelector((store) => store.playersData.players);
+  const dispatch = useAppDispatch();
 
   const [playersFoldStatus, setPlayersFoldStatus] = useState(
     Array(totalPlayers).fill(false)

@@ -13,12 +13,11 @@ import {
   isBuildable,
   ISite,
   isSellable,
-  IState,
   MODAL_TYPES,
 } from 'lib/core/src/lib';
 import { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import Card from './Card/Card';
 
 interface CardWrapperPropsType {
@@ -26,21 +25,20 @@ interface CardWrapperPropsType {
   rowNum: number;
   boughtBy: number;
 }
+
 const CardWrapper = (props: CardWrapperPropsType) => {
   const { site, rowNum, boughtBy } = props;
 
-  const actionData = useSelector((store: IState) => store.actionData);
-  const playersSites = useSelector(
-    (store: IState) => store.siteData.playersSites
+  const actionData = useAppSelector((store) => store.actionData);
+  const playersSites = useAppSelector((store) => store.siteData.playersSites);
+  const activePlayer = useAppSelector(
+    (store) => store.playersData.activePlayer
   );
-  const activePlayer = useSelector(
-    (store: IState) => store.playersData.activePlayer
-  );
-  const noOfCardsInCategory = useSelector(
-    (store: IState) => store.siteData.noOfCardsInCategory
+  const noOfCardsInCategory = useAppSelector(
+    (store) => store.siteData.noOfCardsInCategory
   );
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const [isActionable, setIsActionable] = useState(false);
 
