@@ -1,8 +1,8 @@
 import { setPlayerIdForMyCardsModal, setShowModal } from '@monopoly/lib//core';
-import { IState } from 'lib/core/src/lib';
+import { colorsMapping, IState, MODAL_TYPES } from 'lib/core/src/lib';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../../assets/css/player-details.module.scss';
-import { colors, modalTypes } from '../../../utility/constants';
+
 
 interface PlayerDetailsPropsType {
   playerId: number;
@@ -15,10 +15,10 @@ const PlayerDetails = (props: PlayerDetailsPropsType) => {
 
   const player = playersData.players[playerId];
   const active = playersData.activePlayer === playerId;
-  const color = colors[playerId];
+  const color = colorsMapping[playerId];
 
   const viewMyCards = () => {
-    dispatch(setShowModal(true, modalTypes.MY_CARDS));
+    dispatch(setShowModal(true, MODAL_TYPES.MY_CARDS));
     dispatch(setPlayerIdForMyCardsModal(player.playerId));
   };
 

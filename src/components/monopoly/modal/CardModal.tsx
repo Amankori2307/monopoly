@@ -1,7 +1,6 @@
-import { ISite } from 'lib/core/src/lib';
+import { CARD_TYPES, ISite } from 'lib/core/src/lib';
 import style from '../../../assets/css/card-modal.module.scss';
 import mortgagedIcon from '../../../assets/images/mortgaged.svg';
-import { cardTypes } from '../../../utility/constants';
 
 interface CardModalPropsType {
   card: ISite;
@@ -19,7 +18,7 @@ const CardModal = (props: CardModalPropsType) => {
   const renderUI = () => {
     let UI = null;
     switch (card.type) {
-      case cardTypes.SITE:
+      case CARD_TYPES.SITE:
         UI = (
           <div className={style.card}>
             <p
@@ -55,7 +54,7 @@ const CardModal = (props: CardModalPropsType) => {
           </div>
         );
         break;
-      case cardTypes.REALM_RAILS:
+      case CARD_TYPES.REALM_RAILS:
         UI = (
           <div className={style.card}>
             <p
@@ -89,7 +88,7 @@ const CardModal = (props: CardModalPropsType) => {
         );
         break;
 
-      case cardTypes.UTILITY:
+      case CARD_TYPES.UTILITY:
         UI = (
           <div className={style.card}>
             <p
@@ -116,7 +115,7 @@ const CardModal = (props: CardModalPropsType) => {
         );
         break;
 
-      case cardTypes.TAX:
+      case CARD_TYPES.TAX:
         UI = (
           <div
             className={`${style.card} ${style.centerWrapper} ${style.radialBackground}`}

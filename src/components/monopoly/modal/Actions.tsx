@@ -1,8 +1,7 @@
 import { setAction } from '@monopoly/lib//core';
-import { IState } from 'lib/core/src/lib';
+import { ACTION_TYPES, IState } from 'lib/core/src/lib';
 import { useDispatch, useSelector } from 'react-redux';
 import style from '../../../assets/css/actions.module.scss';
-import { actionTypes } from '../../../utility/constants';
 
 const Actions = () => {
   const active = useSelector((store: IState) => store.actionData.active);
@@ -18,7 +17,7 @@ const Actions = () => {
         disabled={active}
         className={`${style.build} ${style.btn} `}
         onClick={setActionHelper}
-        action-type={actionTypes.BUILD}
+        action-type={ACTION_TYPES.BUILD}
       >
         Build
       </button>
@@ -26,7 +25,7 @@ const Actions = () => {
         disabled={active}
         className={`${style.sell} ${style.btn}`}
         onClick={setActionHelper}
-        action-type={actionTypes.SELL}
+        action-type={ACTION_TYPES.SELL}
       >
         Sell
       </button>
@@ -34,7 +33,7 @@ const Actions = () => {
         disabled={active}
         className={`${style.mortgage} ${style.btn}`}
         onClick={setActionHelper}
-        action-type={actionTypes.MORTGAGE}
+        action-type={ACTION_TYPES.MORTGAGE}
       >
         Mortgage
       </button>
@@ -42,7 +41,7 @@ const Actions = () => {
         disabled={active}
         className={`${style.redeem} ${style.btn}`}
         onClick={setActionHelper}
-        action-type={actionTypes.REDEEM}
+        action-type={ACTION_TYPES.REDEEM}
       >
         Redeem
       </button>

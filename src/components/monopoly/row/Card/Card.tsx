@@ -1,5 +1,4 @@
-import { ISite } from 'lib/core/src/lib';
-import { cardTypes } from '../../../../utility/constants';
+import { CARD_TYPES, ISite } from 'lib/core/src/lib';
 import ChestOrChanceCard from './ChestOrChanceCard';
 import SiteOrRealmRailsOrUtilityCard from './SiteOrRealmRailsOrUtilityCard';
 import SpecialCard from './SpecialCard';
@@ -17,9 +16,9 @@ const Card = (props: CardPropsType) => {
   const { onCardClick, site, rowNum, active, boughtBy } = props;
   const genCard = () => {
     switch (site.type) {
-      case cardTypes.SITE:
-      case cardTypes.REALM_RAILS:
-      case cardTypes.UTILITY:
+      case CARD_TYPES.SITE:
+      case CARD_TYPES.REALM_RAILS:
+      case CARD_TYPES.UTILITY:
         return (
           <SiteOrRealmRailsOrUtilityCard
             data={site}
@@ -29,12 +28,12 @@ const Card = (props: CardPropsType) => {
             boughtBy={boughtBy}
           />
         );
-      case cardTypes.SPECIAL:
+      case CARD_TYPES.SPECIAL:
         return <SpecialCard rowNum={rowNum} active={active} />;
-      case cardTypes.CHEST:
-      case cardTypes.CHANCE:
+      case CARD_TYPES.CHEST:
+      case CARD_TYPES.CHANCE:
         return <ChestOrChanceCard data={site} active={active} />;
-      case cardTypes.TAX:
+      case CARD_TYPES.TAX:
         return (
           <TaxCard data={site} active={active} onCardClick={onCardClick} />
         );

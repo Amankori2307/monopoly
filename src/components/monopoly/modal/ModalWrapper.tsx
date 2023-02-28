@@ -1,7 +1,6 @@
-import { IState } from 'lib/core/src/lib';
+import { IState, MODAL_TYPES } from 'lib/core/src/lib';
 import { useSelector } from 'react-redux';
 
-import { modalTypes } from '../../../utility/constants';
 import AuctionCardModal from './AuctionCardModal';
 import BuyCardModal from './BuyCardModal';
 import CardModal from './CardModal';
@@ -16,24 +15,24 @@ function ModalWrapper() {
     <>
       {modalData.showModal && (
         <>
-          {modalData.currentModal === modalTypes.SHOW_CARD && (
+          {modalData.currentModal === MODAL_TYPES.SHOW_CARD && (
             <ModalContainer component={CardModal} card={currentCard} />
           )}
-          {modalData.currentModal === modalTypes.BUY_CARD && (
+          {modalData.currentModal === MODAL_TYPES.BUY_CARD && (
             <ModalContainer
               component={BuyCardModal}
               card={playersData.players[playersData.activePlayer].site}
               disableHideOnOuterClick={true}
             />
           )}
-          {modalData.currentModal === modalTypes.AUCTION_CARD && (
+          {modalData.currentModal === MODAL_TYPES.AUCTION_CARD && (
             <ModalContainer
               component={AuctionCardModal}
               card={playersData.players[playersData.activePlayer].site}
               disableHideOnOuterClick={true}
             />
           )}
-          {modalData.currentModal === modalTypes.MY_CARDS && (
+          {modalData.currentModal === MODAL_TYPES.MY_CARDS && (
             <ModalContainer component={MyCards} title={'My Cards'} />
           )}
         </>

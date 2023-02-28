@@ -8,11 +8,17 @@ import {
   setCurrentCard,
   setShowModal,
 } from '@monopoly/lib//core';
-import { ISite, IState } from 'lib/core/src/lib';
+import {
+  ACTION_TYPES,
+  isBuildable,
+  ISite,
+  isSellable,
+  IState,
+  MODAL_TYPES,
+} from 'lib/core/src/lib';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { isBuildable, isSellable } from '../../../utility/cardUtilities';
-import { actionTypes, modalTypes } from '../../../utility/constants';
+
 import Card from './Card/Card';
 
 interface CardWrapperPropsType {
@@ -46,17 +52,17 @@ const CardWrapper = (props: CardWrapperPropsType) => {
     switch (actionData.currentAction) {
       case null:
         return true;
-      case actionTypes.MORTGAGE:
+      case ACTION_TYPES.MORTGAGE:
         return card.length ? !card[0].isMortgaged : false;
-      case actionTypes.REDEEM:
+      case ACTION_TYPES.REDEEM:
         return card.length ? card[0].isMortgaged : false;
-      case actionTypes.BUILD:
+      case ACTION_TYPES.BUILD:
         return isBuildable(
           playersSites[activePlayer],
           site,
           noOfCardsInCategory
         );
-      case actionTypes.SELL:
+      case ACTION_TYPES.SELL:
         return isSellable(
           playersSites[activePlayer],
           site,
@@ -76,16 +82,16 @@ const CardWrapper = (props: CardWrapperPropsType) => {
   const onCardClick = () => {
     if (actionData.active && isActionable) {
       switch (actionData.currentAction) {
-        case actionTypes.MORTGAGE:
+        case ACTION_TYPES.MORTGAGE:
           mortgageCard();
           break;
-        case actionTypes.REDEEM:
+        case ACTION_TYPES.REDEEM:
           redeemCard();
           break;
-        case actionTypes.BUILD:
+        case ACTION_TYPES.BUILD:
           build();
           break;
-        case actionTypes.SELL:
+        case ACTION_TYPES.SELL:
           sell();
           break;
         default:
@@ -98,7 +104,7 @@ const CardWrapper = (props: CardWrapperPropsType) => {
   };
 
   const showCardModal = () => {
-    dispatch(setShowModal(true, modalTypes.SHOW_CARD));
+    dispatch(setShowModal(true, MODAL_TYPES.SHOW_CARD));
     dispatch(setCurrentCard(site));
   };
 

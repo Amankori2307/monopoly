@@ -1,13 +1,14 @@
 import {
   buySite,
   debitPlayerMoney,
+  MODAL_TYPES,
   setIsDone,
   setShowModal,
 } from '@monopoly/lib//core';
 import { connect, useDispatch } from 'react-redux';
 import style from '../../../assets/css/buy-card-modal.module.scss';
-import { modalTypes } from '../../../utility/constants';
 import CardModal from './CardModal';
+
 const BuyCardModal = ({
   card,
   setShowModal,
@@ -24,7 +25,7 @@ const BuyCardModal = ({
     dispatch(setIsDone(true));
   };
   const onAuction = () => {
-    setShowModal(true, modalTypes.AUCTION_CARD);
+    setShowModal(true, MODAL_TYPES.AUCTION_CARD);
   };
   return (
     <div>

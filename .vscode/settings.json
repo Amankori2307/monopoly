@@ -1,11 +1,11 @@
 {
-    "editor.codeActionsOnSave": {
-        "source.fixAll": true,
-        "source.organizeImports": true
-    },
-    "editor.formatOnSave": true,
-    "cSpell.words": [
-        "Buildable",
-        "nrwl"
-    ]
+    // "editor.codeActionsOnSave": {
+    //     "source.fixAll": true,
+    //     "source.organizeImports": true
+    // },
+    // "editor.formatOnSave": true,
+    // "cSpell.words": [
+    //     "Buildable",
+    //     "nrwl"
+    // ]
 }

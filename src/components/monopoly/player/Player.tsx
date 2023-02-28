@@ -2,6 +2,7 @@ import {
   appropriateActionHelper,
   creditPlayerMoney,
   debitPlayerMoney,
+  DIRECTIONS,
   getAllTurningPoints,
   movePlayer,
   setIsDone,
@@ -13,7 +14,6 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { connect, useDispatch } from 'react-redux';
 import audio1 from '../../../assets/audio/playermove.wav';
 import style from '../../../assets/css/player.module.scss';
-import { directions } from '../../../utility/constants';
 
 function Player({
   playersData,
@@ -99,7 +99,7 @@ function Player({
           currentPlayerId
       );
       const currentSite = (currentPlayerRef.current.site + diceSum) % 40;
-      movePlayer(currentPlayerId, currentSite, directions.FORWARD);
+      movePlayer(currentPlayerId, currentSite, DIRECTIONS.FORWARD);
     }
   }, [diceSum, currentPlayerId, movePlayer, setDiceSumCalledCount]); // Adding 'setDiceSumCalledCount' because if previous 'diceSUm' is equal to current 'diceSum' it does not get called
 
