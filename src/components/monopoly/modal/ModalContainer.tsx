@@ -1,19 +1,19 @@
 import { setShowModal } from '@monopoly/lib//core';
-import { connect } from 'react-redux';
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
 import style from '../../../assets/css/modal.module.scss';
 import closeIcon from '../../../assets/images/times-solid.svg';
 
 const ModalContainer = ({
-  component: Component,
-  setShowModal,
+  component,
   disableHideOnOuterClick,
   title,
   ...rest
 }) => {
-  const hideOnClick = (e) => {
-    setShowModal(false, null);
+  const dispatch = useAppDispatch();
+  const hideOnClick = () => {
+    dispatch(setShowModal(false, null));
   };
-  const preventModalCloseOnClick = (e) => {
+  const preventModalCloseOnClick = (e: MouseEvent<HTMLElement>) => {
     if (e && e.stopPropagation) e.stopPropagation();
   };
   return (
@@ -46,11 +46,4 @@ const ModalContainer = ({
   );
 };
 
-const mapDispatchToProps = (dispatch) => {
-  return {
-    setShowModal: (showModal, currentModal) =>
-      dispatch(setShowModal(showModal, currentModal)),
-  };
-};
-
-export default connect(null, mapDispatchToProps)(ModalContainer);
+export default ModalContainer;
