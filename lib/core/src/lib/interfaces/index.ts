@@ -102,3 +102,8 @@ export interface IState {
   siteData: ISiteState;
   card: ICardState;
 }
+
+export interface SetIsMovingAction {
+  playerId: number;
+  isMoving: boolean;
+}

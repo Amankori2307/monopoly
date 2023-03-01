@@ -1,5 +1,6 @@
-import { IAction, IPlayerState } from 'lib/core/src/lib';
+import { IAction, IPlayerState, SetIsMovingAction } from 'lib/core/src/lib';
 import { createPlayerData } from '../../../utils/player.utils';
+import rfdc from 'rfdc';
 import {
   CREDIT_PLAYER_MONEY,
   DEBIT_PLAYER_MONEY,
@@ -9,6 +10,8 @@ import {
   SET_TOTAL_PLAYERS,
 } from './player.actions';
 
+
+const clone = rfdc();
 const initialState: IPlayerState = {
   activePlayer: 0,
   totalPlayers: 0,
@@ -77,9 +80,9 @@ const creditPlayerMoneyReducer = (
 
 const setIsMovingReducer = (
   state: IPlayerState,
-  payload: any
+  payload: SetIsMovingAction
 ): IPlayerState => {
-  const players = [...state.players];
+  const players = clone(state.players);
   players[payload.playerId].isMoving = payload.isMoving;
   return {
     ...state,
