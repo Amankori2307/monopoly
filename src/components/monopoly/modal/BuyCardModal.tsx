@@ -5,27 +5,30 @@ import {
   setIsDone,
   setShowModal,
 } from '@monopoly/lib//core';
-import { connect, useDispatch } from 'react-redux';
+import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
+import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../../assets/css/buy-card-modal.module.scss';
 import CardModal from './CardModal';
 
-const BuyCardModal = ({
-  card,
-  setShowModal,
-  buySite,
-  activePlayer,
-  sites,
-  debitPlayerMoney,
-}) => {
-  const dispatch = useDispatch();
+interface BuyCardModalPropsType {
+  card: number;
+}
+const BuyCardModal = (props: BuyCardModalPropsType) => {
+  const { card } = props;
+  const activePlayer = useAppSelector(
+    (store) => store.playersData.activePlayer
+  );
+  const sites = useAppSelector((store) => store.siteData.sites);
+
+  const dispatch = useAppDispatch();
   const onBuy = () => {
-    debitPlayerMoney(activePlayer, sites[card].sellingPrice);
-    buySite(activePlayer, sites[card]);
-    setShowModal(false, null);
+    dispatch(debitPlayerMoney(activePlayer, sites[card].sellingPrice));
+    dispatch(buySite(activePlayer, sites[card]));
+    dispatch(setShowModal(false, null));
     dispatch(setIsDone(true));
   };
   const onAuction = () => {
-    setShowModal(true, MODAL_TYPES.AUCTION_CARD);
+    dispatch(setShowModal(true, MODAL_TYPES.AUCTION_CARD));
   };
   return (
     <div>
@@ -42,20 +45,4 @@ const BuyCardModal = ({
   );
 };
 
-const mapStateToProps = (store) => {
-  return {
-    activePlayer: store.playersData.activePlayer,
-    sites: store.siteData.sites,
-  };
-};
-const mapDispatchToProps = (dispatch) => {
-  return {
-    setShowModal: (showModal, currentModal) =>
-      dispatch(setShowModal(showModal, currentModal)),
-    buySite: (playerId, siteData) => dispatch(buySite(playerId, siteData)),
-    debitPlayerMoney: (playerId, amount) =>
-      dispatch(debitPlayerMoney(playerId, amount)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(BuyCardModal);
+export default BuyCardModal;
