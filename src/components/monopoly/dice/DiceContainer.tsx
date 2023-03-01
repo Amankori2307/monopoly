@@ -11,7 +11,7 @@ const DiceContainer = () => {
   const dispatch = useAppDispatch();
   const [disabled, setDisabled] = useState(false);
   const audioElement = new Audio(rollDiceAudio);
-  const [number, setNumber] = useState({
+  const [nums, setNums] = useState({
     dice1: 6,
     dice2: 6,
   });
@@ -25,9 +25,7 @@ const DiceContainer = () => {
       dice1: num1,
       dice2: num2,
     };
-    // diceData.dice1 = 2
-    // diceData.dice2 = 5
-    setNumber(diceData);
+    setNums(diceData);
     return diceData;
   };
   const onClick = () => {
@@ -49,8 +47,8 @@ const DiceContainer = () => {
       onClick={onClick}
       data-testid="dice-container"
     >
-      <Dice number={number.dice1} />
-      <Dice number={number.dice2} />
+      <Dice num={nums.dice1} />
+      <Dice num={nums.dice2} />
     </div>
   );
 };

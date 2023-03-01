@@ -1,10 +1,11 @@
-import style from '../../../assets/css/dice.module.scss'
+import style from '../../../assets/css/dice.module.scss';
 
-const Dice = ({ number }) => {
-    return (
-        <div className={style.dice}>
-            {number}
-        </div>
-    );
+interface DicePropsType {
+  num: number;
 }
-export default Dice
+
+const Dice = (props: DicePropsType) => {
+  const { num } = props;
+  return <div className={style.dice}>{num}</div>;
+};
+export default Dice;
