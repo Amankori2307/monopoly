@@ -4,9 +4,8 @@ import {
   setSites,
   setTotalPlayers,
 } from '@monopoly/lib//core';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import useAppDispatch from 'src/hooks/redux/use-app-dispatch';
-import useAppSelector from 'src/hooks/redux/use-app-selector';
 import style from '../../assets/css/monopoly.module.scss';
 import Footer from '../home/footer/Footer';
 import Header from '../home/header/Header';
@@ -15,22 +14,21 @@ import ModalWrapper from './modal/ModalWrapper';
 
 const Monopoly = () => {
   const totalPlayers = 4;
-  const isMounted = useRef(false);
   const dispatch = useAppDispatch();
-  const isDone = useAppSelector((state) => state.board.isDone);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (!isMounted.current) {
+    if (!isMounted) {
       dispatch(initBoard(600));
       dispatch(setTotalPlayers(totalPlayers));
       dispatch(setSites([...BOARD_DATA]));
-      isMounted.current = true;
+      setIsMounted(true);
     }
-  }, [dispatch, isDone]);
+  }, [dispatch, isMounted]);
 
   return (
     <div className={style.monopoly}>
-      {isMounted.current && (
+      {isMounted && (
         <>
           <Header />
           <Board />
