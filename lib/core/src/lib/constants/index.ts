@@ -6,12 +6,12 @@ export const PLAYER_SIZE = 30;
 export const MAX_PLAYERS = 8;
 
 export const colorsMapping = {
-  [COLORS.RED]: 'red',
-  [COLORS.YELLOW]: 'yellow',
-  [COLORS.BLUE]: 'blue',
-  [COLORS.GREEN]: 'green',
-  [COLORS.ORANGE]: 'orange',
-  [COLORS.PINK]: 'pink',
+  [COLORS.RED as number]: 'red',
+  [COLORS.YELLOW as number]: 'yellow',
+  [COLORS.BLUE as number]: 'blue',
+  [COLORS.GREEN as number]: 'green',
+  [COLORS.ORANGE as number]: 'orange',
+  [COLORS.PINK as number]: 'pink',
 };
 
 export const BID = 'BID';
