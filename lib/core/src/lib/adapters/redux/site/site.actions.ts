@@ -1,12 +1,12 @@
-import { Action, TActionType } from '../../../interfaces';
+import { Action, IActionType } from '../../../interfaces';
 
 // Sites
-export const BUY_SITE: TActionType = 'BUY_SITE';
-export const SET_SITES: TActionType = 'SET_SITES';
-export const MORTGAGE_SITE: TActionType = 'MORTGAGE_SITE';
-export const REDEEM_SITE: TActionType = 'REDEEM_SITE';
-export const BUILD_ON_SITE: TActionType = 'BUILD_ON_SITE';
-export const SELL_BUILD: TActionType = 'SELL_BUILD';
+export const BUY_SITE: IActionType = 'BUY_SITE';
+export const SET_SITES: IActionType = 'SET_SITES';
+export const MORTGAGE_SITE: IActionType = 'MORTGAGE_SITE';
+export const REDEEM_SITE: IActionType = 'REDEEM_SITE';
+export const BUILD_ON_SITE: IActionType = 'BUILD_ON_SITE';
+export const SELL_BUILD: IActionType = 'SELL_BUILD';
 
 export const buySite = (playerId: number, siteData): Action => {
   return {

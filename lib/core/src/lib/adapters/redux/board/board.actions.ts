@@ -1,7 +1,7 @@
-import { TActionType } from '../../../interfaces';
+import { IActionType } from '../../../interfaces';
 
-export const SET_IS_DONE: TActionType = 'SET_IS_DONE';
-export const INIT_BOARD: TActionType = 'INIT_BOARD';
+export const SET_IS_DONE: IActionType = 'SET_IS_DONE';
+export const INIT_BOARD: IActionType = 'INIT_BOARD';
 
 export const setIsDone = (isDone: boolean) => {
   return {
