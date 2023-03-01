@@ -1,12 +1,12 @@
 import Player from './Player';
 
 interface PlayerWrapperPropsType {
-  currentPlayerId: number;
+  playerId: number;
   color: string;
 }
 const PlayerWrapper = (props: PlayerWrapperPropsType) => {
-  const { currentPlayerId, color } = props;
-  return <Player currentPlayerId={currentPlayerId} color={color} />;
+  const { playerId, color } = props;
+  return <Player playerId={playerId} color={color} />;
 };
 
 export default PlayerWrapper;

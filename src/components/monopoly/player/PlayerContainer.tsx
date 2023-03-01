@@ -9,15 +9,13 @@ const PlayerContainer = (props: PlayerContainerPropsType) => {
   const { totalPlayers } = props;
   return (
     <div className="playerContainer">
-      {Array(totalPlayers)
-        .fill(0)
-        .map((data, idx: number) => (
-          <PlayerWrapper
-            key={idx}
-            currentPlayerId={idx}
-            color={colorsMapping[idx]}
-          />
-        ))}
+      {Array.from(Array(totalPlayers).keys()).map((playerId: number) => (
+        <PlayerWrapper
+          key={playerId}
+          playerId={playerId}
+          color={colorsMapping[playerId]}
+        />
+      ))}
     </div>
   );
 };
