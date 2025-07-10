@@ -5,16 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Context & History
 
 ### Project Overview
+
 This is a Zelda-themed Monopoly board game implementation built with React, TypeScript, and Redux. The project was migrated from Create React App to NX + Vite + TypeScript for better performance and development experience.
 
 ### Major Migrations Completed
 
 #### 1. Package Manager Migration (✅ Complete)
+
 - **From**: npm with package-lock.json
 - **To**: pnpm with pnpm-lock.yaml
 - **Status**: All packages now managed with pnpm
 
 #### 2. Package Updates (✅ Complete)
+
 - **Action**: Updated all packages to latest versions
 - **Key Updates**:
   - React 19 with modern features
@@ -24,6 +27,7 @@ This is a Zelda-themed Monopoly board game implementation built with React, Type
   - Vite 6.3.5 (downgraded from v7 for NX compatibility)
 
 #### 3. TypeScript Migration (✅ Infrastructure Complete)
+
 - **Strategy**: Gradual migration approach
 - **Current State**: All .js files renamed to .ts/.tsx
 - **TypeScript Config**: Strict mode disabled for gradual transition
@@ -31,11 +35,13 @@ This is a Zelda-themed Monopoly board game implementation built with React, Type
 - **Next Steps**: Continue adding proper types throughout codebase
 
 #### 4. Code Quality Tools (✅ Complete)
+
 - **ESLint**: Configured with React best practices
 - **Prettier**: Set up with project standards
 - **Auto-fix capabilities**: Both ESLint and Prettier support auto-fixing
 
 #### 5. Build System Migration (✅ Complete)
+
 - **From**: Create React App
 - **To**: NX + Vite + TypeScript
 - **Benefits**: Faster builds, better caching, modern tooling
@@ -43,31 +49,38 @@ This is a Zelda-themed Monopoly board game implementation built with React, Type
 ### Known Issues & Fixes Applied
 
 #### React Router v7 Breaking Changes
+
 - **Issue**: `Switch` component removed, route syntax changed
 - **Fix**: Replaced with `Routes` and updated `component={Component}` to `element={<Component />}`
 
 #### React 19 Changes
+
 - **Issue**: `ReactDOM.render` deprecated
 - **Fix**: Updated to `ReactDOM.createRoot().render()`
 
 #### Web Vitals v5 API Changes
+
 - **Issue**: Function names changed from `getCLS` to `onCLS`
 - **Fix**: Updated reportWebVitals.ts accordingly
 
 #### ESLint Version Compatibility
+
 - **Issue**: ESLint 9 incompatible with React Scripts
 - **Fix**: Downgraded to ESLint 8.57.1
 
 #### Vite v7 Compatibility
+
 - **Issue**: Vite 7 had crypto.hash errors with NX
 - **Fix**: Downgraded to Vite 6.3.5
 
 ## Game Implementation Details
 
 ### Zelda-Themed Monopoly Rules
+
 This implementation follows standard Monopoly rules with Zelda theming:
 
 #### Board Layout (40 spaces)
+
 - **Corner Spaces**: GO, Jail, Free Parking, Go to Jail
 - **Property Groups** (8 groups):
   - Brown: Minish Woods, Ordon Village
@@ -83,6 +96,7 @@ This implementation follows standard Monopoly rules with Zelda theming:
 - **Taxes**: Income Tax ($200), Super Tax ($100)
 
 #### Game Mechanics
+
 - **Starting Money**: $1000 per player
 - **Rent Calculation**: Matches standard Monopoly with monopoly doubling
 - **Building System**: 5 levels (rentWithHouse array)
@@ -90,6 +104,7 @@ This implementation follows standard Monopoly rules with Zelda theming:
 - **Card System**: 11 Chance cards, 11 Community Chest cards
 
 ### Player State Structure
+
 ```typescript
 {
   site: number,           // Current board position (0-39)
@@ -102,6 +117,7 @@ This implementation follows standard Monopoly rules with Zelda theming:
 ```
 
 ### Property State Structure
+
 ```typescript
 {
   id: number,
@@ -119,15 +135,27 @@ This implementation follows standard Monopoly rules with Zelda theming:
 ```
 
 ### Important File Locations
+
 - `src/assets/data/boardData.json` - Complete board configuration
 - `src/assets/data/chanceData.json` - Chance card actions
 - `src/assets/data/chestData.json` - Community Chest card actions
 - `src/redux/reducers/` - State management
 - `src/utility/playerUtility.tsx` - Game logic utilities
+- `src/components/playerSelection/PlayerSelection.tsx` - Player selection component
+
+### Recent Updates
+
+- **Player Selection Flow**: Added intermediary player selection step between home and game
+- **Routing**: Updated to include `/select-players` route
+- **TypeScript**: PlayerSelection component written in pure TypeScript with proper typing
+- **User Flow**: Home → Player Selection → Game (with player count stored in Redux)
+- **Bug Fix**: Fixed hardcoded player count in Monopoly component that was overriding player selection
+- **Bug Fix**: Added safety checks in playerAppropriateActionUtils to prevent TypeError when currentSite is undefined
 
 ## Development Commands
 
 ### Core Development
+
 - `pnpm start` or `pnpm dev` - Start Vite development server on port 3000
 - `pnpm run build` - Build optimized production bundle with Vite
 - `pnpm test` - Run test suite with Vitest
@@ -136,12 +164,14 @@ This implementation follows standard Monopoly rules with Zelda theming:
 - `pnpm run deploy` - Deploy to GitHub Pages (builds first)
 
 ### NX-Specific Commands
+
 - `pnpm run graph` - View dependency graph of the project
 - `nx serve` - Start development server (direct NX command)
 - `nx build` - Build the project (direct NX command)
 - `nx test` - Run tests (direct NX command)
 
 ### Code Quality Commands
+
 - `pnpm run lint` - Run ESLint via NX
 - `pnpm run lint:fix` - Run ESLint with auto-fix via NX
 - `pnpm run format` - Format all code with Prettier via NX
@@ -152,6 +182,7 @@ This implementation follows standard Monopoly rules with Zelda theming:
 ## Code Architecture
 
 ### Technology Stack
+
 - **Build System**: NX 21.2+ with Vite 6.3+ for fast development and builds
 - **Frontend**: React 19 with functional components and hooks
 - **TypeScript**: Full TypeScript support with strict mode disabled for gradual migration
@@ -162,7 +193,9 @@ This implementation follows standard Monopoly rules with Zelda theming:
 - **Package Manager**: pnpm for efficient dependency management
 
 ### Redux State Structure
+
 The application uses a centralized Redux store with these main slices:
+
 - `playersData` - Player information (money, position, properties, active player)
 - `dice` - Dice state (current values, rolling animation)
 - `board` - Board state and game progression
@@ -172,6 +205,7 @@ The application uses a centralized Redux store with these main slices:
 - `card` - Card-related state for property transactions
 
 ### Game Logic Architecture
+
 The Monopoly game implements complex board game mechanics:
 
 1. **Turn System**: Players take turns rolling dice and moving around the board
@@ -181,6 +215,7 @@ The Monopoly game implements complex board game mechanics:
 5. **Building System**: Property development with houses and hotels
 
 ### Key Components Structure
+
 - `Monopoly.js` - Main game container with game state orchestration
 - `Board.js` - Visual board layout and property grid
 - `DiceContainer.js` - Dice rolling logic and animation
@@ -189,11 +224,13 @@ The Monopoly game implements complex board game mechanics:
 - `Actions.js` - Property management actions (build, sell, mortgage, redeem)
 
 ### Data Files
+
 - `boardData.json` - Complete board configuration with all 40 spaces
 - `chanceData.json` - Chance card actions and effects
 - `chestData.json` - Community Chest card actions and effects
 
 ### Game State Flow
+
 1. Player rolls dice → `dice` reducer updates values
 2. Player moves → `player` reducer updates position
 3. Landing logic → `playerAppropriateActionUtils.js` determines action
@@ -201,22 +238,27 @@ The Monopoly game implements complex board game mechanics:
 5. Turn completion → Active player switches
 
 ### Testing Strategy
+
 - Component tests use custom `testUtils.js` wrapper with Redux Provider
 - Tests focus on user interactions and state changes
 - Mock store testing for Redux-connected components
 
 ### Key Utility Functions
+
 - `playerAppropriateActionUtils.js` - Core game logic for property interactions
 - `playerUtility.js` - Player data management and rent calculations
 - `boardUtility.js` - Board position and movement utilities
 - `cardUtilities.js` - Property card display and management
 
 ### Audio Integration
+
 Game includes audio feedback for:
+
 - Dice rolling (`rolldice1.wav`, `rolldice2.wav`)
 - Player movement (`playermove.wav`)
 
 ### Build System Details
+
 - **NX Workspace**: Configured as single-project workspace with build caching
 - **Vite Configuration**: Optimized for React with TypeScript, SCSS support
 - **Build Output**: Optimized bundles with asset hashing and compression
@@ -224,12 +266,14 @@ Game includes audio feedback for:
 - **Testing**: Vitest with jsdom environment and global test utilities
 
 ### Project Structure
+
 - `project.json` - NX project configuration with build, serve, test, lint targets
 - `vite.config.mjs` - Vite configuration with React plugin and NX integration
 - `nx.json` - NX workspace configuration with caching and task dependencies
 - `tsconfig.json` - TypeScript configuration with strict mode disabled
 
 ### Deployment
+
 - Hosted on GitHub Pages at https://amankori2307.github.io/monopoly/
 - Build process uses Vite for optimal performance
 - Assets and routing configured for subdirectory deployment
