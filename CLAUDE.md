@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `npm start` - Start development server on port 3000
-- `npm run build` - Build optimized production bundle
-- `npm test` - Run test suite (uses React Testing Library)
-- `npm run deploy` - Deploy to GitHub Pages (builds first)
+- `pnpm start` - Start development server on port 3000
+- `pnpm run build` - Build optimized production bundle
+- `pnpm test` - Run test suite (uses React Testing Library)
+- `pnpm run deploy` - Deploy to GitHub Pages (builds first)
 
 ## Code Architecture
 
