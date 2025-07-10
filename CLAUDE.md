@@ -4,28 +4,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `pnpm start` - Start development server on port 3000
-- `pnpm run build` - Build optimized production bundle
-- `pnpm test` - Run test suite (uses React Testing Library)
+### Core Development
+- `pnpm start` or `pnpm dev` - Start Vite development server on port 3000
+- `pnpm run build` - Build optimized production bundle with Vite
+- `pnpm test` - Run test suite with Vitest
+- `pnpm run test:watch` - Run tests in watch mode
+- `pnpm run preview` - Preview production build locally
 - `pnpm run deploy` - Deploy to GitHub Pages (builds first)
 
-### Code Quality Commands
+### NX-Specific Commands
+- `pnpm run graph` - View dependency graph of the project
+- `nx serve` - Start development server (direct NX command)
+- `nx build` - Build the project (direct NX command)
+- `nx test` - Run tests (direct NX command)
 
-- `pnpm run lint` - Run ESLint to check for code issues
-- `pnpm run lint:fix` - Run ESLint and auto-fix fixable issues
-- `pnpm run format` - Format all code with Prettier
-- `pnpm run format:check` - Check if code is formatted correctly
-- `pnpm run check-all` - Run both linting and format checking
+### Code Quality Commands
+- `pnpm run lint` - Run ESLint via NX
+- `pnpm run lint:fix` - Run ESLint with auto-fix via NX
+- `pnpm run format` - Format all code with Prettier via NX
+- `pnpm run format:check` - Check if code is formatted correctly via NX
+- `pnpm run check-all` - Run linting and format checking
 - `pnpm run fix-all` - Auto-fix linting issues and format code
 
 ## Code Architecture
 
 ### Technology Stack
-- **Frontend**: React 17 with functional components and hooks
+- **Build System**: NX 21.2+ with Vite 6.3+ for fast development and builds
+- **Frontend**: React 19 with functional components and hooks
+- **TypeScript**: Full TypeScript support with strict mode disabled for gradual migration
 - **State Management**: Redux with traditional actions/reducers pattern
 - **Styling**: SCSS modules with component-specific styles
-- **Routing**: React Router DOM v5
-- **Testing**: React Testing Library with custom Redux test utilities
+- **Routing**: React Router DOM v7
+- **Testing**: Vitest with React Testing Library
+- **Package Manager**: pnpm for efficient dependency management
 
 ### Redux State Structure
 The application uses a centralized Redux store with these main slices:
@@ -82,7 +93,21 @@ Game includes audio feedback for:
 - Dice rolling (`rolldice1.wav`, `rolldice2.wav`)
 - Player movement (`playermove.wav`)
 
+### Build System Details
+- **NX Workspace**: Configured as single-project workspace with build caching
+- **Vite Configuration**: Optimized for React with TypeScript, SCSS support
+- **Build Output**: Optimized bundles with asset hashing and compression
+- **Development Server**: Hot Module Replacement (HMR) for fast development
+- **Testing**: Vitest with jsdom environment and global test utilities
+
+### Project Structure
+- `project.json` - NX project configuration with build, serve, test, lint targets
+- `vite.config.mjs` - Vite configuration with React plugin and NX integration
+- `nx.json` - NX workspace configuration with caching and task dependencies
+- `tsconfig.json` - TypeScript configuration with strict mode disabled
+
 ### Deployment
 - Hosted on GitHub Pages at https://amankori2307.github.io/monopoly/
-- Build process optimized for static hosting
+- Build process uses Vite for optimal performance
 - Assets and routing configured for subdirectory deployment
+- Production builds include asset optimization and compression

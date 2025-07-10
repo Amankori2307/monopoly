@@ -25,3 +25,7 @@ yarn-error.log*
 
 test.js
 deploy_test.sh
+node_modules
+dist
+
+.nx

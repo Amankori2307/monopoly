@@ -1,0 +1,74 @@
+{
+  "name": "monopoly",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "src",
+  "targets": {
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "monopoly:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "monopoly:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "monopoly:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{projectRoot}/build"],
+      "defaultConfiguration": "production",
+      "options": {
+        "main": "src/index.tsx",
+        "tsConfig": "tsconfig.json",
+        "outputPath": "build"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "mode": "production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{projectRoot}/coverage"],
+      "options": {
+        "passWithNoTests": true,
+        "reportsDirectory": "coverage"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["src/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "preview": {
+      "executor": "@nx/vite:preview-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "monopoly:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "monopoly:build:development"
+        },
+        "production": {
+          "buildTarget": "monopoly:build:production"
+        }
+      }
+    }
+  },
+  "tags": []
+}

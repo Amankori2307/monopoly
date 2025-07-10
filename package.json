@@ -5,7 +5,6 @@
   "private": true,
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
-    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "gh-pages": "^6.3.0",
@@ -14,26 +13,26 @@
     "react-dom": "^19.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.3",
-    "react-scripts": "^5.0.1",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
-    "sass": "^1.89.2",
-    "web-vitals": "^5.0.3"
+    "sass": "^1.89.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "nx serve",
+    "dev": "nx serve",
+    "build": "nx build",
+    "test": "nx test",
+    "test:watch": "nx test --watch",
     "predeploy": "pnpm run build",
     "deploy": "gh-pages -d build",
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
-    "lint-and-format": "pnpm run lint:fix && pnpm run format",
-    "check-all": "pnpm run lint && pnpm run format:check",
-    "fix-all": "pnpm run lint:fix || true && pnpm run format"
+    "lint": "nx lint",
+    "lint:fix": "nx lint --fix",
+    "format": "nx format:write",
+    "format:check": "nx format:check",
+    "check-all": "nx run-many --target=lint && nx format:check",
+    "fix-all": "nx lint --fix || true && nx format:write",
+    "preview": "vite preview",
+    "graph": "nx graph"
   },
   "browserslist": {
     "production": [
@@ -48,16 +47,29 @@
     ]
   },
   "devDependencies": {
+    "@nx/eslint": "^21.2.2",
+    "@nx/js": "^21.2.2",
+    "@nx/react": "^21.2.2",
+    "@nx/vite": "^21.2.2",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/jest": "^30.0.0",
     "@types/jquery": "^3.5.32",
     "@types/node": "^24.0.13",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
     "eslint": "8.57.1",
     "eslint-config-prettier": "^10.1.5",
+    "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-prettier": "^5.5.1",
+    "jest-watch-typeahead": "^3.0.1",
+    "nx": "^21.2.2",
     "prettier": "^3.6.2",
     "redux-mock-store": "^1.5.5",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^6.0.0",
+    "vitest": "^3.2.4",
+    "web-vitals": "^5.0.3"
   }
 }
