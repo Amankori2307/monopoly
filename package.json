@@ -41,6 +41,12 @@
     ]
   },
   "devDependencies": {
-    "redux-mock-store": "^1.5.5"
+    "@types/jest": "^30.0.0",
+    "@types/jquery": "^3.5.32",
+    "@types/node": "^24.0.13",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "redux-mock-store": "^1.5.5",
+    "typescript": "^5.8.3"
   }
 }

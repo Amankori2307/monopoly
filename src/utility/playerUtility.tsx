@@ -45,8 +45,8 @@ export const getAllTurningPoints = (ps, cs, direction) => {
 }
 
 
-export const delay = millis => new Promise((resolve, reject) => {
-    setTimeout(_ => resolve(), millis)
+export const delay = (millis: number) => new Promise<void>((resolve, reject) => {
+    setTimeout(() => resolve(), millis)
   });
 
 export const calcRentForSite = (cs, sites, noOfCardsInCategory) => {

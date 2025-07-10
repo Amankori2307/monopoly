@@ -11,7 +11,7 @@ const ModalContainer = ({ component: Component, setShowModal, disableHideOnOuter
         if (e && e.stopPropagation) e.stopPropagation();
     }
     return (
-        <div className={style.modalContainer} onClick={() => disableHideOnOuterClick ? "" : hideOnClick()}>
+        <div className={style.modalContainer} onClick={(e) => disableHideOnOuterClick ? "" : hideOnClick(e)}>
             <div className={style.cardModal} onClick={preventModalCloseOnClick}>
                 {!disableHideOnOuterClick &&
                     <div className={style.closeStrip} >
