@@ -1,17 +1,17 @@
-.doneButton{
-    position: absolute;
-    right: -125px;
-    bottom: 60px;
-    width: 105px;
-    background-color: red;
-    border: none;
-    border-radius: 5px;
-    padding: 6px 10px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
+.doneButton {
+  position: absolute;
+  right: -125px;
+  bottom: 60px;
+  width: 105px;
+  background-color: red;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
 }
-.inactive{
-    background-color: #888;
-    cursor: not-allowed;
+.inactive {
+  background-color: #888;
+  cursor: not-allowed;
 }

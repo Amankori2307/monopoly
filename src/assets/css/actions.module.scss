@@ -1,41 +1,41 @@
-.actions{
-    position: absolute;
-    left: 10px;
-    top: 80px;
+.actions {
+  position: absolute;
+  left: 10px;
+  top: 80px;
 }
 
-.btn{
-    display: block;
-    width: 200px;
-    text-align: center;
-    font-weight: bold;
-    border: none;
-    border-radius: 5px;
-    padding: 9px 20px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    box-shadow: 2px 3px 3px 0px rgba(0,0,0,0.4);
-    transition: filter 0.2s;
+.btn {
+  display: block;
+  width: 200px;
+  text-align: center;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  padding: 9px 20px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  box-shadow: 2px 3px 3px 0px rgba(0, 0, 0, 0.4);
+  transition: filter 0.2s;
 }
-.btn:hover{
-    filter: brightness(0.9);
+.btn:hover {
+  filter: brightness(0.9);
 }
-.btn:disabled{
-    cursor: not-allowed;
+.btn:disabled {
+  cursor: not-allowed;
 }
-.build{
-    background-color: green;
-    color: white;
+.build {
+  background-color: green;
+  color: white;
 }
-.sell{
-    background-color: yellow;
-    color: black;
+.sell {
+  background-color: yellow;
+  color: black;
 }
-.mortgage{
-    background-color: red;
-    color: white;
+.mortgage {
+  background-color: red;
+  color: white;
 }
-.redeem{
-    background-color: blue;
-    color: white;
+.redeem {
+  background-color: blue;
+  color: white;
 }

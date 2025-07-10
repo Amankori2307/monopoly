@@ -1,31 +1,31 @@
-.diceContainer{
-    padding:5px;
-    border-radius: 10px;
-    position: absolute;
-    bottom:0px;
-    right: -130px;
-    display: flex;
-    cursor: pointer;
+.diceContainer {
+  padding: 5px;
+  border-radius: 10px;
+  position: absolute;
+  bottom: 0px;
+  right: -130px;
+  display: flex;
+  cursor: pointer;
 }
 
-.dice{
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #3d4fd9;
-    color: white;
-    font-weight: bold;
+.dice {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #3d4fd9;
+  color: white;
+  font-weight: bold;
 }
-.dice:first-child{
-    margin-right: 5px;
+.dice:first-child {
+  margin-right: 5px;
 }
 
 .inactive {
-    cursor:not-allowed;
+  cursor: not-allowed;
 }
-.inactive .dice{
-    background-color: #888;
+.inactive .dice {
+  background-color: #888;
 }

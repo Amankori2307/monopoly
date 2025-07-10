@@ -1,37 +1,37 @@
-.actionInfo{
-    box-shadow: 2px 3px 5px 0px rgba(0,0,0,0.3);
-    border-radius: 15px;
-    width: 50%;
-    overflow: hidden;
+.actionInfo {
+  box-shadow: 2px 3px 5px 0px rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  width: 50%;
+  overflow: hidden;
 }
-.header{
-    background-color: dodgerblue;
-    /* background-color: rgba(0,0,0,0.1) !important; */
+.header {
+  background-color: dodgerblue;
+  /* background-color: rgba(0,0,0,0.1) !important; */
 }
-.title{
-    color: white;
-    font-weight: bold;
-    font-size: 20px;
-    padding: 8px 20px;
+.title {
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  padding: 8px 20px;
 }
-.main{
-    background-color: #e9f4ff;
-    padding: 20px 10px;
+.main {
+  background-color: #e9f4ff;
+  padding: 20px 10px;
 }
-.main p{
-    color: #aaa;
-    font-size: 14px;
+.main p {
+  color: #aaa;
+  font-size: 14px;
 }
-.mortgagedIcon{
-    width: 100px;
-    height: auto;
+.mortgagedIcon {
+  width: 100px;
+  height: auto;
 }
-.close{
-    margin-top: 10px;
-    padding: 4px 20px;
-    background-color: #e9f4ff;
-    border: 1px solid dodgerblue;
-    color: dodgerblue;
-    border-radius: 5px;
-    cursor: pointer;
+.close {
+  margin-top: 10px;
+  padding: 4px 20px;
+  background-color: #e9f4ff;
+  border: 1px solid dodgerblue;
+  color: dodgerblue;
+  border-radius: 5px;
+  cursor: pointer;
 }

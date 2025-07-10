@@ -1,115 +1,121 @@
-.card{
-    flex: 1 1 0px;
-    display: flex;
-    /* border-top: 1px solid black; */
-    /* border-left: 1px solid black; */
-    cursor: pointer;
-    background: rgb(233,233,233);
-    background: linear-gradient(0deg, rgba(233,233,233,1) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
-    align-items: center;
-    transition: filter 0.15s;
+.card {
+  flex: 1 1 0px;
+  display: flex;
+  /* border-top: 1px solid black; */
+  /* border-left: 1px solid black; */
+  cursor: pointer;
+  background: rgb(233, 233, 233);
+  background: linear-gradient(
+    0deg,
+    rgba(233, 233, 233, 1) 0%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  align-items: center;
+  transition: filter 0.15s;
 }
 
-.specialCard{
-    flex-basis: 120px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    font-style: italic;
-    background: linear-gradient(0deg, rgba(233,233,233,1) 0%, rgba(255,255,255,1) 50%, rgba(255,255,255,1) 100%);
-    transition: filter 0.3s;
-    /* border-left: 1px solid black; */
+.specialCard {
+  flex-basis: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-style: italic;
+  background: linear-gradient(
+    0deg,
+    rgba(233, 233, 233, 1) 0%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  transition: filter 0.3s;
+  /* border-left: 1px solid black; */
 }
-.chest{
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
+.chest {
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
 }
-.strip{
-    height: 100%;
-    width: 20px;
-    opacity: 0.6;
-    /* background-blend-mode: lighten; */
+.strip {
+  height: 100%;
+  width: 20px;
+  opacity: 0.6;
+  /* background-blend-mode: lighten; */
 }
-.details{
-    text-align: center;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
+.details {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }
-.sellingPrice, .debit{
-    font-size: 13px;
-    font-weight: bold;
+.sellingPrice,
+.debit {
+  font-size: 13px;
+  font-weight: bold;
 }
-.name{
-    font-size: 10px;
+.name {
+  font-size: 10px;
 }
-.reverse{
-    flex-direction: row-reverse;
-    border-left: none;
-    /* border-right: 1px solid black; */
-    border-top: none;
-    /* border-bottom: 1px solid black; */
-}   
+.reverse {
+  flex-direction: row-reverse;
+  border-left: none;
+  /* border-right: 1px solid black; */
+  border-top: none;
+  /* border-bottom: 1px solid black; */
+}
 
-
-.reverseSpecialCard{
-    border-left: none;
-    /* border-right: 1px solid black; */
+.reverseSpecialCard {
+  border-left: none;
+  /* border-right: 1px solid black; */
 }
-
-
 
 /* To show player ownorship mark color */
-.sold::before{
-    content: '';
-    display: inline-block;
-    position: absolute;
-    left: -12px;
-    border-right: 12px solid transparent;
-    border-top: 12px solid transparent;
-    border-bottom: 12px solid transparent;    
-    /* filter: brightness(90%); */
+.sold::before {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  left: -12px;
+  border-right: 12px solid transparent;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  /* filter: brightness(90%); */
 }
 
-.soldRev::before{
-    border-right: none;
-    border-left: 12px solid transparent;
-    right: -12px;
-    left:unset;
+.soldRev::before {
+  border-right: none;
+  border-left: 12px solid transparent;
+  right: -12px;
+  left: unset;
 }
 
-.red::before{
-    border-left-color: red;
-    border-right-color: red;
+.red::before {
+  border-left-color: red;
+  border-right-color: red;
 }
-.yellow::before{
-    border-left-color: yellow;
-    border-right-color: yellow;
-}
-
-.green::before{
-    border-left-color: green;
-    border-right-color: green;
-}
-.blue::before{
-    border-left-color: blue;
-    border-right-color: blue;
+.yellow::before {
+  border-left-color: yellow;
+  border-right-color: yellow;
 }
 
+.green::before {
+  border-left-color: green;
+  border-right-color: green;
+}
+.blue::before {
+  border-left-color: blue;
+  border-right-color: blue;
+}
 
 /* Mortgaged */
-.mortgaged{
-    position: absolute;
-    width: 32px;
-    height: auto;
+.mortgaged {
+  position: absolute;
+  width: 32px;
+  height: auto;
 }
 
-
 /* inactive Card */
-.inactive{
-    filter: brightness(0.7);
-    cursor: default;
+.inactive {
+  filter: brightness(0.7);
+  cursor: default;
 }

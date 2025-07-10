@@ -1,95 +1,94 @@
-
-.card{
-    width: 255px;
-    min-height: 310px;
-    border: 1px solid #cacaca;
-    /* box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.3); */
-    border-radius: 15px;
-    overflow: hidden;
-    position: relative;
-
+.card {
+  width: 255px;
+  min-height: 310px;
+  border: 1px solid #cacaca;
+  /* box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.3); */
+  border-radius: 15px;
+  overflow: hidden;
+  position: relative;
 }
 
-.name{
-    text-align: center;
-    padding: 10px 0px;
-    font-weight: bold;
+.name {
+  text-align: center;
+  padding: 10px 0px;
+  font-weight: bold;
 }
-.rent{
-    text-align: center;
-    font-size: 13px;
-    padding: 10px 0px;
-    font-weight: bold;
+.rent {
+  text-align: center;
+  font-size: 13px;
+  padding: 10px 0px;
+  font-weight: bold;
 }
-.rentWithHouse{
-    width: 100%;
-    padding: 0px 20px;
-    margin-bottom: 20px;
+.rentWithHouse {
+  width: 100%;
+  padding: 0px 20px;
+  margin-bottom: 20px;
 }
-.rentWithHouse  .text{
-    text-align: left;
-    font-size: 13px
+.rentWithHouse .text {
+  text-align: left;
+  font-size: 13px;
 }
-.rentWithHouse  .houseRent{
-    text-align: right;
-    font-size: 13px;
-}
-
-.mortgage, .construction{
-    font-weight: bold;
-    font-size: 13px;
-    text-align: center;
-}
-.construction{
-    margin-bottom: 20px;
-}
-.info{
-    padding: 0px 10px;
-    font-size: 10px;
-    margin-bottom: 10px; 
-}
-.mt{
-   margin-top: 20px; 
-}
-.utilityInfo{
-    font-size: 13px;
-    padding: 20px 10px;
-    text-indent: 10px;
-    text-align: justify;
-}
-.utilityInfo p{
-    margin-bottom: 3px;
-}
-.centerWrapper{
- justify-content: center;
- align-items: center;
- display: flex;
-}
-.circle{
-    width: 230px;
-    height: 230px;
-    border-radius: 140px;
-    background-color: white;
-}
-.centerWrapper .heading{
-    font-size: 25px;
-    font-weight: bold;
-}
-.centerWrapper .subHeading{
-    font-size: 13px;
-}
-.column{
-    flex-direction: column;
-}
-.radialBackground{
-    background: radial-gradient(black, grey, lightgrey, white);
+.rentWithHouse .houseRent {
+  text-align: right;
+  font-size: 13px;
 }
 
-.mortgageIcon{
-    opacity: 30%;
-    width: 50%;
-    height: auto;
-    position: absolute;
-    bottom: 0;
-    right: 0;
+.mortgage,
+.construction {
+  font-weight: bold;
+  font-size: 13px;
+  text-align: center;
+}
+.construction {
+  margin-bottom: 20px;
+}
+.info {
+  padding: 0px 10px;
+  font-size: 10px;
+  margin-bottom: 10px;
+}
+.mt {
+  margin-top: 20px;
+}
+.utilityInfo {
+  font-size: 13px;
+  padding: 20px 10px;
+  text-indent: 10px;
+  text-align: justify;
+}
+.utilityInfo p {
+  margin-bottom: 3px;
+}
+.centerWrapper {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+.circle {
+  width: 230px;
+  height: 230px;
+  border-radius: 140px;
+  background-color: white;
+}
+.centerWrapper .heading {
+  font-size: 25px;
+  font-weight: bold;
+}
+.centerWrapper .subHeading {
+  font-size: 13px;
+}
+.column {
+  flex-direction: column;
+}
+.radialBackground {
+  background: radial-gradient(black, grey, lightgrey, white);
+}
+
+.mortgageIcon {
+  opacity: 30%;
+  width: 50%;
+  height: auto;
+  position: absolute;
+  bottom: 0;
+  right: 0;
 }

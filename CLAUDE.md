@@ -9,6 +9,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm test` - Run test suite (uses React Testing Library)
 - `pnpm run deploy` - Deploy to GitHub Pages (builds first)
 
+### Code Quality Commands
+
+- `pnpm run lint` - Run ESLint to check for code issues
+- `pnpm run lint:fix` - Run ESLint and auto-fix fixable issues
+- `pnpm run format` - Format all code with Prettier
+- `pnpm run format:check` - Check if code is formatted correctly
+- `pnpm run check-all` - Run both linting and format checking
+- `pnpm run fix-all` - Auto-fix linting issues and format code
+
 ## Code Architecture
 
 ### Technology Stack

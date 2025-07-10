@@ -1,71 +1,69 @@
-.playerDetailsContainer{
-    position: absolute;
-    top: 80px;
-    right: 10px;
-    width: 250px;
+.playerDetailsContainer {
+  position: absolute;
+  top: 80px;
+  right: 10px;
+  width: 250px;
 }
-.playerDetails{
-   width: 100%;
-   border-radius: 10px;
-   overflow: hidden !important;
-   margin-bottom: 10px;
-   box-shadow: 2px 3px 3px 0px rgba(0,0,0,0.3);
-   transition: transform 0.3s;
+.playerDetails {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden !important;
+  margin-bottom: 10px;
+  box-shadow: 2px 3px 3px 0px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s;
 }
-.active{
-    transform-origin: 100% 100%;
-    transform: scale(1.1);
+.active {
+  transform-origin: 100% 100%;
+  transform: scale(1.1);
 }
-.header{
-    position: relative;
+.header {
+  position: relative;
 }
-.overley{
-    background-color: rgba(0,0,0,0.2);
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    right: 0;
+.overley {
+  background-color: rgba(0, 0, 0, 0.2);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  right: 0;
 }
-.playerName{
-    font-weight: bold;
-    padding: 4px 10px;
-    font-size: 14px;
-    position: relative;
-    z-index: 1;
+.playerName {
+  font-weight: bold;
+  padding: 4px 10px;
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
 }
-.details{
-    padding: 4px 10px 10px;
+.details {
+  padding: 4px 10px 10px;
 }
-.playerMoney{
-    font-size: 12px;
+.playerMoney {
+  font-size: 12px;
 }
-.viewMyCards{
-    color: white;
-    font-size: 12px;
-    background-color: rgba(0,0,0,0.4);
-    border: none;
-    padding: 3px 7px;
-    border-radius: 3px;
-    cursor: pointer;
-    margin-top: 5px;
+.viewMyCards {
+  color: white;
+  font-size: 12px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: none;
+  padding: 3px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-top: 5px;
 }
 
 .red {
-    background-color: red;
-    color: white;
+  background-color: red;
+  color: white;
 }
 .yellow {
-    background-color: yellow;
-    color: black;
+  background-color: yellow;
+  color: black;
 }
 .green {
-    background-color: green;
-    color: white;
+  background-color: green;
+  color: white;
 }
 .blue {
-    background-color: blue;
-    color: white;
+  background-color: blue;
+  color: white;
 }
-
-

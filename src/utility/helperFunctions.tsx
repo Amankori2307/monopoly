@@ -1,4 +1,3 @@
-export const mortgageableSites = (sites) => {
-    return sites.filter((site) => site.mortaged)
-}
-
+export const mortgageableSites = sites => {
+  return sites.filter(site => site.mortaged);
+};
