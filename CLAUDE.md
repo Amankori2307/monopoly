@@ -2,6 +2,129 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Context & History
+
+### Project Overview
+This is a Zelda-themed Monopoly board game implementation built with React, TypeScript, and Redux. The project was migrated from Create React App to NX + Vite + TypeScript for better performance and development experience.
+
+### Major Migrations Completed
+
+#### 1. Package Manager Migration (✅ Complete)
+- **From**: npm with package-lock.json
+- **To**: pnpm with pnpm-lock.yaml
+- **Status**: All packages now managed with pnpm
+
+#### 2. Package Updates (✅ Complete)
+- **Action**: Updated all packages to latest versions
+- **Key Updates**:
+  - React 19 with modern features
+  - React Router v7 (breaking changes handled)
+  - ESLint 8.57.1 (downgraded from v9 for compatibility)
+  - Web Vitals v5 (API changes handled)
+  - Vite 6.3.5 (downgraded from v7 for NX compatibility)
+
+#### 3. TypeScript Migration (✅ Infrastructure Complete)
+- **Strategy**: Gradual migration approach
+- **Current State**: All .js files renamed to .ts/.tsx
+- **TypeScript Config**: Strict mode disabled for gradual transition
+- **Type Declarations**: Added for CSS modules and assets
+- **Next Steps**: Continue adding proper types throughout codebase
+
+#### 4. Code Quality Tools (✅ Complete)
+- **ESLint**: Configured with React best practices
+- **Prettier**: Set up with project standards
+- **Auto-fix capabilities**: Both ESLint and Prettier support auto-fixing
+
+#### 5. Build System Migration (✅ Complete)
+- **From**: Create React App
+- **To**: NX + Vite + TypeScript
+- **Benefits**: Faster builds, better caching, modern tooling
+
+### Known Issues & Fixes Applied
+
+#### React Router v7 Breaking Changes
+- **Issue**: `Switch` component removed, route syntax changed
+- **Fix**: Replaced with `Routes` and updated `component={Component}` to `element={<Component />}`
+
+#### React 19 Changes
+- **Issue**: `ReactDOM.render` deprecated
+- **Fix**: Updated to `ReactDOM.createRoot().render()`
+
+#### Web Vitals v5 API Changes
+- **Issue**: Function names changed from `getCLS` to `onCLS`
+- **Fix**: Updated reportWebVitals.ts accordingly
+
+#### ESLint Version Compatibility
+- **Issue**: ESLint 9 incompatible with React Scripts
+- **Fix**: Downgraded to ESLint 8.57.1
+
+#### Vite v7 Compatibility
+- **Issue**: Vite 7 had crypto.hash errors with NX
+- **Fix**: Downgraded to Vite 6.3.5
+
+## Game Implementation Details
+
+### Zelda-Themed Monopoly Rules
+This implementation follows standard Monopoly rules with Zelda theming:
+
+#### Board Layout (40 spaces)
+- **Corner Spaces**: GO, Jail, Free Parking, Go to Jail
+- **Property Groups** (8 groups):
+  - Brown: Minish Woods, Ordon Village
+  - Green: Kokiri Forest, Lost Woods, Forest Temple
+  - Pink: Graveyard, Kakariko Village, Shadow Temple
+  - Orange: Haunted Westeland, Gerudo Fortress, Spirit Temple
+  - Red: Death Mountain, Goron City, Fire Temple
+  - Yellow: Lon Lon Ranch, Hyrule Castle, Temple of Time
+  - Sky Blue: Lake Hylia, Zora's Domain, Water Temple
+  - Blue: Skyloft, City in the sky
+- **Railroads**: Forest, Send, Fire, Ocean Realm Rails
+- **Utilities**: Windmill Hut, Waterfall Cave
+- **Taxes**: Income Tax ($200), Super Tax ($100)
+
+#### Game Mechanics
+- **Starting Money**: $1000 per player
+- **Rent Calculation**: Matches standard Monopoly with monopoly doubling
+- **Building System**: 5 levels (rentWithHouse array)
+- **Mortgage System**: All properties can be mortgaged
+- **Card System**: 11 Chance cards, 11 Community Chest cards
+
+### Player State Structure
+```typescript
+{
+  site: number,           // Current board position (0-39)
+  previousSite: number,   // Previous position
+  playerId: number,       // Player identifier
+  money: number,          // Current money (starts at 1000)
+  isMoving: boolean,      // Animation state
+  direction: string       // FORWARD/BACKWARD movement
+}
+```
+
+### Property State Structure
+```typescript
+{
+  id: number,
+  type: string,          // site, realm_rails, utility, special, etc.
+  color: string,         // Property group color
+  name: string,          // Zelda-themed name
+  sellingPrice: number,  // Purchase price
+  rent: number,          // Base rent
+  rentWithHouse: array,  // Rent with 1-5 buildings
+  mortgage: number,      // Mortgage value
+  construction: number,  // Building cost
+  isMortgaged: boolean,
+  built: number         // Number of buildings (0-5)
+}
+```
+
+### Important File Locations
+- `src/assets/data/boardData.json` - Complete board configuration
+- `src/assets/data/chanceData.json` - Chance card actions
+- `src/assets/data/chestData.json` - Community Chest card actions
+- `src/redux/reducers/` - State management
+- `src/utility/playerUtility.tsx` - Game logic utilities
+
 ## Development Commands
 
 ### Core Development
