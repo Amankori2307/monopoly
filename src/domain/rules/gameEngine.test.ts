@@ -32,7 +32,11 @@ describe('gameEngine', () => {
     const activePlayerId = game.playerOrder[game.activePlayerIndex];
     game.players[activePlayerId].position = 0;
 
-    const result = executeGameCommand(game, { type: 'rollTurnDice' }, new SeededRandomSource(2));
+    const result = executeGameCommand(
+      game,
+      { type: 'rollTurnDice' },
+      new SeededRandomSource(2)
+    );
 
     expect(result.nextState.pendingDecision.type).toBe('landed-unowned-property');
   });
@@ -41,7 +45,11 @@ describe('gameEngine', () => {
     const game = createBaseGame();
     const activePlayerId = game.playerOrder[game.activePlayerIndex];
     game.players[activePlayerId].position = 0;
-    const rolled = executeGameCommand(game, { type: 'rollTurnDice' }, new SeededRandomSource(2));
+    const rolled = executeGameCommand(
+      game,
+      { type: 'rollTurnDice' },
+      new SeededRandomSource(2)
+    );
 
     const declined = executeGameCommand(rolled.nextState, { type: 'declineLandedAsset' });
 

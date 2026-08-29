@@ -39,20 +39,19 @@ const BuyCardModal = ({
   );
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     activePlayer: store.playersData.activePlayer,
     sites: store.siteData.sites,
   };
 };
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
     setShowModal: (showModal, currentModal) =>
       dispatch(setShowModal(showModal, currentModal)),
     buySite: (playerId, siteData) => dispatch(buySite(playerId, siteData)),
-    debitPlayerMoney: (playerId, amount) =>
-      dispatch(debitPlayerMoney(playerId, amount)),
-    setIsDone: isDone => dispatch(setIsDone(isDone)),
+    debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
+    setIsDone: (isDone) => dispatch(setIsDone(isDone)),
   };
 };
 

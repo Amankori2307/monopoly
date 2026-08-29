@@ -85,13 +85,7 @@ export interface TaxSpace extends BaseSpace {
 }
 
 export interface ActionSpace extends BaseSpace {
-  kind:
-    | 'go'
-    | 'chance'
-    | 'community-chest'
-    | 'jail'
-    | 'free-parking'
-    | 'go-to-jail';
+  kind: 'go' | 'chance' | 'community-chest' | 'jail' | 'free-parking' | 'go-to-jail';
 }
 
 export type BoardSpace =

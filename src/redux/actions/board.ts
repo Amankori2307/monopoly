@@ -1,8 +1,4 @@
-import {
-  SET_BOARD_SIZE,
-  CALC_SITE_POSITIONS,
-  SET_IS_DONE,
-} from './actionTypes';
+import { SET_BOARD_SIZE, CALC_SITE_POSITIONS, SET_IS_DONE } from './actionTypes';
 
 export function setBoardSize(data) {
   return {

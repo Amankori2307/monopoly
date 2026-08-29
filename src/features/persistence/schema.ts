@@ -6,7 +6,11 @@ export const storedGameIndexEntrySchema = z.object({
   themeId: z.string(),
   playerCount: z.number(),
   playerNames: z.array(z.string()),
-  status: z.union([z.literal('in_progress'), z.literal('completed'), z.literal('corrupt')]),
+  status: z.union([
+    z.literal('in_progress'),
+    z.literal('completed'),
+    z.literal('corrupt'),
+  ]),
   createdAt: z.string(),
   updatedAt: z.string(),
   turnNumber: z.number(),
@@ -22,7 +26,11 @@ export const gameStateSchema = z.object({
   name: z.string(),
   themeId: z.string(),
   rulesetId: z.string(),
-  status: z.union([z.literal('in_progress'), z.literal('completed'), z.literal('corrupt')]),
+  status: z.union([
+    z.literal('in_progress'),
+    z.literal('completed'),
+    z.literal('corrupt'),
+  ]),
   createdAt: z.string(),
   updatedAt: z.string(),
   players: z.record(z.any()),
@@ -47,9 +55,11 @@ export const gameStateSchema = z.object({
     canRollAgain: z.boolean(),
     reason: z.string().nullable(),
   }),
-  pendingDecision: z.object({
-    type: z.string(),
-  }).passthrough(),
+  pendingDecision: z
+    .object({
+      type: z.string(),
+    })
+    .passthrough(),
   tradeState: z.any().nullable(),
   auctionState: z.any().nullable(),
   history: z.array(

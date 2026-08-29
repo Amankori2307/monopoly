@@ -1,11 +1,4 @@
-export const calculatePositionsHelper = (
-  site,
-  positions,
-  side1,
-  side2,
-  side3,
-  side4
-) => {
+export const calculatePositionsHelper = (site, positions, side1, side2, side3, side4) => {
   positions[site] = {
     right: side1,
     bottom: side2,
@@ -37,14 +30,12 @@ export const calculatePositionsHelper = (
   };
 };
 
-export const calculatePositions = board => {
+export const calculatePositions = (board) => {
   const { side: boardSide, rowWidth } = board;
   const rowLength = boardSide - rowWidth;
   const firstSiteLength = 120;
   const totalSitesInRow = 10;
-  const siteLength = Math.floor(
-    (rowLength - firstSiteLength) / (totalSitesInRow - 1)
-  );
+  const siteLength = Math.floor((rowLength - firstSiteLength) / (totalSitesInRow - 1));
   const playerSize = 30;
   let side1 = null;
   const side2 = Math.floor(rowWidth / 2 - playerSize / 2);
@@ -55,10 +46,7 @@ export const calculatePositions = board => {
     if (site === 0) side1 = Math.floor(firstSiteLength / 2 - playerSize / 2);
     else
       side1 = Math.floor(
-        firstSiteLength +
-          siteLength * (site - 1) +
-          siteLength / 2 -
-          playerSize / 2
+        firstSiteLength + siteLength * (site - 1) + siteLength / 2 - playerSize / 2
       );
 
     side3 = boardSide - side1 - playerSize;

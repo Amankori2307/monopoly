@@ -12,10 +12,7 @@ import DoneButton from '../donebutton/DoneButton';
 const Board = ({ side, totalPlayers, sites, active }) => {
   return (
     <>
-      <div
-        className={style.board}
-        style={{ width: side + 'px', height: side + 'px' }}
-      >
+      <div className={style.board} style={{ width: side + 'px', height: side + 'px' }}>
         {[
           sites.slice(0, 10).reverse(),
           sites.slice(10, 20).reverse(),
@@ -35,11 +32,11 @@ const Board = ({ side, totalPlayers, sites, active }) => {
   );
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {};
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     side: store.board.side,
     totalPlayers: store.playersData.totalPlayers,

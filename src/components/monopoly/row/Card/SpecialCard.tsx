@@ -15,8 +15,7 @@ const SpecialCard = ({ rowNum, active }) => {
   const genClassList = () => {
     let classList = '';
     classList += style.specialCard + ' ';
-    classList +=
-      rowNum === 1 || rowNum === 2 ? style.reverseSpecialCard + ' ' : '';
+    classList += rowNum === 1 || rowNum === 2 ? style.reverseSpecialCard + ' ' : '';
     classList += !active ? style.inactive + ' ' : '';
     return classList;
   };

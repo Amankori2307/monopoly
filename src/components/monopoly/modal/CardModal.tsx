@@ -17,9 +17,7 @@ const CardModal = ({ card }) => {
       case cardTypes.SITE:
         UI = (
           <div className={style.card}>
-            <p
-              className={`${style.name} ${card.color} ${'c-' + card.textColorOnShow}`}
-            >
+            <p className={`${style.name} ${card.color} ${'c-' + card.textColorOnShow}`}>
               {card.name}
             </p>
             <p className={`${style.rent}`}>RENT: ${card.rent}</p>
@@ -34,9 +32,7 @@ const CardModal = ({ card }) => {
               </tbody>
             </table>
             <p className={style.mortgage}>Mortage Value ${card.mortgage}</p>
-            <p className={style.construction}>
-              Construction ${card.construction} Each
-            </p>
+            <p className={style.construction}>Construction ${card.construction} Each</p>
             <p className={style.info}>{SITE_INFO}</p>
             {card.isMortgaged && (
               <img
@@ -51,9 +47,7 @@ const CardModal = ({ card }) => {
       case cardTypes.REALM_RAILS:
         UI = (
           <div className={style.card}>
-            <p
-              className={`${style.name} ${card.color} ${'c-' + card.textColorOnShow}`}
-            >
+            <p className={`${style.name} ${card.color} ${'c-' + card.textColorOnShow}`}>
               {card.name}
             </p>
             <table className={`${style.rentWithHouse}  ${style.mt}`}>
@@ -83,9 +77,7 @@ const CardModal = ({ card }) => {
       case cardTypes.UTILITY:
         UI = (
           <div className={style.card}>
-            <p
-              className={`${style.name} ${card.color} ${'c-' + card.textColorOnShow}`}
-            >
+            <p className={`${style.name} ${card.color} ${'c-' + card.textColorOnShow}`}>
               {card.name}
             </p>
             <div className={style.utilityInfo}>
@@ -110,9 +102,7 @@ const CardModal = ({ card }) => {
           <div
             className={`${style.card} ${style.centerWrapper} ${style.radialBackground}`}
           >
-            <div
-              className={`${style.circle} ${style.centerWrapper} ${style.column}`}
-            >
+            <div className={`${style.circle} ${style.centerWrapper} ${style.column}`}>
               <p className={style.heading}>Pay ${card.debit}</p>
               <p className={style.subHeading}>{card.name}</p>
             </div>
@@ -126,7 +116,7 @@ const CardModal = ({ card }) => {
   };
   return <>{renderUI()}</>;
 };
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {};
 };
 

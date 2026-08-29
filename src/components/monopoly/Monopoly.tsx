@@ -9,10 +9,7 @@ import Footer from '../home/footer/Footer';
 import BuyCardModal from './modal/BuyCardModal';
 import { modalTypes } from '../../utility/constants';
 import AuctionCardModal from './modal/AuctionCardModal';
-import {
-  calculateSitePositions,
-  setBoardSize,
-} from '../../redux/actions/board';
+import { calculateSitePositions, setBoardSize } from '../../redux/actions/board';
 import { setTotalPlayers } from '../../redux/actions/player';
 import { setSites } from '../../redux/actions/site';
 import sites from '../../assets/data/boardData.json';
@@ -81,16 +78,16 @@ const Monopoly = ({
   );
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    setBoardSize: data => dispatch(setBoardSize(data)),
-    calculateSitePositions: data => dispatch(calculateSitePositions(data)),
-    setTotalPlayers: totalPlayers => dispatch(setTotalPlayers(totalPlayers)),
-    setSites: data => dispatch(setSites(data)),
+    setBoardSize: (data) => dispatch(setBoardSize(data)),
+    calculateSitePositions: (data) => dispatch(calculateSitePositions(data)),
+    setTotalPlayers: (totalPlayers) => dispatch(setTotalPlayers(totalPlayers)),
+    setSites: (data) => dispatch(setSites(data)),
   };
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     modalData: store.modalData,
     currentCard: store.card.currentCard,

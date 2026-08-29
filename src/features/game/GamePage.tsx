@@ -100,7 +100,8 @@ export function GamePage() {
   const activePlayerId = activeGame.playerOrder[activeGame.activePlayerIndex];
   const activePlayer = activeGame.players[activePlayerId];
   const currentSpace = activeGame.board[activePlayer.position];
-  const selectedSpace = activeGame.board.find((space) => space.id === selectedSpaceId) ?? null;
+  const selectedSpace =
+    activeGame.board.find((space) => space.id === selectedSpaceId) ?? null;
   const ownedProperties = activeGame.board.filter((space) => {
     const ownership = activeGame.ownership[space.id];
     return ownership?.ownerPlayerId === activePlayerId;
@@ -155,7 +156,10 @@ export function GamePage() {
     if (activeGame.pendingDecision.type === 'auction-bid' && activeGame.auctionState) {
       const auction = activeGame.auctionState;
       const activeBidderId = auction.activeBidderOrder[auction.activeBidderIndex];
-      const minimumBid = Math.max(auction.startPrice, auction.highestBid + auction.minIncrement);
+      const minimumBid = Math.max(
+        auction.startPrice,
+        auction.highestBid + auction.minIncrement
+      );
       const activeBidder = activeGame.players[activeBidderId];
       const auctionSpace = activeGame.board.find((space) => space.id === auction.spaceId);
 
@@ -280,13 +284,14 @@ export function GamePage() {
                   .map((playerId) => activeGame.players[playerId])
                   .filter((player) => player.position === space.index);
                 const cornerIcon = cornerIcons[space.kind];
-                const spaceIcon = space.kind === 'utility' && space.name === 'Electric Company'
-                  ? electricCompanyIcon
-                  : space.kind === 'tax' && space.name === 'Super Tax'
-                    ? superTaxIcon
-                  : space.kind === 'utility'
-                    ? waterWorksIcon
-                    : spaceIcons[space.kind];
+                const spaceIcon =
+                  space.kind === 'utility' && space.name === 'Electric Company'
+                    ? electricCompanyIcon
+                    : space.kind === 'tax' && space.name === 'Super Tax'
+                      ? superTaxIcon
+                      : space.kind === 'utility'
+                        ? waterWorksIcon
+                        : spaceIcons[space.kind];
 
                 return (
                   <button
@@ -314,7 +319,14 @@ export function GamePage() {
                       </div>
                     ) : (
                       <div className="space-label">
-                        {spaceIcon ? <img alt="" aria-hidden="true" className="space-icon" src={spaceIcon} /> : null}
+                        {spaceIcon ? (
+                          <img
+                            alt=""
+                            aria-hidden="true"
+                            className="space-icon"
+                            src={spaceIcon}
+                          />
+                        ) : null}
                         <strong className="space-name">{space.name}</strong>
                       </div>
                     )}
@@ -325,7 +337,11 @@ export function GamePage() {
                             (candidate) => candidate.id === player.tokenId
                           );
                           return (
-                            <span className="token-chip" key={player.id} title={player.name}>
+                            <span
+                              className="token-chip"
+                              key={player.id}
+                              title={player.name}
+                            >
                               {token?.emoji ?? player.name.charAt(0)}
                             </span>
                           );
@@ -343,7 +359,7 @@ export function GamePage() {
               <div className="panel-heading">
                 <div>
                   <p className="eyebrow">Turn {activeGame.turnNumber}</p>
-                  <h2>{activePlayer.name}'s move</h2>
+                  <h2>{activePlayer.name}&apos;s move</h2>
                 </div>
                 <span className="turn-token">
                   {theme?.tokenCatalog.find((token) => token.id === activePlayer.tokenId)
@@ -392,7 +408,9 @@ export function GamePage() {
                   <p className="eyebrow">Table</p>
                   <h2>Players</h2>
                 </div>
-                <span className="counter-badge">{activeGame.players ? activeGame.playerOrder.length : 0}</span>
+                <span className="counter-badge">
+                  {activeGame.players ? activeGame.playerOrder.length : 0}
+                </span>
               </div>
               <div className="player-list">
                 {activeGame.playerOrder.map((playerId) => {
@@ -439,7 +457,7 @@ export function GamePage() {
               <div className="panel-heading">
                 <div>
                   <p className="eyebrow">Portfolio</p>
-                  <h2>{activePlayer.name}'s holdings</h2>
+                  <h2>{activePlayer.name}&apos;s holdings</h2>
                 </div>
                 <span className="counter-badge">{ownedProperties.length}</span>
               </div>

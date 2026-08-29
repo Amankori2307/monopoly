@@ -12,3 +12,6 @@ pnpm-lock.yaml
 .nuxt
 .vscode
 .idea
+# generated / vendored
+src/assets
+progres_with_time

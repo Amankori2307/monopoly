@@ -17,7 +17,7 @@ export const buySite = (playerId, siteData) => {
   };
 };
 
-export const setSites = data => {
+export const setSites = (data) => {
   return {
     type: SET_SITES,
     payload: data,

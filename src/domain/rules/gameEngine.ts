@@ -63,22 +63,25 @@ const chooseFirstPlayerOrder = (
 };
 
 const createPlayers = (input: CreateGameInput): Record<PlayerId, PlayerState> =>
-  input.playerConfigs.reduce<Record<PlayerId, PlayerState>>((accumulator, playerConfig, index) => {
-    const playerId = `player-${index + 1}`;
-    accumulator[playerId] = {
-      id: playerId,
-      name: playerConfig.name,
-      tokenId: playerConfig.tokenId,
-      cash: STARTING_CASH,
-      position: 0,
-      inJail: false,
-      jailTurnsServed: 0,
-      jailFreeCards: 0,
-      isBankrupt: false,
-      bankruptcyRank: null,
-    };
-    return accumulator;
-  }, {});
+  input.playerConfigs.reduce<Record<PlayerId, PlayerState>>(
+    (accumulator, playerConfig, index) => {
+      const playerId = `player-${index + 1}`;
+      accumulator[playerId] = {
+        id: playerId,
+        name: playerConfig.name,
+        tokenId: playerConfig.tokenId,
+        cash: STARTING_CASH,
+        position: 0,
+        inJail: false,
+        jailTurnsServed: 0,
+        jailFreeCards: 0,
+        isBankrupt: false,
+        bankruptcyRank: null,
+      };
+      return accumulator;
+    },
+    {}
+  );
 
 const getPlayerById = (state: GameState, playerId: PlayerId): PlayerState =>
   state.players[playerId];
@@ -223,10 +226,13 @@ const ownsEntireColorSet = (
   colorGroup: string
 ): boolean => {
   const matchingSpaces = state.board.filter(
-    (space): space is StreetSpace => space.kind === 'street' && space.colorGroup === colorGroup
+    (space): space is StreetSpace =>
+      space.kind === 'street' && space.colorGroup === colorGroup
   );
 
-  return matchingSpaces.every((space) => state.ownership[space.id]?.ownerPlayerId === playerId);
+  return matchingSpaces.every(
+    (space) => state.ownership[space.id]?.ownerPlayerId === playerId
+  );
 };
 
 const getStreetRent = (
@@ -247,11 +253,13 @@ const getStreetRent = (
 
 const getRailwayRent = (state: GameState, playerId: PlayerId): number => {
   const railwaysOwned = state.board.filter(
-    (space) => space.kind === 'railway' && state.ownership[space.id]?.ownerPlayerId === playerId
+    (space) =>
+      space.kind === 'railway' && state.ownership[space.id]?.ownerPlayerId === playerId
   ).length;
   const firstRailway = state.board.find((space) => space.kind === 'railway');
   return firstRailway?.kind === 'railway'
-    ? firstRailway.rentByCount[Math.max(railwaysOwned - 1, 0)] ?? firstRailway.rentByCount[0]
+    ? (firstRailway.rentByCount[Math.max(railwaysOwned - 1, 0)] ??
+        firstRailway.rentByCount[0])
     : 25;
 };
 
@@ -261,16 +269,24 @@ const getUtilityRent = (
   diceTotal: number
 ): number => {
   const utilitiesOwned = state.board.filter(
-    (space) => space.kind === 'utility' && state.ownership[space.id]?.ownerPlayerId === playerId
+    (space) =>
+      space.kind === 'utility' && state.ownership[space.id]?.ownerPlayerId === playerId
   ).length;
   const utility = state.board.find((space) => space.kind === 'utility');
   if (!utility || utility.kind !== 'utility') {
     return 0;
   }
-  return diceTotal * (utilitiesOwned > 1 ? utility.rentMultiplierBoth : utility.rentMultiplierOne);
+  return (
+    diceTotal *
+    (utilitiesOwned > 1 ? utility.rentMultiplierBoth : utility.rentMultiplierOne)
+  );
 };
 
-const sendPlayerToJail = (state: GameState, playerId: PlayerId, reason: string): GameState => {
+const sendPlayerToJail = (
+  state: GameState,
+  playerId: PlayerId,
+  reason: string
+): GameState => {
   let nextState = updatePlayer(state, playerId, (player) => ({
     ...player,
     position: 10,
@@ -290,7 +306,10 @@ const sendPlayerToJail = (state: GameState, playerId: PlayerId, reason: string):
   };
 
   return appendEvents(nextState, [
-    createEvent(nextState.turnNumber, `${getPlayerById(state, playerId).name} was sent to Jail.`),
+    createEvent(
+      nextState.turnNumber,
+      `${getPlayerById(state, playerId).name} was sent to Jail.`
+    ),
   ]);
 };
 
@@ -354,7 +373,9 @@ const completeAuctionIfPossible = (state: GameState): GameState => {
 };
 
 const startAuction = (state: GameState, spaceId: string): GameState => {
-  const eligiblePlayers = state.playerOrder.filter((playerId) => !state.players[playerId].isBankrupt);
+  const eligiblePlayers = state.playerOrder.filter(
+    (playerId) => !state.players[playerId].isBankrupt
+  );
   const auctionState: AuctionState = {
     id: crypto.randomUUID(),
     spaceId,
@@ -378,7 +399,12 @@ const startAuction = (state: GameState, spaceId: string): GameState => {
         reason: 'Auction in progress',
       },
     },
-    [createEvent(state.turnNumber, `Auction started for ${getSpaceById(state, spaceId).name}.`)]
+    [
+      createEvent(
+        state.turnNumber,
+        `Auction started for ${getSpaceById(state, spaceId).name}.`
+      ),
+    ]
   );
 };
 
@@ -399,7 +425,9 @@ const advanceToNextTurn = (state: GameState): GameState => {
       doublesCount: 0,
       lastRoll: null,
       canRollAgain: false,
-      reason: nextPlayer.inJail ? `${nextPlayer.name} must choose how to leave Jail.` : null,
+      reason: nextPlayer.inJail
+        ? `${nextPlayer.name} must choose how to leave Jail.`
+        : null,
     },
   };
 };
@@ -415,7 +443,8 @@ const resolveCard = (
     ...state,
     decks: {
       ...state.decks,
-      [deckName]: card.effect.kind === 'jail-free' ? remainingCards : [...remainingCards, card],
+      [deckName]:
+        card.effect.kind === 'jail-free' ? remainingCards : [...remainingCards, card],
     },
   };
 
@@ -434,9 +463,19 @@ const resolveCard = (
         };
       });
     case 'pay':
-      return resolveBankPayment(nextState, activePlayer.id, effect.amount, card.description);
+      return resolveBankPayment(
+        nextState,
+        activePlayer.id,
+        effect.amount,
+        card.description
+      );
     case 'move-to': {
-      nextState = movePlayerTo(nextState, activePlayer.id, effect.index, effect.collectGo);
+      nextState = movePlayerTo(
+        nextState,
+        activePlayer.id,
+        effect.index,
+        effect.collectGo
+      );
       return resolveCurrentSpace(nextState, activePlayer.id, false);
     }
     case 'move-steps': {
@@ -455,7 +494,10 @@ const resolveCard = (
       }));
     case 'collect-from-each': {
       state.playerOrder
-        .filter((playerId) => playerId !== activePlayer.id && !state.players[playerId].isBankrupt)
+        .filter(
+          (playerId) =>
+            playerId !== activePlayer.id && !state.players[playerId].isBankrupt
+        )
         .forEach((playerId) => {
           nextState = resolvePlayerPayment(
             nextState,
@@ -469,7 +511,10 @@ const resolveCard = (
     }
     case 'pay-each': {
       state.playerOrder
-        .filter((playerId) => playerId !== activePlayer.id && !state.players[playerId].isBankrupt)
+        .filter(
+          (playerId) =>
+            playerId !== activePlayer.id && !state.players[playerId].isBankrupt
+        )
         .forEach((playerId) => {
           nextState = resolvePlayerPayment(
             nextState,
@@ -497,14 +542,23 @@ const resolveCurrentSpace = (
   let nextState = state;
 
   if (space.kind === 'tax') {
-    nextState = resolveBankPayment(nextState, player.id, space.amount, `${space.name} due`);
+    nextState = resolveBankPayment(
+      nextState,
+      player.id,
+      space.amount,
+      `${space.name} due`
+    );
   } else if (space.kind === 'go-to-jail') {
     return sendPlayerToJail(nextState, player.id, 'Landed on Go To Jail');
   } else if (space.kind === 'chance') {
     nextState = resolveCard(nextState, 'chance');
   } else if (space.kind === 'community-chest') {
     nextState = resolveCard(nextState, 'communityChest');
-  } else if (space.kind === 'street' || space.kind === 'railway' || space.kind === 'utility') {
+  } else if (
+    space.kind === 'street' ||
+    space.kind === 'railway' ||
+    space.kind === 'utility'
+  ) {
     const ownership = nextState.ownership[space.id];
     if (!ownership.ownerPlayerId) {
       nextState = {
@@ -537,7 +591,10 @@ const resolveCurrentSpace = (
         `${player.name} owes ${owner.name} rent on ${space.name}.`
       );
       nextState = appendEvents(nextState, [
-        createEvent(nextState.turnNumber, `${player.name} paid ${getThemeOrDefault(nextState.themeId).currencySymbol}${rent} rent to ${owner.name}.`),
+        createEvent(
+          nextState.turnNumber,
+          `${player.name} paid ${getThemeOrDefault(nextState.themeId).currencySymbol}${rent} rent to ${owner.name}.`
+        ),
       ]);
     }
   }
@@ -549,7 +606,11 @@ const resolveCurrentSpace = (
     ...nextState,
     turn: {
       ...nextState.turn,
-      phase: isBlockedByDecision ? 'await_decision' : canRollAgain ? 'await_extra_roll_or_end' : 'turn_complete',
+      phase: isBlockedByDecision
+        ? 'await_decision'
+        : canRollAgain
+          ? 'await_extra_roll_or_end'
+          : 'turn_complete',
       canRollAgain,
       reason: isBlockedByDecision ? nextState.turn.reason : null,
     },
@@ -604,7 +665,10 @@ export const createGameState = (
     auctionState: null,
     history: [
       createEvent(1, `${name} started with ${input.playerConfigs.length} players.`),
-      createEvent(1, `${players[playerOrder[0]].name} won the opening roll and goes first.`),
+      createEvent(
+        1,
+        `${players[playerOrder[0]].name} won the opening roll and goes first.`
+      ),
     ],
     winnerPlayerId: null,
   };
@@ -632,7 +696,10 @@ export const executeGameCommand = (
       if (activePlayer.inJail) {
         throw new Error('Player must choose a Jail action first.');
       }
-      if (nextState.turn.phase !== 'await_roll' && nextState.turn.phase !== 'await_extra_roll_or_end') {
+      if (
+        nextState.turn.phase !== 'await_roll' &&
+        nextState.turn.phase !== 'await_extra_roll_or_end'
+      ) {
         throw new Error('Rolling is not available right now.');
       }
 
@@ -653,7 +720,11 @@ export const executeGameCommand = (
       };
 
       if (nextDoublesCount === 3) {
-        nextState = sendPlayerToJail(nextState, activePlayer.id, 'Rolled doubles three times');
+        nextState = sendPlayerToJail(
+          nextState,
+          activePlayer.id,
+          'Rolled doubles three times'
+        );
         break;
       }
 
@@ -661,7 +732,10 @@ export const executeGameCommand = (
       const destination = (activePlayer.position + total) % nextState.board.length;
       nextState = movePlayerTo(nextState, activePlayer.id, destination, true);
       nextState = appendEvents(nextState, [
-        createEvent(nextState.turnNumber, `${activePlayer.name} rolled ${dieOne} and ${dieTwo}.`),
+        createEvent(
+          nextState.turnNumber,
+          `${activePlayer.name} rolled ${dieOne} and ${dieTwo}.`
+        ),
       ]);
       nextState = resolveCurrentSpace(nextState, activePlayer.id, isDouble);
       break;
@@ -673,7 +747,9 @@ export const executeGameCommand = (
       const decision = nextState.pendingDecision;
       const buyer = getPlayerById(nextState, decision.playerId);
       const space = getSpaceById(nextState, decision.spaceId);
-      if (!(space.kind === 'street' || space.kind === 'railway' || space.kind === 'utility')) {
+      if (
+        !(space.kind === 'street' || space.kind === 'railway' || space.kind === 'utility')
+      ) {
         throw new Error('Current space is not buyable.');
       }
       if (buyer.cash < space.price) {
@@ -693,13 +769,17 @@ export const executeGameCommand = (
         pendingDecision: { type: 'none' },
         turn: {
           ...nextState.turn,
-          phase: nextState.turn.doublesCount > 0 ? 'await_extra_roll_or_end' : 'turn_complete',
+          phase:
+            nextState.turn.doublesCount > 0 ? 'await_extra_roll_or_end' : 'turn_complete',
           canRollAgain: nextState.turn.doublesCount > 0,
           reason: null,
         },
       };
       nextState = appendEvents(nextState, [
-        createEvent(nextState.turnNumber, `${buyer.name} bought ${space.name} for ${getThemeOrDefault(nextState.themeId).currencySymbol}${space.price}.`),
+        createEvent(
+          nextState.turnNumber,
+          `${buyer.name} bought ${space.name} for ${getThemeOrDefault(nextState.themeId).currencySymbol}${space.price}.`
+        ),
       ]);
       break;
     }
@@ -716,7 +796,10 @@ export const executeGameCommand = (
       }
       const activeBidderId = auction.activeBidderOrder[auction.activeBidderIndex];
       const activeBidder = getPlayerById(nextState, activeBidderId);
-      const minimumBid = Math.max(auction.startPrice, auction.highestBid + auction.minIncrement);
+      const minimumBid = Math.max(
+        auction.startPrice,
+        auction.highestBid + auction.minIncrement
+      );
       if (command.amount < minimumBid) {
         throw new Error(`Bid must be at least ${minimumBid}.`);
       }
@@ -730,11 +813,15 @@ export const executeGameCommand = (
           ...auction,
           highestBid: command.amount,
           highestBidderId: activeBidderId,
-          activeBidderIndex: (auction.activeBidderIndex + 1) % auction.activeBidderOrder.length,
+          activeBidderIndex:
+            (auction.activeBidderIndex + 1) % auction.activeBidderOrder.length,
         },
       };
       nextState = appendEvents(nextState, [
-        createEvent(nextState.turnNumber, `${activeBidder.name} bid ${getThemeOrDefault(nextState.themeId).currencySymbol}${command.amount}.`),
+        createEvent(
+          nextState.turnNumber,
+          `${activeBidder.name} bid ${getThemeOrDefault(nextState.themeId).currencySymbol}${command.amount}.`
+        ),
       ]);
       nextState = completeAuctionIfPossible(nextState);
       break;
@@ -749,12 +836,16 @@ export const executeGameCommand = (
         ...nextState,
         auctionState: {
           ...auction,
-          activeBidderIndex: (auction.activeBidderIndex + 1) % auction.activeBidderOrder.length,
+          activeBidderIndex:
+            (auction.activeBidderIndex + 1) % auction.activeBidderOrder.length,
           passedPlayerIds: [...auction.passedPlayerIds, activeBidderId],
         },
       };
       nextState = appendEvents(nextState, [
-        createEvent(nextState.turnNumber, `${getPlayerById(nextState, activeBidderId).name} passed in the auction.`),
+        createEvent(
+          nextState.turnNumber,
+          `${getPlayerById(nextState, activeBidderId).name} passed in the auction.`
+        ),
       ]);
       nextState = completeAuctionIfPossible(nextState);
       break;
@@ -821,7 +912,10 @@ export const executeGameCommand = (
         },
       };
       nextState = appendEvents(nextState, [
-        createEvent(nextState.turnNumber, `${activePlayer.name} attempted a Jail roll and got ${dieOne} and ${dieTwo}.`),
+        createEvent(
+          nextState.turnNumber,
+          `${activePlayer.name} attempted a Jail roll and got ${dieOne} and ${dieTwo}.`
+        ),
       ]);
 
       if (dieOne === dieTwo) {
@@ -830,7 +924,12 @@ export const executeGameCommand = (
           inJail: false,
           jailTurnsServed: 0,
         }));
-        nextState = movePlayerTo(nextState, activePlayer.id, (10 + dieOne + dieTwo) % nextState.board.length, true);
+        nextState = movePlayerTo(
+          nextState,
+          activePlayer.id,
+          (10 + dieOne + dieTwo) % nextState.board.length,
+          true
+        );
         nextState = resolveCurrentSpace(nextState, activePlayer.id, false);
       } else {
         const jailTurnsServed = activePlayer.jailTurnsServed + 1;
@@ -839,13 +938,23 @@ export const executeGameCommand = (
           jailTurnsServed,
         }));
         if (jailTurnsServed >= 3) {
-          nextState = resolveBankPayment(nextState, activePlayer.id, JAIL_FINE, 'Mandatory Jail fine');
+          nextState = resolveBankPayment(
+            nextState,
+            activePlayer.id,
+            JAIL_FINE,
+            'Mandatory Jail fine'
+          );
           nextState = updatePlayer(nextState, activePlayer.id, (player) => ({
             ...player,
             inJail: false,
             jailTurnsServed: 0,
           }));
-          nextState = movePlayerTo(nextState, activePlayer.id, (10 + dieOne + dieTwo) % nextState.board.length, true);
+          nextState = movePlayerTo(
+            nextState,
+            activePlayer.id,
+            (10 + dieOne + dieTwo) % nextState.board.length,
+            true
+          );
           nextState = resolveCurrentSpace(nextState, activePlayer.id, false);
         } else {
           nextState = {
@@ -862,7 +971,10 @@ export const executeGameCommand = (
       break;
     }
     case 'endTurn':
-      if (nextState.turn.phase !== 'turn_complete' && nextState.turn.phase !== 'await_extra_roll_or_end') {
+      if (
+        nextState.turn.phase !== 'turn_complete' &&
+        nextState.turn.phase !== 'await_extra_roll_or_end'
+      ) {
         throw new Error('Turn cannot be ended yet.');
       }
       if (nextState.turn.canRollAgain) {
@@ -888,7 +1000,9 @@ export const executeGameCommand = (
     case 'acceptTrade':
     case 'rejectTrade':
     case 'confirmBankruptcy':
-      uiHints.push(`${command.type} is scaffolded in the engine contract and will be implemented in the next phase.`);
+      uiHints.push(
+        `${command.type} is scaffolded in the engine contract and will be implemented in the next phase.`
+      );
       break;
     default:
       break;

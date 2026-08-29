@@ -52,15 +52,15 @@ const DiceContainer = ({ rollDice, isDone }) => {
   );
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     isDone: store.board.isDone,
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    rollDice: diceData => dispatch(rollDice(diceData)),
+    rollDice: (diceData) => dispatch(rollDice(diceData)),
   };
 };
 

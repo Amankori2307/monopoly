@@ -1,6 +1,6 @@
 import { cardTypes, directions } from './constants';
 
-export const createPlayerData = totalPlayers => {
+export const createPlayerData = (totalPlayers) => {
   const players = {};
   for (let player = 0; player < totalPlayers; player++) {
     players[player] = {
@@ -51,7 +51,7 @@ export const calcRentForSite = (cs, sites, noOfCardsInCategory) => {
   // check if built
   if (cs.built > 0) return cs.rentWithHouse[cs.built - 1];
   // check if all
-  const totalSites = sites.filter(site => site.subType === cs.subType);
+  const totalSites = sites.filter((site) => site.subType === cs.subType);
   let isDouble = false;
   if (totalSites.length === noOfCardsInCategory[cs.subType]) {
     // If none of the site is morgaged then take double rent else take single rent
@@ -67,23 +67,18 @@ export const calcRentForSite = (cs, sites, noOfCardsInCategory) => {
   return isDouble ? 2 * cs.rent : cs.rent;
 };
 
-export const calcRentForRealmRails = sites => {
-  const realRails = sites.filter(site => site.type === cardTypes.REALM_RAILS);
+export const calcRentForRealmRails = (sites) => {
+  const realRails = sites.filter((site) => site.type === cardTypes.REALM_RAILS);
   return Math.pow(2, realRails.length - 1) * 25;
 };
 
 export const calcRentForUtility = (sites, diceSum) => {
-  const utility = sites.filter(site => site.type === cardTypes.UTILITY);
+  const utility = sites.filter((site) => site.type === cardTypes.UTILITY);
   if (utility.length === 1) return 4 * diceSum;
   else if (utility.length === 2) return 10 * diceSum;
 };
 
-export const calcRent = (
-  cs,
-  otherPlayerSites,
-  diceSum,
-  noOfCardsInCategory
-) => {
+export const calcRent = (cs, otherPlayerSites, diceSum, noOfCardsInCategory) => {
   if (cs.type === cardTypes.SITE)
     return calcRentForSite(cs, otherPlayerSites, noOfCardsInCategory);
   else if (cs.type === cardTypes.REALM_RAILS)

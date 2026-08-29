@@ -6,7 +6,7 @@ const HouseAndHotel = ({ built, oddRowNum }) => {
     <div className={`${style.houseAndHotelContainer} `}>
       {built !== 5 ? (
         <div className={`${style.houseAndHotel} ${style['house' + built]}`}>
-          {Array.from(Array(built).keys()).map(index => (
+          {Array.from(Array(built).keys()).map((index) => (
             <div key={index} className={`${style.house}`}>
               <img
                 src={houseIcon}
@@ -17,11 +17,7 @@ const HouseAndHotel = ({ built, oddRowNum }) => {
           ))}
         </div>
       ) : (
-        <img
-          src={hotelIcon}
-          className={oddRowNum ? style.rotate : ''}
-          alt="hotel-icon"
-        />
+        <img src={hotelIcon} className={oddRowNum ? style.rotate : ''} alt="hotel-icon" />
       )}
     </div>
   );

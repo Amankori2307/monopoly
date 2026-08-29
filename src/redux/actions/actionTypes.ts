@@ -27,8 +27,7 @@ export const BUILD_ON_SITE = 'BUILD_ON_SITE';
 export const SELL_BUILD = 'SELL_BUILD';
 
 // Modal
-export const SET_PLAYER_ID_FOR_MY_CARDS_MODAL =
-  'SET_PLAYER_ID_FOR_MY_CARDS_MODAL';
+export const SET_PLAYER_ID_FOR_MY_CARDS_MODAL = 'SET_PLAYER_ID_FOR_MY_CARDS_MODAL';
 
 // Action
 export const SET_ACTION = 'SET_ACTION';

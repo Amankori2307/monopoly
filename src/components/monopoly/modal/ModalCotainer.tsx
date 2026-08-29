@@ -10,16 +10,16 @@ const ModalContainer = ({
   title,
   ...rest
 }) => {
-  const hideOnClick = e => {
+  const hideOnClick = (e) => {
     setShowModal(false, null);
   };
-  const preventModalCloseOnClick = e => {
+  const preventModalCloseOnClick = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
   };
   return (
     <div
       className={style.modalContainer}
-      onClick={e => (disableHideOnOuterClick ? '' : hideOnClick(e))}
+      onClick={(e) => (disableHideOnOuterClick ? '' : hideOnClick(e))}
     >
       <div className={style.cardModal} onClick={preventModalCloseOnClick}>
         {!disableHideOnOuterClick && (
@@ -46,7 +46,7 @@ const ModalContainer = ({
   );
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
     setShowModal: (showModal, currentModal) =>
       dispatch(setShowModal(showModal, currentModal)),

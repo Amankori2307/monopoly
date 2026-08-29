@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import replace from '@rollup/plugin-replace';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 
@@ -17,7 +17,7 @@ const craEnvVars = Object.keys(process.env)
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? '/monopoly/' : '/',
   build: {
-    outDir: './build'
+    outDir: './build',
   },
   server: {
     port: 3000,

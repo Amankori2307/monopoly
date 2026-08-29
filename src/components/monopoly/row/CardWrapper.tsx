@@ -9,10 +9,7 @@ import {
   buildOnSite,
   sellBuild,
 } from '../../../redux/actions/site';
-import {
-  creditPlayerMoney,
-  debitPlayerMoney,
-} from '../../../redux/actions/player';
+import { creditPlayerMoney, debitPlayerMoney } from '../../../redux/actions/player';
 import Card from './Card/Card';
 import { isBuildable, isSellable } from '../../../utility/cardUtilities';
 
@@ -36,7 +33,7 @@ const CardWrapper = ({
   const [isActionable, setIsActionable] = useState(false);
 
   const getIsActionable = useCallback(() => {
-    const card = playersSites[activePlayer].filter(item => item.id === data.id);
+    const card = playersSites[activePlayer].filter((item) => item.id === data.id);
 
     switch (actionData.currentAction) {
       case null:
@@ -46,27 +43,13 @@ const CardWrapper = ({
       case actionTypes.REDEEM:
         return card.length ? card[0].isMortgaged : false;
       case actionTypes.BUILD:
-        return isBuildable(
-          playersSites[activePlayer],
-          data,
-          noOfCardsInCategory
-        );
+        return isBuildable(playersSites[activePlayer], data, noOfCardsInCategory);
       case actionTypes.SELL:
-        return isSellable(
-          playersSites[activePlayer],
-          data,
-          noOfCardsInCategory
-        );
+        return isSellable(playersSites[activePlayer], data, noOfCardsInCategory);
       default:
         return false;
     }
-  }, [
-    activePlayer,
-    data,
-    playersSites,
-    actionData.currentAction,
-    noOfCardsInCategory,
-  ]);
+  }, [activePlayer, data, playersSites, actionData.currentAction, noOfCardsInCategory]);
 
   const onCardClick = () => {
     if (actionData.active && isActionable) {
@@ -133,23 +116,21 @@ const CardWrapper = ({
   );
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
     setShowModal: (showModal, currentModal) =>
       dispatch(setShowModal(showModal, currentModal)),
-    setCurrentCard: cardData => dispatch(setCurrentCard(cardData)),
-    mortgageSite: (siteId, playerId) =>
-      dispatch(mortgageSite(siteId, playerId)),
+    setCurrentCard: (cardData) => dispatch(setCurrentCard(cardData)),
+    mortgageSite: (siteId, playerId) => dispatch(mortgageSite(siteId, playerId)),
     redeemSite: (siteId, playerId) => dispatch(redeemSite(siteId, playerId)),
     buildOnSite: (siteId, playerId) => dispatch(buildOnSite(siteId, playerId)),
     sellBuild: (siteId, playerId) => dispatch(sellBuild(siteId, playerId)),
     creditPlayerMoney: (playerId, amount) =>
       dispatch(creditPlayerMoney(playerId, amount)),
-    debitPlayerMoney: (playerId, amount) =>
-      dispatch(debitPlayerMoney(playerId, amount)),
+    debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
   };
 };
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     actionData: store.actionData,
     playersSites: store.siteData.playersSites,

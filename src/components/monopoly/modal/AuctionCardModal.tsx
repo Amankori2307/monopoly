@@ -34,10 +34,9 @@ const AuctionCardModal = ({
 
   const genBiddingHistory = (playerId, action) => {
     let statement = '';
-    if (action === BID)
-      statement = `Player${playerId} bids $${currentBidAmount}`;
+    if (action === BID) statement = `Player${playerId} bids $${currentBidAmount}`;
     else if (action === FOLD) statement = `Player${playerId} folded`;
-    setBiddingHistory(previousHistory => {
+    setBiddingHistory((previousHistory) => {
       return [...previousHistory, statement];
     });
   };
@@ -62,7 +61,7 @@ const AuctionCardModal = ({
   };
 
   // Called When Bid Amount Changes
-  const onBidAmountChange = e => {
+  const onBidAmountChange = (e) => {
     setCurrentBidAmountHelper(e.target.value);
   };
 
@@ -80,12 +79,12 @@ const AuctionCardModal = ({
   };
 
   // To ensure bid amount is of int type
-  const setCurrentBidAmountHelper = bidAmount => {
+  const setCurrentBidAmountHelper = (bidAmount) => {
     setCurrentBidAmount(parseInt(bidAmount));
   };
 
   // Set active bidder helper
-  const setActiveBidderHelper = playersWhoCanBid => {
+  const setActiveBidderHelper = (playersWhoCanBid) => {
     if (playersWhoCanBid.length === 1) {
       wonAuction(playersWhoCanBid[0]);
     } else if (playersWhoCanBid.length === 0) {
@@ -98,7 +97,7 @@ const AuctionCardModal = ({
   };
 
   // getNextBidder
-  const getNextBidder = playersWhoCanBid => {
+  const getNextBidder = (playersWhoCanBid) => {
     for (let i = 1; i < totalPlayers; i++) {
       const nextBidder = (activeBidder + i) % totalPlayers;
       if (playersWhoCanBid.indexOf(nextBidder) !== -1) return nextBidder;
@@ -130,7 +129,7 @@ const AuctionCardModal = ({
       return true;
     else return false;
   };
-  const wonAuction = playerId => {
+  const wonAuction = (playerId) => {
     debitPlayerMoney(playerId, currentBidAmount);
     buySite(playerId, sites[card]);
     setIsDone(true);
@@ -164,14 +163,9 @@ const AuctionCardModal = ({
             />
           </p>
           <p className={style.playerMoney}>
-            Money:{' '}
-            <del className={style.actualMoney}>
-              ${players[activeBidder].money}
-            </del>
+            Money: <del className={style.actualMoney}>${players[activeBidder].money}</del>
             <ins className={style.moneyAfterBidDeuction}>
-              $
-              {players[activeBidder].money -
-                (currentBidAmount ? currentBidAmount : 0)}
+              ${players[activeBidder].money - (currentBidAmount ? currentBidAmount : 0)}
             </ins>
           </p>
           <div className={`${style.btnContainer} ${style.row}`}>
@@ -188,7 +182,7 @@ const AuctionCardModal = ({
   );
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     sites: store.siteData.sites,
     totalPlayers: store.playersData.totalPlayers,
@@ -197,14 +191,13 @@ const mapStateToProps = store => {
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    debitPlayerMoney: (playerId, amount) =>
-      dispatch(debitPlayerMoney(playerId, amount)),
+    debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
     setShowModal: (showModal, currentModal) =>
       dispatch(setShowModal(showModal, currentModal)),
     buySite: (playerId, siteData) => dispatch(buySite(playerId, siteData)),
-    setIsDone: isDone => dispatch(setIsDone(isDone)),
+    setIsDone: (isDone) => dispatch(setIsDone(isDone)),
   };
 };
 

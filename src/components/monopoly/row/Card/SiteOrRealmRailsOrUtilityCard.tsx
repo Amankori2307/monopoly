@@ -28,10 +28,7 @@ const SiteOrRealmRailsOrUtilityCard = ({
   return (
     <div className={genClassList()} onClick={onCardClick}>
       <div className={`${style.strip} ${data.color}`}>
-        <HouseAndHotel
-          built={data.built ? data.built : 0}
-          oddRowNum={rowNum % 2 !== 0}
-        />
+        <HouseAndHotel built={data.built ? data.built : 0} oddRowNum={rowNum % 2 !== 0} />
       </div>
       <div className={style.details}>
         <p className={style.sellingPrice}>${data.sellingPrice}</p>

@@ -17,7 +17,7 @@ const Row = ({ rowNum, data, boughtBy }) => {
   );
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     boughtBy: store.siteData.boughtBy,
   };

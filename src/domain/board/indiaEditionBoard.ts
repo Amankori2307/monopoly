@@ -53,13 +53,7 @@ const utility = (index: number, name: string): BoardSpace => ({
 const action = (
   index: number,
   name: string,
-  kind:
-    | 'go'
-    | 'chance'
-    | 'community-chest'
-    | 'jail'
-    | 'free-parking'
-    | 'go-to-jail'
+  kind: 'go' | 'chance' | 'community-chest' | 'jail' | 'free-parking' | 'go-to-jail'
 ): BoardSpace => ({
   id: `space-${index}`,
   index,

@@ -71,7 +71,7 @@ function Player({
 
   // To move player when there are multple turns
   const setPlayerPositionRecursive = useCallback(
-    async turningPoints => {
+    async (turningPoints) => {
       setPlayerPositionRecursiveHelper(
         turningPoints,
         currentPlayerRef.current.site,
@@ -90,13 +90,9 @@ function Player({
 
   // Update active players position in redux on dice roll
   useEffect(() => {
-    if (
-      isMountedRef.current &&
-      playersDataRef.current.activePlayer === currentPlayerId
-    ) {
+    if (isMountedRef.current && playersDataRef.current.activePlayer === currentPlayerId) {
       console.log(
-        'useEffect1 ID(Update activePlayer postion in redux) Player' +
-          currentPlayerId
+        'useEffect1 ID(Update activePlayer postion in redux) Player' + currentPlayerId
       );
       const currentSite = (currentPlayerRef.current.site + diceSum) % 40;
       movePlayer(currentPlayerId, currentSite, directions.FORWARD);
@@ -106,8 +102,7 @@ function Player({
   // To move player(actually move player on board in UI[Brower Window])
   useEffect(() => {
     if (isMoving || isMountedRef.current === false) {
-      currentPlayerRef.current =
-        playersDataRef.current.players[currentPlayerId];
+      currentPlayerRef.current = playersDataRef.current.players[currentPlayerId];
       const turningPoints = getAllTurningPoints(
         currentPlayerRef.current.previousSite,
         currentPlayerRef.current.site,
@@ -145,7 +140,7 @@ function Player({
     </div>
   );
 }
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     playersData: store.playersData,
     diceSum: store.dice.diceSum,
@@ -156,19 +151,17 @@ const mapStateToProps = store => {
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
     movePlayer: (playerId, currentSite, direction) =>
       dispatch(movePlayer(playerId, currentSite, direction)),
     setShowModal: (showModal, currentModal) =>
       dispatch(setShowModal(showModal, currentModal)),
-    setIsDone: isDone => dispatch(board.setIsDone(isDone)),
-    debitPlayerMoney: (playerId, amount) =>
-      dispatch(debitPlayerMoney(playerId, amount)),
+    setIsDone: (isDone) => dispatch(board.setIsDone(isDone)),
+    debitPlayerMoney: (playerId, amount) => dispatch(debitPlayerMoney(playerId, amount)),
     creditPlayerMoney: (playerId, amount) =>
       dispatch(creditPlayerMoney(playerId, amount)),
-    setIsMoving: (playerId, isMoving) =>
-      dispatch(setIsMoving(playerId, isMoving)),
+    setIsMoving: (playerId, isMoving) => dispatch(setIsMoving(playerId, isMoving)),
   };
 };
 

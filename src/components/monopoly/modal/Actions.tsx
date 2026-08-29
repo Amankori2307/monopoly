@@ -4,7 +4,7 @@ import { setAction } from '../../../redux/actions/action';
 import { actionTypes } from '../../../utility/constants';
 
 const Actions = ({ setAction, active: disabled }) => {
-  const setActionHelper = e => {
+  const setActionHelper = (e) => {
     const el = e.target;
     const actionType = el.getAttribute('action-type');
     setAction(true, actionType);
@@ -47,14 +47,13 @@ const Actions = ({ setAction, active: disabled }) => {
   );
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    setAction: (active, currentAction) =>
-      dispatch(setAction(active, currentAction)),
+    setAction: (active, currentAction) => dispatch(setAction(active, currentAction)),
   };
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     active: store.actionData.active,
   };

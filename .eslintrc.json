@@ -72,11 +72,26 @@
           "error",
           {
             "paths": [
-              { "name": "react", "message": "src/domain must stay pure - no React. See docs/architecture.md section 1." },
-              { "name": "react-dom", "message": "src/domain must stay pure - no React. See docs/architecture.md section 1." },
-              { "name": "react-redux", "message": "src/domain must stay pure - no Redux. See docs/architecture.md section 1." },
-              { "name": "@reduxjs/toolkit", "message": "src/domain must stay pure - no Redux. See docs/architecture.md section 1." },
-              { "name": "react-router-dom", "message": "src/domain must stay pure - no routing. See docs/architecture.md section 1." }
+              {
+                "name": "react",
+                "message": "src/domain must stay pure - no React. See docs/architecture.md section 1."
+              },
+              {
+                "name": "react-dom",
+                "message": "src/domain must stay pure - no React. See docs/architecture.md section 1."
+              },
+              {
+                "name": "react-redux",
+                "message": "src/domain must stay pure - no Redux. See docs/architecture.md section 1."
+              },
+              {
+                "name": "@reduxjs/toolkit",
+                "message": "src/domain must stay pure - no Redux. See docs/architecture.md section 1."
+              },
+              {
+                "name": "react-router-dom",
+                "message": "src/domain must stay pure - no routing. See docs/architecture.md section 1."
+              }
             ],
             "patterns": [
               {
@@ -105,12 +120,24 @@
       }
     },
     {
+      "files": ["**/*.d.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": "off"
+      }
+    },
+    {
       "files": ["**/*.test.ts", "**/*.test.tsx", "tests/**/*.ts", "src/setupTests.ts"],
       "env": { "node": true },
       "globals": {
-        "describe": "readonly", "it": "readonly", "expect": "readonly",
-        "beforeEach": "readonly", "afterEach": "readonly",
-        "beforeAll": "readonly", "afterAll": "readonly", "vi": "readonly"
+        "describe": "readonly",
+        "it": "readonly",
+        "expect": "readonly",
+        "beforeEach": "readonly",
+        "afterEach": "readonly",
+        "beforeAll": "readonly",
+        "afterAll": "readonly",
+        "vi": "readonly"
       }
     }
   ]

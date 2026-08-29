@@ -37,11 +37,7 @@ export const updatePostionDataAccoringToPlayersOnThatSite = (
   currentPlayerId
 ) => {
   const site = positionData.site;
-  const playersOnCurrentSite = calculatePlayersOnCurrentSite(
-    site,
-    players,
-    totalPlayers
-  );
+  const playersOnCurrentSite = calculatePlayersOnCurrentSite(site, players, totalPlayers);
   const [adjust, zIndex] = adjustHelper(playersOnCurrentSite, currentPlayerId);
   positionData.zIndex = zIndex;
   if ((site >= 0 && site <= 9) || (site >= 20 && site <= 29)) {
@@ -78,14 +74,12 @@ export const setPlayerPositionHelper = (
     currentPlayerId
   );
   playerRef.style.zIndex = positionData.zIndex;
-  playerRef.style.top =
-    positionData.top != null ? positionData.top + 'px' : 'unset';
+  playerRef.style.top = positionData.top != null ? positionData.top + 'px' : 'unset';
   playerRef.style.right =
     positionData.right != null ? positionData.right + 'px' : 'unset';
   playerRef.style.bottom =
     positionData.bottom != null ? positionData.bottom + 'px' : 'unset';
-  playerRef.style.left =
-    positionData.left != null ? positionData.left + 'px' : 'unset';
+  playerRef.style.left = positionData.left != null ? positionData.left + 'px' : 'unset';
 };
 
 export const setPlayerPosition = (

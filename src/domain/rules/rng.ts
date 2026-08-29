@@ -24,10 +24,9 @@ export class SeededRandomSource implements RandomSource {
   }
 }
 
-export const rollDie = (randomSource: RandomSource) =>
-  randomSource.nextInt(1, 6);
+export const rollDie = (randomSource: RandomSource) => randomSource.nextInt(1, 6);
 
-export const shuffle = <T,>(values: T[], randomSource: RandomSource): T[] => {
+export const shuffle = <T>(values: T[], randomSource: RandomSource): T[] => {
   const result = [...values];
   for (let index = result.length - 1; index > 0; index -= 1) {
     const swapIndex = randomSource.nextInt(0, index);

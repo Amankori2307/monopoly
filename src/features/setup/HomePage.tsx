@@ -5,11 +5,7 @@ import {
   availableThemes,
   indiaEditionTheme,
 } from '../../domain/themes/indiaEditionTheme';
-import {
-  bootstrapRecentGames,
-  createNewGame,
-  removeSavedGame,
-} from '../game/gameSlice';
+import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
 
 const clampPlayerCount = (value: number) => Math.max(2, Math.min(8, value));
 
@@ -223,7 +219,9 @@ export function HomePage() {
           <section className="panel">
             <h2>Recent games</h2>
             {recentGames.length === 0 ? (
-              <div className="empty-state">No saved games yet. Create one to get started.</div>
+              <div className="empty-state">
+                No saved games yet. Create one to get started.
+              </div>
             ) : (
               <div className="recent-games">
                 {recentGames.map((game) => (

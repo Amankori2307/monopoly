@@ -3,9 +3,7 @@ export const isBuildable = (mySites, currentCard, noOfCardsInCategory) => {
   let _isActionable = false;
   if (currentCard.type === cardTypes.SITE) {
     const subType = currentCard.subType;
-    const mySitesInGivenCategory = mySites.filter(
-      item => item.subType === subType
-    );
+    const mySitesInGivenCategory = mySites.filter((item) => item.subType === subType);
     if (mySitesInGivenCategory.length === noOfCardsInCategory[subType]) {
       // checking is all the sites of this subType belongs to the current user
       let i = 0;
@@ -26,9 +24,7 @@ export const isSellable = (mySites, currentCard, noOfCardsInCategory) => {
   if (currentCard.built) {
     // Check if any construction on the current site/card
     const subType = currentCard.subType;
-    const mySitesInGivenCategory = mySites.filter(
-      item => item.subType === subType
-    );
+    const mySitesInGivenCategory = mySites.filter((item) => item.subType === subType);
     let i = 0;
     for (; i < mySitesInGivenCategory.length; i++) {
       // checking if any site is mortgaged

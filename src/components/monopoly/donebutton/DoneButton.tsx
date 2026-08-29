@@ -20,16 +20,16 @@ const DoneButton = ({ isDone, setActivePlayer, setIsDone }) => {
   );
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     isDone: store.board.isDone,
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
     setActivePlayer: () => dispatch(setActivePlayer()),
-    setIsDone: isDone => dispatch(setIsDone(isDone)),
+    setIsDone: (isDone) => dispatch(setIsDone(isDone)),
   };
 };
 

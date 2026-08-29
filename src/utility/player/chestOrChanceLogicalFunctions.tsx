@@ -1,18 +1,13 @@
 function getNoOfHotelAndHouses(sites) {
   let noOfHotelAndHouses = 0;
-  sites.forEach(site => {
+  sites.forEach((site) => {
     noOfHotelAndHouses += site.built ? site.built : 0;
   });
   return noOfHotelAndHouses;
 }
 
 const chestOrChanceLogicalFunctions = {
-  '1': function (
-    currentPlayer,
-    currentPlayerSites,
-    debitPlayerMoney,
-    setIsDone
-  ) {
+  '1': function (currentPlayer, currentPlayerSites, debitPlayerMoney, setIsDone) {
     const noOfHotelAndHouses = getNoOfHotelAndHouses(currentPlayerSites);
     const amount = noOfHotelAndHouses * 20;
     debitPlayerMoney(currentPlayer.playerId, amount);
@@ -26,7 +21,7 @@ const chestOrChanceLogicalFunctions = {
     setIsDone
   ) {
     creditPlayerMoney(currentPlayer.playerId, (totalPlayers - 1) * 10);
-    Array.from(Array(totalPlayers).keys()).forEach(playerId => {
+    Array.from(Array(totalPlayers).keys()).forEach((playerId) => {
       if (playerId !== currentPlayer.playerId) {
         debitPlayerMoney(playerId, 10);
       }

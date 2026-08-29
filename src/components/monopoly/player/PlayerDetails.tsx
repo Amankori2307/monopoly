@@ -1,9 +1,6 @@
 import { connect } from 'react-redux';
 import style from '../../../assets/css/player-details.module.scss';
-import {
-  setShowModal,
-  setPlayerIdForMyCardsModal,
-} from '../../../redux/actions/modal';
+import { setShowModal, setPlayerIdForMyCardsModal } from '../../../redux/actions/modal';
 import { modalTypes, colors } from '../../../utility/constants';
 const PlayerDetails = ({
   playersData,
@@ -38,18 +35,18 @@ const PlayerDetails = ({
     </div>
   );
 };
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     playersData: store.playersData,
     // activePlayer: store.playersData.activePlayer
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
     setShowModal: (showModal, currentModal) =>
       dispatch(setShowModal(showModal, currentModal)),
-    setPlayerIdForMyCardsModal: playerId =>
+    setPlayerIdForMyCardsModal: (playerId) =>
       dispatch(setPlayerIdForMyCardsModal(playerId)),
   };
 };

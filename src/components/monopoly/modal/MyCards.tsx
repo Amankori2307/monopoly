@@ -20,7 +20,7 @@ const MyCards = ({ playerIdForMyCardsModal, playersSites }) => {
     setGroupedCards(_groupedCards);
   }, [playersSites, playerIdForMyCardsModal]);
 
-  const changeTab = tabName => {
+  const changeTab = (tabName) => {
     setActiveTab(tabName);
     setCardList(groupedCards[tabName]);
   };
@@ -56,11 +56,11 @@ const MyCards = ({ playerIdForMyCardsModal, playersSites }) => {
     </>
   );
 };
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {};
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     playersSites: store.siteData.playersSites,
     playerIdForMyCardsModal: store.modalData.playerIdForMyCardsModal,

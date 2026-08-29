@@ -49,8 +49,7 @@ const slice = createSlice({
 });
 
 export const gameReducer = slice.reducer;
-export const { setRecentGames, setActiveGame, setLoadError, setUiHints } =
-  slice.actions;
+export const { setRecentGames, setActiveGame, setLoadError, setUiHints } = slice.actions;
 
 export const bootstrapRecentGames = () => (dispatch: AppDispatch) => {
   try {
@@ -59,47 +58,41 @@ export const bootstrapRecentGames = () => (dispatch: AppDispatch) => {
   } catch (error) {
     dispatch(setRecentGames([]));
     dispatch(
-      setLoadError(
-        error instanceof Error ? error.message : 'Failed to load saved games.'
-      )
+      setLoadError(error instanceof Error ? error.message : 'Failed to load saved games.')
     );
   }
 };
 
-export const createNewGame =
-  (input: CreateGameInput) => (dispatch: AppDispatch) => {
-    const nextGame = createGameState(input, new DefaultRandomSource());
-    saveGame(nextGame);
-    dispatch(setActiveGame(nextGame));
-    dispatch(setUiHints([]));
-    dispatch(bootstrapRecentGames());
-    return nextGame;
-  };
+export const createNewGame = (input: CreateGameInput) => (dispatch: AppDispatch) => {
+  const nextGame = createGameState(input, new DefaultRandomSource());
+  saveGame(nextGame);
+  dispatch(setActiveGame(nextGame));
+  dispatch(setUiHints([]));
+  dispatch(bootstrapRecentGames());
+  return nextGame;
+};
 
-export const loadGameById =
-  (gameId: string) => (dispatch: AppDispatch) => {
-    try {
-      const savedGame = loadGame(gameId);
-      if (!savedGame) {
-        dispatch(setActiveGame(null));
-        dispatch(setLoadError(`No saved game found for id ${gameId}.`));
-        return null;
-      }
-      dispatch(setActiveGame(savedGame));
-      dispatch(setLoadError(null));
-      dispatch(setUiHints([]));
-      dispatch(bootstrapRecentGames());
-      return savedGame;
-    } catch (error) {
+export const loadGameById = (gameId: string) => (dispatch: AppDispatch) => {
+  try {
+    const savedGame = loadGame(gameId);
+    if (!savedGame) {
       dispatch(setActiveGame(null));
-      dispatch(
-        setLoadError(
-          error instanceof Error ? error.message : 'Saved game is invalid.'
-        )
-      );
+      dispatch(setLoadError(`No saved game found for id ${gameId}.`));
       return null;
     }
-  };
+    dispatch(setActiveGame(savedGame));
+    dispatch(setLoadError(null));
+    dispatch(setUiHints([]));
+    dispatch(bootstrapRecentGames());
+    return savedGame;
+  } catch (error) {
+    dispatch(setActiveGame(null));
+    dispatch(
+      setLoadError(error instanceof Error ? error.message : 'Saved game is invalid.')
+    );
+    return null;
+  }
+};
 
 export const runGameCommand =
   (command: Exclude<GameCommand, { type: 'createGame' }>) =>
@@ -109,11 +102,7 @@ export const runGameCommand =
       return null;
     }
 
-    const result = executeGameCommand(
-      currentGame,
-      command,
-      new DefaultRandomSource()
-    );
+    const result = executeGameCommand(currentGame, command, new DefaultRandomSource());
     saveGame(result.nextState);
     dispatch(setActiveGame(result.nextState));
     dispatch(setUiHints(result.uiHints));

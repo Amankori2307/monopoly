@@ -20,16 +20,15 @@ const ActionInfo = ({ setAction, actionData }) => {
   );
 };
 
-const mapStateToProps = store => {
+const mapStateToProps = (store) => {
   return {
     actionData: store.actionData,
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    setAction: (active, currentAction) =>
-      dispatch(setAction(active, currentAction)),
+    setAction: (active, currentAction) => dispatch(setAction(active, currentAction)),
   };
 };
 

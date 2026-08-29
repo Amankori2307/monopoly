@@ -27,10 +27,7 @@ function site(state = initialState, action) {
         boughtBy: _boughtBy,
         playersSites: {
           ...state.playersSites,
-          [payload.playerId]: [
-            ...state.playersSites[payload.playerId],
-            payload.siteData,
-          ],
+          [payload.playerId]: [...state.playersSites[payload.playerId], payload.siteData],
         },
       };
     case SET_SITES:

@@ -1,8 +1,4 @@
-import {
-  CALC_SITE_POSITIONS,
-  SET_BOARD_SIZE,
-  SET_IS_DONE,
-} from '../actions/actionTypes';
+import { CALC_SITE_POSITIONS, SET_BOARD_SIZE, SET_IS_DONE } from '../actions/actionTypes';
 import { calculatePositions } from '../../utility/boardUtility';
 const initialState = {
   side: null,

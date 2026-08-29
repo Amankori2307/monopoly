@@ -25,9 +25,7 @@ const Card = ({ onCardClick, data, rowNum, active, boughtBy }) => {
       case cardTypes.CHANCE:
         return <ChestOrChanceCard data={data} active={active} />;
       case cardTypes.TAX:
-        return (
-          <TaxCard data={data} active={active} onCardClick={onCardClick} />
-        );
+        return <TaxCard data={data} active={active} onCardClick={onCardClick} />;
       default:
         return null;
     }
