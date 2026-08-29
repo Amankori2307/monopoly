@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { MAX_PLAYERS } from '../../../domain/constants/game.constants';
 import { indiaEditionTheme } from '../../../domain/themes/indiaEditionTheme';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
@@ -23,13 +23,16 @@ const makeSummary = (index: number): PlayerSummary => ({
   propertyCount: 0,
 });
 
-const renderPanel = (playerCount = 2) =>
-  render(
+const renderPanel = (playerCount = 2, onSelectPlayer = vi.fn()) => {
+  const view = render(
     <PlayersPanel
       currencySymbol="M"
+      onSelectPlayer={onSelectPlayer}
       summaries={Array.from({ length: playerCount }, (_, i) => makeSummary(i))}
     />
   );
+  return { ...view, onSelectPlayer };
+};
 
 describe('PlayersPanel', () => {
   it('starts collapsed as a stack', () => {

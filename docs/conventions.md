@@ -132,14 +132,14 @@ survives renders, subscriptions, timers, or store access. Pure logic is a util, 
 
 **Existing hooks**
 
-| Hook                                                                  | Owns                                                    |
-| --------------------------------------------------------------------- | ------------------------------------------------------- |
-| [`useEscapeKey`](../src/shared/hooks/useEscapeKey.ts)                 | Escape-to-dismiss for overlays, with listener cleanup   |
-| [`useDiceRoller`](../src/components/game/hooks/useDiceRoller.ts)      | Dice animation, roll sound, timers, committing the roll |
-| [`useActiveGame`](../src/features/game/hooks/useActiveGame.ts)        | Loading the routed game and resolving its theme         |
-| [`useGameCommands`](../src/features/game/hooks/useGameCommands.ts)    | Every command the game screen dispatches                |
-| [`useSelectedSpace`](../src/features/game/hooks/useSelectedSpace.ts)  | Which space has its title deed open                     |
-| [`useGameSetupForm`](../src/features/setup/hooks/useGameSetupForm.ts) | Setup form state; validation delegated to a util        |
+| Hook                                                                  | Owns                                                                    |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [`useEscapeKey`](../src/shared/hooks/useEscapeKey.ts)                 | Escape-to-dismiss for overlays, with listener cleanup                   |
+| [`useDiceRoller`](../src/components/game/hooks/useDiceRoller.ts)      | Dice animation, roll sound, timers, committing the roll                 |
+| [`useActiveGame`](../src/features/game/hooks/useActiveGame.ts)        | Loading the routed game and resolving its theme                         |
+| [`useGameCommands`](../src/features/game/hooks/useGameCommands.ts)    | Every command the game screen dispatches                                |
+| [`useGameOverlays`](../src/features/game/hooks/useGameOverlays.ts)    | Which overlay is open: activity drawer, player details, or a space deed |
+| [`useGameSetupForm`](../src/features/setup/hooks/useGameSetupForm.ts) | Setup form state; validation delegated to a util                        |
 
 The payoff is visible in the page components: `GamePage` went from 502 lines of mixed state,
 derivation, and markup to 140 lines of wiring.

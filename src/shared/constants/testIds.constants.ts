@@ -20,6 +20,13 @@ export const TEST_IDS = {
   spaceColorBar: 'space-color-bar',
   spacePlayerToken: 'space-player-token',
 
+  // Overlays
+  decisionModal: 'decision-modal',
+  activityButton: 'activity-button',
+  activityDrawer: 'activity-drawer',
+  playerDetailDrawer: 'player-detail-drawer',
+  drawerClose: 'drawer-close',
+
   // Panels
   turnPanel: 'turn-panel',
   decisionPanel: 'decision-panel',

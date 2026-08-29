@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import type { PlayerId } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { formatMoney } from '../../../shared/utils/money.utils';
 import type { PlayerSummary } from './panels.interfaces';
 
 interface PlayersPanelProps {
   currencySymbol: string;
+  onSelectPlayer: (playerId: PlayerId) => void;
   summaries: PlayerSummary[];
 }
 
@@ -12,10 +14,16 @@ interface PlayersPanelProps {
  * Bare card stack - no panel, no heading.
  *
  * Order carries the meaning: `selectPlayerSummaries` puts the active player
- * first, so the card on top of the stack is whose turn it is. Clicking the stack
- * expands it into a list; the collapse control appears only once expanded.
+ * first, so the card on top of the stack is whose turn it is.
+ *
+ * Collapsed, a click anywhere expands the stack. Expanded, each card is its own
+ * button that opens that player's details.
  */
-export function PlayersPanel({ currencySymbol, summaries }: PlayersPanelProps) {
+export function PlayersPanel({
+  currencySymbol,
+  onSelectPlayer,
+  summaries,
+}: PlayersPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const toggle = () => setIsExpanded((expanded) => !expanded);
 
@@ -53,6 +61,16 @@ export function PlayersPanel({ currencySymbol, summaries }: PlayersPanelProps) {
               className="player-card-strip"
               style={{ background: token?.color }}
             />
+
+            {/* Only reachable once expanded; the overlay covers it while collapsed. */}
+            <button
+              aria-label={`View ${player.name} details`}
+              className="player-card-open"
+              onClick={() => onSelectPlayer(player.id)}
+              tabIndex={isExpanded ? 0 : -1}
+              type="button"
+            />
+
             <strong>
               {token?.emoji} {player.name}
             </strong>

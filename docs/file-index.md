@@ -83,11 +83,11 @@ File-naming rules are in [conventions.md](conventions.md).
 | [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                       | Shown when the routed game is missing or fails schema validation.                                       |
 | [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                 | Loads the routed game and resolves its theme and currency symbol.                                       |
 | [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)             | Binds every command the game screen dispatches.                                                         |
-| [game/hooks/useSelectedSpace.ts](../src/features/game/hooks/useSelectedSpace.ts)           | Tracks which board space has its title deed open.                                                       |
 | [setup/hooks/useGameSetupForm.ts](../src/features/setup/hooks/useGameSetupForm.ts)         | Setup form state; delegates the rules to setupValidation.utils.                                         |
 | [setup/setupValidation.utils.ts](../src/features/setup/setupValidation.utils.ts)           | Pure setup validation: non-empty, unique names, unique tokens.                                          |
 | [setup/setupValidation.utils.test.ts](../src/features/setup/setupValidation.utils.test.ts) | Unit tests for every validation rule and its precedence.                                                |
 | [setup/setup.constants.ts](../src/features/setup/setup.constants.ts)                       | Setup form defaults and error messages.                                                                 |
+| [game/hooks/useGameOverlays.ts](../src/features/game/hooks/useGameOverlays.ts)             | Which overlay is open: activity drawer, player details, or a space deed.                                |
 
 ## `src/components/game/` — presentational (props in, callbacks out, no store)
 
@@ -117,10 +117,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | File                                                                                                          | What it does                                                                   |
 | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                         | Left rail of property actions (Build/Sell/Mortgage/Redeem).                    |
-| [panels/TurnPanel.tsx](../src/components/game/panels/TurnPanel.tsx)                                           | Whose turn it is, where they are, and the end-turn control.                    |
 | [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                     | Player cards: cash, property count, position, jail status.                     |
-| [panels/HoldingsPanel.tsx](../src/components/game/panels/HoldingsPanel.tsx)                                   | The active player's owned properties.                                          |
-| [panels/ActivityPanel.tsx](../src/components/game/panels/ActivityPanel.tsx)                                   | Scrolling game event log.                                                      |
 | [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                         | Surfaces engine `uiHints` (the "not implemented yet" notices).                 |
 | [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                             | Shared panel view models and decision handler types.                           |
 | [panels/decisions/DecisionPanel.tsx](../src/components/game/panels/decisions/DecisionPanel.tsx)               | Picks the right decision UI for the pending decision.                          |
@@ -131,6 +128,11 @@ File-naming rules are in [conventions.md](conventions.md).
 | [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                       | Dice animation state: tumbling faces, roll sound, timers, committing the roll. |
 | [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                     | Bottom-right cluster: end-turn button plus the dice, level with the board.     |
 | [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                           | Stack collapse/expand, click target, token colours, full-table support.        |
+| [overlays/DecisionModal.tsx](../src/components/game/overlays/DecisionModal.tsx)                               | Blocking centre modal for a pending decision. Deliberately not dismissible.    |
+| [overlays/SideDrawer.tsx](../src/components/game/overlays/SideDrawer.tsx)                                     | Right-hand drawer shell: backdrop, header, Escape to close.                    |
+| [overlays/ActivityDrawer.tsx](../src/components/game/overlays/ActivityDrawer.tsx)                             | Game event log, opened from the floating activity button.                      |
+| [overlays/ActivityButton.tsx](../src/components/game/overlays/ActivityButton.tsx)                             | Floating control that opens the activity drawer.                               |
+| [overlays/PlayerDetailDrawer.tsx](../src/components/game/overlays/PlayerDetailDrawer.tsx)                     | A player's stats and holdings, opened by clicking their card.                  |
 
 ## `src/components/setup/` — presentational setup components
 

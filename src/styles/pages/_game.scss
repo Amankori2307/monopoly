@@ -50,10 +50,12 @@
   flex-direction: column;
   gap: t.$gap-md;
   min-width: 0;
-  max-height: calc(100dvh - 72px);
+  // A definite height is what lets the turn controls sit at the bottom via
+  // margin-top:auto, however little the column holds.
+  height: calc(100dvh - 72px);
 
   @include m.below(t.$breakpoint-board) {
-    max-height: none;
+    height: auto;
   }
 }
 
