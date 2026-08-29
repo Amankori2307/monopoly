@@ -1,280 +1,173 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working in this repository.
 
-## Project Context & History
+> **Doc upkeep is part of every task.** See [Documentation contract](#documentation-contract).
+> Deep architecture map: [docs/architecture.md](docs/architecture.md) · Ruleset source of truth: [docs/india-edition-rules.md](docs/india-edition-rules.md)
 
-### Project Overview
+---
 
-This is a Zelda-themed Monopoly board game implementation built with React, TypeScript, and Redux. The project was migrated from Create React App to NX + Vite + TypeScript for better performance and development experience.
+## 1. What this project is
 
-### Major Migrations Completed
+A **Monopoly India Edition** board game in the browser: React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `/game/:gameId`.
 
-#### 1. Package Manager Migration (✅ Complete)
+The defining architectural decision: **the rules engine is a pure module that knows nothing about React or Redux.** UI dispatches *commands*; the engine returns a *new game state*. Keep it that way.
 
-- **From**: npm with package-lock.json
-- **To**: pnpm with pnpm-lock.yaml
-- **Status**: All packages now managed with pnpm
+---
 
-#### 2. Package Updates (✅ Complete)
+## 2. ⚠️ Two code trees — only one is alive
 
-- **Action**: Updated all packages to latest versions
-- **Key Updates**:
-  - React 19 with modern features
-  - React Router v7 (breaking changes handled)
-  - ESLint 8.57.1 (downgraded from v9 for compatibility)
-  - Web Vitals v5 (API changes handled)
-  - Vite 6.3.5 (downgraded from v7 for NX compatibility)
+The app was rewritten. `src/` currently holds the new app **and** a fully disconnected legacy island.
 
-#### 3. TypeScript Migration (✅ Infrastructure Complete)
+| | Active (~3.1k LOC) | Legacy island (~2.9k LOC) |
+|---|---|---|
+| Paths | `src/domain/`, `src/features/`, `src/app/`, `src/components/game/`, `src/test/` | `src/redux/`, `src/utility/`, `src/components/monopoly/`, `src/components/home/`, `src/components/not_found/`, `src/assets/css/*.scss`, `src/assets/data/*.json` |
+| Reachable from `src/App.tsx`? | Yes | **No** — verified zero import edges |
+| Theme | India Edition | Zelda-themed (old) |
+| State | RTK slices + pure engine | hand-rolled actions/reducers |
 
-- **Strategy**: Gradual migration approach
-- **Current State**: All .js files renamed to .ts/.tsx
-- **TypeScript Config**: Strict mode disabled for gradual transition
-- **Type Declarations**: Added for CSS modules and assets
-- **Next Steps**: Continue adding proper types throughout codebase
+**Rules of engagement:**
+- Build all new work in the active tree.
+- Never import from the legacy island into active code, and never "fix" legacy files — they ship nothing.
+- Treat any older doc describing Zelda spaces, `boardData.json`, `playerAppropriateActionUtils`, or `Monopoly.tsx` as **historical, not current**.
+- Deleting the island is a deliberate, separate decision — confirm with the user first.
 
-#### 4. Code Quality Tools (✅ Complete)
+---
 
-- **ESLint**: Configured with React best practices
-- **Prettier**: Set up with project standards
-- **Auto-fix capabilities**: Both ESLint and Prettier support auto-fixing
+## 3. Architecture
 
-#### 5. Build System Migration (✅ Complete)
-
-- **From**: Create React App
-- **To**: NX + Vite + TypeScript
-- **Benefits**: Faster builds, better caching, modern tooling
-
-### Known Issues & Fixes Applied
-
-#### React Router v7 Breaking Changes
-
-- **Issue**: `Switch` component removed, route syntax changed
-- **Fix**: Replaced with `Routes` and updated `component={Component}` to `element={<Component />}`
-
-#### React 19 Changes
-
-- **Issue**: `ReactDOM.render` deprecated
-- **Fix**: Updated to `ReactDOM.createRoot().render()`
-
-#### Web Vitals v5 API Changes
-
-- **Issue**: Function names changed from `getCLS` to `onCLS`
-- **Fix**: Updated reportWebVitals.ts accordingly
-
-#### ESLint Version Compatibility
-
-- **Issue**: ESLint 9 incompatible with React Scripts
-- **Fix**: Downgraded to ESLint 8.57.1
-
-#### Vite v7 Compatibility
-
-- **Issue**: Vite 7 had crypto.hash errors with NX
-- **Fix**: Downgraded to Vite 6.3.5
-
-## Game Implementation Details
-
-### Zelda-Themed Monopoly Rules
-
-This implementation follows standard Monopoly rules with Zelda theming:
-
-#### Board Layout (40 spaces)
-
-- **Corner Spaces**: GO, Jail, Free Parking, Go to Jail
-- **Property Groups** (8 groups):
-  - Brown: Minish Woods, Ordon Village
-  - Green: Kokiri Forest, Lost Woods, Forest Temple
-  - Pink: Graveyard, Kakariko Village, Shadow Temple
-  - Orange: Haunted Westeland, Gerudo Fortress, Spirit Temple
-  - Red: Death Mountain, Goron City, Fire Temple
-  - Yellow: Lon Lon Ranch, Hyrule Castle, Temple of Time
-  - Sky Blue: Lake Hylia, Zora's Domain, Water Temple
-  - Blue: Skyloft, City in the sky
-- **Railroads**: Forest, Send, Fire, Ocean Realm Rails
-- **Utilities**: Windmill Hut, Waterfall Cave
-- **Taxes**: Income Tax ($200), Super Tax ($100)
-
-#### Game Mechanics
-
-- **Starting Money**: $1000 per player
-- **Rent Calculation**: Matches standard Monopoly with monopoly doubling
-- **Building System**: 5 levels (rentWithHouse array)
-- **Mortgage System**: All properties can be mortgaged
-- **Card System**: 11 Chance cards, 11 Community Chest cards
-
-### Player State Structure
-
-```typescript
-{
-  site: number,           // Current board position (0-39)
-  previousSite: number,   // Previous position
-  playerId: number,       // Player identifier
-  money: number,          // Current money (starts at 1000)
-  isMoving: boolean,      // Animation state
-  direction: string       // FORWARD/BACKWARD movement
-}
+```
+src/App.tsx                      routes only
+  └─ features/                   pages + redux slices (React-aware)
+       setup/HomePage.tsx        create game, list/resume/delete saves
+       game/GamePage.tsx         board render + decision panels
+       game/gameSlice.ts         thunks: bridge UI ⇄ engine ⇄ storage
+       game/uiSlice.ts           ephemeral UI state (auction bid input)
+       rules/RulesPage.tsx       static rules booklet
+       persistence/              localStorage + zod validation
+  └─ components/game/            presentational, no store access
+       DiceDock.tsx              dice animation + roll sound
+       SpaceDetailCard.tsx       title-deed modal
+  └─ domain/                     PURE — no React, no Redux, no DOM
+       types/game.ts             single source of truth for all game types
+       rules/gameEngine.ts       createGameState + executeGameCommand
+       rules/rng.ts              RandomSource (Default / Seeded)
+       board/, cards/, themes/   India Edition data
+  └─ app/                        store wiring + typed hooks
 ```
 
-### Property State Structure
+**Dependency direction is one-way: `features` → `components`/`domain`; `domain` → nothing.** A `react` or `@reduxjs/toolkit` import inside `src/domain/` is always a bug.
 
-```typescript
-{
-  id: number,
-  type: string,          // site, realm_rails, utility, special, etc.
-  color: string,         // Property group color
-  name: string,          // Zelda-themed name
-  sellingPrice: number,  // Purchase price
-  rent: number,          // Base rent
-  rentWithHouse: array,  // Rent with 1-5 buildings
-  mortgage: number,      // Mortgage value
-  construction: number,  // Building cost
-  isMortgaged: boolean,
-  built: number         // Number of buildings (0-5)
-}
+### Data flow for one player action
+
+```
+UI event → dispatch(runGameCommand({type:'rollTurnDice'}))   features/game/gameSlice.ts
+        → executeGameCommand(state, command, randomSource)    domain/rules/gameEngine.ts  (pure)
+        → { nextState, uiHints }
+        → saveGame(nextState)                                 features/persistence
+        → setActiveGame(nextState) → React re-renders
 ```
 
-### Important File Locations
+Every command runs through `runGameCommand`. Do not mutate game state in a component or a reducer — add a command to the engine instead.
 
-- `src/assets/data/boardData.json` - Complete board configuration
-- `src/assets/data/chanceData.json` - Chance card actions
-- `src/assets/data/chestData.json` - Community Chest card actions
-- `src/redux/reducers/` - State management
-- `src/utility/playerUtility.tsx` - Game logic utilities
-- `src/components/playerSelection/PlayerSelection.tsx` - Player selection component
+---
 
-### Recent Updates
+## 4. The game engine contract
 
-- **Player Selection Flow**: Added intermediary player selection step between home and game
-- **Routing**: Updated to include `/select-players` route
-- **TypeScript**: PlayerSelection component written in pure TypeScript with proper typing
-- **User Flow**: Home → Player Selection → Game (with player count stored in Redux)
-- **Bug Fix**: Fixed hardcoded player count in Monopoly component that was overriding player selection
-- **Bug Fix**: Added safety checks in playerAppropriateActionUtils to prevent TypeError when currentSite is undefined
+`executeGameCommand(state, command, randomSource) → { nextState, events, saveRequired, uiHints }`
 
-## Development Commands
+- **Immutable**: every helper returns a new state object; nothing is mutated in place.
+- **Deterministic** given a `RandomSource` — *except* `crypto.randomUUID()` and `new Date()`, which are called directly inside the engine. Tests use `SeededRandomSource` for dice.
+- **Throws** on invalid commands (e.g. rolling out of phase). Callers currently do **not** catch — an invalid dispatch surfaces as an uncaught error.
 
-### Core Development
+### Turn phases
+`await_roll → resolving_movement → resolving_space → await_decision → await_extra_roll_or_end → turn_complete`
 
-- `pnpm start` or `pnpm dev` - Start Vite development server on port 3000
-- `pnpm run build` - Build optimized production bundle with Vite
-- `pnpm test` - Run test suite with Vitest
-- `pnpm run test:watch` - Run tests in watch mode
-- `pnpm run preview` - Preview production build locally
-- `pnpm run deploy` - Deploy to GitHub Pages (builds first)
+### Commands
+| Implemented | Scaffolded (returns a `uiHints` placeholder, changes nothing) |
+|---|---|
+| `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `mortgageAsset`, `unmortgageAsset`, `proposeTrade`, `acceptTrade`, `rejectTrade`, `confirmBankruptcy` |
 
-### NX-Specific Commands
+### Locked economics (`gameEngine.ts` constants)
+Starting cash `M1500` · pass GO `M200` · jail fine `M50` · auction opens at `M10`, min increment `1` · 40 spaces · 32 houses / 12 hotels · history capped at 120 events, newest first.
 
-- `pnpm run graph` - View dependency graph of the project
-- `nx serve` - Start development server (direct NX command)
-- `nx build` - Build the project (direct NX command)
-- `nx test` - Run tests (direct NX command)
+Money values live in `domain/board/` and `gameEngine.ts` constants — never hardcode an amount in a component.
 
-### Code Quality Commands
+---
 
-- `pnpm run lint` - Run ESLint via NX
-- `pnpm run lint:fix` - Run ESLint with auto-fix via NX
-- `pnpm run format` - Format all code with Prettier via NX
-- `pnpm run format:check` - Check if code is formatted correctly via NX
-- `pnpm run check-all` - Run linting and format checking
-- `pnpm run fix-all` - Auto-fix linting issues and format code
+## 5. Persistence
 
-## Code Architecture
+- Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
+- `GAME_STATE_VERSION = 1`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load.
+- Loads are validated with zod (`features/persistence/schema.ts`). The schema is deliberately loose in places (`z.any()` for players/board/ownership) — tighten it alongside any shape change.
+- Every command save is a full-state write, then the index is rewritten sorted by `updatedAt`.
 
-### Technology Stack
+---
 
-- **Build System**: NX 21.2+ with Vite 6.3+ for fast development and builds
-- **Frontend**: React 19 with functional components and hooks
-- **TypeScript**: Full TypeScript support with strict mode disabled for gradual migration
-- **State Management**: Redux with traditional actions/reducers pattern
-- **Styling**: SCSS modules with component-specific styles
-- **Routing**: React Router DOM v7
-- **Testing**: Vitest with React Testing Library
-- **Package Manager**: pnpm for efficient dependency management
+## 6. Commands
 
-### Redux State Structure
+```bash
+pnpm dev          # Vite dev server on :3000
+pnpm build        # production build → build/
+pnpm test         # vitest (src/**/*.test.{ts,tsx})
+pnpm test:e2e     # playwright (tests/e2e), auto-starts dev server
+pnpm lint         # eslint via nx
+pnpm fix-all      # eslint --fix + prettier write
+pnpm deploy       # gh-pages → build/
+```
 
-The application uses a centralized Redux store with these main slices:
+Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc` clean, 5/5 unit tests passing.** Keep it that way — if you land a change, re-run both.
 
-- `playersData` - Player information (money, position, properties, active player)
-- `dice` - Dice state (current values, rolling animation)
-- `board` - Board state and game progression
-- `modalData` - Modal visibility and current modal type
-- `siteData` - Property ownership, mortgages, and building states
-- `actionData` - Current player actions and turn state
-- `card` - Card-related state for property transactions
+---
 
-### Game Logic Architecture
+## 7. Conventions
 
-The Monopoly game implements complex board game mechanics:
+**Modularity**
+- `domain/` stays pure. UI-only concerns (colors, icons, copy) never leak into it.
+- `components/game/` are presentational: props in, callbacks out, no `useAppSelector`.
+- Slices hold state; *thunks* hold orchestration. Business rules belong in the engine.
+- Path aliases exist in `tsconfig.json` (`@app/*`, `@domain/*`, `@features/*`, `@components/*`, `@test/*`) but **nothing uses them yet** — the codebase is uniformly relative-import. Pick one style deliberately rather than mixing.
 
-1. **Turn System**: Players take turns rolling dice and moving around the board
-2. **Property Interactions**: Landing on properties triggers different actions based on ownership
-3. **Financial Transactions**: Money management with rent, taxes, and property purchases
-4. **Special Spaces**: Chance/Chest cards, jail, taxes, and special movement spaces
-5. **Building System**: Property development with houses and hotels
+**DRY — known duplication, fix on contact**
+| Duplicated | Locations |
+|---|---|
+| Street colour-group hex map (8 entries) | [GamePage.tsx:56](src/features/game/GamePage.tsx:56), [SpaceDetailCard.tsx:28](src/components/game/SpaceDetailCard.tsx:28) |
+| Electric-Company / Super-Tax icon ternary | [GamePage.tsx:283](src/features/game/GamePage.tsx:283), [SpaceDetailCard.tsx:43](src/components/game/SpaceDetailCard.tsx:43) |
+| `availableThemes.find(...)` theme lookup | [gameEngine.ts:37](src/domain/rules/gameEngine.ts:37), [GamePage.tsx:82](src/features/game/GamePage.tsx:82), [HomePage.tsx:52](src/features/setup/HomePage.tsx:52) |
+| `kind === 'street' \|\| 'railway' \|\| 'utility'` inline check (a `propertySpaceKinds` set already exists in the engine) | [gameEngine.ts:507](src/domain/rules/gameEngine.ts:507), [gameEngine.ts:676](src/domain/rules/gameEngine.ts:676), [GamePage.tsx:119](src/features/game/GamePage.tsx:119) |
+| `theme?.currencySymbol ?? 'M'` — 5× in one file; a `formatMoney` helper exists but only in `SpaceDetailCard` | GamePage.tsx |
 
-### Key Components Structure
+When you touch one of these, extract it (colors/icons → a shared board-presentation module; `formatMoney` + `isPropertySpace` → shared helpers) rather than adding a sixth copy.
 
-- `Monopoly.js` - Main game container with game state orchestration
-- `Board.js` - Visual board layout and property grid
-- `DiceContainer.js` - Dice rolling logic and animation
-- `PlayerContainer.js` - Player piece positioning and movement
-- `ModalContainer.js` - Dynamic modal system for game interactions
-- `Actions.js` - Property management actions (build, sell, mortgage, redeem)
+**Styling** — the active app uses one plain stylesheet, `src/app/app.css`, imported once in `App.tsx`. The `.scss` modules under `src/assets/css/` belong to the legacy island.
 
-### Data Files
+**Testing** — engine logic gets a `SeededRandomSource` unit test; pages get a React Testing Library test via `src/test/renderWithProviders.tsx`; user-visible flows get a Playwright spec.
 
-- `boardData.json` - Complete board configuration with all 40 spaces
-- `chanceData.json` - Chance card actions and effects
-- `chestData.json` - Community Chest card actions and effects
+---
 
-### Game State Flow
+## 8. Known gaps and traps
 
-1. Player rolls dice → `dice` reducer updates values
-2. Player moves → `player` reducer updates position
-3. Landing logic → `playerAppropriateActionUtils.js` determines action
-4. Property interaction → Modals trigger for buy/auction/rent
-5. Turn completion → Active player switches
+- **Jail-fine bug**: [gameEngine.ts:767](src/domain/rules/gameEngine.ts:767) — `payJailFine` calls `resolveBankPayment`, which sets an `asset-liquidation` pending decision when the player can't afford `M50`; lines 773-781 then overwrite `pendingDecision` back to `none`, so a broke player leaves jail without paying.
+- **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:899](src/domain/rules/gameEngine.ts:899)). `saveRequired` is hardcoded `true`.
+- **No end condition**: `winnerPlayerId`, `status: 'completed'`, and the `game-over` decision are never set — games run forever.
+- **Bank inventory is cosmetic**: `housesAvailable`/`hotelsAvailable` are never decremented (building isn't implemented).
+- **Mortgaged properties** are skipped for rent but there is no way to mortgage yet.
+- `tsconfig.json` has `strict: false` and `target: es5` — a deliberate gradual-migration holdover, not an endorsement.
 
-### Testing Strategy
+---
 
-- Component tests use custom `testUtils.js` wrapper with Redux Provider
-- Tests focus on user interactions and state changes
-- Mock store testing for Redux-connected components
+## Documentation contract
 
-### Key Utility Functions
+Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a stale line actively misleads. **Update docs in the same change as the code**, not afterwards.
 
-- `playerAppropriateActionUtils.js` - Core game logic for property interactions
-- `playerUtility.js` - Player data management and rent calculations
-- `boardUtility.js` - Board position and movement utilities
-- `cardUtilities.js` - Property card display and management
+| If you change… | Update |
+|---|---|
+| Engine commands, phases, or constants | §4 above |
+| `GameState` shape or storage keys | §5 + bump `GAME_STATE_VERSION` + zod schema |
+| Layer boundaries, new directory | §3 + `docs/architecture.md` |
+| Ruleset behaviour or values | `docs/india-edition-rules.md` |
+| Scripts in `package.json` | §6 |
+| Fixing/adding duplication or a known bug | the §7 DRY table / §8 list — remove rows you resolve |
+| Deleting part of the legacy island | §2 |
 
-### Audio Integration
-
-Game includes audio feedback for:
-
-- Dice rolling (`rolldice1.wav`, `rolldice2.wav`)
-- Player movement (`playermove.wav`)
-
-### Build System Details
-
-- **NX Workspace**: Configured as single-project workspace with build caching
-- **Vite Configuration**: Optimized for React with TypeScript, SCSS support
-- **Build Output**: Optimized bundles with asset hashing and compression
-- **Development Server**: Hot Module Replacement (HMR) for fast development
-- **Testing**: Vitest with jsdom environment and global test utilities
-
-### Project Structure
-
-- `project.json` - NX project configuration with build, serve, test, lint targets
-- `vite.config.mjs` - Vite configuration with React plugin and NX integration
-- `nx.json` - NX workspace configuration with caching and task dependencies
-- `tsconfig.json` - TypeScript configuration with strict mode disabled
-
-### Deployment
-
-- Hosted on GitHub Pages at https://amankori2307.github.io/monopoly/
-- Build process uses Vite for optimal performance
-- Assets and routing configured for subdirectory deployment
-- Production builds include asset optimization and compression
+Before finishing a task: re-read the sections you touched, delete anything now false, and re-run `npx tsc --noEmit` + `pnpm test`.

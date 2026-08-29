@@ -276,13 +276,9 @@ export function GamePage() {
               </div>
               {activeGame.board.map((space) => {
                 const position = boardToGridPosition(space.index);
-                const ownership = activeGame.ownership[space.id];
                 const playersOnSpace = activeGame.playerOrder
                   .map((playerId) => activeGame.players[playerId])
                   .filter((player) => player.position === space.index);
-                const owner = ownership?.ownerPlayerId
-                  ? activeGame.players[ownership.ownerPlayerId]
-                  : null;
                 const cornerIcon = cornerIcons[space.kind];
                 const spaceIcon = space.kind === 'utility' && space.name === 'Electric Company'
                   ? electricCompanyIcon
@@ -305,10 +301,12 @@ export function GamePage() {
                       gridColumn: position.column,
                     }}
                   >
-                    <div
-                      className="space-color"
-                      style={{ background: getSpaceColor(space) }}
-                    />
+                    {space.kind === 'street' ? (
+                      <div
+                        className="space-color"
+                        style={{ background: getSpaceColor(space) }}
+                      />
+                    ) : null}
                     {cornerIcon ? (
                       <div className="corner-title">
                         <img alt="" aria-hidden="true" src={cornerIcon} />
@@ -321,7 +319,6 @@ export function GamePage() {
                       </div>
                     )}
                     <div>
-                      {owner ? <div className="space-owner">{owner.name.charAt(0)}</div> : null}
                       <div className="space-players">
                         {playersOnSpace.map((player) => {
                           const token = theme?.tokenCatalog.find(
