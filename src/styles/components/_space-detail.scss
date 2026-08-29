@@ -42,6 +42,25 @@
   }
 }
 
+// Every title deed is the same height, whatever the space kind, so the card
+// does not resize as you move around the board.
+.space-card-body.is-deed {
+  display: flex;
+  flex-direction: column;
+  min-height: t.$deed-min-height;
+}
+
+// Street footer (house/hotel costs) sits at the bottom of that shared height.
+.space-card-body.is-deed .deed-footer {
+  margin-top: auto;
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  .space-card-body.is-deed {
+    min-height: 0;
+  }
+}
+
 /** Actions rendered under a deed when a caller passes them to SpaceCard. */
 .space-card-actions {
   display: flex;

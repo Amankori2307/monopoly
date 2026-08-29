@@ -39,6 +39,11 @@ $board-color-bar-compact: 7px;
 // Width of the property-action rail beside the board.
 $action-rail-width: 168px;
 
+// Title deeds share one height so the card does not jump between space kinds.
+// Sized to the tallest: a street, whose rent schedule has seven rows. Railways
+// (four rows) and utilities (two) pad out to match.
+$deed-min-height: 510px;
+
 // Player card stack. $max-players must match MAX_PLAYERS in
 // src/domain/constants/game.constants.ts - a unit test asserts the stack still
 // renders correctly at that count.

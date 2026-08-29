@@ -340,3 +340,38 @@ test('renders every surface with square corners', async ({ page }) => {
 
   expect(rounded).toEqual([]);
 });
+
+// Deeds used to size to their content - a street (7 rent rows) was 507px, a
+// railway 362, a utility 294 - so the card jumped as you moved around the board.
+test('renders every title deed at the same height', async ({ page }) => {
+  await startGame(page);
+
+  const measure = async (spaceName: string) => {
+    await page
+      .getByRole('button', { name: `View details for ${spaceName}`, exact: true })
+      .click();
+    const card = page.getByTestId(TEST_IDS.spaceCard);
+    await expect(card).toBeVisible();
+    const box = await card.boundingBox();
+    const isDeed = await card.evaluate((el) => el.classList.contains('is-deed'));
+    await page.getByRole('button', { name: 'Close space details' }).click();
+    await expect(card).toHaveCount(0);
+    return { height: box ? Math.round(box.height) : 0, isDeed };
+  };
+
+  // One of each ownable kind: street, railway, utility.
+  const street = await measure('Mumbai');
+  const railway = await measure('Howrah Railway Station');
+  const utility = await measure('Electric Company');
+
+  for (const deed of [street, railway, utility]) {
+    expect(deed.isDeed).toBe(true);
+  }
+  expect(street.height).toBe(railway.height);
+  expect(railway.height).toBe(utility.height);
+
+  // A space with no deed stays compact rather than padding out to deed height.
+  const tax = await measure('Income Tax');
+  expect(tax.isDeed).toBe(false);
+  expect(tax.height).toBeLessThan(street.height);
+});

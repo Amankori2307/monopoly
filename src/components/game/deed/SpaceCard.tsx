@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { isOwnableSpace } from '../../../domain/rules/space.utils';
 import { SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
@@ -32,9 +33,15 @@ export function SpaceCard({
 }: SpaceCardProps) {
   const icon = getSpaceIcon(space);
   const title = space.kind === SpaceKind.Street ? 'Title deed' : 'Board space';
+  // Only buyable spaces get the shared deed height; a Chance or tax card has
+  // almost no content and would just render as empty space.
+  const isDeed = isOwnableSpace(space);
 
   return (
-    <div className="space-card-body" data-testid={TEST_IDS.spaceCard}>
+    <div
+      className={`space-card-body ${isDeed ? 'is-deed' : ''}`}
+      data-testid={TEST_IDS.spaceCard}
+    >
       <p className="eyebrow">{title}</p>
       <div className="space-detail-title-row">
         {icon ? (
