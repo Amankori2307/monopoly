@@ -120,6 +120,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | File                                                                                                                    | What it does                                                                   |
 | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                                   | Left rail of property actions (Build/Sell/Mortgage/Redeem).                    |
+| [panels/CommandErrorBanner.tsx](../src/components/game/panels/CommandErrorBanner.tsx)                                   | Shows a command the engine rejected, instead of failing silently.              |
 | [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                               | Player cards: cash, property count, position, jail status.                     |
 | [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                                   | Surfaces engine `uiHints` (the "not implemented yet" notices).                 |
 | [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                                       | Shared panel view models and decision handler types.                           |
@@ -130,6 +131,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [panels/decisions/JailDecision.tsx](../src/components/game/panels/decisions/JailDecision.tsx)                           | Jail exit choices.                                                             |
 | [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)             | Asset-liquidation notice.                                                      |
 | [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                                 | Dice animation state: tumbling faces, roll sound, timers, committing the roll. |
+| [hooks/useDiceRoller.test.ts](../src/components/game/hooks/useDiceRoller.test.ts)                                       | Roll lifecycle, and that a throwing handler never strands the dock.            |
 | [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                               | Bottom-right cluster: end-turn button plus the dice, level with the board.     |
 | [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                                     | Stack collapse/expand, click target, token colours, full-table support.        |
 | [overlays/DecisionModal.tsx](../src/components/game/overlays/DecisionModal.tsx)                                         | Blocking centre modal for a pending decision. Deliberately not dismissible.    |
@@ -170,6 +172,8 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | File                                                                           | What it does                                                                            |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts) | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
+| [utils/logger.utils.ts](../src/shared/utils/logger.utils.ts)                   | App log: console + capped ring + localStorage, exposed as `window.monopolyLog`.         |
+| [utils/logger.utils.test.ts](../src/shared/utils/logger.utils.test.ts)         | Ring cap, persistence, error filtering, storage-failure safety.                         |
 | [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                     | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
 | [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)           | Unit tests for money formatting.                                                        |
 | [hooks/useEscapeKey.ts](../src/shared/hooks/useEscapeKey.ts)                   | Escape-to-dismiss for overlays, with listener cleanup.                                  |

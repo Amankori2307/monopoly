@@ -198,6 +198,12 @@
   },
   "overrides": [
     {
+      "files": ["src/shared/utils/logger.utils.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
       "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
       "rules": {
         "max-lines": "off",

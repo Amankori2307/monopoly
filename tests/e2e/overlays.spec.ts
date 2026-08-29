@@ -141,3 +141,42 @@ test('shows the full title deed inside the buy decision', async ({ page }) => {
   }
   expect(cardBox.x + cardBox.width).toBeLessThanOrEqual(choiceBox.x + 1);
 });
+
+// Regression: a Chance card could jail a player mid-doubles, leaving them able
+// to roll while in jail. The engine rejected that roll by throwing, the throw
+// escaped the dice commit callback, and the dock stuck on "Rolling..." forever.
+//
+// Plays a long stretch of real turns and fails if the dock ever fails to settle
+// or the engine rejects a command the UI offered.
+test('never strands the dice on Rolling through a long game', async ({ page }) => {
+  await startGame(page);
+
+  const rollButton = page.getByTestId(TEST_IDS.rollButton);
+  const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
+  const declineButton = page.getByTestId(TEST_IDS.declineButton);
+  const payFineButton = page.getByRole('button', { name: /^Pay M/ });
+
+  for (let turn = 0; turn < 60; turn += 1) {
+    // The dock must always settle back out of its rolling state.
+    await expect
+      .poll(async () => (await rollButton.textContent())?.trim(), { timeout: 4000 })
+      .not.toBe('Rolling…');
+
+    if (await declineButton.isVisible()) {
+      await declineButton.click();
+    } else if (await payFineButton.isVisible()) {
+      await payFineButton.click();
+    } else if (await rollButton.isEnabled()) {
+      await rollButton.click();
+      await page.waitForTimeout(650);
+    } else if (await endTurnButton.isVisible()) {
+      await endTurnButton.click();
+    } else {
+      // Nothing actionable (e.g. an auction is open) - stop rather than spin.
+      break;
+    }
+  }
+
+  // The UI must never offer an action the engine then rejects.
+  await expect(page.getByTestId(TEST_IDS.commandError)).toHaveCount(0);
+});

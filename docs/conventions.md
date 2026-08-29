@@ -144,6 +144,35 @@ survives renders, subscriptions, timers, or store access. Pure logic is a util, 
 The payoff is visible in the page components: `GamePage` went from 502 lines of mixed state,
 derivation, and markup to 140 lines of wiring.
 
+## 4d. Debuggability
+
+Failures must leave a trace. The engine throws on an invalid command, and a throw that escapes
+into React's event path aborts the caller mid-flight — that is how the dice once stuck on
+"Rolling…" with no error visible anywhere.
+
+**Rules**
+
+- **Never let an engine throw reach React.** `runGameCommand` catches, logs, and stores the
+  message in `game.commandError`; the UI shows it in a `CommandErrorBanner`. A rejected command
+  is a visible, dismissible message, never a dead button.
+- **Log at the boundary.** Every command dispatch logs at debug with the game id, turn, phase,
+  and pending decision; every rejection logs at error with the command and stack. That context is
+  what makes a report reproducible.
+- **Contain throws in timer and animation callbacks.** A throw escaping a `setTimeout` prevents
+  React committing queued state. Catch, log, and reset — a stuck UI is worse than a logged error.
+- **Prefer a guard over a throw in the UI.** If the engine would reject an action, the UI should
+  not offer it (`selectCanRollDice` refuses a jailed player). The catch is the safety net, not
+  the design.
+
+**The log** — [`shared/utils/logger.utils.ts`](../src/shared/utils/logger.utils.ts). Entries go to
+the console, a capped in-memory ring, and `localStorage` so they survive a reload. In the browser:
+
+```js
+monopolyLog.entries(); // everything captured
+monopolyLog.errors(); // failures only
+monopolyLog.download(); // JSON to copy into a bug report
+```
+
 ## 5. Component rules
 
 - **One component per file**, named the same as the file.

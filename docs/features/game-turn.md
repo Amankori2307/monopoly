@@ -65,6 +65,18 @@ Reads and writes `GameState.turn`, `.players`, `.ownership`, `.pendingDecision`,
 | Integration | —                                                               | _Gap: no thunk-level test of command → save → store._                |
 | E2E         | [tests/e2e/overlays.spec.ts](../../tests/e2e/overlays.spec.ts)  | Board renders; space details open.                                   |
 
+## Failure handling
+
+The engine throws on an invalid command. `runGameCommand` catches it, logs it with the game id,
+turn, phase, and pending decision, and puts the message in `game.commandError`, which the
+`CommandErrorBanner` shows. Nothing throws into React.
+
+_Fixed:_ a Chance card could jail a player mid-doubles, and `resolveCurrentSpace` then reassigned
+the phase and granted the jailed player an extra roll. The engine rejected that roll by throwing,
+the throw escaped the dice commit callback, and the dice stuck on "Rolling…" permanently. Three
+layers now guard it: the engine ends the turn when a player is jailed, `selectCanRollDice` refuses
+a roll from jail, and the dice roller contains and logs any throw.
+
 ## Known gaps
 
 - **Jail-fine bug**: `payJailFine` overwrites the `asset-liquidation` decision that

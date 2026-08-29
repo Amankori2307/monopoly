@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { describeError, logger } from '../../../shared/utils/logger.utils';
 import { DIE_MAX, DIE_MIN } from '../../../domain/constants/game.constants';
 import {
   DICE_ROLL_DURATION_MS,
@@ -88,10 +89,14 @@ export const useDiceRoller = ({
 
     commitTimerRef.current = window.setTimeout(() => {
       clearTimers();
-      // finally, so a throw from onRoll can never strand the dock on
-      // "Rolling..." with no way for the player to recover.
+      // The throw is contained rather than rethrown: letting it escape the timer
+      // callback stops React committing the reset below, which is exactly how
+      // the dock used to strand on "Rolling..." with the button disabled and no
+      // way back. It is logged instead, so nothing is lost.
       try {
         onRoll();
+      } catch (error) {
+        logger.error('diceRoller', 'roll handler threw', describeError(error));
       } finally {
         setIsRolling(false);
       }
