@@ -1,0 +1,40 @@
+@use '../abstracts/tokens' as t;
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 rgba(23, 29, 20, 0.18);
+  }
+}
+
+.primary-button {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.secondary-button {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.danger-button {
+  background: var(--danger-bg);
+  color: var(--text-inverse);
+}

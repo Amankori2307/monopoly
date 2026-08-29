@@ -25,17 +25,6 @@ const detailIcons: Partial<Record<BoardSpace['kind'], string>> = {
   tax: taxIcon,
 };
 
-const streetColors: Record<string, string> = {
-  brown: '#8d5a2b',
-  'light-blue': '#8fd3ff',
-  pink: '#ef6fb0',
-  orange: '#f08c2e',
-  red: '#d13232',
-  yellow: '#e7c947',
-  green: '#2a9d5b',
-  'dark-blue': '#3150b6',
-};
-
 export function SpaceDetailCard({
   currencySymbol,
   onClose,
@@ -102,10 +91,7 @@ export function SpaceDetailCard({
 
         {space.kind === 'street' ? (
           <>
-            <div
-              className="deed-band"
-              style={{ background: streetColors[space.colorGroup] ?? '#bd9637' }}
-            />
+            <div className={`deed-band group-${space.colorGroup}`} />
             <div className="deed-primary-stats">
               <span>
                 Site value<strong>{formatMoney(space.price, currencySymbol)}</strong>

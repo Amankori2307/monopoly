@@ -84,7 +84,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={themeId}>
       <div className="page">
         <section className="hero-card">
           <div>

@@ -1,0 +1,122 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+.panel,
+.hero-card,
+.summary-card,
+.decision-card,
+.recent-game-item {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.panel {
+  padding: t.$gap-lg;
+  border-radius: t.$radius-xl;
+
+  @include m.below(t.$breakpoint-tablet) {
+    padding: 16px;
+  }
+}
+
+.hero-card {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: t.$gap-xl;
+  padding: 34px;
+  border-radius: t.$radius-pill;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+    padding: t.$gap-lg;
+  }
+}
+
+.hero-card h1,
+.game-header h1 {
+  margin: 0 0 8px;
+  font-size: clamp(2.1rem, 4vw, 4.3rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.hero-card p,
+.game-header p {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.hero-actions {
+  margin-top: 20px;
+}
+
+.summary-card {
+  padding: 18px;
+  border-radius: t.$radius-lg;
+
+  h2 {
+    margin-bottom: 16px;
+  }
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 15px;
+
+  .eyebrow {
+    margin-bottom: 4px;
+  }
+}
+
+.counter-badge {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--badge-bg);
+  font: 500 0.72rem t.$font-mono;
+}
+
+.decision-card {
+  padding: 18px;
+  border: 2px solid var(--decision-border);
+  border-radius: t.$radius-lg;
+  background: var(--decision-bg);
+  box-shadow: 0 10px 25px rgba(90, 36, 23, 0.13);
+
+  h2 {
+    margin-bottom: 8px;
+  }
+
+  p {
+    line-height: 1.45;
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    padding: 16px;
+  }
+}
+
+.empty-state {
+  padding: t.$gap-lg;
+  border: 1px dashed var(--border-dashed);
+  border-radius: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.event-item {
+  padding: 11px 0;
+  border-bottom: 1px dashed var(--border-dashed);
+  font-size: 0.81rem;
+  line-height: 1.4;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}

@@ -1,4 +1,4 @@
-import './app/app.css';
+import './styles/main.scss';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { GamePage } from './features/game/GamePage';
 import { RulesPage } from './features/rules/RulesPage';

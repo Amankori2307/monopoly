@@ -1,0 +1,197 @@
+@use 'sass:map';
+@use '../abstracts/tokens' as t;
+
+// ---------------------------------------------------------------------------
+// THEME ENGINE
+//
+// Each theme is a flat map of token -> value. The engine below turns every
+// entry into a CSS custom property, emitted once on :root (the default theme)
+// and once per [data-theme="<id>"] block.
+//
+// Components must never hardcode a colour - always var(--token). That is what
+// makes a new theme a data change rather than a stylesheet rewrite.
+//
+// TO ADD A THEME:
+//   1. Add an entry to $themes below with every key in $theme-contract.
+//   2. Register a matching ThemeConfig in src/domain/themes/ so the game can
+//      select it (id must equal the key used here).
+// See docs/theming.md.
+// ---------------------------------------------------------------------------
+
+// Every key a theme must define. Used to fail the build on an incomplete theme.
+$theme-contract: surface-app surface-panel surface-board surface-input surface-muted
+  surface-raised text-primary text-body text-muted text-inverse text-eyebrow accent
+  accent-hover accent-strong accent-soft accent-contrast border-subtle border-input
+  border-space border-dashed focus-ring shadow-panel shadow-board board-space-bg
+  board-space-hover board-active-outline ribbon-bg ribbon-border ribbon-outline
+  ribbon-text deck-community-bg deck-chance-bg decision-bg decision-border badge-bg
+  token-bg danger-bg error-text;
+
+$themes: (
+  // -- India Edition: the shipped look. -------------------------------------
+  'india-edition': (
+      surface-app: #f1f3f5,
+      surface-panel: #fff,
+      surface-board: #fff,
+      surface-input: #fffef9,
+      surface-muted: #f4eed8,
+      surface-raised: #fffef8,
+
+      text-primary: #1d211b,
+      text-body: #292d24,
+      text-muted: #68674f,
+      text-inverse: #fffaf0,
+      text-eyebrow: #846826,
+
+      accent: #c84132,
+      accent-hover: #aa3228,
+      accent-strong: #ca4334,
+      accent-soft: #efe0ab,
+      accent-contrast: #fffaf0,
+
+      border-subtle: rgba(37, 42, 31, 0.18),
+      border-input: #cfc5a4,
+      border-space: rgba(42, 51, 41, 0.42),
+      border-dashed: #d0c7a6,
+
+      focus-ring: #3150b6,
+      shadow-panel: 0 14px 34px rgba(64, 47, 12, 0.12),
+      shadow-board: (
+        0 24px 52px rgba(25, 31, 24, 0.24),
+        0 4px 12px rgba(25, 31, 24, 0.12),
+      ),
+      board-space-bg: #fff,
+      board-space-hover: #fffdf6,
+      board-active-outline: #d53f32,
+
+      ribbon-bg: #c9362f,
+      ribbon-border: #fff7d9,
+      ribbon-outline: #a22d28,
+      ribbon-text: #fff9e6,
+
+      deck-community-bg: #77d7e5,
+      deck-chance-bg: #ff9b2f,
+
+      decision-bg: #fff2dc,
+      decision-border: #ca4334,
+
+      badge-bg: #e5d37e,
+      token-bg: #f1df9d,
+      danger-bg: #2b3127,
+      error-text: #9a2e24,
+
+      group-brown: #8d5a2b,
+      group-light-blue: #8fd3ff,
+      group-pink: #ef6fb0,
+      group-orange: #f08c2e,
+      group-red: #d13232,
+      group-yellow: #e7c947,
+      group-green: #2a9d5b,
+      group-dark-blue: #3150b6,
+    ),
+
+  // -- Midnight: proves the engine works end to end. -------------------------
+  // Not yet registered in src/domain/themes, so it is not selectable in the UI.
+  // Registering a ThemeConfig with id 'midnight' is all that is needed.
+  'midnight': (
+      surface-app: #12151a,
+      surface-panel: #1b2027,
+      surface-board: #171c22,
+      surface-input: #232a33,
+      surface-muted: #222831,
+      surface-raised: #202730,
+
+      text-primary: #e8ecf1,
+      text-body: #dbe2ea,
+      text-muted: #97a3b2,
+      text-inverse: #12151a,
+      text-eyebrow: #d9a441,
+
+      accent: #e2574a,
+      accent-hover: #f0685b,
+      accent-strong: #e2574a,
+      accent-soft: #2f3844,
+      accent-contrast: #fff6ee,
+
+      border-subtle: rgba(226, 233, 243, 0.14),
+      border-input: #39424e,
+      border-space: rgba(226, 233, 243, 0.16),
+      border-dashed: #3b4552,
+
+      focus-ring: #6f9dff,
+      shadow-panel: 0 14px 34px rgba(0, 0, 0, 0.46),
+      shadow-board: (
+        0 24px 52px rgba(0, 0, 0, 0.55),
+        0 4px 12px rgba(0, 0, 0, 0.4),
+      ),
+      board-space-bg: #1b2027,
+      board-space-hover: #232b34,
+      board-active-outline: #f0685b,
+
+      ribbon-bg: #b8362d,
+      ribbon-border: #2a323c,
+      ribbon-outline: #7d221c,
+      ribbon-text: #ffeede,
+
+      deck-community-bg: #2f7f8d,
+      deck-chance-bg: #b8701f,
+
+      decision-bg: #262019,
+      decision-border: #e2574a,
+
+      badge-bg: #3a4250,
+      token-bg: #333c48,
+      danger-bg: #0e1116,
+      error-text: #ff8b7d,
+
+      group-brown: #9c6a3a,
+      group-light-blue: #6bb6e8,
+      group-pink: #d8629b,
+      group-orange: #d9822b,
+      group-red: #c8433f,
+      group-yellow: #cfae42,
+      group-green: #35b06b,
+      group-dark-blue: #5878d4,
+    )
+);
+
+$default-theme: 'india-edition';
+
+@mixin emit-theme-vars($tokens) {
+  @each $token, $value in $tokens {
+    --#{$token}: #{$value};
+  }
+}
+
+// Guard: a theme missing a contract key would silently fall back to the
+// default theme's value at runtime, which is very hard to debug. Fail loudly.
+@each $theme-name, $tokens in $themes {
+  @each $required in $theme-contract {
+    @if not map.has-key($tokens, $required) {
+      @error 'Theme "#{$theme-name}" is missing required token "#{$required}". See $theme-contract in themes/_themes.scss.';
+    }
+  }
+  @each $group in t.$color-groups {
+    @if not map.has-key($tokens, 'group-#{$group}') {
+      @error 'Theme "#{$theme-name}" is missing colour group token "group-#{$group}".';
+    }
+  }
+}
+
+:root {
+  @include emit-theme-vars(map.get($themes, $default-theme));
+}
+
+@each $theme-name, $tokens in $themes {
+  [data-theme='#{$theme-name}'] {
+    @include emit-theme-vars($tokens);
+  }
+}
+
+// Street colour-group helpers. Replaces the hex maps that used to be duplicated
+// in GamePage.tsx and SpaceDetailCard.tsx.
+@each $group in t.$color-groups {
+  .group-#{$group} {
+    background: var(--group-#{$group});
+  }
+}

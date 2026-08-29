@@ -1,0 +1,38 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: t.$font-serif;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 1.42rem;
+  line-height: 1.1;
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: var(--text-eyebrow);
+  @include m.mono-label(0.67rem, 0.14em);
+  line-height: 1.1;
+}
+
+.helper-text,
+.error-text {
+  font-size: 0.86rem;
+}
+
+.error-text {
+  color: var(--error-text);
+  font-weight: 700;
+}

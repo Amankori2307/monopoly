@@ -1,0 +1,33 @@
+@use '../abstracts/tokens' as t;
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-family: t.$font-sans;
+  background: var(--surface-app);
+  color: var(--text-primary);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}

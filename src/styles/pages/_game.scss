@@ -1,0 +1,110 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+.game-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 30px;
+  margin: 0 2px t.$gap-lg;
+
+  > div:first-child {
+    max-width: 700px;
+  }
+
+  .button-row {
+    justify-content: flex-end;
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+
+    .button-row {
+      justify-content: flex-start;
+    }
+  }
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: minmax(0, calc(100dvh - 72px)) minmax(340px, 1fr);
+  gap: t.$gap-lg;
+  align-items: start;
+
+  @include m.below(t.$breakpoint-board) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.game-side {
+  min-width: 0;
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+  padding-right: 4px;
+
+  @include m.below(t.$breakpoint-board) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    max-height: none;
+    overflow: visible;
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include m.below(t.$breakpoint-board) {
+  .board-card {
+    width: min(100%, 820px);
+    margin: auto;
+  }
+
+  .decision-card,
+  .activity-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+.player-panel,
+.holdings-panel,
+.activity-panel {
+  padding: 18px;
+}
+
+.turn-panel {
+  padding: 18px;
+  border-top: 5px solid var(--accent);
+
+  .panel-heading {
+    margin-bottom: 6px;
+  }
+}
+
+.turn-token {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--token-bg);
+  font-size: 1.35rem;
+}
+
+.turn-location {
+  margin: 0 0 15px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.activity-panel .event-list {
+  max-height: 310px;
+  overflow: auto;
+  padding-right: 5px;
+
+  @include m.below(t.$breakpoint-tablet) {
+    max-height: 240px;
+  }
+}

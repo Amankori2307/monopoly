@@ -46,25 +46,6 @@ const boardToGridPosition = (index: number) => {
   return { row: index - 30 + 1, column: 11 };
 };
 
-const getSpaceColor = (space: BoardSpace): string => {
-  if (space.kind !== 'street') {
-    return '#e5dcae';
-  }
-
-  return (
-    {
-      brown: '#8d5a2b',
-      'light-blue': '#8fd3ff',
-      pink: '#ef6fb0',
-      orange: '#f08c2e',
-      red: '#d13232',
-      yellow: '#e7c947',
-      green: '#2a9d5b',
-      'dark-blue': '#3150b6',
-    }[space.colorGroup] ?? '#e5dcae'
-  );
-};
-
 export function GamePage() {
   const { gameId = '' } = useParams();
   const dispatch = useAppDispatch();
@@ -259,7 +240,7 @@ export function GamePage() {
   };
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={activeGame.themeId}>
       <div className="page">
         <div className="game-layout">
           <section className="board-card panel">
@@ -307,10 +288,7 @@ export function GamePage() {
                     }}
                   >
                     {space.kind === 'street' ? (
-                      <div
-                        className="space-color"
-                        style={{ background: getSpaceColor(space) }}
-                      />
+                      <div className={`space-color group-${space.colorGroup}`} />
                     ) : null}
                     {cornerIcon ? (
                       <div className="corner-title">

@@ -1,0 +1,47 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+.setup-form,
+.player-config-grid,
+.recent-games,
+.game-side,
+.player-list,
+.space-list,
+.event-list {
+  display: grid;
+  gap: t.$gap-md;
+}
+
+.field-grid,
+.player-config-grid {
+  gap: 12px;
+}
+
+.field-grid label,
+.player-config-grid label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.player-config-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 12px;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.text-input,
+.select-input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--border-input);
+  border-radius: t.$radius-md;
+  background: var(--surface-input);
+  color: var(--text-primary);
+  outline-color: var(--accent-strong);
+}

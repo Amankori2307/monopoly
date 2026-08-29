@@ -1,0 +1,272 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+.board-card {
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-board);
+  box-shadow: var(--shadow-board);
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: t.$board-corner-track repeat(9, 1fr) t.$board-corner-track;
+  grid-template-rows: t.$board-corner-track repeat(9, 1fr) t.$board-corner-track;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+.board-center {
+  position: relative;
+  grid-area: 2 / 2 / 11 / 11;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--surface-board);
+  color: var(--text-body);
+
+  &::before {
+    position: absolute;
+    inset: 12px;
+    content: '';
+    border: 1px solid var(--border-subtle);
+    pointer-events: none;
+  }
+}
+
+.board-logo-ribbon {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 55%;
+  padding: 7px 11px 6px;
+  border: 3px solid var(--ribbon-border);
+  outline: 2px solid var(--ribbon-outline);
+  background: var(--ribbon-bg);
+  box-shadow: 0 5px 0 rgba(76, 31, 27, 0.38);
+  color: var(--ribbon-text);
+  line-height: 0.9;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-39deg);
+
+  span {
+    font: 800 clamp(1.2rem, 4.25vw, 3.8rem) / 0.86 t.$font-serif;
+    letter-spacing: -0.08em;
+  }
+
+  small {
+    margin-top: 4px;
+    font: 800 clamp(0.36rem, 1vw, 0.76rem) / 1 t.$font-sans;
+    letter-spacing: 0.19em;
+  }
+}
+
+.deck-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: clamp(38px, 7.4vw, 86px);
+  aspect-ratio: 1;
+  padding: 7px;
+  border: 2px dotted rgba(36, 64, 43, 0.75);
+  box-shadow: 3px 3px 0 rgba(38, 73, 44, 0.18);
+  color: #1b3929;
+  font-size: clamp(0.38rem, 0.74vw, 0.67rem);
+  line-height: 1.05;
+  text-align: center;
+  transform: rotate(45deg);
+
+  > * {
+    transform: rotate(-45deg);
+  }
+
+  strong {
+    font-family: t.$font-serif;
+    font-size: 1.15em;
+  }
+}
+
+.community-deck {
+  top: 17%;
+  left: 17%;
+  background: var(--deck-community-bg);
+}
+
+.chance-deck {
+  right: 18%;
+  bottom: 17%;
+  background: var(--deck-chance-bg);
+
+  strong {
+    font-size: clamp(1.1rem, 3.3vw, 3rem);
+  }
+
+  span {
+    font-size: 0.75em;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Board spaces
+//
+// Row template must match the number of children the space actually renders:
+//   street space -> colour bar + label + players  (3 rows)
+//   every other  -> label + players               (2 rows)
+//
+// The default is therefore 2 rows and only .space-street opts into the bar.
+// Corner spaces previously declared 3 rows while rendering 2 children, which
+// squeezed the corner title into the bar row and clipped the label.
+// ---------------------------------------------------------------------------
+.board-space {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 3px;
+  min-width: 0;
+  padding: clamp(3px, 0.55vw, 7px);
+  padding-top: clamp(5px, 0.7vw, 9px);
+  overflow: hidden;
+  border: 0;
+  background: var(--board-space-bg);
+  box-shadow: inset -1px -1px 0 var(--border-space);
+  color: var(--text-body);
+  font-size: clamp(0.42rem, 0.67vw, 0.67rem);
+  text-align: left;
+
+  &.space-street {
+    grid-template-rows: t.$board-color-bar minmax(0, 1fr) auto;
+    padding-top: clamp(3px, 0.55vw, 7px);
+  }
+
+  &:not(:disabled):hover {
+    z-index: 3;
+    background: var(--board-space-hover);
+    box-shadow:
+      inset 0 0 0 2px var(--accent),
+      inset -1px -1px 0 var(--border-space);
+  }
+
+  &:focus-visible {
+    z-index: 4;
+    outline: 3px solid var(--focus-ring);
+    outline-offset: -3px;
+  }
+
+  &.active-space {
+    z-index: 2;
+    outline: 2px solid var(--board-active-outline);
+    outline-offset: -2px;
+    background: var(--board-space-hover);
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    padding: 2px;
+    font-size: 5px;
+
+    &.space-street {
+      grid-template-rows: t.$board-color-bar-compact minmax(0, 1fr) auto;
+    }
+  }
+}
+
+.space-color {
+  height: 100%;
+  border-radius: 1px;
+}
+
+.space-label {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-height: 0;
+}
+
+.space-name {
+  align-self: center;
+  overflow: hidden;
+  font-weight: 800;
+  line-height: 1.06;
+  text-wrap: balance;
+
+  @include m.below(t.$breakpoint-tablet) {
+    font-size: 5px;
+  }
+}
+
+.space-icon {
+  width: clamp(12px, 1.35vw, 19px);
+  height: clamp(12px, 1.35vw, 19px);
+  object-fit: contain;
+  opacity: 0.74;
+}
+
+.space-railway,
+.space-tax,
+.space-utility {
+  .space-icon {
+    width: clamp(15px, 1.7vw, 23px);
+    height: clamp(15px, 1.7vw, 23px);
+  }
+}
+
+.space-chance,
+.space-community-chest {
+  .space-icon {
+    opacity: 0.62;
+  }
+}
+
+.corner-title {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  min-height: 0;
+  text-align: center;
+
+  img {
+    width: clamp(15px, 2.2vw, 34px);
+    height: clamp(15px, 2.2vw, 34px);
+    object-fit: contain;
+    opacity: 0.82;
+  }
+
+  .space-name {
+    align-self: auto;
+  }
+}
+
+.space-players {
+  align-items: end;
+  gap: 2px;
+  min-height: 0;
+}
+
+.token-chip {
+  display: inline-grid;
+  place-items: center;
+  width: clamp(11px, 1.35vw, 18px);
+  height: clamp(11px, 1.35vw, 18px);
+  border: 1px solid var(--border-space);
+  border-radius: 50%;
+  background: var(--surface-raised);
+  font-size: clamp(0.42rem, 0.6vw, 0.65rem);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+
+  @include m.below(t.$breakpoint-tablet) {
+    width: 10px;
+    height: 10px;
+    font-size: 5px;
+  }
+}

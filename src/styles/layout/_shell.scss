@@ -1,0 +1,51 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+.app-shell {
+  min-height: 100vh;
+  padding: clamp(14px, 2.2vw, 36px);
+  background: var(--surface-app);
+  color: var(--text-primary);
+
+  @include m.below(t.$breakpoint-tablet) {
+    padding: 10px;
+  }
+}
+
+.page {
+  max-width: 1640px;
+  margin: 0 auto;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.1fr);
+  gap: t.$gap-lg;
+  margin-top: t.$gap-lg;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-grid.two,
+.two-column,
+.summary-grid,
+.player-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.button-row,
+.recent-game-meta,
+.status-row,
+.space-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$gap-sm;
+}

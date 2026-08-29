@@ -1,0 +1,29 @@
+// ---------------------------------------------------------------------------
+// Application stylesheet entry point. Imported once, by src/App.tsx.
+//
+// Layer order matters: tokens and themes must come first so every later
+// partial can reference the CSS custom properties they define.
+//
+// Fonts are loaded via <link> in index.html (Sass requires @use to come first,
+// and a <link> avoids the CSS @import request waterfall).
+//
+// See docs/theming.md for how themes work and how to add one.
+// ---------------------------------------------------------------------------
+@use 'themes/themes';
+
+@use 'base/reset';
+@use 'base/typography';
+
+@use 'layout/shell';
+
+@use 'components/buttons';
+@use 'components/forms';
+@use 'components/panels';
+@use 'components/board';
+@use 'components/dice';
+@use 'components/space-detail';
+@use 'components/player';
+
+@use 'pages/home';
+@use 'pages/game';
+@use 'pages/rules';

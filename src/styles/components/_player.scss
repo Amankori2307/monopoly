@@ -1,0 +1,52 @@
+@use '../abstracts/tokens' as t;
+
+.player-list {
+  gap: t.$gap-sm;
+}
+
+.player-card {
+  position: relative;
+  padding: 14px;
+  border: 1px solid var(--border-input);
+  border-radius: 13px;
+  background: var(--surface-raised);
+
+  &.is-active {
+    border: 2px solid var(--accent-strong);
+    background: var(--decision-bg);
+    box-shadow: 3px 3px 0 var(--accent-strong);
+  }
+
+  > strong {
+    display: block;
+    margin-bottom: 10px;
+    font-family: t.$font-serif;
+    font-size: 1.04rem;
+  }
+}
+
+.player-metrics {
+  gap: 5px 12px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+
+  strong {
+    color: var(--text-primary);
+    font-family: t.$font-mono;
+    font-size: 0.75rem;
+    text-align: right;
+  }
+}
+
+.space-card {
+  padding: 12px;
+  border-left: 5px solid var(--text-eyebrow);
+  border-radius: t.$radius-sm + 3px;
+  background: var(--surface-muted);
+  font-size: 0.82rem;
+
+  strong {
+    display: block;
+    margin-bottom: 5px;
+  }
+}

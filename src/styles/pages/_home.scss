@@ -1,0 +1,12 @@
+@use '../abstracts/tokens' as t;
+
+.recent-game-item {
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.recent-game-meta {
+  margin: 8px 0 14px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
