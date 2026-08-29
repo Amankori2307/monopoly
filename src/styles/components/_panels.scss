@@ -102,6 +102,33 @@
   }
 }
 
+// Rejected command notice. Loud enough to notice, dismissible once read.
+.command-error {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-left: 5px solid var(--error-text);
+  background: var(--surface-muted);
+}
+
+.command-error-message {
+  margin: 0;
+  color: var(--text-body);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.command-error-dismiss {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  font: 700 0.8rem t.$font-sans;
+}
+
 .empty-state {
   padding: t.$gap-lg;
   border: 1px dashed var(--border-dashed);

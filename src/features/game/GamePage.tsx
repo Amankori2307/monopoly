@@ -5,6 +5,7 @@ import { ActivityDrawer } from '../../components/game/overlays/ActivityDrawer';
 import { DecisionModal } from '../../components/game/overlays/DecisionModal';
 import { PlayerDetailDrawer } from '../../components/game/overlays/PlayerDetailDrawer';
 import { ActionRail } from '../../components/game/panels/ActionRail';
+import { CommandErrorBanner } from '../../components/game/panels/CommandErrorBanner';
 import { HintsPanel } from '../../components/game/panels/HintsPanel';
 import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
@@ -37,7 +38,8 @@ import { useGameOverlays } from './hooks/useGameOverlays';
  */
 export function GamePage() {
   const { gameId = '' } = useParams();
-  const { activeGame, currencySymbol, loadError, theme, uiHints } = useActiveGame(gameId);
+  const { activeGame, commandError, currencySymbol, loadError, theme, uiHints } =
+    useActiveGame(gameId);
   const commands = useGameCommands();
   const overlays = useGameOverlays();
 
@@ -85,6 +87,11 @@ export function GamePage() {
             />
 
             <div className="game-side-scroll">
+              <CommandErrorBanner
+                message={commandError}
+                onDismiss={commands.dismissError}
+              />
+
               <HintsPanel hints={uiHints} />
               <div className="button-row">
                 <Link className="secondary-button" to="/">

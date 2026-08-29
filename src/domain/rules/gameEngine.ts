@@ -642,6 +642,22 @@ const resolveCurrentSpace = (
     }
   }
 
+  // Going to jail ends the turn outright, even on doubles. sendPlayerToJail
+  // already sets that, but a Chance / Community Chest card routes back through
+  // here afterwards, and the phase assignment below would otherwise hand a
+  // jailed player an extra roll - leaving them able to roll while in jail, which
+  // the engine then rejects.
+  if (getPlayerById(nextState, playerId).inJail) {
+    return {
+      ...nextState,
+      turn: {
+        ...nextState.turn,
+        phase: TurnPhase.TurnComplete,
+        canRollAgain: false,
+      },
+    };
+  }
+
   const isBlockedByDecision = nextState.pendingDecision.type !== PendingDecisionType.None;
   const canRollAgain = allowExtraRoll && !isBlockedByDecision;
 

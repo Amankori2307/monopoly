@@ -88,8 +88,13 @@ export const useDiceRoller = ({
 
     commitTimerRef.current = window.setTimeout(() => {
       clearTimers();
-      onRoll();
-      setIsRolling(false);
+      // finally, so a throw from onRoll can never strand the dock on
+      // "Rolling..." with no way for the player to recover.
+      try {
+        onRoll();
+      } finally {
+        setIsRolling(false);
+      }
     }, DICE_ROLL_DURATION_MS);
   }, [canRoll, clearTimers, isRolling, onRoll]);
 

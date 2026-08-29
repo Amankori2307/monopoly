@@ -8,6 +8,7 @@ import type {
   RuntimeGameCommand,
   StoredGameIndexEntry,
 } from '../../domain/types/game.interfaces';
+import { describeError, logger } from '../../shared/utils/logger.utils';
 import {
   deleteSavedGame,
   loadGame,
@@ -19,6 +20,8 @@ interface GameSliceState {
   recentGames: StoredGameIndexEntry[];
   activeGame: GameState | null;
   loadError: string | null;
+  /** Last command the engine rejected. Surfaced to the player, then dismissed. */
+  commandError: string | null;
   uiHints: string[];
 }
 
@@ -26,6 +29,7 @@ const initialState: GameSliceState = {
   recentGames: [],
   activeGame: null,
   loadError: null,
+  commandError: null,
   uiHints: [],
 };
 
@@ -45,11 +49,20 @@ const slice = createSlice({
     setUiHints(state, action: PayloadAction<string[]>) {
       state.uiHints = action.payload;
     },
+    setCommandError(state, action: PayloadAction<string | null>) {
+      state.commandError = action.payload;
+    },
   },
 });
 
 export const gameReducer = slice.reducer;
-export const { setRecentGames, setActiveGame, setLoadError, setUiHints } = slice.actions;
+export const {
+  setRecentGames,
+  setActiveGame,
+  setLoadError,
+  setUiHints,
+  setCommandError,
+} = slice.actions;
 
 export const bootstrapRecentGames = () => (dispatch: AppDispatch) => {
   try {
@@ -102,12 +115,39 @@ export const runGameCommand =
       return null;
     }
 
-    const result = executeGameCommand(currentGame, command, new DefaultRandomSource());
-    saveGame(result.nextState);
-    dispatch(setActiveGame(result.nextState));
-    dispatch(setUiHints(result.uiHints));
-    dispatch(bootstrapRecentGames());
-    return result;
+    // The engine throws on an invalid command. Catching here keeps the failure
+    // out of React's render/event path: an uncaught throw used to abort the
+    // caller mid-flight (it left the dice stuck on "Rolling..."), and left no
+    // trace of what went wrong.
+    try {
+      logger.debug('gameCommand', `dispatching ${command.type}`, {
+        gameId: currentGame.id,
+        turnNumber: currentGame.turnNumber,
+        phase: currentGame.turn.phase,
+        pendingDecision: currentGame.pendingDecision.type,
+      });
+
+      const result = executeGameCommand(currentGame, command, new DefaultRandomSource());
+      saveGame(result.nextState);
+      dispatch(setActiveGame(result.nextState));
+      dispatch(setUiHints(result.uiHints));
+      dispatch(setCommandError(null));
+      dispatch(bootstrapRecentGames());
+      return result;
+    } catch (error) {
+      const { message, stack } = describeError(error);
+      logger.error('gameCommand', `${command.type} rejected: ${message}`, {
+        command,
+        gameId: currentGame.id,
+        turnNumber: currentGame.turnNumber,
+        phase: currentGame.turn.phase,
+        pendingDecision: currentGame.pendingDecision.type,
+        activePlayerId: currentGame.playerOrder[currentGame.activePlayerIndex],
+        stack,
+      });
+      dispatch(setCommandError(message));
+      return null;
+    }
   };
 
 export const removeSavedGame =

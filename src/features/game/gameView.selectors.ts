@@ -84,8 +84,19 @@ export const selectCanEndTurn = (game: GameState) =>
 export const selectIsJailRoll = (game: GameState) =>
   game.pendingDecision.type === PendingDecisionType.JailChoice;
 
-export const selectCanRollDice = (game: GameState) =>
-  game.turn.phase === TurnPhase.AwaitRoll || selectIsJailRoll(game);
+/**
+ * A jailed player rolls only through the jail decision - the engine rejects a
+ * plain roll from jail, so the button must not offer one.
+ */
+export const selectCanRollDice = (game: GameState) => {
+  if (selectIsJailRoll(game)) {
+    return true;
+  }
+  if (selectActivePlayer(game).inJail) {
+    return false;
+  }
+  return game.turn.phase === TurnPhase.AwaitRoll;
+};
 
 /**
  * Builds the decision view model, or null when nothing is pending.

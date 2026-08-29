@@ -39,6 +39,7 @@ export const TEST_IDS = {
   holdingsPanel: 'holdings-panel',
   activityPanel: 'activity-panel',
   hintsPanel: 'hints-panel',
+  commandError: 'command-error',
 
   // Controls
   turnControls: 'turn-controls',

@@ -2,12 +2,13 @@ import { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import type { DecisionHandlers } from '../../../components/game/panels/panels.interfaces';
 import { GameCommandType } from '../../../domain/types/game.enums';
-import { runGameCommand } from '../gameSlice';
+import { runGameCommand, setCommandError } from '../gameSlice';
 import { setAuctionBidInput } from '../uiSlice';
 
 export interface UseGameCommandsResult {
   auctionBidInput: number;
   decisionHandlers: DecisionHandlers;
+  dismissError: () => void;
   endTurn: () => void;
   rollDice: (isJailRoll: boolean) => void;
 }
@@ -23,6 +24,7 @@ export const useGameCommands = (): UseGameCommandsResult => {
   return useMemo(
     () => ({
       auctionBidInput,
+      dismissError: () => dispatch(setCommandError(null)),
       endTurn: () => dispatch(runGameCommand({ type: GameCommandType.EndTurn })),
       rollDice: (isJailRoll: boolean) =>
         dispatch(

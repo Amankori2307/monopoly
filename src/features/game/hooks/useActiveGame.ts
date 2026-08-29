@@ -7,6 +7,7 @@ import { loadGameById } from '../gameSlice';
 
 export interface UseActiveGameResult {
   activeGame: GameState | null;
+  commandError: string | null;
   currencySymbol: string;
   loadError: string | null;
   theme: ThemeConfig | undefined;
@@ -22,6 +23,7 @@ export const useActiveGame = (gameId: string): UseActiveGameResult => {
   const activeGame = useAppSelector((state) => state.game.activeGame);
   const loadError = useAppSelector((state) => state.game.loadError);
   const uiHints = useAppSelector((state) => state.game.uiHints);
+  const commandError = useAppSelector((state) => state.game.commandError);
 
   useEffect(() => {
     dispatch(loadGameById(gameId));
@@ -34,6 +36,7 @@ export const useActiveGame = (gameId: string): UseActiveGameResult => {
 
   return {
     activeGame,
+    commandError,
     currencySymbol: resolveCurrencySymbol(theme?.currencySymbol),
     loadError,
     theme,
