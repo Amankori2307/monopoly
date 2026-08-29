@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { startGame } from './helpers';
 
@@ -100,19 +100,20 @@ test('rolls the dice and records the roll', async ({ page }) => {
 
 // The buy decision reuses the same SpaceCard the board shows, so a player
 // decides against the full deed rather than a bare name and price.
-test('shows the full title deed inside the buy decision', async ({ page }) => {
-  await startGame(page);
-
+/** Dice are real random, so play on until a buy decision comes up. */
+const reachBuyDecision = async (page: Page) => {
   const buyButton = page.getByTestId(TEST_IDS.buyButton);
   const rollButton = page.getByTestId(TEST_IDS.rollButton);
   const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
+  const payFine = page.getByRole('button', { name: /^Pay M/ });
 
-  // Dice are real random, so roll through turns until a buy decision appears.
-  for (let attempt = 0; attempt < 15; attempt += 1) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
     if (await buyButton.isVisible()) {
-      break;
+      return;
     }
-    if (await rollButton.isEnabled()) {
+    if (await payFine.isVisible()) {
+      await payFine.click();
+    } else if (await rollButton.isEnabled()) {
       await rollButton.click();
       await page.waitForTimeout(700);
     } else if (await endTurnButton.isVisible()) {
@@ -121,7 +122,13 @@ test('shows the full title deed inside the buy decision', async ({ page }) => {
       break;
     }
   }
+};
 
+test('shows the full title deed inside the buy decision', async ({ page }) => {
+  await startGame(page);
+  await reachBuyDecision(page);
+
+  const buyButton = page.getByTestId(TEST_IDS.buyButton);
   await expect(buyButton).toBeVisible();
   await expect(page.getByTestId(TEST_IDS.declineButton)).toBeVisible();
 
@@ -140,6 +147,67 @@ test('shows the full title deed inside the buy decision', async ({ page }) => {
     throw new Error('Buy decision columns have no layout box');
   }
   expect(cardBox.x + cardBox.width).toBeLessThanOrEqual(choiceBox.x + 1);
+});
+
+// The decision surface used to be tinted cream and ringed in red, so the same
+// deed looked different depending on where it appeared. It is a plain white
+// card like every other panel.
+test('shows the buy decision on a plain white card', async ({ page }) => {
+  await startGame(page);
+  await reachBuyDecision(page);
+
+  const surface = page.locator('.decision-card');
+  await expect(surface).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  // No accent-coloured ring.
+  const border = await surface.evaluate((el) => getComputedStyle(el).borderColor);
+  expect(border).not.toMatch(/rgb\(20[0-9], |rgb\(19[0-9], /);
+});
+
+// Primary is blue and secondary is neutral, both from theme tokens - the buy
+// button used to be red.
+test('uses themed primary and secondary buttons, side by side at the bottom', async ({
+  page,
+}) => {
+  await startGame(page);
+  await reachBuyDecision(page);
+
+  const buy = page.getByTestId(TEST_IDS.buyButton);
+  const decline = page.getByTestId(TEST_IDS.declineButton);
+
+  const [buyBg, declineBg] = await Promise.all([
+    buy.evaluate((el) => getComputedStyle(el).backgroundColor),
+    decline.evaluate((el) => getComputedStyle(el).backgroundColor),
+  ]);
+  const [primary, secondary] = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement);
+    return [
+      style.getPropertyValue('--button-primary').trim(),
+      style.getPropertyValue('--button-secondary').trim(),
+    ];
+  });
+
+  const toRgb = (hex: string) => {
+    const value = hex.replace('#', '');
+    const full = value.length === 3 ? value.replace(/./g, (c) => c + c) : value;
+    const int = parseInt(full, 16);
+    return `rgb(${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255})`;
+  };
+  expect(buyBg).toBe(toRgb(primary));
+  expect(declineBg).toBe(toRgb(secondary));
+
+  // Side by side, not stacked, and pinned to the bottom of their column.
+  const [buyBox, declineBox, choiceBox] = await Promise.all([
+    buy.boundingBox(),
+    decline.boundingBox(),
+    page.locator('.buy-decision-choice').boundingBox(),
+  ]);
+  if (!buyBox || !declineBox || !choiceBox) {
+    throw new Error('Buy decision buttons have no layout box');
+  }
+  expect(Math.abs(buyBox.y - declineBox.y)).toBeLessThanOrEqual(1);
+  expect(buyBox.x + buyBox.width).toBeLessThanOrEqual(declineBox.x + 1);
+  // Bottom-aligned within the choice column.
+  expect(buyBox.y + buyBox.height).toBeGreaterThan(choiceBox.y + choiceBox.height * 0.6);
 });
 
 // Regression: a Chance card could jail a player mid-doubles, leaving them able
@@ -179,4 +247,56 @@ test('never strands the dice on Rolling through a long game', async ({ page }) =
 
   // The UI must never offer an action the engine then rejects.
   await expect(page.getByTestId(TEST_IDS.commandError)).toHaveCount(0);
+});
+
+// Regression: a jailed player whose `pendingDecision` had drifted was offered no
+// action at all - no roll, no jail choice, no end turn. The game was unplayable
+// with nothing on screen explaining why.
+test('always leaves the player at least one action', async ({ page }) => {
+  await startGame(page);
+
+  const anyActionAvailable = async () => {
+    const enabled = await page
+      .locator('button:not([disabled])')
+      .filter({
+        hasText:
+          /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay M|Use jail card|Submit bid|Pass/,
+      })
+      .count();
+    return enabled > 0;
+  };
+
+  for (let turn = 0; turn < 40; turn += 1) {
+    expect(
+      await anyActionAvailable(),
+      'the player must always have at least one action'
+    ).toBe(true);
+
+    const rollButton = page.getByTestId(TEST_IDS.rollButton);
+    const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
+    const declineButton = page.getByTestId(TEST_IDS.declineButton);
+    const payFine = page.getByRole('button', { name: /^Pay M/ });
+    const passAuction = page.getByRole('button', { name: 'Pass' });
+
+    if (await declineButton.isVisible()) {
+      await declineButton.click();
+    } else if (await passAuction.isVisible()) {
+      await passAuction.click();
+    } else if (await payFine.isVisible()) {
+      await payFine.click();
+    } else if (await rollButton.isEnabled()) {
+      await rollButton.click();
+      await page.waitForTimeout(650);
+    } else if (await endTurnButton.isVisible()) {
+      await endTurnButton.click();
+    }
+  }
+
+  // A deadlock is logged as an error; the log must stay clean.
+  const loggedErrors = await page.evaluate(() => {
+    const handle = (window as unknown as { monopolyLog?: { errors: () => unknown[] } })
+      .monopolyLog;
+    return handle ? handle.errors().length : 0;
+  });
+  expect(loggedErrors).toBe(0);
 });

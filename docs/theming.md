@@ -41,6 +41,12 @@ theme against it (and against every colour group in `$color-groups`) and raises 
 miss. A partially-defined theme fails the build instead of silently inheriting the default
 theme's colour at runtime, which is close to impossible to debug by eye.
 
+### Button roles
+
+`--button-primary` / `--button-secondary` (plus their `-hover` and `-text` pairs) are part of the
+theme contract, so every theme decides its own button palette. Components use `.primary-button`
+and `.secondary-button` and never pick a colour themselves.
+
 ### Street colour groups
 
 The eight property colour groups are tokens like `--group-red`, and

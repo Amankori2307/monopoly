@@ -26,7 +26,8 @@ $theme-contract: surface-app surface-panel surface-board surface-input surface-m
   board-space-hover board-active-outline ribbon-bg ribbon-border ribbon-outline
   ribbon-text deck-community-bg deck-chance-bg decision-bg decision-border badge-bg
   token-bg danger-bg error-text action-build action-sell action-mortgage action-redeem
-  action-text;
+  action-text button-primary button-primary-hover button-primary-text button-secondary
+  button-secondary-hover button-secondary-text;
 
 $themes: (
   // -- India Edition: the shipped look. -------------------------------------
@@ -86,6 +87,13 @@ $themes: (
       action-mortgage: #c8382c,
       action-redeem: #2547a8,
       action-text: #fffaf0,
+
+      button-primary: #2547a8,
+      button-primary-hover: #1c3782,
+      button-primary-text: #ffffff,
+      button-secondary: #ece9de,
+      button-secondary-hover: #ded9c8,
+      button-secondary-text: #23281f,
 
       group-brown: #8d5a2b,
       group-light-blue: #8fd3ff,
@@ -156,6 +164,13 @@ $themes: (
       action-mortgage: #d4483c,
       action-redeem: #4a6fd4,
       action-text: #f4f7fb,
+
+      button-primary: #4a6fd4,
+      button-primary-hover: #5c81e6,
+      button-primary-text: #0e1116,
+      button-secondary: #2f3844,
+      button-secondary-hover: #3a4552,
+      button-secondary-text: #e8ecf1,
 
       group-brown: #9c6a3a,
       group-light-blue: #6bb6e8,

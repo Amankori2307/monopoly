@@ -81,28 +81,66 @@ export const selectCanEndTurn = (game: GameState) =>
   game.turn.phase === TurnPhase.TurnComplete ||
   game.turn.phase === TurnPhase.AwaitExtraRollOrEnd;
 
-export const selectIsJailRoll = (game: GameState) =>
-  game.pendingDecision.type === PendingDecisionType.JailChoice;
+/**
+ * Decisions that must be answered before anything else can happen.
+ * A jail choice is deliberately NOT one: a jailed player always has jail actions
+ * available, so it never blocks.
+ */
+const BLOCKING_DECISIONS: ReadonlySet<PendingDecisionType> = new Set([
+  PendingDecisionType.LandedUnownedProperty,
+  PendingDecisionType.AuctionBid,
+  PendingDecisionType.AssetLiquidation,
+  PendingDecisionType.TradeResponse,
+  PendingDecisionType.BankruptcyResolution,
+  PendingDecisionType.GameOver,
+]);
+
+const hasBlockingDecision = (game: GameState) =>
+  BLOCKING_DECISIONS.has(game.pendingDecision.type);
 
 /**
- * A jailed player rolls only through the jail decision - the engine rejects a
- * plain roll from jail, so the button must not offer one.
+ * Derived from the player, not from `pendingDecision`.
+ *
+ * The flag and the player's `inJail` can drift apart, and when they did the UI
+ * offered a plain roll that the engine rejected - and later, once that roll was
+ * guarded, offered nothing at all and deadlocked. The player's own state is the
+ * fact that matters.
  */
+export const selectIsJailRoll = (game: GameState) => selectActivePlayer(game).inJail;
+
 export const selectCanRollDice = (game: GameState) => {
-  if (selectIsJailRoll(game)) {
-    return true;
-  }
-  if (selectActivePlayer(game).inJail) {
+  const player = selectActivePlayer(game);
+
+  if (player.isBankrupt || hasBlockingDecision(game)) {
     return false;
+  }
+  // A jailed player rolls for doubles until their turn is done.
+  if (player.inJail) {
+    return game.turn.phase !== TurnPhase.TurnComplete;
   }
   return game.turn.phase === TurnPhase.AwaitRoll;
 };
+
+/**
+ * True when the player has nothing at all they can do. Should never happen -
+ * it is a deadlock - so it is logged loudly wherever it is observed.
+ */
+export const selectHasAvailableAction = (game: GameState) =>
+  selectCanRollDice(game) ||
+  selectCanEndTurn(game) ||
+  selectDecisionViewModel(game) !== null;
 
 /**
  * Builds the decision view model, or null when nothing is pending.
  * Returns null for decision types with no UI yet, which is why GamePage still
  * needs a fallback - see docs/features/game-turn.md.
  */
+const jailDecision = (activePlayer: PlayerState): DecisionViewModel => ({
+  type: PendingDecisionType.JailChoice,
+  playerName: activePlayer.name,
+  canUseJailCard: activePlayer.jailFreeCards > 0,
+});
+
 export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
   const decision = game.pendingDecision;
   const activePlayer = selectActivePlayer(game);
@@ -139,11 +177,7 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
       };
     }
     case PendingDecisionType.JailChoice:
-      return {
-        type: PendingDecisionType.JailChoice,
-        playerName: activePlayer.name,
-        canUseJailCard: activePlayer.jailFreeCards > 0,
-      };
+      return jailDecision(activePlayer);
     case PendingDecisionType.AssetLiquidation:
       return {
         type: PendingDecisionType.AssetLiquidation,
@@ -152,6 +186,10 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
         playerId: decision.playerId,
       };
     default:
-      return null;
+      // Falls through to the jail check below, so a jailed player always has
+      // actions even if `pendingDecision` drifted away from `jail-choice`.
+      break;
   }
+
+  return activePlayer.inJail ? jailDecision(activePlayer) : null;
 };

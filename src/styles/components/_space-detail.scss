@@ -56,34 +56,54 @@
   flex: 1 1 auto;
 }
 
-// Buy decision: site card on one side, the choice on the other.
+// Buy decision: site card on one side, the choice on the other. The columns are
+// separated by a rule and generous padding so the deed reads as its own card.
 .buy-decision {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: t.$gap-lg;
-  align-items: start;
+  gap: t.$gap-xl;
+  align-items: stretch;
 }
 
+.buy-decision-card {
+  padding-right: t.$gap-xl;
+  border-right: 1px solid var(--border-subtle);
+}
+
+// Copy at the top, actions pinned to the bottom of the column.
 .buy-decision-choice {
-  display: grid;
-  align-content: center;
-  gap: t.$gap-md;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: t.$gap-lg;
   min-width: 0;
 }
 
+// Side by side, not stacked.
 .buy-decision-buttons {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  gap: 12px;
 }
 
 .buy-decision-buttons > * {
-  width: 100%;
+  flex: 1;
   min-height: 52px;
 }
 
 @include m.below(t.$breakpoint-tablet) {
   .buy-decision {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .buy-decision-card {
+    padding-right: 0;
+    padding-bottom: t.$gap-lg;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .buy-decision-buttons {
+    flex-direction: column;
   }
 }
 

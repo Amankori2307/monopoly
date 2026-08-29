@@ -7,9 +7,11 @@ import {
   TurnPhase,
 } from '../../domain/types/game.enums';
 import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { selectIsJailRoll } from './gameView.selectors';
 import type { GameState } from '../../domain/types/game.interfaces';
 import {
   makeTokenFinder,
+  selectHasAvailableAction,
   selectActivePlayer,
   selectPlayerOrderFromActive,
   selectCanEndTurn,
@@ -180,5 +182,79 @@ describe('makeTokenFinder', () => {
 
     expect(find('elephant')?.emoji).toBe('🐘');
     expect(find('not-a-token')).toBeUndefined();
+  });
+});
+
+describe('a jailed player always has something to do', () => {
+  const jailedGame = (): GameState => {
+    const game = createGame();
+    const activeId = game.playerOrder[game.activePlayerIndex];
+    game.players[activeId].inJail = true;
+    return game;
+  };
+
+  // Regression: `pendingDecision` and the player's `inJail` drifted apart. The
+  // UI keyed jail actions off the flag, so the player was offered a plain roll
+  // the engine rejected - and once that was guarded, nothing at all: a deadlock.
+  it('offers the jail decision even when pendingDecision drifted to none', () => {
+    const game = jailedGame();
+    game.pendingDecision = { type: PendingDecisionType.None };
+    game.turn = { ...game.turn, phase: TurnPhase.AwaitRoll };
+
+    const decision = selectDecisionViewModel(game);
+
+    expect(decision?.type).toBe(PendingDecisionType.JailChoice);
+    expect(selectCanRollDice(game)).toBe(true);
+    expect(selectHasAvailableAction(game)).toBe(true);
+  });
+
+  it('routes the roll to the jail attempt, not a plain roll', () => {
+    const game = jailedGame();
+    game.pendingDecision = { type: PendingDecisionType.None };
+
+    expect(selectIsJailRoll(game)).toBe(true);
+  });
+
+  it('still offers the jail decision with the flag set', () => {
+    const game = jailedGame();
+    game.pendingDecision = {
+      type: PendingDecisionType.JailChoice,
+      playerId: game.playerOrder[game.activePlayerIndex],
+    };
+
+    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
+  });
+
+  it('does not offer a roll while a blocking decision is open', () => {
+    const game = jailedGame();
+    game.pendingDecision = {
+      type: PendingDecisionType.AssetLiquidation,
+      playerId: game.playerOrder[game.activePlayerIndex],
+      amountDue: 50,
+      creditorPlayerId: null,
+      reason: 'Jail fine',
+    };
+
+    expect(selectCanRollDice(game)).toBe(false);
+  });
+});
+
+describe('selectHasAvailableAction', () => {
+  it('is true for a fresh game', () => {
+    expect(selectHasAvailableAction(createGame())).toBe(true);
+  });
+
+  it('is true at every phase of an ordinary turn', () => {
+    const game = createGame();
+
+    for (const phase of [
+      TurnPhase.AwaitRoll,
+      TurnPhase.AwaitExtraRollOrEnd,
+      TurnPhase.TurnComplete,
+    ]) {
+      expect(selectHasAvailableAction({ ...game, turn: { ...game.turn, phase } })).toBe(
+        true
+      );
+    }
   });
 });

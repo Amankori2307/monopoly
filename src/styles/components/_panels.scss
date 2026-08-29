@@ -82,12 +82,14 @@
   font: 500 0.72rem t.$font-mono;
 }
 
+// Plain white, like every other card. It used to be tinted and ringed in red,
+// which made the same deed look different depending on where it was shown.
 .decision-card {
-  padding: 18px;
-  border: 2px solid var(--decision-border);
+  padding: t.$gap-lg;
+  border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
-  background: var(--decision-bg);
-  box-shadow: 0 10px 25px rgba(90, 36, 23, 0.13);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
 
   h2 {
     margin-bottom: 8px;

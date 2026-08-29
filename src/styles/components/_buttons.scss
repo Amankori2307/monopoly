@@ -25,13 +25,21 @@
 }
 
 .primary-button {
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--button-primary);
+  color: var(--button-primary-text);
+
+  &:not(:disabled):hover {
+    background: var(--button-primary-hover);
+  }
 }
 
 .secondary-button {
-  background: var(--accent-soft);
-  color: var(--text-primary);
+  background: var(--button-secondary);
+  color: var(--button-secondary-text);
+
+  &:not(:disabled):hover {
+    background: var(--button-secondary-hover);
+  }
 }
 
 .danger-button {
