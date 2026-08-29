@@ -163,6 +163,38 @@
   }
 }
 
+// Status badges. Only rendered when true, so an unremarkable player shows none.
+.player-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.player-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font: 500 0.64rem t.$font-mono;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-jail {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.badge-card {
+  background: var(--badge-bg);
+  color: var(--text-primary);
+}
+
+.badge-bankrupt {
+  background: var(--danger-bg);
+  color: var(--text-inverse);
+}
+
 .space-card {
   padding: 12px;
   border-left: 5px solid var(--text-eyebrow);

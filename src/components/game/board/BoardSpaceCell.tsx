@@ -6,6 +6,7 @@ import type {
   ThemeToken,
 } from '../../../domain/types/game.interfaces';
 import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.utils';
+import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { getCornerIcon, getSpaceIcon } from '../spaceIcons.constants';
 
@@ -19,9 +20,9 @@ interface BoardSpaceCellProps {
 /**
  * One square of the board.
  *
- * Row template note: only street spaces render a colour bar, so only they carry
- * the three-row template (see components/_board.scss). Adding a child here means
- * updating that template.
+ * The `side-*` class decides which edge the colour ribbon hugs: always the cell's
+ * short side, on the edge facing the board centre, as on a printed board. Layout
+ * per side lives in components/_board.scss.
  */
 export function BoardSpaceCell({
   space,
@@ -38,6 +39,7 @@ export function BoardSpaceCell({
   const className = [
     'board-space',
     `space-${space.kind}`,
+    `side-${getBoardSide(space.index)}`,
     isOccupied ? 'active-space' : '',
     isCorner ? 'corner-space' : '',
   ]
@@ -60,21 +62,22 @@ export function BoardSpaceCell({
         />
       ) : null}
 
-      {cornerIcon ? (
-        <div className="corner-title">
-          <img alt="" aria-hidden="true" src={cornerIcon} />
-          <strong className="space-name">{space.name}</strong>
-        </div>
-      ) : (
-        <div className="space-label">
-          {spaceIcon ? (
-            <img alt="" aria-hidden="true" className="space-icon" src={spaceIcon} />
-          ) : null}
-          <strong className="space-name">{space.name}</strong>
-        </div>
-      )}
+      {/* Wrapper so the ribbon can sit on any edge while the text keeps the rest. */}
+      <div className="space-body">
+        {cornerIcon ? (
+          <div className="corner-title">
+            <img alt="" aria-hidden="true" src={cornerIcon} />
+            <strong className="space-name">{space.name}</strong>
+          </div>
+        ) : (
+          <div className="space-label">
+            {spaceIcon ? (
+              <img alt="" aria-hidden="true" className="space-icon" src={spaceIcon} />
+            ) : null}
+            <strong className="space-name">{space.name}</strong>
+          </div>
+        )}
 
-      <div>
         <div className="space-players">
           {playersOnSpace.map((player) => (
             <span

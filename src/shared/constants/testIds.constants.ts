@@ -35,6 +35,7 @@ export const TEST_IDS = {
   playerStackToggle: 'player-stack-toggle',
   playerStackExpand: 'player-stack-expand',
   playerCard: 'player-card',
+  playerBadge: 'player-badge',
   holdingsPanel: 'holdings-panel',
   activityPanel: 'activity-panel',
   hintsPanel: 'hints-panel',

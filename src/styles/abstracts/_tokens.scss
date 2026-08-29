@@ -19,8 +19,11 @@ $gap-xl: 28px;
 
 // Board geometry. The colour bar only exists on street spaces - see components/_board.scss.
 $board-corner-track: 1.7fr;
-$board-color-bar: 7px;
-$board-color-bar-compact: 4px;
+// Padding for a board cell's content. The cell itself has none, so the colour
+// ribbon can run edge to edge.
+$space-inset: clamp(3px, 0.55vw, 7px);
+$board-color-bar: 12px;
+$board-color-bar-compact: 7px;
 
 // Width of the property-action rail beside the board.
 $action-rail-width: 168px;

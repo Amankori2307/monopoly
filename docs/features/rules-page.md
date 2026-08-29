@@ -27,11 +27,11 @@ None.
 
 ## Tests
 
-| Level       | File                                                 | Covers                                                  |
-| ----------- | ---------------------------------------------------- | ------------------------------------------------------- |
-| Unit        | —                                                    | _Gap._                                                  |
-| Integration | —                                                    | _Gap: no test that sections and anchors render._        |
-| E2E         | [tests/e2e/app.spec.ts](../../tests/e2e/app.spec.ts) | Asserts the Rules link is present from the game screen. |
+| Level       | File                                                     | Covers                                                  |
+| ----------- | -------------------------------------------------------- | ------------------------------------------------------- |
+| Unit        | —                                                        | _Gap._                                                  |
+| Integration | —                                                        | _Gap: no test that sections and anchors render._        |
+| E2E         | [tests/e2e/setup.spec.ts](../../tests/e2e/setup.spec.ts) | Asserts the Rules link is present from the game screen. |
 
 ## Known gaps
 

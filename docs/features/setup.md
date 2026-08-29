@@ -51,7 +51,7 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 | ----------- | --------------------------------------------------------------- | ------------------------------------------------------ |
 | Unit        | —                                                               | _Gap: `clampPlayerCount`, validation rules._           |
 | Integration | [HomePage.test.tsx](../../src/features/setup/HomePage.test.tsx) | Renders setup + recent games; rejects duplicate names. |
-| E2E         | [tests/e2e/app.spec.ts](../../tests/e2e/app.spec.ts)            | Create game → navigates to `/game/:id`.                |
+| E2E         | [tests/e2e/setup.spec.ts](../../tests/e2e/setup.spec.ts)        | Create game → navigates to `/game/:id`.                |
 
 ## Known gaps
 

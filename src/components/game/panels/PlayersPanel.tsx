@@ -3,6 +3,7 @@ import type { PlayerId } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { formatMoney } from '../../../shared/utils/money.utils';
 import type { PlayerSummary } from './panels.interfaces';
+import { PlayerBadges } from './PlayerBadges';
 
 interface PlayersPanelProps {
   currencySymbol: string;
@@ -79,11 +80,8 @@ export function PlayersPanel({
               <strong>{formatMoney(player.cash, currencySymbol)}</strong>
               <span>Properties</span>
               <strong>{propertyCount}</strong>
-              <span>Position</span>
-              <strong>{player.position}</strong>
-              <span>Jail</span>
-              <strong>{player.inJail ? `Yes (${player.jailTurnsServed})` : 'No'}</strong>
             </div>
+            <PlayerBadges player={player} />
           </article>
         ))}
       </div>

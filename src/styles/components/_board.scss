@@ -20,6 +20,10 @@
   width: 100%;
   height: 100%;
   background: transparent;
+  // Every cell and the centre draw their own right and bottom edge, so the grid
+  // only has to close the board's top and left. Each boundary then gets exactly
+  // one 1px line, with no doubling anywhere.
+  box-shadow: inset 1px 1px 0 var(--border-space);
 }
 
 .board-center {
@@ -30,6 +34,10 @@
   overflow: hidden;
   isolation: isolate;
   background: var(--surface-board);
+  // The centre follows the same rule as a cell: draw your right and bottom edge.
+  // Without it the right column's left edge and the bottom row's top edge - the
+  // two boundaries the centre owns - would be the only ones with no line.
+  box-shadow: inset -1px -1px 0 var(--border-space);
   color: var(--text-body);
 
   &::before {
@@ -128,35 +136,59 @@
 // Corner spaces previously declared 3 rows while rendering 2 children, which
 // squeezed the corner title into the bar row and clipped the label.
 // ---------------------------------------------------------------------------
+// The cell itself carries no padding, so a street's colour ribbon runs the full
+// width to the cell edges like a printed board. Inset padding lives on the
+// content rows instead - see $space-inset below.
 .board-space {
   position: relative;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 3px;
+  display: flex;
+  gap: 0;
   min-width: 0;
-  padding: clamp(3px, 0.55vw, 7px);
-  padding-top: clamp(5px, 0.7vw, 9px);
+  padding: 0;
   overflow: hidden;
   border: 0;
   background: var(--board-space-bg);
-  box-shadow: inset -1px -1px 0 var(--border-space);
   color: var(--text-body);
   font-size: clamp(0.42rem, 0.67vw, 0.67rem);
   text-align: left;
 
-  &.space-street {
-    grid-template-rows: t.$board-color-bar minmax(0, 1fr) auto;
-    padding-top: clamp(3px, 0.55vw, 7px);
+  // Cell separation. It lives on a pseudo-element rather than on the cell so it
+  // paints ABOVE the colour ribbon - an inset box-shadow on the cell itself sits
+  // under its children, so a full-bleed ribbon would hide the divider and make
+  // neighbouring ribbons of the same colour run together.
+  &::after {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    content: '';
+    box-shadow: inset -1px -1px 0 var(--border-space);
+    pointer-events: none;
   }
 
+  // Ribbon on the cell's short side, on the edge facing the board centre - the
+  // DOM order is always ribbon-then-body, so the flex direction does the work.
+  &.side-bottom {
+    flex-direction: column;
+  }
+  &.side-top {
+    flex-direction: column-reverse;
+  }
+  &.side-right {
+    flex-direction: row;
+  }
+  &.side-left {
+    flex-direction: row-reverse;
+  }
+
+  // Hover and occupancy are shown by a background shift only; the red outline
+  // that used to ring them made the board look boxed in.
   &:not(:disabled):hover {
     z-index: 3;
     background: var(--board-space-hover);
-    box-shadow:
-      inset 0 0 0 2px var(--accent),
-      inset -1px -1px 0 var(--border-space);
   }
 
+  // Keyboard focus keeps a visible ring - that one is an accessibility need,
+  // not decoration.
   &:focus-visible {
     z-index: 4;
     outline: 3px solid var(--focus-ring);
@@ -165,36 +197,147 @@
 
   &.active-space {
     z-index: 2;
-    outline: 2px solid var(--board-active-outline);
-    outline-offset: -2px;
     background: var(--board-space-hover);
   }
 
   @include m.below(t.$breakpoint-tablet) {
-    padding: 2px;
     font-size: 5px;
+  }
+}
 
-    &.space-street {
-      grid-template-rows: t.$board-color-bar-compact minmax(0, 1fr) auto;
+/** Everything that is not the ribbon; always stacks top to bottom. */
+.space-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/**
+ * Street colour ribbon. Full bleed along the cell's short side: a horizontal band
+ * on the top and bottom rows, a vertical band on the left and right columns.
+ */
+.space-color {
+  flex: 0 0 t.$board-color-bar;
+  border-radius: 0;
+
+  .side-bottom &,
+  .side-top & {
+    width: 100%;
+    height: t.$board-color-bar;
+  }
+
+  .side-left &,
+  .side-right & {
+    width: t.$board-color-bar;
+    height: auto;
+    align-self: stretch;
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    flex-basis: t.$board-color-bar-compact;
+
+    .side-bottom &,
+    .side-top & {
+      height: t.$board-color-bar-compact;
+    }
+
+    .side-left &,
+    .side-right & {
+      width: t.$board-color-bar-compact;
     }
   }
 }
 
-.space-color {
-  height: 100%;
-  border-radius: 1px;
+// ---------------------------------------------------------------------------
+// Every cell reads ribbon -> icon -> text, starting from the board centre.
+// The ribbon hugs the inner edge, so the icon sits next to it and the text sits
+// beyond, nearest the board's outer edge.
+//
+// The label is a flex line whose direction follows the cell's side.
+// ---------------------------------------------------------------------------
+.space-label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  padding: t.$space-inset;
 }
 
-.space-label {
-  display: grid;
-  align-content: center;
-  gap: 3px;
-  min-height: 0;
+// Ribbon at the top: icon then text, running down.
+.side-bottom .space-label {
+  flex-direction: column;
+}
+
+// Ribbon at the bottom: text then icon, so the icon still lands beside it.
+.side-top .space-label {
+  flex-direction: column-reverse;
+}
+
+// Ribbon on the left: icon then text, running right.
+.side-right .space-label {
+  flex-direction: row;
+}
+
+// Ribbon on the right: text then icon.
+.side-left .space-label {
+  flex-direction: row-reverse;
+}
+
+// Side columns put the icon beside the text, so the name has less width and
+// wraps to more lines. Trim the vertical padding to buy those lines room -
+// "Chhatrapati Shivaji Terminus" needs three.
+.side-left .space-label,
+.side-right .space-label {
+  padding-block: 3px;
+}
+
+// ---------------------------------------------------------------------------
+// Space names run along the cell's LONG axis.
+//
+// Left and right column cells are landscape, so horizontal text already flows
+// the long way. Top and bottom row cells are portrait, so their names are set
+// vertically - otherwise a name like "Chennai Central Railway Station" wraps
+// into four cramped lines across the short side.
+//
+// The two rows mirror each other: text flows from the board edge inward, so the
+// bottom row reads upward and the top row reads downward.
+// ---------------------------------------------------------------------------
+.side-bottom .space-label .space-name,
+.side-top .space-label .space-name {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  // Long names wrap into further vertical lines rather than being clipped -
+  // "Chennai Central Railway Station" does not fit one line at this size, and a
+  // single long word like "Bhubaneshwar" has to break, as printed boards do.
+  max-height: 100%;
+  text-wrap: balance;
+}
+
+.side-bottom .space-label .space-name {
+  rotate: 180deg;
+}
+
+// Corner cells are square and keep their upright, centred label.
+.corner-title .space-name {
+  writing-mode: horizontal-tb;
+  rotate: none;
 }
 
 .space-name {
   align-self: center;
+  // Lets the name shrink inside the flex label instead of forcing overflow.
+  min-width: 0;
   overflow: hidden;
+  // A single word can be wider than its cell - "Chhatrapati" does not fit the
+  // side columns once the icon takes its share - so allow it to break, as
+  // printed boards hyphenate long names.
+  overflow-wrap: anywhere;
   font-weight: 800;
   line-height: 1.06;
   text-wrap: balance;
@@ -205,10 +348,21 @@
 }
 
 .space-icon {
+  flex: 0 0 auto;
   width: clamp(12px, 1.35vw, 19px);
   height: clamp(12px, 1.35vw, 19px);
   object-fit: contain;
   opacity: 0.74;
+}
+
+// Icons turn with the text so a cell reads as one unit. The side columns keep
+// horizontal text, so their icons stay upright.
+.side-bottom .space-icon {
+  rotate: -90deg;
+}
+
+.side-top .space-icon {
+  rotate: 90deg;
 }
 
 .space-railway,
@@ -229,10 +383,12 @@
 
 .corner-title {
   display: grid;
+  flex: 1;
   align-content: center;
   justify-items: center;
   gap: 3px;
   min-height: 0;
+  padding: t.$space-inset;
   text-align: center;
 
   img {
@@ -248,9 +404,11 @@
 }
 
 .space-players {
+  flex: 0 0 auto;
   align-items: end;
   gap: 2px;
   min-height: 0;
+  padding: 0 t.$space-inset t.$space-inset;
 }
 
 .token-chip {

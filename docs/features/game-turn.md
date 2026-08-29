@@ -56,7 +56,7 @@ Reads and writes `GameState.turn`, `.players`, `.ownership`, `.pendingDecision`,
 | ----------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Unit        | [gameEngine.test.ts](../../src/domain/rules/gameEngine.test.ts) | Game creation defaults; buy decision on landing; auction on decline. |
 | Integration | —                                                               | _Gap: no thunk-level test of command → save → store._                |
-| E2E         | [tests/e2e/app.spec.ts](../../tests/e2e/app.spec.ts)            | Board renders; space details open.                                   |
+| E2E         | [tests/e2e/overlays.spec.ts](../../tests/e2e/overlays.spec.ts)  | Board renders; space details open.                                   |
 
 ## Known gaps
 

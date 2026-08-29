@@ -102,6 +102,17 @@ export enum GameCommandType {
   ConfirmBankruptcy = 'confirmBankruptcy',
 }
 
+/**
+ * Which edge of the board a space sits on. Drives where its colour ribbon goes:
+ * always the cell's short side, on the edge facing the board centre.
+ */
+export enum BoardSide {
+  Bottom = 'bottom',
+  Left = 'left',
+  Top = 'top',
+  Right = 'right',
+}
+
 /** Property-management actions offered on the action rail. */
 export enum PropertyAction {
   Build = 'build',

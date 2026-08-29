@@ -54,6 +54,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)   | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                        |
 | [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)   | Chance and Community Chest deck contents and effects.                               |
 | [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts) | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS. |
+| [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)       | Which edge of the board a space sits on; drives which side its colour ribbon hugs.  |
 
 ### Domain tests
 
@@ -63,6 +64,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.             |
 | [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.               |
 | [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.              |
+| [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping. |
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
@@ -133,6 +135,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [overlays/ActivityDrawer.tsx](../src/components/game/overlays/ActivityDrawer.tsx)                             | Game event log, opened from the floating activity button.                      |
 | [overlays/ActivityButton.tsx](../src/components/game/overlays/ActivityButton.tsx)                             | Floating control that opens the activity drawer.                               |
 | [overlays/PlayerDetailDrawer.tsx](../src/components/game/overlays/PlayerDetailDrawer.tsx)                     | A player's stats and holdings, opened by clicking their card.                  |
+| [panels/PlayerBadges.tsx](../src/components/game/panels/PlayerBadges.tsx)                                     | Status badges on a player card: jail card held, jail progress, bankruptcy.     |
+| [panels/PlayerBadges.test.tsx](../src/components/game/panels/PlayerBadges.test.tsx)                           | Unit tests for every badge and the empty case.                                 |
 
 ## `src/components/setup/` — presentational setup components
 
@@ -195,11 +199,15 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Test infrastructure
 
-| File                                                                    | What it does                                                                                                               |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx) | RTL helper wrapping a component in the Redux `Provider` + `MemoryRouter`.                                                  |
-| [src/setupTests.ts](../src/setupTests.ts)                               | Vitest setup; loads jest-dom matchers.                                                                                     |
-| [tests/e2e/app.spec.ts](../tests/e2e/app.spec.ts)                       | Playwright journeys: create game, deed colour band, corner geometry, three-column layout, action rail, theming, dice roll. |
+| File                                                                    | What it does                                                                |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx) | RTL helper wrapping a component in the Redux `Provider` + `MemoryRouter`.   |
+| [src/setupTests.ts](../src/setupTests.ts)                               | Vitest setup; loads jest-dom matchers.                                      |
+| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                         | Shared `startGame` helper and corner reference data.                        |
+| [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                   | Creating a game and landing on a resumable route.                           |
+| [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                   | Corner geometry, title deed, ribbon placement, dividers, outlines, theming. |
+| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                 | Three-column layout, action rail, dice placement, player stack.             |
+| [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)             | Decision modal, activity drawer, player detail drawer, dice roll.           |
 
 ## Config
 
