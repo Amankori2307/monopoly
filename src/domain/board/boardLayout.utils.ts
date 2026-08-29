@@ -32,3 +32,38 @@ export const boardIndexToGridPosition = (index: number): GridPosition => {
   }
   return { row: normalised - SPACES_PER_SIDE * 3 + 1, column: BOARD_GRID_SIZE };
 };
+
+/** Grid track sizes: corners are wider, the nine spaces between them are 1fr. */
+const CORNER_TRACK = 1.7;
+const SPACE_TRACK = 1;
+const TOTAL_TRACKS = CORNER_TRACK * 2 + SPACE_TRACK * 9;
+
+const trackSize = (line: number) =>
+  line === 1 || line === BOARD_GRID_SIZE ? CORNER_TRACK : SPACE_TRACK;
+
+/** Distance from the board edge to the start of a grid line, in track units. */
+const trackOffset = (line: number) => {
+  let offset = 0;
+  for (let current = 1; current < line; current += 1) {
+    offset += trackSize(current);
+  }
+  return offset;
+};
+
+export interface CellCenter {
+  leftPercent: number;
+  topPercent: number;
+}
+
+/**
+ * Centre of a board space as a percentage of the board, so a token can be
+ * positioned absolutely and animated between spaces. Grid placement alone gives
+ * no motion - the token would jump from cell to cell.
+ */
+export const getBoardCellCenter = (index: number): CellCenter => {
+  const { row, column } = boardIndexToGridPosition(index);
+  const toPercent = (line: number) =>
+    ((trackOffset(line) + trackSize(line) / 2) / TOTAL_TRACKS) * 100;
+
+  return { leftPercent: toPercent(column), topPercent: toPercent(row) };
+};

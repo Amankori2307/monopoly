@@ -330,6 +330,9 @@ test('renders every surface with square corners', async ({ page }) => {
 
   const rounded = await page.evaluate(() =>
     Array.from(document.querySelectorAll('body *'))
+      // Player tokens are the one documented exception: a playing piece is a
+      // physical object, not a UI surface, so it is round.
+      .filter((element) => !element.classList.contains('token-chip'))
       .filter((element) => {
         const radius = getComputedStyle(element).borderRadius;
         return radius !== '' && radius !== '0px';
@@ -416,14 +419,11 @@ test('draws player tokens as an overlay that cannot resize a cell', async ({ pag
 test('walks the token one space at a time after a roll', async ({ page }) => {
   await startGame(page);
 
+  // Tokens are absolutely positioned, so their space shows in left/top.
   const cellOfFirstToken = () =>
     page.evaluate(() => {
-      const token = document.querySelector('.board-token-layer .token-chip');
-      if (!token) return null;
-      const cell = token.closest('.board-token-cell');
-      if (!cell) return null;
-      const style = getComputedStyle(cell);
-      return `${style.gridRowStart}:${style.gridColumnStart}`;
+      const token = document.querySelector<HTMLElement>('.board-token-layer .token-chip');
+      return token ? `${token.style.left},${token.style.top}` : null;
     });
 
   const rollButton = page.getByTestId(TEST_IDS.rollButton);
@@ -456,4 +456,63 @@ test('walks the token one space at a time after a roll', async ({ page }) => {
 
   // More than one intermediate cell means it walked rather than teleported.
   expect(visited.length, `cells visited: ${visited.join(' -> ')}`).toBeGreaterThan(2);
+});
+
+// Tokens must stay legible over any street colour while they move.
+test('draws tokens as shaded spheres in each player’s colour', async ({ page }) => {
+  await startGame(page);
+
+  const token = page.getByTestId(/^space-player-token-/).first();
+  await expect(token).toBeVisible();
+
+  const style = await token.evaluate((element) => {
+    const computed = getComputedStyle(element);
+    const box = element.getBoundingClientRect();
+    return {
+      width: Math.round(box.width),
+      height: Math.round(box.height),
+      position: computed.position,
+      background: computed.backgroundColor,
+      backgroundImage: computed.backgroundImage,
+      radius: computed.borderRadius,
+      boxShadow: computed.boxShadow,
+      timing: computed.transitionTimingFunction,
+      duration: computed.transitionDuration,
+    };
+  });
+
+  // Small pieces, but round and solid rather than the old faint chip.
+  expect(style.width).toBeGreaterThanOrEqual(11);
+  expect(style.height).toBe(style.width);
+  // A round, shaded piece in the player's own colour - not white, not square.
+  expect(style.radius).toBe('50%');
+  expect(style.background).not.toBe('rgb(255, 255, 255)');
+  expect(style.background).not.toBe('rgba(0, 0, 0, 0)');
+  // Sphere shading: gradients plus inset highlight and shade.
+  expect(style.backgroundImage).toContain('radial-gradient');
+  expect(style.boxShadow).toContain('inset');
+  // No outer ring around the piece - only inset shading and the cast shadow.
+  const outerShadows = style.boxShadow
+    .split(/,(?![^(]*\))/)
+    .filter((shadow) => !shadow.includes('inset'));
+  expect(outerShadows.every((shadow) => !shadow.includes('255, 255, 255'))).toBe(true);
+  // Absolutely positioned so movement is a transition, not a grid jump.
+  expect(style.position).toBe('absolute');
+  // Fast out, slow across, fast in.
+  expect(style.timing).toContain('cubic-bezier(0.45, 1, 0.55, 0)');
+  expect(style.duration).not.toBe('0s');
+});
+
+// Colour is the only thing distinguishing pieces now, so it must differ per player.
+test('gives each player a distinct token colour', async ({ page }) => {
+  await startGame(page);
+
+  const colours = await page
+    .getByTestId(/^space-player-token-/)
+    .evaluateAll((tokens) =>
+      tokens.map((token) => getComputedStyle(token).backgroundColor)
+    );
+
+  expect(colours.length).toBeGreaterThan(1);
+  expect(new Set(colours).size).toBe(colours.length);
 });

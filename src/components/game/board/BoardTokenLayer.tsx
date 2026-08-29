@@ -1,4 +1,4 @@
-import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.utils';
+import { getBoardCellCenter } from '../../../domain/board/boardLayout.utils';
 import type { PlayerState, ThemeToken } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { TokenPositions } from '../hooks/useAnimatedTokenPositions';
@@ -9,50 +9,48 @@ interface BoardTokenLayerProps {
   positions: TokenPositions;
 }
 
+/** Nudge so tokens sharing a space stay individually visible. */
+const CROWD_OFFSET_PERCENT = 1.6;
+
 /**
  * Player tokens, drawn over the board rather than inside the space cells.
  *
- * Tokens used to live in the cell's flow, so landing on a space made that cell
- * taller than its neighbours and shifted the board. This layer shares the
- * board's grid template, so a token is placed by grid cell - no pixel maths -
- * and cannot affect any cell's size.
+ * Each token is positioned absolutely at its space's centre, so moving between
+ * spaces is a real transition rather than a jump between grid cells. Tokens
+ * used to live in the cell's flow, which made an occupied cell taller than its
+ * neighbours and shifted the board.
  */
 export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLayerProps) {
-  const byCell = new Map<string, PlayerState[]>();
-
-  for (const player of players) {
-    const position = positions[player.id] ?? player.position;
-    const { row, column } = boardIndexToGridPosition(position);
-    const key = `${row}:${column}`;
-    const existing = byCell.get(key);
-    if (existing) {
-      existing.push(player);
-    } else {
-      byCell.set(key, [player]);
-    }
-  }
+  const occupants = new Map<number, number>();
 
   return (
     <div className="board-token-layer" data-testid={TEST_IDS.boardTokenLayer}>
-      {Array.from(byCell.entries()).map(([key, cellPlayers]) => {
-        const [row, column] = key.split(':').map(Number);
+      {players.map((player) => {
+        const space = positions[player.id] ?? player.position;
+        const { leftPercent, topPercent } = getBoardCellCenter(space);
+
+        // Fan out tokens that share a space so none is hidden behind another.
+        const crowdIndex = occupants.get(space) ?? 0;
+        occupants.set(space, crowdIndex + 1);
+        const nudge = crowdIndex * CROWD_OFFSET_PERCENT;
+
+        const token = findToken(player.tokenId);
+
         return (
-          <div
-            className="board-token-cell"
-            key={key}
-            style={{ gridRow: row, gridColumn: column }}
-          >
-            {cellPlayers.map((player) => (
-              <span
-                className="token-chip"
-                data-testid={scopedTestId(TEST_IDS.spacePlayerToken, player.id)}
-                key={player.id}
-                title={player.name}
-              >
-                {findToken(player.tokenId)?.emoji ?? player.name.charAt(0)}
-              </span>
-            ))}
-          </div>
+          <span
+            aria-label={player.name}
+            className="token-chip"
+            data-testid={scopedTestId(TEST_IDS.spacePlayerToken, player.id)}
+            key={player.id}
+            role="img"
+            // Base colour inline; the sphere shading is colour-agnostic CSS.
+            style={{
+              left: `${leftPercent + nudge}%`,
+              top: `${topPercent + nudge}%`,
+              backgroundColor: token?.color,
+            }}
+            title={player.name}
+          />
         );
       })}
     </div>

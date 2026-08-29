@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BoardGrid } from '../../components/game/board/BoardGrid';
+import { useAnimatedTokenPositions } from '../../components/game/hooks/useAnimatedTokenPositions';
 import { ActivityButton } from '../../components/game/overlays/ActivityButton';
 import { ActivityDrawer } from '../../components/game/overlays/ActivityDrawer';
 import { DecisionModal } from '../../components/game/overlays/DecisionModal';
@@ -41,6 +43,13 @@ export function GamePage() {
     useActiveGame(gameId);
   const commands = useGameCommands();
   const overlays = useGameOverlays();
+  // Hooks must run before any early return, so this is computed unconditionally.
+  const players = useMemo(
+    () => activeGame?.playerOrder.map((id) => activeGame.players[id]) ?? [],
+    [activeGame]
+  );
+  // Display positions lag the engine while a token walks to its new space.
+  const { positions: tokenPositions, isMoving } = useAnimatedTokenPositions(players);
 
   if (!activeGame) {
     return <GameUnavailable loadError={loadError} />;
@@ -75,7 +84,8 @@ export function GamePage() {
             centerTitle={BOARD_CENTER_TITLE}
             findToken={findToken}
             onSelectSpace={overlays.selectSpace}
-            players={activeGame.playerOrder.map((id) => activeGame.players[id])}
+            players={players}
+            tokenPositions={tokenPositions}
           />
 
           <aside className="game-side" data-testid={TEST_IDS.gameSidebar}>
@@ -143,7 +153,7 @@ export function GamePage() {
         <DecisionModal
           bidAmount={commands.auctionBidInput}
           currencySymbol={currencySymbol}
-          decision={selectDecisionViewModel(activeGame)}
+          decision={isMoving ? null : selectDecisionViewModel(activeGame)}
           handlers={commands.decisionHandlers}
         />
       </div>

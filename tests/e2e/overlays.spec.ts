@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { startGame } from './helpers';
+import { advanceGame, startGame } from './helpers';
 
 // The main screen stays to the board, players, and turn controls. Holdings and
 // the activity log moved behind overlays so nothing competes with the board.
@@ -267,10 +267,15 @@ test('always leaves the player at least one action', async ({ page }) => {
   };
 
   for (let turn = 0; turn < 40; turn += 1) {
-    expect(
-      await anyActionAvailable(),
-      'the player must always have at least one action'
-    ).toBe(true);
+    // Polled, not asserted instantly: while a token walks to its space the
+    // decision is deliberately withheld, so an action can be momentarily
+    // absent. A real deadlock never resolves.
+    await expect
+      .poll(anyActionAvailable, {
+        timeout: 5000,
+        message: 'the player must always end up with at least one action',
+      })
+      .toBe(true);
 
     const rollButton = page.getByTestId(TEST_IDS.rollButton);
     const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
@@ -299,4 +304,64 @@ test('always leaves the player at least one action', async ({ page }) => {
     return handle ? handle.errors().length : 0;
   });
   expect(loggedErrors).toBe(0);
+});
+
+// The decision modal used to appear the instant the engine resolved the roll,
+// covering the board while the token was still walking to the space.
+test('opens the buy decision only after the token finishes moving', async ({ page }) => {
+  await startGame(page);
+
+  const declineButton = page.getByTestId(TEST_IDS.declineButton);
+  const rollButton = page.getByTestId(TEST_IDS.rollButton);
+
+  const tokenSnapshot = () =>
+    page.evaluate(() =>
+      Array.from(document.querySelectorAll('.board-token-layer .token-chip'))
+        .map((token) => {
+          const element = token as HTMLElement;
+          return `${element.style.left},${element.style.top}`;
+        })
+        .join('|')
+    );
+
+  /** Rolls once, returning when the token last moved and when the modal appeared. */
+  const rollAndWatch = async () => {
+    let previous = await tokenSnapshot();
+    let lastMoveAt: number | null = null;
+    let firstModalAt: number | null = null;
+
+    await rollButton.click();
+    for (let sample = 0; sample < 100; sample += 1) {
+      await page.waitForTimeout(40);
+      const now = await tokenSnapshot();
+      if (now !== previous) {
+        previous = now;
+        lastMoveAt = sample * 40;
+      }
+      if (firstModalAt === null && (await declineButton.isVisible())) {
+        firstModalAt = sample * 40;
+      }
+    }
+    return { lastMoveAt, firstModalAt };
+  };
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (!(await rollButton.isEnabled())) {
+      if ((await advanceGame(page)) === 'none') break;
+      continue;
+    }
+
+    const { lastMoveAt, firstModalAt } = await rollAndWatch();
+
+    // Only meaningful when the token actually walked and a decision followed.
+    if (lastMoveAt !== null && firstModalAt !== null) {
+      expect(
+        firstModalAt,
+        `modal at ${firstModalAt}ms, last token move at ${lastMoveAt}ms`
+      ).toBeGreaterThan(lastMoveAt);
+      return;
+    }
+
+    await advanceGame(page);
+  }
 });

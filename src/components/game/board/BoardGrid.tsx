@@ -4,7 +4,7 @@ import type {
   ThemeToken,
 } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
-import { useAnimatedTokenPositions } from '../hooks/useAnimatedTokenPositions';
+import type { TokenPositions } from '../hooks/useAnimatedTokenPositions';
 import { BoardCenter } from './BoardCenter';
 import { BoardSpaceCell } from './BoardSpaceCell';
 import { BoardTokenLayer } from './BoardTokenLayer';
@@ -16,6 +16,8 @@ interface BoardGridProps {
   findToken: (tokenId: string) => ThemeToken | undefined;
   onSelectSpace: (spaceId: string) => void;
   players: PlayerState[];
+  /** Display positions, which lag the engine while a token walks. */
+  tokenPositions: TokenPositions;
 }
 
 export function BoardGrid({
@@ -25,9 +27,8 @@ export function BoardGrid({
   findToken,
   onSelectSpace,
   players,
+  tokenPositions,
 }: BoardGridProps) {
-  // Display positions lag the engine while a token walks to its new space.
-  const tokenPositions = useAnimatedTokenPositions(players);
   const occupied = new Set(Object.values(tokenPositions));
 
   return (

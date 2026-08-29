@@ -9,6 +9,13 @@ import { TOKEN_STEP_INTERVAL_MS, TOKEN_STEP_VOLUME } from '../diceDock.constants
 
 export type TokenPositions = Record<PlayerId, number>;
 
+export interface AnimatedTokens {
+  /** Where each token is being drawn right now, which lags the engine mid-walk. */
+  positions: TokenPositions;
+  /** True while any token is still walking to its space. */
+  isMoving: boolean;
+}
+
 const positionsOf = (players: PlayerState[]): TokenPositions =>
   players.reduce<TokenPositions>((accumulator, player) => {
     accumulator[player.id] = player.position;
@@ -32,11 +39,12 @@ const positionsKeyOf = (players: PlayerState[]) =>
  * teleport (Go To Jail, advance to GO) snaps, because walking it would
  * misrepresent what happened - see tokenMovement.utils.
  */
-export const useAnimatedTokenPositions = (players: PlayerState[]): TokenPositions => {
+export const useAnimatedTokenPositions = (players: PlayerState[]): AnimatedTokens => {
   const displayRef = useRef<TokenPositions>(positionsOf(players));
   const [displayPositions, setDisplayPositions] = useState<TokenPositions>(
     displayRef.current
   );
+  const [isMoving, setIsMoving] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timersRef = useRef<number[]>([]);
   const positionsKey = positionsKeyOf(players);
@@ -82,6 +90,7 @@ export const useAnimatedTokenPositions = (players: PlayerState[]): TokenPosition
 
     displayRef.current = settled;
     setDisplayPositions(settled);
+    setIsMoving(steps.length > 0);
 
     const playStep = () => {
       const audio = audioRef.current;
@@ -100,9 +109,19 @@ export const useAnimatedTokenPositions = (players: PlayerState[]): TokenPosition
       }, step.delayMs);
       timersRef.current.push(timer);
     }
+
+    if (steps.length > 0) {
+      // Settled once the last token finishes its final hop.
+      const lastStepAt = Math.max(...steps.map((step) => step.delayMs));
+      const settle = window.setTimeout(
+        () => setIsMoving(false),
+        lastStepAt + TOKEN_STEP_INTERVAL_MS
+      );
+      timersRef.current.push(settle);
+    }
     // players is intentionally excluded: positionsKey is its meaningful identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positionsKey]);
 
-  return displayPositions;
+  return { positions: displayPositions, isMoving };
 };

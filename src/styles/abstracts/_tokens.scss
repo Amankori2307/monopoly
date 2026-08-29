@@ -58,6 +58,16 @@ $stack-inset: 9px;
 $stack-strip-height: 5px;
 $stack-expanded-max-height: 420px;
 
+// Player token on the board. Big enough to follow while it moves.
+// Small pieces, like a real board, but big enough to follow while they move.
+$token-size: clamp(11px, 1.4vw, 18px);
+// Deliberate exception to the sharp-corner system: a token is a physical playing
+// piece, not a UI surface, so it is round and shaded like a real pawn.
+$token-radius: 50%;
+$token-move-duration: 170ms;
+// Fast out of a space, slow across the gap, fast into the next one.
+$token-move-easing: cubic-bezier(0.45, 1, 0.55, 0);
+
 $breakpoint-board: 1250px;
 $breakpoint-tablet: 720px;
 $breakpoint-mobile: 620px;
