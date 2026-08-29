@@ -1,29 +1,19 @@
-import './assets/css/style.scss';
-import { connect } from 'react-redux';
+import './app/app.css';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { GamePage } from './features/game/GamePage';
+import { RulesPage } from './features/rules/RulesPage';
+import { HomePage } from './features/setup/HomePage';
 
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Monopoly from './components/monopoly/Monopoly';
-import Home from './components/home/Home';
-import NotFound from './components/not_found/NotFound';
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/monopoly" element={<Monopoly />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-    </Router>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/rules" element={<RulesPage />} />
+        <Route path="/game/:gameId" element={<GamePage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
-const mapStateToProps = store => {
-  return {};
-};
-
-const mapDispatchToProps = dispatch => {
-  return {};
-};
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default App;

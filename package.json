@@ -15,7 +15,8 @@
     "react-router-dom": "^7.6.3",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
-    "sass": "^1.89.2"
+    "sass": "^1.89.2",
+    "zod": "^3.24.1"
   },
   "scripts": {
     "start": "nx serve",
@@ -23,6 +24,7 @@
     "build": "nx build",
     "test": "nx test",
     "test:watch": "nx test --watch",
+    "test:e2e": "playwright test",
     "predeploy": "pnpm run build",
     "deploy": "gh-pages -d build",
     "lint": "nx lint",
@@ -59,6 +61,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
+    "@playwright/test": "^1.55.0",
     "eslint": "8.57.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-config-react-app": "^7.0.1",
