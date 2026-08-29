@@ -6,10 +6,10 @@ How the visual theme system works, and how to add a theme.
 
 Two different things are called "theme" in this codebase, and keeping them apart is the point:
 
-| | Lives in | Holds | Consumed by |
-|---|---|---|---|
-| **Visual theme** | [src/styles/themes/_themes.scss](../src/styles/themes/_themes.scss) | Every colour, shadow, and surface | CSS, via `var(--token)` |
-| **Theme config** | [src/domain/themes/](../src/domain/themes/) | Name, currency symbol, player token catalog | Game logic and UI copy |
+|                  | Lives in                                                             | Holds                                       | Consumed by             |
+| ---------------- | -------------------------------------------------------------------- | ------------------------------------------- | ----------------------- |
+| **Visual theme** | [src/styles/themes/\_themes.scss](../src/styles/themes/_themes.scss) | Every colour, shadow, and surface           | CSS, via `var(--token)` |
+| **Theme config** | [src/domain/themes/](../src/domain/themes/)                          | Name, currency symbol, player token catalog | Game logic and UI copy  |
 
 They are joined by one string: the theme **id**. `ThemeConfig.id` must equal the key used in the
 SCSS `$themes` map. The React tree writes it to the DOM as `data-theme`, and CSS does the rest.
@@ -57,11 +57,13 @@ This replaced two hardcoded hex maps that were duplicated between `GamePage.tsx`
 
 ## Adding a theme
 
-**1. Add the token map** in [_themes.scss](../src/styles/themes/_themes.scss):
+**1. Add the token map** in [\_themes.scss](../src/styles/themes/_themes.scss):
 
 ```scss
 $themes: (
-  'india-edition': ( … ),
+  'india-edition': (
+    …,
+  ),
   'monsoon': (
     surface-app: #eef4f2,
     // … every key in $theme-contract, plus group-* for each colour group
@@ -75,10 +77,12 @@ Miss a token and the build fails with the exact key name. That is intentional.
 
 ```ts
 export const monsoonTheme: ThemeConfig = {
-  id: 'monsoon',          // MUST match the SCSS map key
+  id: 'monsoon', // MUST match the SCSS map key
   name: 'Monsoon Edition',
   currencySymbol: 'M',
-  tokenCatalog: [ /* at least 8 tokens - the max player count */ ],
+  tokenCatalog: [
+    /* at least 8 tokens - the max player count */
+  ],
   // …
 };
 
@@ -89,6 +93,7 @@ export const availableThemes = [indiaEditionTheme, monsoonTheme];
 all the UI needs.
 
 **3. Test it**, per [coding-guidelines.md](coding-guidelines.md):
+
 - unit — the `ThemeConfig` is well-formed (id matches, ≥8 tokens, unique token ids)
 - integration — selecting it on `HomePage` creates a game whose `themeId` persists
 - e2e — the board renders with `data-theme="monsoon"` applied
@@ -102,7 +107,7 @@ renders before any `data-theme` attribute applies.
 
 ## Current themes
 
-| id | Status |
-|---|---|
-| `india-edition` | Shipped. The default. |
-| `midnight` | Dark palette, fully defined in SCSS. **Not registered** in `src/domain/themes/`, so it is not yet selectable — it exists to prove the engine and as a starting point. Add a `ThemeConfig` with id `midnight` to turn it on. |
+| id              | Status                                                                                                                                                                                                                      |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `india-edition` | Shipped. The default.                                                                                                                                                                                                       |
+| `midnight`      | Dark palette, fully defined in SCSS. **Not registered** in `src/domain/themes/`, so it is not yet selectable — it exists to prove the engine and as a starting point. Add a `ThemeConfig` with id `midnight` to turn it on. |

@@ -3,16 +3,19 @@
 Last updated: August 29, 2026
 
 ## Source precedence
+
 1. User product requirements
 2. Uploaded Monopoly India Edition booklet and board images
 3. Official Monopoly internet sources for gaps
 
 ## Locked digital adaptations
+
 - Rent is auto-collected when owed.
 - Building and trading are exposed during safe UI windows instead of interrupt-anytime actions.
 - Speed Die is intentionally deferred.
 
 ## India Edition board mapping
+
 - GO: collect `M200`
 - Income Tax: pay `M200`
 - Super Tax: pay `M100`
@@ -28,6 +31,7 @@ Last updated: August 29, 2026
 - 3 Community Chest
 
 ## Space order
+
 1. GO
 2. Guwahati
 3. Community Chest
@@ -70,6 +74,7 @@ Last updated: August 29, 2026
 40. Mumbai
 
 ## Current implementation status
+
 - Implemented:
   - Setup flow for 2-8 players
   - Unique game id creation

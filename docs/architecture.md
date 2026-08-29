@@ -27,6 +27,23 @@ Forbidden: anything `domain → *`. If `src/domain/` ever imports React, Redux, 
 
 `src/app/` holds only store wiring (`appStore.ts`) and typed hooks (`hooks.ts` → `useAppDispatch`, `useAppSelector`). Always use the typed hooks, never bare `useSelector`.
 
+`src/styles/` is the SCSS layer, entered through `main.scss` and imported once by `App.tsx`:
+
+```
+styles/
+  abstracts/   tokens (fonts, radii, spacing, breakpoints, board geometry) + mixins
+  themes/      the theme engine - token maps -> [data-theme] custom properties
+  base/        reset, typography
+  layout/      app shell, page, shared grids
+  components/  board, buttons, forms, panels, dice, space-detail, player
+  pages/       game, home, rules
+```
+
+Components consume `var(--token)` only; no partial hardcodes a colour. See [theming.md](theming.md).
+
+These boundaries are enforced by ESLint `no-restricted-imports`, not just convention - a `react`
+import inside `src/domain/` fails `pnpm lint`.
+
 ---
 
 ## 2. Domain model
@@ -34,24 +51,27 @@ Forbidden: anything `domain → *`. If `src/domain/` ever imports React, Redux, 
 All types live in one file, [`src/domain/types/game.ts`](../src/domain/types/game.ts). It is the single source of truth — extend it there rather than declaring local shapes.
 
 ### Board spaces
+
 `BoardSpace` is a discriminated union on `kind`:
 
-| kind | extra fields |
-|---|---|
-| `street` | `colorGroup`, `price`, `mortgageValue`, `houseCost`, `hotelCost`, `rents: StreetRentTable` |
-| `railway` | `price`, `mortgageValue`, `rentByCount: [1,2,3,4 owned]` |
-| `utility` | `price`, `mortgageValue`, `rentMultiplierOne`, `rentMultiplierBoth` |
-| `tax` | `amount` |
-| `go`, `chance`, `community-chest`, `jail`, `free-parking`, `go-to-jail` | none |
+| kind                                                                    | extra fields                                                                               |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `street`                                                                | `colorGroup`, `price`, `mortgageValue`, `houseCost`, `hotelCost`, `rents: StreetRentTable` |
+| `railway`                                                               | `price`, `mortgageValue`, `rentByCount: [1,2,3,4 owned]`                                   |
+| `utility`                                                               | `price`, `mortgageValue`, `rentMultiplierOne`, `rentMultiplierBoth`                        |
+| `tax`                                                                   | `amount`                                                                                   |
+| `go`, `chance`, `community-chest`, `jail`, `free-parking`, `go-to-jail` | none                                                                                       |
 
 Narrow on `kind` — never cast. Space ids are positional: `space-<index>`, indices `0..39`.
 
 ### GameState (persisted root)
+
 `version`, `id`, `name`, `themeId`, `rulesetId`, `status`, timestamps, `players` (keyed by id), `playerOrder`, `activePlayerIndex`, `turnNumber`, `board`, `ownership` (keyed by space id), `bank`, `decks`, `turn`, `pendingDecision`, `tradeState`, `auctionState`, `history`, `winnerPlayerId`.
 
 Two things to note: **`board` is serialised into every save** (so board data changes don't retroactively apply to existing saves), and `ownership` only has entries for buyable spaces.
 
 ### Cards
+
 `DeckCard.effect` is a union: `collect`, `pay`, `move-to`, `move-steps`, `go-to-jail`, `jail-free`, `collect-from-each`, `pay-each`. Adding an effect kind means updating both the type and the `switch` in `resolveCard`.
 
 Drawn cards are returned to the **bottom** of their deck; `jail-free` cards are removed from the deck and held by the player.
@@ -96,23 +116,24 @@ Drawn cards are returned to the **bottom** of their deck; `jail-free` cards are 
 
 Internal helpers worth knowing before adding logic (reuse these instead of writing new ones):
 
-| Helper | Purpose |
-|---|---|
-| `updatePlayer(state, id, fn)` | immutable player update |
-| `updateSpaceOwnership(state, id, fn)` | immutable ownership update |
-| `appendEvents(state, events)` | prepend to history, cap 120, stamp `updatedAt` |
-| `movePlayerTo(state, id, pos, collectGo)` | move + pass-GO salary |
-| `resolveBankPayment` / `resolvePlayerPayment` | pay, or raise `asset-liquidation` if short |
-| `resolveCurrentSpace` | the landing-resolution core |
-| `getStreetRent` / `getRailwayRent` / `getUtilityRent` | rent maths |
-| `ownsEntireColorSet` | monopoly check (doubles base rent) |
-| `sendPlayerToJail`, `startAuction`, `completeAuctionIfPossible`, `advanceToNextTurn`, `resolveCard` | flow transitions |
+| Helper                                                                                              | Purpose                                        |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `updatePlayer(state, id, fn)`                                                                       | immutable player update                        |
+| `updateSpaceOwnership(state, id, fn)`                                                               | immutable ownership update                     |
+| `appendEvents(state, events)`                                                                       | prepend to history, cap 120, stamp `updatedAt` |
+| `movePlayerTo(state, id, pos, collectGo)`                                                           | move + pass-GO salary                          |
+| `resolveBankPayment` / `resolvePlayerPayment`                                                       | pay, or raise `asset-liquidation` if short     |
+| `resolveCurrentSpace`                                                                               | the landing-resolution core                    |
+| `getStreetRent` / `getRailwayRent` / `getUtilityRent`                                               | rent maths                                     |
+| `ownsEntireColorSet`                                                                                | monopoly check (doubles base rent)             |
+| `sendPlayerToJail`, `startAuction`, `completeAuctionIfPossible`, `advanceToNextTurn`, `resolveCard` | flow transitions                               |
 
 **Rent rules as implemented:** streets use build level 1-5 → house/hotel rents, else `monopolyRent` if the owner holds the whole colour group, else `baseRent`. Railways read `rentByCount[owned-1]` off the first railway space. Utilities multiply the last dice total. Rent is skipped entirely if the property is mortgaged or self-owned.
 
 **Auctions** are mandatory after a decline, open at `M10`, and rotate through every non-bankrupt player; the auction closes when at most one bidder has not passed.
 
 ### Purity caveat
+
 The engine calls `crypto.randomUUID()` (event/auction/game ids) and `new Date().toISOString()` (timestamps) directly. Dice are injectable via `RandomSource`, so rules are testable — but snapshot-comparing whole states across runs will not work. If full determinism is ever needed, inject a clock and id source the same way `RandomSource` is injected.
 
 ---
@@ -144,6 +165,7 @@ Clicking any space opens `SpaceDetailCard` (title-deed modal, `role="dialog"`). 
 ## 7. Extension recipes
 
 ### Add a game command
+
 1. Add the variant to `GameCommand` in `domain/types/game.ts`.
 2. Implement the `case` in `executeGameCommand` — reuse the helpers in §4; return new state, never mutate.
 3. If it introduces a decision, add the `PendingDecision` variant **and** a branch in `renderDecisionPanel()`.
@@ -151,12 +173,15 @@ Clicking any space opens `SpaceDetailCard` (title-deed modal, `role="dialog"`). 
 5. Remove it from the scaffolded list in CLAUDE.md §4.
 
 ### Add a theme
+
 Add a `ThemeConfig` next to `indiaEditionTheme` and include it in `availableThemes`. Both the setup form and the game view read that array. A theme needs at least 8 tokens (max player count).
 
 ### Change board data
+
 Edit `domain/board/indiaEditionBoard.ts` via the `street/railway/utility/tax/action` builders. Remember: existing saves embed their own board copy and will not pick up the change — bump `GAME_STATE_VERSION` if the shape (not just values) changes, and update `docs/india-edition-rules.md`.
 
 ### Add a board space kind
+
 Extend `SpaceKind` + the `BoardSpace` union, then handle it in `resolveCurrentSpace`, `getSpaceColor`/icon maps in the UI, and `SpaceDetailCard`. TypeScript will point at most sites; the icon/colour maps are `Partial<Record<...>>` and will **not** error on a missing entry — check them by hand.
 
 ---

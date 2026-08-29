@@ -4,11 +4,13 @@
 **Entry points:** [src/domain/rules/gameEngine.ts](../../src/domain/rules/gameEngine.ts), [src/features/game/GamePage.tsx](../../src/features/game/GamePage.tsx)
 
 ## What it does
+
 The active player rolls two dice, moves, and resolves whatever they land on — buying an unowned
 property or sending it to auction, paying rent or tax, drawing a card, or going to jail. Doubles
 grant another roll; three in a row send the player to jail.
 
 ## How it works
+
 Every action is a **command** through one entry point. The UI never edits game state.
 
 ```
@@ -29,6 +31,7 @@ matching panel. **A new decision type without a branch here silently stalls the 
 Phase machine and helper inventory: [../architecture.md](../architecture.md) sections 3-4.
 
 ## Key decisions
+
 - **Command pattern over direct mutation.** One choke point means saving, logging, and undo are
   possible without touching the UI, and rules stay unit-testable with no React in scope.
 - **Dice are injected** via `RandomSource` so tests are deterministic; the UI's dice animation is
@@ -42,17 +45,20 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   Mumbai" resolves rent exactly like landing there normally.
 
 ## State and data
+
 Reads and writes `GameState.turn`, `.players`, `.ownership`, `.pendingDecision`, `.auctionState`,
 `.history`. Every command persists the whole state — see [persistence.md](persistence.md).
 
 ## Tests
-| Level | File | Covers |
-|---|---|---|
-| Unit | [gameEngine.test.ts](../../src/domain/rules/gameEngine.test.ts) | Game creation defaults; buy decision on landing; auction on decline. |
-| Integration | — | *Gap: no thunk-level test of command → save → store.* |
-| E2E | [tests/e2e/app.spec.ts](../../tests/e2e/app.spec.ts) | Board renders; space details open. |
+
+| Level       | File                                                            | Covers                                                               |
+| ----------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Unit        | [gameEngine.test.ts](../../src/domain/rules/gameEngine.test.ts) | Game creation defaults; buy decision on landing; auction on decline. |
+| Integration | —                                                               | _Gap: no thunk-level test of command → save → store._                |
+| E2E         | [tests/e2e/app.spec.ts](../../tests/e2e/app.spec.ts)            | Board renders; space details open.                                   |
 
 ## Known gaps
+
 - **Jail-fine bug**: `payJailFine` overwrites the `asset-liquidation` decision that
   `resolveBankPayment` raises, letting a broke player leave jail free. See CLAUDE.md section 8.
 - Building, mortgaging, trading, and bankruptcy are scaffolded — they return a `uiHints` string

@@ -4,11 +4,13 @@
 **Entry points:** [src/features/setup/HomePage.tsx](../../src/features/setup/HomePage.tsx), [src/features/game/gameSlice.ts](../../src/features/game/gameSlice.ts)
 
 ## What it does
+
 Configure and start a new game — 2 to 8 players, each with a name and a distinct token, plus an
 optional game name and a theme. The same screen lists previously saved games so any of them can
 be resumed or deleted.
 
 ## How it works
+
 ```
 HomePage form state (local useState)
   └─ submit → validate (non-empty, unique names, unique tokens)
@@ -27,6 +29,7 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 (`chooseFirstPlayerOrder`) and sorts by score.
 
 ## Key decisions
+
 - **Form state is local, not Redux.** It is ephemeral and belongs to one screen; putting it in
   the store would add persistence questions for nothing.
 - **Validation happens before the thunk**, so the engine only ever sees valid input and does not
@@ -37,18 +40,21 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
   the game exists.
 
 ## State and data
+
 - Local: `gameName`, `playerCount`, `themeId`, `playerNames[]`, `playerTokens[]`, `formError`.
 - Store: reads `game.recentGames`, `game.loadError`; writes via `createNewGame`, `removeSavedGame`.
 - Storage: writes `monopoly.game.<id>.v1` and the index `monopoly.games.index.v1`.
 
 ## Tests
-| Level | File | Covers |
-|---|---|---|
-| Unit | — | *Gap: `clampPlayerCount`, validation rules.* |
+
+| Level       | File                                                            | Covers                                                 |
+| ----------- | --------------------------------------------------------------- | ------------------------------------------------------ |
+| Unit        | —                                                               | _Gap: `clampPlayerCount`, validation rules._           |
 | Integration | [HomePage.test.tsx](../../src/features/setup/HomePage.test.tsx) | Renders setup + recent games; rejects duplicate names. |
-| E2E | [tests/e2e/app.spec.ts](../../tests/e2e/app.spec.ts) | Create game → navigates to `/game/:id`. |
+| E2E         | [tests/e2e/app.spec.ts](../../tests/e2e/app.spec.ts)            | Create game → navigates to `/game/:id`.                |
 
 ## Known gaps
+
 - No test for duplicate-token or empty-name validation.
 - Player count is clamped silently (2-8) with no user feedback.
 - Deleting a saved game has no confirmation step.

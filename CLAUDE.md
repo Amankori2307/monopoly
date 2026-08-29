@@ -14,7 +14,7 @@ Guidance for Claude Code working in this repository.
 
 A **Monopoly India Edition** board game in the browser: React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `/game/:gameId`.
 
-The defining architectural decision: **the rules engine is a pure module that knows nothing about React or Redux.** UI dispatches *commands*; the engine returns a *new game state*. Keep it that way.
+The defining architectural decision: **the rules engine is a pure module that knows nothing about React or Redux.** UI dispatches _commands_; the engine returns a _new game state_. Keep it that way.
 
 ---
 
@@ -22,14 +22,15 @@ The defining architectural decision: **the rules engine is a pure module that kn
 
 The app was rewritten. `src/` currently holds the new app **and** a fully disconnected legacy island.
 
-| | Active (~3.1k LOC) | Legacy island (~2.9k LOC) |
-|---|---|---|
-| Paths | `src/domain/`, `src/features/`, `src/app/`, `src/components/game/`, `src/test/` | `src/redux/`, `src/utility/`, `src/components/monopoly/`, `src/components/home/`, `src/components/not_found/`, `src/assets/css/*.scss`, `src/assets/data/*.json` |
-| Reachable from `src/App.tsx`? | Yes | **No** — verified zero import edges |
-| Theme | India Edition | Zelda-themed (old) |
-| State | RTK slices + pure engine | hand-rolled actions/reducers |
+|                               | Active (~3.1k LOC)                                                              | Legacy island (~2.9k LOC)                                                                                                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Paths                         | `src/domain/`, `src/features/`, `src/app/`, `src/components/game/`, `src/test/` | `src/redux/`, `src/utility/`, `src/components/monopoly/`, `src/components/home/`, `src/components/not_found/`, `src/assets/css/*.scss`, `src/assets/data/*.json` |
+| Reachable from `src/App.tsx`? | Yes                                                                             | **No** — verified zero import edges                                                                                                                              |
+| Theme                         | India Edition                                                                   | Zelda-themed (old)                                                                                                                                               |
+| State                         | RTK slices + pure engine                                                        | hand-rolled actions/reducers                                                                                                                                     |
 
 **Rules of engagement:**
+
 - Build all new work in the active tree.
 - Never import from the legacy island into active code, and never "fix" legacy files — they ship nothing.
 - Treat any older doc describing Zelda spaces, `boardData.json`, `playerAppropriateActionUtils`, or `Monopoly.tsx` as **historical, not current**.
@@ -83,18 +84,21 @@ Every command runs through `runGameCommand`. Do not mutate game state in a compo
 `executeGameCommand(state, command, randomSource) → { nextState, events, saveRequired, uiHints }`
 
 - **Immutable**: every helper returns a new state object; nothing is mutated in place.
-- **Deterministic** given a `RandomSource` — *except* `crypto.randomUUID()` and `new Date()`, which are called directly inside the engine. Tests use `SeededRandomSource` for dice.
+- **Deterministic** given a `RandomSource` — _except_ `crypto.randomUUID()` and `new Date()`, which are called directly inside the engine. Tests use `SeededRandomSource` for dice.
 - **Throws** on invalid commands (e.g. rolling out of phase). Callers currently do **not** catch — an invalid dispatch surfaces as an uncaught error.
 
 ### Turn phases
+
 `await_roll → resolving_movement → resolving_space → await_decision → await_extra_roll_or_end → turn_complete`
 
 ### Commands
-| Implemented | Scaffolded (returns a `uiHints` placeholder, changes nothing) |
-|---|---|
+
+| Implemented                                                                                                                                               | Scaffolded (returns a `uiHints` placeholder, changes nothing)                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `mortgageAsset`, `unmortgageAsset`, `proposeTrade`, `acceptTrade`, `rejectTrade`, `confirmBankruptcy` |
 
 ### Locked economics (`gameEngine.ts` constants)
+
 Starting cash `M1500` · pass GO `M200` · jail fine `M50` · auction opens at `M10`, min increment `1` · 40 spaces · 32 houses / 12 hotels · history capped at 120 events, newest first.
 
 Money values live in `domain/board/` and `gameEngine.ts` constants — never hardcode an amount in a component.
@@ -129,9 +133,10 @@ Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc`
 ## 7. Conventions
 
 **Modularity**
+
 - `domain/` stays pure. UI-only concerns (colors, icons, copy) never leak into it.
 - `components/game/` are presentational: props in, callbacks out, no `useAppSelector`.
-- Slices hold state; *thunks* hold orchestration. Business rules belong in the engine.
+- Slices hold state; _thunks_ hold orchestration. Business rules belong in the engine.
 - Path aliases exist in `tsconfig.json` (`@app/*`, `@domain/*`, `@features/*`, `@components/*`, `@test/*`) but **nothing uses them yet** — the codebase is uniformly relative-import. Pick one style deliberately rather than mixing.
 
 **DRY — known duplication, fix on contact**
@@ -142,7 +147,7 @@ Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc`
 | `kind === 'street' \|\| 'railway' \|\| 'utility'` inline check (a `propertySpaceKinds` set already exists in the engine) | [gameEngine.ts:558](src/domain/rules/gameEngine.ts:558), [gameEngine.ts:751](src/domain/rules/gameEngine.ts:751), [GamePage.tsx:101](src/features/game/GamePage.tsx:101) |
 | `theme?.currencySymbol ?? 'M'` — 5× in one file; a `formatMoney` helper exists but only in `SpaceDetailCard` | GamePage.tsx |
 
-*Resolved:* the duplicated street colour-group hex maps are gone — colours are now theme tokens with generated `.group-*` classes (see [docs/theming.md](docs/theming.md)).
+_Resolved:_ the duplicated street colour-group hex maps are gone — colours are now theme tokens with generated `.group-*` classes (see [docs/theming.md](docs/theming.md)).
 
 When you touch one of these, extract it (colors/icons → a shared board-presentation module; `formatMoney` + `isPropertySpace` → shared helpers) rather than adding a sixth copy.
 
@@ -173,20 +178,20 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 
 Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a stale line actively misleads. **Update docs in the same change as the code**, not afterwards.
 
-| If you change… | Update |
-|---|---|
-| Engine commands, phases, or constants | §4 above |
-| `GameState` shape or storage keys | §5 + bump `GAME_STATE_VERSION` + zod schema |
-| Layer boundaries, new directory | §3 + `docs/architecture.md` |
-| Ruleset behaviour or values | `docs/india-edition-rules.md` |
-| Scripts in `package.json` | §6 |
-| Fixing/adding duplication or a known bug | the §7 DRY table / §8 list — remove rows you resolve |
-| Deleting part of the legacy island | §2 |
-| Adding tests, or fixing a harness blocker | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5 |
-| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md) |
-| **Adding or removing any file** | [docs/file-index.md](docs/file-index.md) — one line saying what it does |
-| **Adding a feature** | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index |
-| Changing a feature's behaviour or decisions | that feature's doc in `docs/features/` |
-| Adding a theme, or changing theme tokens | [docs/theming.md](docs/theming.md) |
+| If you change…                                  | Update                                                                                             |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Engine commands, phases, or constants           | §4 above                                                                                           |
+| `GameState` shape or storage keys               | §5 + bump `GAME_STATE_VERSION` + zod schema                                                        |
+| Layer boundaries, new directory                 | §3 + `docs/architecture.md`                                                                        |
+| Ruleset behaviour or values                     | `docs/india-edition-rules.md`                                                                      |
+| Scripts in `package.json`                       | §6                                                                                                 |
+| Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                               |
+| Deleting part of the legacy island              | §2                                                                                                 |
+| Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5     |
+| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                             |
+| **Adding or removing any file**                 | [docs/file-index.md](docs/file-index.md) — one line saying what it does                            |
+| **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index |
+| Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                             |
+| Adding a theme, or changing theme tokens        | [docs/theming.md](docs/theming.md)                                                                 |
 
 Before finishing a task: re-read the sections you touched, delete anything now false, and re-run `npx tsc --noEmit` + `pnpm test`.
