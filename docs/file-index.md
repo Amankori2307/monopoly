@@ -50,10 +50,11 @@ Keep this current — adding or removing a file means editing this table in the 
 
 ## `src/components/game/` — presentational (props in, callbacks out, no store)
 
-| File                                                              | What it does                                                                                                    |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| [DiceDock.tsx](../src/components/game/DiceDock.tsx)               | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.                        |
-| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx) | Title-deed modal for a clicked space: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape. |
+| File                                                                        | What it does                                                                                                    |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| [DiceDock.tsx](../src/components/game/DiceDock.tsx)                         | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.                        |
+| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx)           | Title-deed modal for a clicked space: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape. |
+| [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx) | Unit tests: per-kind rendering, themed colour-group class, close on button/Escape/backdrop.                     |
 
 ## `src/styles/` — SCSS
 
