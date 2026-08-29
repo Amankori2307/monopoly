@@ -39,7 +39,11 @@ export function DiceDock({ canRoll, lastRoll, onRoll, rollLabel }: DiceDockProps
   });
 
   return (
-    <section aria-label="Dice roller" className="dice-dock" data-testid={TEST_IDS.diceDock}>
+    <section
+      aria-label="Dice roller"
+      className="dice-dock"
+      data-testid={TEST_IDS.diceDock}
+    >
       <div aria-live="polite" className="dice-pair">
         <Die index={0} isRolling={isRolling} value={displayValues[0]} />
         <Die index={1} isRolling={isRolling} value={displayValues[1]} />

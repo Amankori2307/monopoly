@@ -13,13 +13,7 @@
       "jsx": true
     }
   },
-  "plugins": [
-    "@typescript-eslint",
-    "react",
-    "react-hooks",
-    "jsx-a11y",
-    "check-file"
-  ],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y", "check-file"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -48,17 +42,11 @@
     "*.config.mjs"
   ],
   "rules": {
-    "eqeqeq": [
-      "error",
-      "smart"
-    ],
+    "eqeqeq": ["error", "smart"],
     "no-console": [
       "warn",
       {
-        "allow": [
-          "warn",
-          "error"
-        ]
+        "allow": ["warn", "error"]
       }
     ],
     "no-param-reassign": "error",
@@ -100,52 +88,34 @@
       "error",
       {
         "selector": "import",
-        "format": [
-          "camelCase",
-          "PascalCase"
-        ]
+        "format": ["camelCase", "PascalCase"]
       },
       {
         "selector": "default",
-        "format": [
-          "camelCase"
-        ],
+        "format": ["camelCase"],
         "leadingUnderscore": "allow"
       },
       {
         "selector": "variable",
-        "format": [
-          "camelCase",
-          "UPPER_CASE",
-          "PascalCase"
-        ],
+        "format": ["camelCase", "UPPER_CASE", "PascalCase"],
         "leadingUnderscore": "allow"
       },
       {
         "selector": "parameter",
-        "format": [
-          "camelCase"
-        ],
+        "format": ["camelCase"],
         "leadingUnderscore": "allow"
       },
       {
         "selector": "function",
-        "format": [
-          "camelCase",
-          "PascalCase"
-        ]
+        "format": ["camelCase", "PascalCase"]
       },
       {
         "selector": "typeLike",
-        "format": [
-          "PascalCase"
-        ]
+        "format": ["PascalCase"]
       },
       {
         "selector": "interface",
-        "format": [
-          "PascalCase"
-        ],
+        "format": ["PascalCase"],
         "custom": {
           "regex": "^I[A-Z]",
           "match": false
@@ -153,24 +123,16 @@
       },
       {
         "selector": "enum",
-        "format": [
-          "PascalCase"
-        ]
+        "format": ["PascalCase"]
       },
       {
         "selector": "enumMember",
-        "format": [
-          "PascalCase"
-        ]
+        "format": ["PascalCase"]
       },
       {
         "selector": "typeParameter",
-        "format": [
-          "PascalCase"
-        ],
-        "prefix": [
-          "T"
-        ]
+        "format": ["PascalCase"],
+        "prefix": ["T"]
       },
       {
         "selector": "objectLiteralProperty",
@@ -182,15 +144,11 @@
       },
       {
         "selector": "classProperty",
-        "format": [
-          "camelCase"
-        ]
+        "format": ["camelCase"]
       },
       {
         "selector": "classMethod",
-        "format": [
-          "camelCase"
-        ]
+        "format": ["camelCase"]
       }
     ],
     "max-lines": [
@@ -209,14 +167,8 @@
         "skipComments": true
       }
     ],
-    "max-depth": [
-      "warn",
-      4
-    ],
-    "complexity": [
-      "warn",
-      12
-    ],
+    "max-depth": ["warn", 4],
+    "complexity": ["warn", 12],
     "no-nested-ternary": "error",
     "prefer-const": "error",
     "no-else-return": "warn",
@@ -230,7 +182,8 @@
         "**/*.utils.ts": "CAMEL_CASE",
         "**/*.selectors.ts": "CAMEL_CASE",
         "src/components/**/*.tsx": "PASCAL_CASE",
-        "src/features/**/*.tsx": "PASCAL_CASE"
+        "src/features/**/*.tsx": "PASCAL_CASE",
+        "src/**/hooks/*.ts": "CAMEL_CASE"
       },
       {
         "ignoreMiddleExtensions": true
@@ -245,10 +198,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.test.ts",
-        "**/*.test.tsx"
-      ],
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
       "rules": {
         "max-lines": "off",
         "max-lines-per-function": "off",
@@ -269,10 +219,7 @@
       }
     },
     {
-      "files": [
-        "src/domain/**/*.ts",
-        "src/domain/**/*.tsx"
-      ],
+      "files": ["src/domain/**/*.ts", "src/domain/**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -301,11 +248,7 @@
             ],
             "patterns": [
               {
-                "group": [
-                  "**/features/**",
-                  "**/components/**",
-                  "**/app/**"
-                ],
+                "group": ["**/features/**", "**/components/**", "**/app/**"],
                 "message": "Dependency direction is one-way: domain must not import from features, components, or app."
               }
             ]
@@ -314,20 +257,14 @@
       }
     },
     {
-      "files": [
-        "src/components/**/*.tsx"
-      ],
+      "files": ["src/components/**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": [
-                  "**/app/hooks",
-                  "**/app/appStore",
-                  "**/features/**"
-                ],
+                "group": ["**/app/hooks", "**/app/appStore", "**/features/**"],
                 "message": "Presentational components take props and callbacks - no store access. See docs/coding-guidelines.md section 3."
               }
             ]
@@ -336,21 +273,14 @@
       }
     },
     {
-      "files": [
-        "**/*.d.ts"
-      ],
+      "files": ["**/*.d.ts"],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": "off"
       }
     },
     {
-      "files": [
-        "**/*.test.ts",
-        "**/*.test.tsx",
-        "tests/**/*.ts",
-        "src/setupTests.ts"
-      ],
+      "files": ["**/*.test.ts", "**/*.test.tsx", "tests/**/*.ts", "src/setupTests.ts"],
       "env": {
         "node": true
       },

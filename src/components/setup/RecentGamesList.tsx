@@ -9,7 +9,9 @@ interface RecentGamesListProps {
 
 export function RecentGamesList({ games, onContinue, onDelete }: RecentGamesListProps) {
   if (games.length === 0) {
-    return <div className="empty-state">No saved games yet. Create one to get started.</div>;
+    return (
+      <div className="empty-state">No saved games yet. Create one to get started.</div>
+    );
   }
 
   return (

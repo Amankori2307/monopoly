@@ -45,7 +45,8 @@ export const useGameCommands = (): UseGameCommandsResult => {
           ),
         onBidAmountChange: (amount: number) => dispatch(setAuctionBidInput(amount)),
         onPass: () => dispatch(runGameCommand({ type: GameCommandType.PassAuction })),
-        onPayJailFine: () => dispatch(runGameCommand({ type: GameCommandType.PayJailFine })),
+        onPayJailFine: () =>
+          dispatch(runGameCommand({ type: GameCommandType.PayJailFine })),
         onUseJailCard: () =>
           dispatch(runGameCommand({ type: GameCommandType.UseJailFreeCard })),
       },

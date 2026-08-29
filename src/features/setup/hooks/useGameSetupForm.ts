@@ -4,7 +4,10 @@ import {
   availableThemes,
   indiaEditionTheme,
 } from '../../../domain/themes/indiaEditionTheme';
-import type { CreatePlayerInput, ThemeConfig } from '../../../domain/types/game.interfaces';
+import type {
+  CreatePlayerInput,
+  ThemeConfig,
+} from '../../../domain/types/game.interfaces';
 import { DEFAULT_GAME_NAME } from '../setup.constants';
 import { trimPlayerNames, validateSetupDraft } from '../setupValidation.utils';
 

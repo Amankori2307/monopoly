@@ -66,19 +66,27 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
-| File                                                                               | What it does                                                                                            |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                           | New-game setup form plus the saved-game list with resume/delete.                                        |
-| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                 | Integration tests for setup rendering and name validation.                                              |
-| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                             | Game screen **wiring only**: selects state, derives view models, dispatches commands.                   |
-| [game/gameView.selectors.ts](../src/features/game/gameView.selectors.ts)           | **Pure derivations**: game state → the view models the panels render. Where the screen's logic lives.   |
-| [game/gameView.selectors.test.ts](../src/features/game/gameView.selectors.test.ts) | Unit tests for every selector, including each decision view model.                                      |
-| [game/game.constants.ts](../src/features/game/game.constants.ts)                   | Game-screen copy constants (board centre title and subtitle).                                           |
-| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                             | Game slice + thunks bridging UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`). |
-| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                 | Ephemeral UI state not part of the saved game (auction bid input).                                      |
-| [persistence/persistence.ts](../src/features/persistence/persistence.ts)           | localStorage read/write: save, load, delete, and the saved-game index.                                  |
-| [persistence/schema.ts](../src/features/persistence/schema.ts)                     | Zod schemas validating anything read back out of storage.                                               |
-| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                         | Static rules booklet page.                                                                              |
+| File                                                                                       | What it does                                                                                            |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                                   | New-game setup form plus the saved-game list with resume/delete.                                        |
+| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                         | Integration tests for setup rendering and name validation.                                              |
+| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                                     | Game screen **wiring only**: selects state, derives view models, dispatches commands.                   |
+| [game/gameView.selectors.ts](../src/features/game/gameView.selectors.ts)                   | **Pure derivations**: game state → the view models the panels render. Where the screen's logic lives.   |
+| [game/gameView.selectors.test.ts](../src/features/game/gameView.selectors.test.ts)         | Unit tests for every selector, including each decision view model.                                      |
+| [game/game.constants.ts](../src/features/game/game.constants.ts)                           | Game-screen copy constants (board centre title and subtitle).                                           |
+| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                                     | Game slice + thunks bridging UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`). |
+| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                         | Ephemeral UI state not part of the saved game (auction bid input).                                      |
+| [persistence/persistence.ts](../src/features/persistence/persistence.ts)                   | localStorage read/write: save, load, delete, and the saved-game index.                                  |
+| [persistence/schema.ts](../src/features/persistence/schema.ts)                             | Zod schemas validating anything read back out of storage.                                               |
+| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                 | Static rules booklet page.                                                                              |
+| [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                       | Shown when the routed game is missing or fails schema validation.                                       |
+| [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                 | Loads the routed game and resolves its theme and currency symbol.                                       |
+| [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)             | Binds every command the game screen dispatches.                                                         |
+| [game/hooks/useSelectedSpace.ts](../src/features/game/hooks/useSelectedSpace.ts)           | Tracks which board space has its title deed open.                                                       |
+| [setup/hooks/useGameSetupForm.ts](../src/features/setup/hooks/useGameSetupForm.ts)         | Setup form state; delegates the rules to setupValidation.utils.                                         |
+| [setup/setupValidation.utils.ts](../src/features/setup/setupValidation.utils.ts)           | Pure setup validation: non-empty, unique names, unique tokens.                                          |
+| [setup/setupValidation.utils.test.ts](../src/features/setup/setupValidation.utils.test.ts) | Unit tests for every validation rule and its precedence.                                                |
+| [setup/setup.constants.ts](../src/features/setup/setup.constants.ts)                       | Setup form defaults and error messages.                                                                 |
 
 ## `src/components/game/` — presentational (props in, callbacks out, no store)
 
@@ -100,20 +108,29 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Panels
 
-| File                                                                                                          | What it does                                                   |
-| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                         | Left rail of property actions (Build/Sell/Mortgage/Redeem).    |
-| [panels/TurnPanel.tsx](../src/components/game/panels/TurnPanel.tsx)                                           | Whose turn it is, where they are, and the end-turn control.    |
-| [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                     | Player cards: cash, property count, position, jail status.     |
-| [panels/HoldingsPanel.tsx](../src/components/game/panels/HoldingsPanel.tsx)                                   | The active player's owned properties.                          |
-| [panels/ActivityPanel.tsx](../src/components/game/panels/ActivityPanel.tsx)                                   | Scrolling game event log.                                      |
-| [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                         | Surfaces engine `uiHints` (the "not implemented yet" notices). |
-| [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                             | Shared panel view models and decision handler types.           |
-| [panels/decisions/DecisionPanel.tsx](../src/components/game/panels/decisions/DecisionPanel.tsx)               | Picks the right decision UI for the pending decision.          |
-| [panels/decisions/BuyOrAuctionDecision.tsx](../src/components/game/panels/decisions/BuyOrAuctionDecision.tsx) | Buy-or-auction prompt on landing unowned.                      |
-| [panels/decisions/AuctionDecision.tsx](../src/components/game/panels/decisions/AuctionDecision.tsx)           | Auction bidding controls.                                      |
-| [panels/decisions/JailDecision.tsx](../src/components/game/panels/decisions/JailDecision.tsx)                 | Jail exit choices.                                             |
-| [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)   | Asset-liquidation notice.                                      |
+| File                                                                                                          | What it does                                                                   |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                         | Left rail of property actions (Build/Sell/Mortgage/Redeem).                    |
+| [panels/TurnPanel.tsx](../src/components/game/panels/TurnPanel.tsx)                                           | Whose turn it is, where they are, and the end-turn control.                    |
+| [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                     | Player cards: cash, property count, position, jail status.                     |
+| [panels/HoldingsPanel.tsx](../src/components/game/panels/HoldingsPanel.tsx)                                   | The active player's owned properties.                                          |
+| [panels/ActivityPanel.tsx](../src/components/game/panels/ActivityPanel.tsx)                                   | Scrolling game event log.                                                      |
+| [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                         | Surfaces engine `uiHints` (the "not implemented yet" notices).                 |
+| [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                             | Shared panel view models and decision handler types.                           |
+| [panels/decisions/DecisionPanel.tsx](../src/components/game/panels/decisions/DecisionPanel.tsx)               | Picks the right decision UI for the pending decision.                          |
+| [panels/decisions/BuyOrAuctionDecision.tsx](../src/components/game/panels/decisions/BuyOrAuctionDecision.tsx) | Buy-or-auction prompt on landing unowned.                                      |
+| [panels/decisions/AuctionDecision.tsx](../src/components/game/panels/decisions/AuctionDecision.tsx)           | Auction bidding controls.                                                      |
+| [panels/decisions/JailDecision.tsx](../src/components/game/panels/decisions/JailDecision.tsx)                 | Jail exit choices.                                                             |
+| [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)   | Asset-liquidation notice.                                                      |
+| [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                       | Dice animation state: tumbling faces, roll sound, timers, committing the roll. |
+
+## `src/components/setup/` — presentational setup components
+
+| File                                                               | What it does                                              |
+| ------------------------------------------------------------------ | --------------------------------------------------------- |
+| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)             | Intro card: what the app is and the locked v1 scope.      |
+| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx) | One player's name and token inputs.                       |
+| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx) | Saved games with continue and delete, or the empty state. |
 
 ## `src/shared/` — cross-cutting helpers
 
@@ -122,6 +139,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts) | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
 | [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                     | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
 | [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)           | Unit tests for money formatting.                                                        |
+| [hooks/useEscapeKey.ts](../src/shared/hooks/useEscapeKey.ts)                   | Escape-to-dismiss for overlays, with listener cleanup.                                  |
+| [hooks/useEscapeKey.test.ts](../src/shared/hooks/useEscapeKey.test.ts)         | Unit tests, including that the listener is removed on unmount.                          |
 
 ## `src/styles/` — SCSS
 

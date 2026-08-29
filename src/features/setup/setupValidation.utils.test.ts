@@ -9,7 +9,9 @@ const draft = (playerNames: string[], playerTokens: string[]) => ({
 
 describe('validateSetupDraft', () => {
   it('accepts distinct names and tokens', () => {
-    expect(validateSetupDraft(draft(['Asha', 'Vikram'], ['elephant', 'train']))).toBeNull();
+    expect(
+      validateSetupDraft(draft(['Asha', 'Vikram'], ['elephant', 'train']))
+    ).toBeNull();
   });
 
   it('rejects an empty name', () => {
