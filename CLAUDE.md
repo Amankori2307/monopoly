@@ -2,8 +2,9 @@
 
 Guidance for Claude Code working in this repository.
 
-> **Doc upkeep is part of every task.** See [Documentation contract](#documentation-contract).
-> Deep architecture map: [docs/architecture.md](docs/architecture.md) · Ruleset source of truth: [docs/india-edition-rules.md](docs/india-edition-rules.md)
+> **Every change ships with unit + integration + e2e tests, and updates its docs.**
+> Binding rules: [docs/coding-guidelines.md](docs/coding-guidelines.md) — read before writing code.
+> Deep architecture map: [docs/architecture.md](docs/architecture.md) · Ruleset source of truth: [docs/india-edition-rules.md](docs/india-edition-rules.md) · [Documentation contract](#documentation-contract)
 
 ---
 
@@ -111,10 +112,10 @@ pnpm dev          # Vite dev server on :3000
 pnpm build        # production build → build/
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
 pnpm test:e2e     # playwright (tests/e2e), auto-starts dev server
-pnpm lint         # eslint via nx
-pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
+
+⚠️ **`pnpm lint` / `lint:fix` / `check-all` / `fix-all` are currently broken** — there is no ESLint config anywhere in the repo (`No ESLint configuration found in .../src`). The scripts exist but fail. Add a config before depending on them; don't report "lint passes" without checking.
 
 Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc` clean, 5/5 unit tests passing.** Keep it that way — if you land a change, re-run both.
 
@@ -141,7 +142,9 @@ When you touch one of these, extract it (colors/icons → a shared board-present
 
 **Styling** — the active app uses one plain stylesheet, `src/app/app.css`, imported once in `App.tsx`. The `.scss` modules under `src/assets/css/` belong to the legacy island.
 
-**Testing** — engine logic gets a `SeededRandomSource` unit test; pages get a React Testing Library test via `src/test/renderWithProviders.tsx`; user-visible flows get a Playwright spec.
+**Testing — mandatory, all three levels.** Every feature, entity, and behaviour ships with **unit + integration + e2e** coverage in the same change. Unit: pure logic, `SeededRandomSource` for dice, cover every `throw` branch. Integration: thunk → engine → persistence → store, and pages via `src/test/renderWithProviders.tsx`. E2E: the user journey in Playwright, queried by accessible role and name.
+
+Full definition of done, per-layer patterns, and the current coverage gap: [docs/coding-guidelines.md](docs/coding-guidelines.md). Three harness blockers (no ESLint config, singleton test store, no `localStorage` reset) are listed there and need fixing before the integration mandate is fully achievable.
 
 ---
 
@@ -169,5 +172,7 @@ Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a
 | Scripts in `package.json` | §6 |
 | Fixing/adding duplication or a known bug | the §7 DRY table / §8 list — remove rows you resolve |
 | Deleting part of the legacy island | §2 |
+| Adding tests, or fixing a harness blocker | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5 |
+| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md) |
 
 Before finishing a task: re-read the sections you touched, delete anything now false, and re-run `npx tsc --noEmit` + `pnpm test`.
