@@ -376,3 +376,84 @@ test('renders every space card at the same height', async ({ page }) => {
 
   expect(new Set(Object.values(heights)).size, JSON.stringify(heights)).toBe(1);
 });
+
+// Tokens are drawn over the board, not inside the space cells. In the flow an
+// occupied cell grew taller than its neighbours and shifted the whole board.
+test('draws player tokens as an overlay that cannot resize a cell', async ({ page }) => {
+  await startGame(page);
+
+  await expect(page.getByTestId(TEST_IDS.boardTokenLayer)).toBeVisible();
+
+  // No token lives inside a board space.
+  expect(await page.locator('.board-space .token-chip').count()).toBe(0);
+  expect(await page.locator('.board-token-layer .token-chip').count()).toBeGreaterThan(0);
+
+  // Every ordinary cell on a side is the same size, occupied or not. Corners sit
+  // on the wider track, so they are measured separately by their own test.
+  const sizes = await page.evaluate(() => {
+    const bySide: Record<string, string[]> = {};
+    const cells = Array.from(document.querySelectorAll('.board-space')).filter(
+      (cell) => !cell.classList.contains('corner-space')
+    );
+    for (const cell of cells) {
+      const side = Array.from(cell.classList).find((name) => name.startsWith('side-'));
+      if (!side) continue;
+      const box = cell.getBoundingClientRect();
+      (bySide[side] ??= []).push(`${Math.round(box.width)}x${Math.round(box.height)}`);
+    }
+    return bySide;
+  });
+
+  for (const [side, dimensions] of Object.entries(sizes)) {
+    expect(
+      new Set(dimensions).size,
+      `${side} cells differ: ${[...new Set(dimensions)].join(', ')}`
+    ).toBe(1);
+  }
+});
+
+// The token walks space by space so the move is legible, rather than teleporting.
+test('walks the token one space at a time after a roll', async ({ page }) => {
+  await startGame(page);
+
+  const cellOfFirstToken = () =>
+    page.evaluate(() => {
+      const token = document.querySelector('.board-token-layer .token-chip');
+      if (!token) return null;
+      const cell = token.closest('.board-token-cell');
+      if (!cell) return null;
+      const style = getComputedStyle(cell);
+      return `${style.gridRowStart}:${style.gridColumnStart}`;
+    });
+
+  const rollButton = page.getByTestId(TEST_IDS.rollButton);
+  const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
+  const declineButton = page.getByTestId(TEST_IDS.declineButton);
+
+  // Real dice, and a card can cancel out a move, so retry until a walk happens.
+  let visited: string[] = [];
+  for (let attempt = 0; attempt < 8 && visited.length <= 2; attempt += 1) {
+    if (await declineButton.isVisible()) {
+      await declineButton.click();
+    } else if (!(await rollButton.isEnabled())) {
+      if (await endTurnButton.isVisible()) await endTurnButton.click();
+      continue;
+    } else {
+      visited = [(await cellOfFirstToken()) ?? ''];
+      await rollButton.click();
+      for (let sample = 0; sample < 80; sample += 1) {
+        await page.waitForTimeout(40);
+        const cell = await cellOfFirstToken();
+        if (cell && cell !== visited[visited.length - 1]) {
+          visited.push(cell);
+        }
+      }
+      if (visited.length <= 2 && (await endTurnButton.isVisible())) {
+        await endTurnButton.click();
+      }
+    }
+  }
+
+  // More than one intermediate cell means it walked rather than teleported.
+  expect(visited.length, `cells visited: ${visited.join(' -> ')}`).toBeGreaterThan(2);
+});

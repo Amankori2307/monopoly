@@ -22,7 +22,6 @@ import {
   selectDecisionViewModel,
   selectHoldings,
   selectIsJailRoll,
-  selectPlayersByPosition,
   selectPlayerSummaries,
 } from './gameView.selectors';
 import { useActiveGame } from './hooks/useActiveGame';

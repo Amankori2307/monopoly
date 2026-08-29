@@ -48,13 +48,14 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Data
 
-| File                                                                     | What it does                                                                        |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)   | The 40 board spaces with prices, rents, and colour groups.                          |
-| [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)   | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                        |
-| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)   | Chance and Community Chest deck contents and effects.                               |
-| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts) | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS. |
-| [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)       | Which edge of the board a space sits on; drives which side its colour ribbon hugs.  |
+| File                                                                       | What it does                                                                        |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)     | The 40 board spaces with prices, rents, and colour groups.                          |
+| [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)     | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                        |
+| [board/tokenMovement.utils.ts](../src/domain/board/tokenMovement.utils.ts) | Forward step count, whether a move is walkable, and the path it passes through.     |
+| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)     | Chance and Community Chest deck contents and effects.                               |
+| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts)   | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS. |
+| [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)         | Which edge of the board a space sits on; drives which side its colour ribbon hugs.  |
 
 ### Domain tests
 
@@ -64,6 +65,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.             |
 | [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.               |
 | [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.              |
+| [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Forward steps, GO wrapping, walkable vs teleport, path contents. |
 | [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping. |
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
@@ -109,11 +111,12 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Board
 
-| File                                                                        | What it does                                                      |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)           | The 11x11 board: centre plus all 40 space cells.                  |
-| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx) | One square: colour bar (streets only), icon, name, player tokens. |
-| [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)       | Decorative centre: deck markers and logo ribbon.                  |
+| File                                                                          | What it does                                                                           |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)             | The 11x11 board: centre plus all 40 space cells.                                       |
+| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx)   | One square: colour bar (streets only), icon, name, player tokens.                      |
+| [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)         | Decorative centre: deck markers and logo ribbon.                                       |
+| [board/BoardTokenLayer.tsx](../src/components/game/board/BoardTokenLayer.tsx) | Player tokens drawn over the board, placed by grid cell so they cannot resize a space. |
 
 ### Panels
 
@@ -132,6 +135,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)             | Asset-liquidation notice.                                                      |
 | [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                                 | Dice animation state: tumbling faces, roll sound, timers, committing the roll. |
 | [hooks/useDiceRoller.test.ts](../src/components/game/hooks/useDiceRoller.test.ts)                                       | Roll lifecycle, and that a throwing handler never strands the dock.            |
+| [hooks/useAnimatedTokenPositions.ts](../src/components/game/hooks/useAnimatedTokenPositions.ts)                         | Walks tokens one space at a time with a tick per step; snaps teleports.        |
+| [hooks/useAnimatedTokenPositions.test.ts](../src/components/game/hooks/useAnimatedTokenPositions.test.ts)               | Step-by-step walk, wrapping past GO, per-step tick, teleport snap.             |
 | [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                               | Bottom-right cluster: end-turn button plus the dice, level with the board.     |
 | [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                                     | Stack collapse/expand, click target, token colours, full-table support.        |
 | [overlays/DecisionModal.tsx](../src/components/game/overlays/DecisionModal.tsx)                                         | Blocking centre modal for a pending decision. Deliberately not dismissible.    |

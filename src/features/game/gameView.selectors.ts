@@ -22,20 +22,6 @@ import type {
 export const selectActivePlayer = (game: GameState): PlayerState =>
   game.players[game.playerOrder[game.activePlayerIndex]];
 
-export const selectPlayersByPosition = (game: GameState): Map<number, PlayerState[]> => {
-  const byPosition = new Map<number, PlayerState[]>();
-  for (const playerId of game.playerOrder) {
-    const player = game.players[playerId];
-    const existing = byPosition.get(player.position);
-    if (existing) {
-      existing.push(player);
-    } else {
-      byPosition.set(player.position, [player]);
-    }
-  }
-  return byPosition;
-};
-
 export const makeTokenFinder =
   (theme: ThemeConfig | undefined) =>
   (tokenId: string): ThemeToken | undefined =>

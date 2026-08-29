@@ -19,7 +19,6 @@ import {
   selectDecisionViewModel,
   selectHoldings,
   selectPlayerSummaries,
-  selectPlayersByPosition,
 } from './gameView.selectors';
 
 const createGame = (): GameState =>
@@ -35,17 +34,6 @@ const createGame = (): GameState =>
     },
     new SeededRandomSource(7)
   );
-
-describe('selectPlayersByPosition', () => {
-  it('groups both starting players on GO', () => {
-    const game = createGame();
-
-    const byPosition = selectPlayersByPosition(game);
-
-    expect(byPosition.get(0)).toHaveLength(2);
-    expect(byPosition.get(5)).toBeUndefined();
-  });
-});
 
 describe('selectPlayerSummaries', () => {
   it('returns one summary per player', () => {

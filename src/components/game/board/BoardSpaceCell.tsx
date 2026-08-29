@@ -1,10 +1,6 @@
 import { CORNER_POSITIONS } from '../../../domain/constants/game.constants';
 import { SpaceKind } from '../../../domain/types/game.enums';
-import type {
-  BoardSpace,
-  PlayerState,
-  ThemeToken,
-} from '../../../domain/types/game.interfaces';
+import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.utils';
 import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
