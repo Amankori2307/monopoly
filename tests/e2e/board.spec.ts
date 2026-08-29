@@ -341,37 +341,38 @@ test('renders every surface with square corners', async ({ page }) => {
   expect(rounded).toEqual([]);
 });
 
-// Deeds used to size to their content - a street (7 rent rows) was 507px, a
-// railway 362, a utility 294 - so the card jumped as you moved around the board.
-test('renders every title deed at the same height', async ({ page }) => {
+// Cards used to size to their content - a street (7 rent rows) was 507px, a
+// railway 362, a utility 294, a tax card 111 - so the card jumped as you moved
+// around the board. Every space kind now renders at one height.
+test('renders every space card at the same height', async ({ page }) => {
   await startGame(page);
 
-  const measure = async (spaceName: string) => {
-    await page
-      .getByRole('button', { name: `View details for ${spaceName}`, exact: true })
-      .click();
+  // Selected by board index: names like "Chance" appear three times.
+  const measure = async (index: number) => {
+    await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, index)).click();
     const card = page.getByTestId(TEST_IDS.spaceCard);
     await expect(card).toBeVisible();
     const box = await card.boundingBox();
-    const isDeed = await card.evaluate((el) => el.classList.contains('is-deed'));
     await page.getByRole('button', { name: 'Close space details' }).click();
     await expect(card).toHaveCount(0);
-    return { height: box ? Math.round(box.height) : 0, isDeed };
+    return box ? Math.round(box.height) : 0;
   };
 
-  // One of each ownable kind: street, railway, utility.
-  const street = await measure('Mumbai');
-  const railway = await measure('Howrah Railway Station');
-  const utility = await measure('Electric Company');
+  // One of every kind: street, railway, utility, tax, both decks, and a corner.
+  const samples = {
+    'street (Mumbai)': 39,
+    'railway (Howrah)': 15,
+    'utility (Electric Company)': 12,
+    'tax (Income Tax)': 4,
+    chance: 7,
+    'community chest': 2,
+    'corner (Free Parking)': 20,
+  };
 
-  for (const deed of [street, railway, utility]) {
-    expect(deed.isDeed).toBe(true);
+  const heights: Record<string, number> = {};
+  for (const [label, index] of Object.entries(samples)) {
+    heights[label] = await measure(index);
   }
-  expect(street.height).toBe(railway.height);
-  expect(railway.height).toBe(utility.height);
 
-  // A space with no deed stays compact rather than padding out to deed height.
-  const tax = await measure('Income Tax');
-  expect(tax.isDeed).toBe(false);
-  expect(tax.height).toBeLessThan(street.height);
+  expect(new Set(Object.values(heights)).size, JSON.stringify(heights)).toBe(1);
 });

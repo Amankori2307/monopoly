@@ -4,8 +4,10 @@ import type {
   ThemeToken,
 } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
+import { useAnimatedTokenPositions } from '../hooks/useAnimatedTokenPositions';
 import { BoardCenter } from './BoardCenter';
 import { BoardSpaceCell } from './BoardSpaceCell';
+import { BoardTokenLayer } from './BoardTokenLayer';
 
 interface BoardGridProps {
   board: BoardSpace[];
@@ -13,10 +15,8 @@ interface BoardGridProps {
   centerSubtitle: string;
   findToken: (tokenId: string) => ThemeToken | undefined;
   onSelectSpace: (spaceId: string) => void;
-  playersByPosition: Map<number, PlayerState[]>;
+  players: PlayerState[];
 }
-
-const NO_PLAYERS: PlayerState[] = [];
 
 export function BoardGrid({
   board,
@@ -24,21 +24,29 @@ export function BoardGrid({
   centerSubtitle,
   findToken,
   onSelectSpace,
-  playersByPosition,
+  players,
 }: BoardGridProps) {
+  // Display positions lag the engine while a token walks to its new space.
+  const tokenPositions = useAnimatedTokenPositions(players);
+  const occupied = new Set(Object.values(tokenPositions));
+
   return (
     <section className="board-card panel">
       <div className="board-grid" data-testid={TEST_IDS.boardGrid}>
         <BoardCenter subtitle={centerSubtitle} title={centerTitle} />
         {board.map((space) => (
           <BoardSpaceCell
-            findToken={findToken}
+            isOccupied={occupied.has(space.index)}
             key={space.id}
             onSelect={onSelectSpace}
-            playersOnSpace={playersByPosition.get(space.index) ?? NO_PLAYERS}
             space={space}
           />
         ))}
+        <BoardTokenLayer
+          findToken={findToken}
+          players={players}
+          positions={tokenPositions}
+        />
       </div>
     </section>
   );

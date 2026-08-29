@@ -18,6 +18,7 @@ export const TEST_IDS = {
   boardCenter: 'board-center',
   boardSpace: 'board-space',
   spaceColorBar: 'space-color-bar',
+  boardTokenLayer: 'board-token-layer',
   spacePlayerToken: 'space-player-token',
 
   // Overlays

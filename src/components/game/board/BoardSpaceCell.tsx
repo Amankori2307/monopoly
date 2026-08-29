@@ -11,10 +11,11 @@ import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.consta
 import { getCornerIcon, getSpaceIcon } from '../spaceIcons.constants';
 
 interface BoardSpaceCellProps {
-  space: BoardSpace;
-  playersOnSpace: PlayerState[];
-  findToken: (tokenId: string) => ThemeToken | undefined;
+  /** Whether any token currently sits here - tokens themselves are drawn by
+   * BoardTokenLayer, over the board rather than inside the cell. */
+  isOccupied: boolean;
   onSelect: (spaceId: string) => void;
+  space: BoardSpace;
 }
 
 /**
@@ -24,17 +25,11 @@ interface BoardSpaceCellProps {
  * short side, on the edge facing the board centre, as on a printed board. Layout
  * per side lives in components/_board.scss.
  */
-export function BoardSpaceCell({
-  space,
-  playersOnSpace,
-  findToken,
-  onSelect,
-}: BoardSpaceCellProps) {
+export function BoardSpaceCell({ isOccupied, onSelect, space }: BoardSpaceCellProps) {
   const position = boardIndexToGridPosition(space.index);
   const cornerIcon = getCornerIcon(space);
   const spaceIcon = getSpaceIcon(space);
   const isCorner = CORNER_POSITIONS.includes(space.index as never);
-  const isOccupied = playersOnSpace.length > 0;
 
   const className = [
     'board-space',
@@ -77,19 +72,6 @@ export function BoardSpaceCell({
             <strong className="space-name">{space.name}</strong>
           </div>
         )}
-
-        <div className="space-players">
-          {playersOnSpace.map((player) => (
-            <span
-              className="token-chip"
-              data-testid={TEST_IDS.spacePlayerToken}
-              key={player.id}
-              title={player.name}
-            >
-              {findToken(player.tokenId)?.emoji ?? player.name.charAt(0)}
-            </span>
-          ))}
-        </div>
       </div>
     </button>
   );

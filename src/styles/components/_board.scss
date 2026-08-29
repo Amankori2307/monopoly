@@ -13,6 +13,7 @@
 }
 
 .board-grid {
+  position: relative;
   display: grid;
   grid-template-columns: t.$board-corner-track repeat(9, 1fr) t.$board-corner-track;
   grid-template-rows: t.$board-corner-track repeat(9, 1fr) t.$board-corner-track;
@@ -403,16 +404,37 @@
   }
 }
 
-.space-players {
-  flex: 0 0 auto;
+// ---------------------------------------------------------------------------
+// Token overlay
+//
+// Tokens are drawn over the board, not inside the cells. In the flow they made
+// an occupied cell taller than its neighbours and shifted the whole board.
+// The layer mirrors the board's grid template, so a token is placed by grid
+// cell rather than pixel maths, and can never change a cell's size.
+// ---------------------------------------------------------------------------
+.board-token-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: t.$board-corner-track repeat(9, 1fr) t.$board-corner-track;
+  grid-template-rows: t.$board-corner-track repeat(9, 1fr) t.$board-corner-track;
+  pointer-events: none;
+}
+
+.board-token-cell {
+  display: flex;
+  flex-wrap: wrap;
   align-items: end;
+  justify-content: center;
   gap: 2px;
-  min-height: 0;
-  padding: 0 t.$space-inset t.$space-inset;
+  min-width: 0;
+  padding: 2px;
 }
 
 .token-chip {
   display: inline-grid;
+  transition: transform 0.14s ease;
   place-items: center;
   width: clamp(11px, 1.35vw, 18px);
   height: clamp(11px, 1.35vw, 18px);

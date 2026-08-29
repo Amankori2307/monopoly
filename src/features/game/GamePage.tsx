@@ -76,7 +76,7 @@ export function GamePage() {
             centerTitle={BOARD_CENTER_TITLE}
             findToken={findToken}
             onSelectSpace={overlays.selectSpace}
-            playersByPosition={selectPlayersByPosition(activeGame)}
+            players={activeGame.playerOrder.map((id) => activeGame.players[id])}
           />
 
           <aside className="game-side" data-testid={TEST_IDS.gameSidebar}>

@@ -5,3 +5,7 @@ export const DICE_ROLL_DURATION_MS = 520;
 /** How often the shown faces change while tumbling. */
 export const DICE_SHUFFLE_INTERVAL_MS = 80;
 export const DICE_VOLUME = 0.42;
+
+/** Delay between a token's steps while it walks around the board. */
+export const TOKEN_STEP_INTERVAL_MS = 180;
+export const TOKEN_STEP_VOLUME = 0.35;
