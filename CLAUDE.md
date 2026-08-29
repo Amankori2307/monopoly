@@ -4,7 +4,9 @@ Guidance for Claude Code working in this repository.
 
 > **Every change ships with unit + integration + e2e tests, and updates its docs.**
 > Binding rules: [docs/coding-guidelines.md](docs/coding-guidelines.md) — read before writing code.
-> Deep architecture map: [docs/architecture.md](docs/architecture.md) · Ruleset source of truth: [docs/india-edition-rules.md](docs/india-edition-rules.md) · [Documentation contract](#documentation-contract)
+> **Lost? Start with [docs/file-index.md](docs/file-index.md)** — one line per file, what each one does.
+>
+> [Architecture](docs/architecture.md) · [Features](docs/features/README.md) · [Theming](docs/theming.md) · [Ruleset](docs/india-edition-rules.md) · [Documentation contract](#documentation-contract)
 
 ---
 
@@ -55,6 +57,9 @@ src/App.tsx                      routes only
        rules/rng.ts              RandomSource (Default / Seeded)
        board/, cards/, themes/   India Edition data
   └─ app/                        store wiring + typed hooks
+  └─ styles/                     SCSS: tokens, themes, components, pages
+       main.scss                 the one stylesheet App.tsx imports
+       themes/_themes.scss       theme engine -> [data-theme] custom properties
 ```
 
 **Dependency direction is one-way: `features` → `components`/`domain`; `domain` → nothing.** A `react` or `@reduxjs/toolkit` import inside `src/domain/` is always a bug.
@@ -112,12 +117,12 @@ pnpm dev          # Vite dev server on :3000
 pnpm build        # production build → build/
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
 pnpm test:e2e     # playwright (tests/e2e), auto-starts dev server
+pnpm lint         # eslint (config: .eslintrc.json)
+pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-⚠️ **`pnpm lint` / `lint:fix` / `check-all` / `fix-all` are currently broken** — there is no ESLint config anywhere in the repo (`No ESLint configuration found in .../src`). The scripts exist but fail. Add a config before depending on them; don't report "lint passes" without checking.
-
-Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc` clean, 5/5 unit tests passing.** Keep it that way — if you land a change, re-run both.
+Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc` clean, eslint clean, 5/5 unit tests passing, `nx build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 ---
 
@@ -132,15 +137,20 @@ Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc`
 **DRY — known duplication, fix on contact**
 | Duplicated | Locations |
 |---|---|
-| Street colour-group hex map (8 entries) | [GamePage.tsx:56](src/features/game/GamePage.tsx:56), [SpaceDetailCard.tsx:28](src/components/game/SpaceDetailCard.tsx:28) |
-| Electric-Company / Super-Tax icon ternary | [GamePage.tsx:283](src/features/game/GamePage.tsx:283), [SpaceDetailCard.tsx:43](src/components/game/SpaceDetailCard.tsx:43) |
-| `availableThemes.find(...)` theme lookup | [gameEngine.ts:37](src/domain/rules/gameEngine.ts:37), [GamePage.tsx:82](src/features/game/GamePage.tsx:82), [HomePage.tsx:52](src/features/setup/HomePage.tsx:52) |
-| `kind === 'street' \|\| 'railway' \|\| 'utility'` inline check (a `propertySpaceKinds` set already exists in the engine) | [gameEngine.ts:507](src/domain/rules/gameEngine.ts:507), [gameEngine.ts:676](src/domain/rules/gameEngine.ts:676), [GamePage.tsx:119](src/features/game/GamePage.tsx:119) |
+| Electric-Company / Super-Tax icon ternary | [GamePage.tsx:269](src/features/game/GamePage.tsx:269), [SpaceDetailCard.tsx:53](src/components/game/SpaceDetailCard.tsx:53) |
+| `availableThemes.find(...)` theme lookup | [gameEngine.ts:37](src/domain/rules/gameEngine.ts:37), [GamePage.tsx:63](src/features/game/GamePage.tsx:63), [HomePage.tsx:48](src/features/setup/HomePage.tsx:48) |
+| `kind === 'street' \|\| 'railway' \|\| 'utility'` inline check (a `propertySpaceKinds` set already exists in the engine) | [gameEngine.ts:558](src/domain/rules/gameEngine.ts:558), [gameEngine.ts:751](src/domain/rules/gameEngine.ts:751), [GamePage.tsx:101](src/features/game/GamePage.tsx:101) |
 | `theme?.currencySymbol ?? 'M'` — 5× in one file; a `formatMoney` helper exists but only in `SpaceDetailCard` | GamePage.tsx |
+
+*Resolved:* the duplicated street colour-group hex maps are gone — colours are now theme tokens with generated `.group-*` classes (see [docs/theming.md](docs/theming.md)).
 
 When you touch one of these, extract it (colors/icons → a shared board-presentation module; `formatMoney` + `isPropertySpace` → shared helpers) rather than adding a sixth copy.
 
-**Styling** — the active app uses one plain stylesheet, `src/app/app.css`, imported once in `App.tsx`. The `.scss` modules under `src/assets/css/` belong to the legacy island.
+**Styling** — SCSS under `src/styles/`, entry `main.scss`, imported once in `App.tsx`. Layered: `abstracts` (tokens, mixins) → `themes` → `base` → `layout` → `components` → `pages`.
+
+- **Never hardcode a colour.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming.
+- Themes are token maps in `themes/_themes.scss`, emitted as `[data-theme="<id>"]` blocks. A compile-time guard fails the build if a theme misses a contract token. See [docs/theming.md](docs/theming.md).
+- The `.scss` modules under `src/assets/css/` belong to the legacy island — do not add to them.
 
 **Testing — mandatory, all three levels.** Every feature, entity, and behaviour ships with **unit + integration + e2e** coverage in the same change. Unit: pure logic, `SeededRandomSource` for dice, cover every `throw` branch. Integration: thunk → engine → persistence → store, and pages via `src/test/renderWithProviders.tsx`. E2E: the user journey in Playwright, queried by accessible role and name.
 
@@ -150,8 +160,8 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 
 ## 8. Known gaps and traps
 
-- **Jail-fine bug**: [gameEngine.ts:767](src/domain/rules/gameEngine.ts:767) — `payJailFine` calls `resolveBankPayment`, which sets an `asset-liquidation` pending decision when the player can't afford `M50`; lines 773-781 then overwrite `pendingDecision` back to `none`, so a broke player leaves jail without paying.
-- **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:899](src/domain/rules/gameEngine.ts:899)). `saveRequired` is hardcoded `true`.
+- **Jail-fine bug**: [gameEngine.ts:858](src/domain/rules/gameEngine.ts:858) — `payJailFine` calls `resolveBankPayment`, which sets an `asset-liquidation` pending decision when the player can't afford `M50`; the lines immediately after then overwrite `pendingDecision` back to `none`, so a broke player leaves jail without paying.
+- **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:1013](src/domain/rules/gameEngine.ts:1013)). `saveRequired` is hardcoded `true`.
 - **No end condition**: `winnerPlayerId`, `status: 'completed'`, and the `game-over` decision are never set — games run forever.
 - **Bank inventory is cosmetic**: `housesAvailable`/`hotelsAvailable` are never decremented (building isn't implemented).
 - **Mortgaged properties** are skipped for rent but there is no way to mortgage yet.
@@ -174,5 +184,9 @@ Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a
 | Deleting part of the legacy island | §2 |
 | Adding tests, or fixing a harness blocker | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5 |
 | Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md) |
+| **Adding or removing any file** | [docs/file-index.md](docs/file-index.md) — one line saying what it does |
+| **Adding a feature** | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index |
+| Changing a feature's behaviour or decisions | that feature's doc in `docs/features/` |
+| Adding a theme, or changing theme tokens | [docs/theming.md](docs/theming.md) |
 
 Before finishing a task: re-read the sections you touched, delete anything now false, and re-run `npx tsc --noEmit` + `pnpm test`.
