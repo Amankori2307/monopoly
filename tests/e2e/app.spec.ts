@@ -1,9 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { PropertyAction } from '../../src/domain/types/game.enums';
-import {
-  scopedTestId,
-  TEST_IDS,
-} from '../../src/shared/constants/testIds.constants';
+import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
 
 /** Board indices of the four corner spaces, with their expected labels. */
 const CORNERS = [
@@ -71,12 +68,14 @@ test('renders every corner space square, aligned, and labelled', async ({ page }
   if (!go || !neighbour) {
     throw new Error('GO or its row neighbour has no layout box');
   }
-  expect(Math.abs(go.y + go.height - (neighbour.y + neighbour.height))).toBeLessThanOrEqual(
-    1
-  );
+  expect(
+    Math.abs(go.y + go.height - (neighbour.y + neighbour.height))
+  ).toBeLessThanOrEqual(1);
 });
 
-test('lays out the action rail, board, and sidebar in three columns', async ({ page }) => {
+test('lays out the action rail, board, and sidebar in three columns', async ({
+  page,
+}) => {
   await startGame(page);
 
   const rail = page.getByTestId(TEST_IDS.actionRail);
@@ -103,9 +102,7 @@ test('offers the four property actions, disabled while scaffolded', async ({ pag
   await startGame(page);
 
   for (const action of Object.values(PropertyAction)) {
-    const button = page.getByTestId(
-      scopedTestId(TEST_IDS.propertyActionButton, action)
-    );
+    const button = page.getByTestId(scopedTestId(TEST_IDS.propertyActionButton, action));
     await expect(button).toBeVisible();
     await expect(button).toBeDisabled();
   }
@@ -118,9 +115,7 @@ test('paints every action-rail button with its theme colour', async ({ page }) =
   await startGame(page);
 
   for (const action of Object.values(PropertyAction)) {
-    const button = page.getByTestId(
-      scopedTestId(TEST_IDS.propertyActionButton, action)
-    );
+    const button = page.getByTestId(scopedTestId(TEST_IDS.propertyActionButton, action));
     const background = await button.evaluate(
       (element) => getComputedStyle(element).backgroundColor
     );

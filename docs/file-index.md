@@ -78,7 +78,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                         | Ephemeral UI state not part of the saved game (auction bid input).                                      |
 | [persistence/persistence.ts](../src/features/persistence/persistence.ts)                   | localStorage read/write: save, load, delete, and the saved-game index.                                  |
 | [persistence/schema.ts](../src/features/persistence/schema.ts)                             | Zod schemas validating anything read back out of storage.                                               |
-| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                 | Static rules booklet page.                                                                              |
+| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                 | Rules booklet shell: header, section nav, and the section components.                                   |
+| [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                       | Integration tests: every nav link resolves to a rendered section.                                       |
 | [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                       | Shown when the routed game is missing or fails schema validation.                                       |
 | [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                 | Loads the routed game and resolves its theme and currency symbol.                                       |
 | [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)             | Binds every command the game screen dispatches.                                                         |
@@ -90,13 +91,18 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/components/game/` — presentational (props in, callbacks out, no store)
 
-| File                                                                        | What it does                                                                                |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [DiceDock.tsx](../src/components/game/DiceDock.tsx)                         | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.    |
-| [diceDock.constants.ts](../src/components/game/diceDock.constants.ts)       | Dice animation timing and volume.                                                           |
-| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx)           | Title-deed modal: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape. |
-| [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx) | Per-kind rendering, themed colour-group class, close on button/Escape/backdrop.             |
-| [spaceIcons.constants.ts](../src/components/game/spaceIcons.constants.ts)   | Icon lookup for board spaces, shared by the board cell and the title deed.                  |
+| File                                                                          | What it does                                                                                |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [DiceDock.tsx](../src/components/game/DiceDock.tsx)                           | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.    |
+| [diceDock.constants.ts](../src/components/game/diceDock.constants.ts)         | Dice animation timing and volume.                                                           |
+| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx)             | Title-deed modal: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape. |
+| [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx)   | Per-kind rendering, themed colour-group class, close on button/Escape/backdrop.             |
+| [spaceIcons.constants.ts](../src/components/game/spaceIcons.constants.ts)     | Icon lookup for board spaces, shared by the board cell and the title deed.                  |
+| [deed/StreetDeed.tsx](../src/components/game/deed/StreetDeed.tsx)             | Title-deed body for a street: colour band and full rent schedule.                           |
+| [deed/RailwayDeed.tsx](../src/components/game/deed/RailwayDeed.tsx)           | Title-deed body for a railway: rent by stations owned.                                      |
+| [deed/UtilityDeed.tsx](../src/components/game/deed/UtilityDeed.tsx)           | Title-deed body for a utility: dice-multiplier rents.                                       |
+| [deed/DeedPrimaryStats.tsx](../src/components/game/deed/DeedPrimaryStats.tsx) | Site value and mortgage value, shared by all three deed bodies.                             |
+| [deed/SpaceDescription.tsx](../src/components/game/deed/SpaceDescription.tsx) | Explanatory copy for spaces with no rent table (GO, tax, jail, decks).                      |
 
 ### Board
 
@@ -131,6 +137,23 @@ File-naming rules are in [conventions.md](conventions.md).
 | [SetupHero.tsx](../src/components/setup/SetupHero.tsx)             | Intro card: what the app is and the locked v1 scope.      |
 | [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx) | One player's name and token inputs.                       |
 | [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx) | Saved games with continue and delete, or the empty state. |
+
+## `src/components/rules/` — rules booklet sections
+
+Static prose, one component per booklet section, composed by `RulesPage`.
+
+| File                  | What it does                                  |
+| --------------------- | --------------------------------------------- |
+| `RulesIntro.tsx`      | A short history of Monopoly and this edition. |
+| `RulesStart.tsx`      | Setting up before the first roll.             |
+| `RulesTurn.tsx`       | What happens on a turn.                       |
+| `RulesBoard.tsx`      | Space-by-space board reference.               |
+| `RulesBoardExtra.tsx` | Additional board notes.                       |
+| `RulesJail.tsx`       | Going to and leaving Jail.                    |
+| `RulesBuildings.tsx`  | Houses and hotels.                            |
+| `RulesMoney.tsx`      | Money, rent, and mortgages.                   |
+| `RulesSpeedDie.tsx`   | Speed Die, deferred in this ruleset.          |
+| `RulesClosing.tsx`    | Closing notes.                                |
 
 ## `src/shared/` — cross-cutting helpers
 

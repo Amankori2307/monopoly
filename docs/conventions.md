@@ -169,8 +169,8 @@ Warnings, not errors, because splitting is a judgement call — but a warning is
 not to ignore. Data tables (`domain/board`, `domain/cards`) and `gameEngine.ts` are exempt; they
 are long by nature and splitting the engine is tracked separately.
 
-Current warnings are the standing refactor backlog: `RulesPage`, `HomePage`, and `GamePage` all
-exceed the function-length limit.
+**The codebase currently has zero lint warnings.** Keep it that way: if a change introduces one,
+split the file rather than raising the limit.
 
 ## 7. TypeScript
 
