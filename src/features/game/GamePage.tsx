@@ -5,6 +5,7 @@ import { availableThemes } from '../../domain/themes/indiaEditionTheme';
 import type { BoardSpace } from '../../domain/types/game';
 import { loadGameById, runGameCommand } from './gameSlice';
 import { setAuctionBidInput } from './uiSlice';
+import { DiceDock } from '../../components/game/DiceDock';
 import goIcon from '../../assets/images/board-corners/go.svg';
 import freeParkingIcon from '../../assets/images/board-corners/free-parking.svg';
 import justVisitingIcon from '../../assets/images/board-corners/just-visiting.svg';
@@ -87,6 +88,8 @@ export function GamePage() {
     const ownership = activeGame.ownership[space.id];
     return ownership?.ownerPlayerId === activePlayerId;
   });
+  const isJailRoll = activeGame.pendingDecision.type === 'jail-choice';
+  const canRollDice = activeGame.turn.phase === 'await_roll' || isJailRoll;
 
   const renderDecisionPanel = () => {
     if (activeGame.pendingDecision.type === 'landed-unowned-property') {
@@ -208,13 +211,6 @@ export function GamePage() {
             <button
               className="secondary-button"
               type="button"
-              onClick={() => dispatch(runGameCommand({ type: 'attemptJailRoll' }))}
-            >
-              Roll for doubles
-            </button>
-            <button
-              className="secondary-button"
-              type="button"
               disabled={activePlayer.jailFreeCards < 1}
               onClick={() => dispatch(runGameCommand({ type: 'useJailFreeCard' }))}
             >
@@ -330,15 +326,6 @@ export function GamePage() {
               </div>
               <p className="turn-location">At {currentSpace.name}</p>
               <div className="button-row">
-                {activeGame.turn.phase === 'await_roll' ? (
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() => dispatch(runGameCommand({ type: 'rollTurnDice' }))}
-                  >
-                    Roll dice
-                  </button>
-                ) : null}
                 {(activeGame.turn.phase === 'turn_complete' ||
                   activeGame.turn.phase === 'await_extra_roll_or_end') && (
                   <button
@@ -466,6 +453,18 @@ export function GamePage() {
             </section>
           </aside>
         </div>
+        <DiceDock
+          canRoll={canRollDice}
+          lastRoll={activeGame.turn.lastRoll}
+          onRoll={() =>
+            dispatch(
+              runGameCommand({
+                type: isJailRoll ? 'attemptJailRoll' : 'rollTurnDice',
+              })
+            )
+          }
+          rollLabel={isJailRoll ? 'Roll for doubles' : 'Roll dice'}
+        />
       </div>
     </div>
   );
