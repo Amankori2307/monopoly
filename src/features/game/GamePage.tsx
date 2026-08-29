@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { availableThemes } from '../../domain/themes/indiaEditionTheme';
@@ -6,16 +6,31 @@ import type { BoardSpace } from '../../domain/types/game';
 import { loadGameById, runGameCommand } from './gameSlice';
 import { setAuctionBidInput } from './uiSlice';
 import { DiceDock } from '../../components/game/DiceDock';
+import { SpaceDetailCard } from '../../components/game/SpaceDetailCard';
 import goIcon from '../../assets/images/board-corners/go.svg';
 import freeParkingIcon from '../../assets/images/board-corners/free-parking.svg';
 import justVisitingIcon from '../../assets/images/board-corners/just-visiting.svg';
 import goToJailIcon from '../../assets/images/board-corners/go-to-jail.svg';
+import railwayIcon from '../../assets/images/board-icons/railway.svg';
+import communityChestIcon from '../../assets/images/board-icons/community-chest.svg';
+import chanceIcon from '../../assets/images/board-icons/chance.svg';
+import waterWorksIcon from '../../assets/images/board-icons/water-works.svg';
+import electricCompanyIcon from '../../assets/images/board-icons/electric-company.svg';
+import taxIcon from '../../assets/images/board-icons/tax.svg';
+import superTaxIcon from '../../assets/images/board-icons/super-tax.svg';
 
 const cornerIcons: Partial<Record<BoardSpace['kind'], string>> = {
   go: goIcon,
   'free-parking': freeParkingIcon,
   jail: justVisitingIcon,
   'go-to-jail': goToJailIcon,
+};
+
+const spaceIcons: Partial<Record<BoardSpace['kind'], string>> = {
+  railway: railwayIcon,
+  'community-chest': communityChestIcon,
+  chance: chanceIcon,
+  tax: taxIcon,
 };
 
 const boardToGridPosition = (index: number) => {
@@ -57,6 +72,7 @@ export function GamePage() {
   const loadError = useAppSelector((state) => state.game.loadError);
   const uiHints = useAppSelector((state) => state.game.uiHints);
   const auctionBidInput = useAppSelector((state) => state.ui.auctionBidInput);
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(loadGameById(gameId));
@@ -84,6 +100,7 @@ export function GamePage() {
   const activePlayerId = activeGame.playerOrder[activeGame.activePlayerIndex];
   const activePlayer = activeGame.players[activePlayerId];
   const currentSpace = activeGame.board[activePlayer.position];
+  const selectedSpace = activeGame.board.find((space) => space.id === selectedSpaceId) ?? null;
   const ownedProperties = activeGame.board.filter((space) => {
     const ownership = activeGame.ownership[space.id];
     return ownership?.ownerPlayerId === activePlayerId;
@@ -267,13 +284,22 @@ export function GamePage() {
                   ? activeGame.players[ownership.ownerPlayerId]
                   : null;
                 const cornerIcon = cornerIcons[space.kind];
+                const spaceIcon = space.kind === 'utility' && space.name === 'Electric Company'
+                  ? electricCompanyIcon
+                  : space.kind === 'tax' && space.name === 'Super Tax'
+                    ? superTaxIcon
+                  : space.kind === 'utility'
+                    ? waterWorksIcon
+                    : spaceIcons[space.kind];
 
                 return (
-                  <div
+                  <button
+                    aria-label={`View details for ${space.name}`}
                     className={`board-space space-${space.kind} ${
                       playersOnSpace.length > 0 ? 'active-space' : ''
                     } ${[0, 10, 20, 30].includes(space.index) ? 'corner-space' : ''}`}
                     key={space.id}
+                    onClick={() => setSelectedSpaceId(space.id)}
                     style={{
                       gridRow: position.row,
                       gridColumn: position.column,
@@ -289,7 +315,10 @@ export function GamePage() {
                         <strong className="space-name">{space.name}</strong>
                       </div>
                     ) : (
-                      <strong className="space-name">{space.name}</strong>
+                      <div className="space-label">
+                        {spaceIcon ? <img alt="" aria-hidden="true" className="space-icon" src={spaceIcon} /> : null}
+                        <strong className="space-name">{space.name}</strong>
+                      </div>
                     )}
                     <div>
                       {owner ? <div className="space-owner">{owner.name.charAt(0)}</div> : null}
@@ -306,7 +335,7 @@ export function GamePage() {
                         })}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -464,6 +493,11 @@ export function GamePage() {
             )
           }
           rollLabel={isJailRoll ? 'Roll for doubles' : 'Roll dice'}
+        />
+        <SpaceDetailCard
+          currencySymbol={theme?.currencySymbol ?? 'M'}
+          onClose={() => setSelectedSpaceId(null)}
+          space={selectedSpace}
         />
       </div>
     </div>
