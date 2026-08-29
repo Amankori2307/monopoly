@@ -1,0 +1,213 @@
+# Conventions
+
+How code in this repo is named, organised, and enforced. Read with
+[coding-guidelines.md](coding-guidelines.md) (testing policy) and
+[architecture.md](architecture.md) (layers).
+
+**Most of this is machine-enforced.** `pnpm lint` fails the build on a violation, so these are
+rules, not suggestions. Where a rule is a warning rather than an error, it is called out below.
+
+---
+
+## 1. File naming
+
+Suffix says what a file contains. One purpose per file.
+
+| Pattern                   | Contains                                            | Example                 |
+| ------------------------- | --------------------------------------------------- | ----------------------- |
+| `PascalCase.tsx`          | Exactly one React component (same name as the file) | `BoardSpaceCell.tsx`    |
+| `camelCase.constants.ts`  | Constants and frozen lookup tables                  | `game.constants.ts`     |
+| `camelCase.enums.ts`      | Enums                                               | `game.enums.ts`         |
+| `camelCase.interfaces.ts` | Exported interfaces and type aliases                | `game.interfaces.ts`    |
+| `camelCase.utils.ts`      | Pure functions, no React, no state                  | `money.utils.ts`        |
+| `camelCase.selectors.ts`  | Pure derivations from state                         | `gameView.selectors.ts` |
+| `camelCase.ts`            | Everything else (slices, services)                  | `gameSlice.ts`          |
+| `*.test.ts(x)`            | Tests, beside the file under test                   | `space.utils.test.ts`   |
+| `_partial.scss`           | SCSS partial                                        | `_board.scss`           |
+
+Folders are `kebab-case`. Enforced by `check-file/filename-naming-convention` and
+`check-file/folder-naming-convention`.
+
+**Exceptions**, deliberate and narrow: `src/index.tsx` and `src/App.tsx` are entry points;
+`src/test/renderWithProviders.tsx` is a helper, not a component.
+
+## 2. Naming inside files
+
+| Thing                    | Convention                  | Notes                                                 |
+| ------------------------ | --------------------------- | ----------------------------------------------------- |
+| Interfaces, types, enums | `PascalCase`                | **No `I` prefix** — `PlayerState`, not `IPlayerState` |
+| Enum members             | `PascalCase`                | `SpaceKind.CommunityChest`                            |
+| Constants                | `UPPER_SNAKE_CASE`          | `STARTING_CASH`, `MAX_PLAYERS`                        |
+| Variables, parameters    | `camelCase`                 |                                                       |
+| Functions                | `camelCase`                 | Components are the `PascalCase` exception             |
+| Type parameters          | `TPascalCase`               | `T` prefix required                                   |
+| Booleans                 | `is` / `has` / `can` prefix | `isEnabled`, `canRollAgain`                           |
+| Predicates / type guards | `is*` returning `x is T`    | `isOwnableSpace`                                      |
+| Selectors                | `select*`                   | `selectActivePlayer`                                  |
+| Handler props            | `on*`                       | `onSelect`, `onRoll`                                  |
+| Factories                | `make*` / `create*`         | `makeTokenFinder`                                     |
+
+Enforced by `@typescript-eslint/naming-convention`.
+
+## 3. No hardcoded values
+
+**Never inline a magic string or number that has meaning.**
+
+- **Closed sets → enums** in `*.enums.ts`. `SpaceKind.Street`, never `'street'`. The compiler
+  then catches typos and finds every usage on rename.
+- **Ruleset numbers → constants** in `domain/constants/`. `STARTING_CASH`, never `1500`.
+- **Colours → theme tokens.** `var(--accent)` in SCSS, never a hex in a component partial.
+  See [theming.md](theming.md).
+- **Test selectors → `TEST_IDS`** in `shared/constants/testIds.constants.ts`.
+- **Copy that repeats → a constant.** One-off human prose can stay inline.
+
+String enums serialise to their plain values, so they are safe in persisted state.
+
+## 4. Keep logic out of components
+
+This is what makes the code testable — a pure function needs no DOM, no store, no render.
+
+```
+domain/**/*.utils.ts        rules and predicates      pure, no React
+features/**/*.selectors.ts  state -> view models      pure, no React
+components/**/*.tsx         view models -> markup     no store, no derivation
+features/**/*Page.tsx       wiring: select, derive, dispatch
+```
+
+A component should read as a list of elements and props. If it contains a `filter`, a `reduce`,
+or a chain of conditionals deciding _what_ to show rather than _how_, that belongs in a selector
+or a util.
+
+Concretely: `GamePage` selects state and calls selectors; `gameView.selectors.ts` builds view
+models; `BoardSpaceCell` renders one square. Each is independently testable.
+
+## 4b. Utility files — what goes where
+
+Not everything belongs in a component. Before adding a function to a `.tsx`, ask which of these
+it is:
+
+| Kind                     | Home                         | Rule                                                 |
+| ------------------------ | ---------------------------- | ---------------------------------------------------- |
+| Game rule or predicate   | `domain/**/*.utils.ts`       | Pure. No React, no store, no DOM.                    |
+| Derivation from state    | `features/**/*.selectors.ts` | Pure. Takes state, returns a view model.             |
+| Cross-cutting formatting | `shared/utils/*.utils.ts`    | Pure. Depends on nothing but domain types/constants. |
+| Stateful React behaviour | `**/hooks/useThing.ts`       | See section 4c.                                      |
+| Rendering                | `*.tsx`                      | Props in, elements out.                              |
+
+A function belongs in a util file if you can describe it without saying "when the user…" or
+"on screen". Being able to test it without rendering anything is the point.
+
+Existing utils: `space.utils` (board-space guards), `boardLayout.utils` (index → grid cell),
+`playerActions.utils` (what a player may do), `money.utils` (formatting),
+`setupValidation.utils` (form rules), `gameView.selectors` (state → view models).
+
+## 4c. Hooks
+
+Use a custom hook when behaviour is **stateful or effectful and belongs to React** — state that
+survives renders, subscriptions, timers, or store access. Pure logic is a util, not a hook.
+
+**Rules**
+
+- One hook per file, in a `hooks/` folder, named `useThing.ts` after the hook it exports.
+- Name the return type `UseThingResult`, and options `UseThingOptions`.
+- Return an object, not a positional tuple, once there is more than one value — call sites stay
+  readable and adding a field is not a breaking change.
+- **Every effect that subscribes must clean up.** Listeners, timers, intervals, and audio all get
+  torn down in the returned cleanup; test the unmount case.
+- Wrap returned callbacks in `useCallback` and derived objects in `useMemo` when they are passed
+  as props, so children do not re-render for nothing.
+- A hook that only wraps `useState` adds indirection without value — don't.
+- Keep hooks out of `domain/`. That layer must stay React-free.
+
+**Which React tool to reach for**
+
+| Need                                | Use                                                   |
+| ----------------------------------- | ----------------------------------------------------- |
+| Value derived from props/state      | Compute it during render; `useMemo` only if expensive |
+| Value derived from store state      | A selector in `*.selectors.ts`, called during render  |
+| State that outlives a render        | `useState` in a hook, not scattered in the component  |
+| Subscription, timer, or listener    | `useEffect` inside a hook, with cleanup               |
+| A stable callback passed to a child | `useCallback`                                         |
+| Reading the Redux store             | `useAppSelector` — never bare `useSelector`           |
+
+**Existing hooks**
+
+| Hook                                                                  | Owns                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------- |
+| [`useEscapeKey`](../src/shared/hooks/useEscapeKey.ts)                 | Escape-to-dismiss for overlays, with listener cleanup   |
+| [`useDiceRoller`](../src/components/game/hooks/useDiceRoller.ts)      | Dice animation, roll sound, timers, committing the roll |
+| [`useActiveGame`](../src/features/game/hooks/useActiveGame.ts)        | Loading the routed game and resolving its theme         |
+| [`useGameCommands`](../src/features/game/hooks/useGameCommands.ts)    | Every command the game screen dispatches                |
+| [`useSelectedSpace`](../src/features/game/hooks/useSelectedSpace.ts)  | Which space has its title deed open                     |
+| [`useGameSetupForm`](../src/features/setup/hooks/useGameSetupForm.ts) | Setup form state; validation delegated to a util        |
+
+The payoff is visible in the page components: `GamePage` went from 502 lines of mixed state,
+derivation, and markup to 140 lines of wiring.
+
+## 5. Component rules
+
+- **One component per file**, named the same as the file.
+- **Props interface beside the component**, named `<Component>Props`, not exported unless another
+  file needs it.
+- **Shared, exported view models go in `*.interfaces.ts`** — e.g.
+  `components/game/panels/panels.interfaces.ts`. They live in the component layer because
+  components may not import from `features/`, so the feature layer builds them and passes down.
+- **Presentational components take props and callbacks only** — no `useAppSelector`, no
+  `dispatch`. Enforced by `no-restricted-imports`.
+- **Sort props alphabetically** in JSX when there is no logical grouping; it makes diffs smaller.
+
+## 6. File and function size
+
+| Rule                     | Limit | Level   |
+| ------------------------ | ----- | ------- |
+| `max-lines`              | 300   | warning |
+| `max-lines-per-function` | 120   | warning |
+| `max-depth`              | 4     | warning |
+| `complexity`             | 12    | warning |
+
+Warnings, not errors, because splitting is a judgement call — but a warning is a signal to split,
+not to ignore. Data tables (`domain/board`, `domain/cards`) and `gameEngine.ts` are exempt; they
+are long by nature and splitting the engine is tracked separately.
+
+Current warnings are the standing refactor backlog: `RulesPage`, `HomePage`, and `GamePage` all
+exceed the function-length limit.
+
+## 7. TypeScript
+
+- **No `any`** (error). No casts — a needed cast means the type is wrong. `as never` is banned in
+  spirit and should never appear.
+- **Narrow discriminated unions** on `kind` / `type`; do not cast to the variant.
+- **`import type`** for type-only imports (auto-fixable).
+- **Prefer type guards** over inline condition chains — they narrow _and_ name the concept.
+- Non-null assertions (`!`) are a warning; prefer an explicit throw with a useful message.
+
+## 8. Enforcement
+
+| Convention             | Enforced by                                                    |
+| ---------------------- | -------------------------------------------------------------- |
+| Layer boundaries       | `no-restricted-imports` overrides in `.eslintrc.json`          |
+| File naming            | `check-file/filename-naming-convention`                        |
+| Folder naming          | `check-file/folder-naming-convention`                          |
+| Identifier naming      | `@typescript-eslint/naming-convention`                         |
+| No `any`               | `@typescript-eslint/no-explicit-any`                           |
+| No nested ternaries    | `no-nested-ternary`                                            |
+| File/function size     | `max-lines`, `max-lines-per-function`, `complexity` (warnings) |
+| Formatting             | Prettier (`pnpm format`)                                       |
+| Theme token discipline | `@error` guard in `themes/_themes.scss` at compile time        |
+
+Run everything before reporting work done:
+
+```bash
+npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e
+```
+
+## 9. Adding something new — checklist
+
+- [ ] File named per section 1, in the layer its dependencies allow
+- [ ] Identifiers named per section 2
+- [ ] No literal strings/numbers with meaning — enum, constant, or token (section 3)
+- [ ] Logic in a `.utils.ts` / `.selectors.ts`, not in the component (section 4)
+- [ ] `TEST_IDS` entry added for anything a test needs to select
+- [ ] Unit + integration + e2e tests ([coding-guidelines.md](coding-guidelines.md))
+- [ ] [file-index.md](file-index.md) row added
+- [ ] Feature doc added or updated in [features/](features/)

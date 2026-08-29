@@ -40,6 +40,24 @@ styles/
 ```
 
 Components consume `var(--token)` only; no partial hardcodes a colour. See [theming.md](theming.md).
+`utilities/` must stay last in `main.scss`: the `.group-*` classes are single-class selectors, so
+an equal-specificity component rule declared later would silently win.
+
+`src/shared/` holds cross-cutting helpers with no layer of their own — `TEST_IDS` and money
+formatting. Anything here must be dependency-free apart from `domain/` types and constants.
+
+### Where logic lives
+
+```
+domain/**/*.utils.ts        rules, predicates       pure
+features/**/*.selectors.ts  state -> view models    pure
+components/**/*.tsx         view models -> markup   no derivation, no store
+features/**/*Page.tsx       select, derive, dispatch
+```
+
+`GamePage` is wiring only; `gameView.selectors.ts` builds every view model the panels render.
+That split is what makes the screen's behaviour unit-testable without a DOM. See
+[conventions.md](conventions.md) section 4.
 
 These boundaries are enforced by ESLint `no-restricted-imports`, not just convention - a `react`
 import inside `src/domain/` fails `pnpm lint`.
@@ -48,7 +66,7 @@ import inside `src/domain/` fails `pnpm lint`.
 
 ## 2. Domain model
 
-All types live in one file, [`src/domain/types/game.ts`](../src/domain/types/game.ts). It is the single source of truth — extend it there rather than declaring local shapes.
+All types live in one file, [`src/domain/types/game.interfaces.ts`](../src/domain/types/game.interfaces.ts). It is the single source of truth — extend it there rather than declaring local shapes.
 
 ### Board spaces
 
@@ -166,7 +184,7 @@ Clicking any space opens `SpaceDetailCard` (title-deed modal, `role="dialog"`). 
 
 ### Add a game command
 
-1. Add the variant to `GameCommand` in `domain/types/game.ts`.
+1. Add the member to `GameCommandType` in `domain/types/game.enums.ts` and the variant to `GameCommand` in `domain/types/game.interfaces.ts`.
 2. Implement the `case` in `executeGameCommand` — reuse the helpers in §4; return new state, never mutate.
 3. If it introduces a decision, add the `PendingDecision` variant **and** a branch in `renderDecisionPanel()`.
 4. Unit-test it with `SeededRandomSource`.

@@ -1,13 +1,25 @@
 {
   "root": true,
-  "env": { "browser": true, "es2022": true, "node": true },
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module",
-    "ecmaFeatures": { "jsx": true }
+    "ecmaFeatures": {
+      "jsx": true
+    }
   },
-  "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y"],
+  "plugins": [
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "jsx-a11y",
+    "check-file"
+  ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -17,7 +29,11 @@
     "plugin:jsx-a11y/recommended",
     "prettier"
   ],
-  "settings": { "react": { "version": "detect" } },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "ignorePatterns": [
     "build",
     "coverage",
@@ -32,17 +48,34 @@
     "*.config.mjs"
   ],
   "rules": {
-    "eqeqeq": ["error", "smart"],
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
     "no-param-reassign": "error",
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/consistent-type-imports": [
       "error",
-      { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
+      {
+        "prefer": "type-imports",
+        "fixStyle": "inline-type-imports"
+      }
     ],
     "@typescript-eslint/no-unused-vars": [
       "error",
-      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
     ],
     "no-restricted-imports": [
       "error",
@@ -62,11 +95,184 @@
           }
         ]
       }
+    ],
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        "selector": "import",
+        "format": [
+          "camelCase",
+          "PascalCase"
+        ]
+      },
+      {
+        "selector": "default",
+        "format": [
+          "camelCase"
+        ],
+        "leadingUnderscore": "allow"
+      },
+      {
+        "selector": "variable",
+        "format": [
+          "camelCase",
+          "UPPER_CASE",
+          "PascalCase"
+        ],
+        "leadingUnderscore": "allow"
+      },
+      {
+        "selector": "parameter",
+        "format": [
+          "camelCase"
+        ],
+        "leadingUnderscore": "allow"
+      },
+      {
+        "selector": "function",
+        "format": [
+          "camelCase",
+          "PascalCase"
+        ]
+      },
+      {
+        "selector": "typeLike",
+        "format": [
+          "PascalCase"
+        ]
+      },
+      {
+        "selector": "interface",
+        "format": [
+          "PascalCase"
+        ],
+        "custom": {
+          "regex": "^I[A-Z]",
+          "match": false
+        }
+      },
+      {
+        "selector": "enum",
+        "format": [
+          "PascalCase"
+        ]
+      },
+      {
+        "selector": "enumMember",
+        "format": [
+          "PascalCase"
+        ]
+      },
+      {
+        "selector": "typeParameter",
+        "format": [
+          "PascalCase"
+        ],
+        "prefix": [
+          "T"
+        ]
+      },
+      {
+        "selector": "objectLiteralProperty",
+        "format": null
+      },
+      {
+        "selector": "typeProperty",
+        "format": null
+      },
+      {
+        "selector": "classProperty",
+        "format": [
+          "camelCase"
+        ]
+      },
+      {
+        "selector": "classMethod",
+        "format": [
+          "camelCase"
+        ]
+      }
+    ],
+    "max-lines": [
+      "warn",
+      {
+        "max": 300,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "max-lines-per-function": [
+      "warn",
+      {
+        "max": 120,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "max-depth": [
+      "warn",
+      4
+    ],
+    "complexity": [
+      "warn",
+      12
+    ],
+    "no-nested-ternary": "error",
+    "prefer-const": "error",
+    "no-else-return": "warn",
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    "check-file/filename-naming-convention": [
+      "error",
+      {
+        "**/*.constants.ts": "CAMEL_CASE",
+        "**/*.interfaces.ts": "CAMEL_CASE",
+        "**/*.enums.ts": "CAMEL_CASE",
+        "**/*.utils.ts": "CAMEL_CASE",
+        "**/*.selectors.ts": "CAMEL_CASE",
+        "src/components/**/*.tsx": "PASCAL_CASE",
+        "src/features/**/*.tsx": "PASCAL_CASE"
+      },
+      {
+        "ignoreMiddleExtensions": true
+      }
+    ],
+    "check-file/folder-naming-convention": [
+      "error",
+      {
+        "src/**/": "KEBAB_CASE"
+      }
     ]
   },
   "overrides": [
     {
-      "files": ["src/domain/**/*.ts", "src/domain/**/*.tsx"],
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx"
+      ],
+      "rules": {
+        "max-lines": "off",
+        "max-lines-per-function": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "check-file/filename-naming-convention": "off"
+      }
+    },
+    {
+      "files": [
+        "src/domain/board/**",
+        "src/domain/cards/**",
+        "src/domain/rules/gameEngine.ts"
+      ],
+      "rules": {
+        "max-lines": "off",
+        "max-lines-per-function": "off",
+        "complexity": "off"
+      }
+    },
+    {
+      "files": [
+        "src/domain/**/*.ts",
+        "src/domain/**/*.tsx"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -95,7 +301,11 @@
             ],
             "patterns": [
               {
-                "group": ["**/features/**", "**/components/**", "**/app/**"],
+                "group": [
+                  "**/features/**",
+                  "**/components/**",
+                  "**/app/**"
+                ],
                 "message": "Dependency direction is one-way: domain must not import from features, components, or app."
               }
             ]
@@ -104,14 +314,20 @@
       }
     },
     {
-      "files": ["src/components/**/*.tsx"],
+      "files": [
+        "src/components/**/*.tsx"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": ["**/app/hooks", "**/app/appStore", "**/features/**"],
+                "group": [
+                  "**/app/hooks",
+                  "**/app/appStore",
+                  "**/features/**"
+                ],
                 "message": "Presentational components take props and callbacks - no store access. See docs/coding-guidelines.md section 3."
               }
             ]
@@ -120,15 +336,24 @@
       }
     },
     {
-      "files": ["**/*.d.ts"],
+      "files": [
+        "**/*.d.ts"
+      ],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": "off"
       }
     },
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx", "tests/**/*.ts", "src/setupTests.ts"],
-      "env": { "node": true },
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "tests/**/*.ts",
+        "src/setupTests.ts"
+      ],
+      "env": {
+        "node": true
+      },
       "globals": {
         "describe": "readonly",
         "it": "readonly",

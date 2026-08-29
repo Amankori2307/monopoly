@@ -1,3 +1,22 @@
+/**
+ * Every shape the game is built from. Extend here rather than declaring local
+ * structural types, so there is one place to look for the model.
+ *
+ * Closed value sets live in game.enums.ts; ruleset numbers in
+ * ../constants/game.constants.ts.
+ */
+import type {
+  CardDeck,
+  CardEffectKind,
+  ColorGroup,
+  DeckName,
+  GameCommandType,
+  GameStatus,
+  PendingDecisionType,
+  SpaceKind,
+  TurnPhase,
+} from './game.enums';
+
 export type GameId = string;
 export type PlayerId = string;
 export type SpaceId = string;
@@ -5,37 +24,9 @@ export type CardId = string;
 export type ThemeId = string;
 export type AuctionId = string;
 export type RulesetId = string;
+export type TokenId = string;
 
-export type GameStatus = 'in_progress' | 'completed' | 'corrupt';
-export type TurnPhase =
-  | 'await_roll'
-  | 'resolving_movement'
-  | 'resolving_space'
-  | 'await_decision'
-  | 'await_extra_roll_or_end'
-  | 'turn_complete';
-
-export type SpaceKind =
-  | 'go'
-  | 'street'
-  | 'railway'
-  | 'utility'
-  | 'tax'
-  | 'chance'
-  | 'community-chest'
-  | 'jail'
-  | 'free-parking'
-  | 'go-to-jail';
-
-export type PendingDecisionType =
-  | 'none'
-  | 'landed-unowned-property'
-  | 'auction-bid'
-  | 'jail-choice'
-  | 'asset-liquidation'
-  | 'trade-response'
-  | 'bankruptcy-resolution'
-  | 'game-over';
+// -- Board -------------------------------------------------------------------
 
 export interface StreetRentTable {
   baseRent: number;
@@ -55,8 +46,8 @@ export interface BaseSpace {
 }
 
 export interface StreetSpace extends BaseSpace {
-  kind: 'street';
-  colorGroup: string;
+  kind: SpaceKind.Street;
+  colorGroup: ColorGroup;
   price: number;
   mortgageValue: number;
   houseCost: number;
@@ -65,14 +56,14 @@ export interface StreetSpace extends BaseSpace {
 }
 
 export interface RailwaySpace extends BaseSpace {
-  kind: 'railway';
+  kind: SpaceKind.Railway;
   price: number;
   mortgageValue: number;
   rentByCount: [number, number, number, number];
 }
 
 export interface UtilitySpace extends BaseSpace {
-  kind: 'utility';
+  kind: SpaceKind.Utility;
   price: number;
   mortgageValue: number;
   rentMultiplierOne: number;
@@ -80,12 +71,18 @@ export interface UtilitySpace extends BaseSpace {
 }
 
 export interface TaxSpace extends BaseSpace {
-  kind: 'tax';
+  kind: SpaceKind.Tax;
   amount: number;
 }
 
 export interface ActionSpace extends BaseSpace {
-  kind: 'go' | 'chance' | 'community-chest' | 'jail' | 'free-parking' | 'go-to-jail';
+  kind:
+    | SpaceKind.Go
+    | SpaceKind.Chance
+    | SpaceKind.CommunityChest
+    | SpaceKind.Jail
+    | SpaceKind.FreeParking
+    | SpaceKind.GoToJail;
 }
 
 export type BoardSpace =
@@ -95,10 +92,15 @@ export type BoardSpace =
   | TaxSpace
   | ActionSpace;
 
+/** Spaces a player can own. */
+export type OwnableSpace = StreetSpace | RailwaySpace | UtilitySpace;
+
+// -- Players and ownership ---------------------------------------------------
+
 export interface PlayerState {
   id: PlayerId;
   name: string;
-  tokenId: string;
+  tokenId: TokenId;
   cash: number;
   position: number;
   inJail: boolean;
@@ -120,26 +122,29 @@ export interface BankState {
   hotelsAvailable: number;
 }
 
+// -- Cards -------------------------------------------------------------------
+
+export type CardEffect =
+  | { kind: CardEffectKind.Collect; amount: number }
+  | { kind: CardEffectKind.Pay; amount: number }
+  | { kind: CardEffectKind.MoveTo; index: number; collectGo: boolean }
+  | { kind: CardEffectKind.MoveSteps; steps: number }
+  | { kind: CardEffectKind.GoToJail }
+  | { kind: CardEffectKind.JailFree }
+  | { kind: CardEffectKind.CollectFromEach; amount: number }
+  | { kind: CardEffectKind.PayEach; amount: number };
+
 export interface DeckCard {
   id: CardId;
-  deck: 'chance' | 'community-chest';
+  deck: CardDeck;
   title: string;
   description: string;
-  effect:
-    | { kind: 'collect'; amount: number }
-    | { kind: 'pay'; amount: number }
-    | { kind: 'move-to'; index: number; collectGo: boolean }
-    | { kind: 'move-steps'; steps: number }
-    | { kind: 'go-to-jail' }
-    | { kind: 'jail-free' }
-    | { kind: 'collect-from-each'; amount: number }
-    | { kind: 'pay-each'; amount: number };
+  effect: CardEffect;
 }
 
-export interface DeckState {
-  chance: DeckCard[];
-  communityChest: DeckCard[];
-}
+export type DeckState = Record<DeckName, DeckCard[]>;
+
+// -- Turn and decisions ------------------------------------------------------
 
 export interface TurnState {
   phase: TurnPhase;
@@ -149,51 +154,47 @@ export interface TurnState {
   reason: string | null;
 }
 
-export interface PendingDecisionBase {
-  type: PendingDecisionType;
+export interface PendingDecisionNone {
+  type: PendingDecisionType.None;
 }
 
-export interface PendingDecisionNone extends PendingDecisionBase {
-  type: 'none';
-}
-
-export interface PendingDecisionProperty extends PendingDecisionBase {
-  type: 'landed-unowned-property';
+export interface PendingDecisionProperty {
+  type: PendingDecisionType.LandedUnownedProperty;
   spaceId: SpaceId;
   playerId: PlayerId;
 }
 
-export interface PendingDecisionAuction extends PendingDecisionBase {
-  type: 'auction-bid';
+export interface PendingDecisionAuction {
+  type: PendingDecisionType.AuctionBid;
   auctionId: AuctionId;
 }
 
-export interface PendingDecisionJail extends PendingDecisionBase {
-  type: 'jail-choice';
+export interface PendingDecisionJail {
+  type: PendingDecisionType.JailChoice;
   playerId: PlayerId;
 }
 
-export interface PendingDecisionAssetLiquidation extends PendingDecisionBase {
-  type: 'asset-liquidation';
+export interface PendingDecisionAssetLiquidation {
+  type: PendingDecisionType.AssetLiquidation;
   playerId: PlayerId;
   amountDue: number;
   creditorPlayerId: PlayerId | null;
   reason: string;
 }
 
-export interface PendingDecisionTrade extends PendingDecisionBase {
-  type: 'trade-response';
+export interface PendingDecisionTrade {
+  type: PendingDecisionType.TradeResponse;
   proposerPlayerId: PlayerId;
   recipientPlayerId: PlayerId;
 }
 
-export interface PendingDecisionBankruptcy extends PendingDecisionBase {
-  type: 'bankruptcy-resolution';
+export interface PendingDecisionBankruptcy {
+  type: PendingDecisionType.BankruptcyResolution;
   playerId: PlayerId;
 }
 
-export interface PendingDecisionGameOver extends PendingDecisionBase {
-  type: 'game-over';
+export interface PendingDecisionGameOver {
+  type: PendingDecisionType.GameOver;
 }
 
 export type PendingDecision =
@@ -236,14 +237,23 @@ export interface GameEvent {
   message: string;
 }
 
+// -- Theme -------------------------------------------------------------------
+
+export interface ThemeToken {
+  id: TokenId;
+  label: string;
+  emoji: string;
+  color: string;
+}
+
 export interface ThemeConfig {
   id: ThemeId;
   name: string;
   currencySymbol: string;
-  accentColor: string;
-  background: string;
-  tokenCatalog: Array<{ id: string; label: string; emoji: string; color: string }>;
+  tokenCatalog: ThemeToken[];
 }
+
+// -- Root state --------------------------------------------------------------
 
 export interface GameState {
   version: number;
@@ -284,9 +294,11 @@ export interface StoredGameIndexEntry {
   winnerPlayerId: PlayerId | null;
 }
 
+// -- Commands ----------------------------------------------------------------
+
 export interface CreatePlayerInput {
   name: string;
-  tokenId: string;
+  tokenId: TokenId;
 }
 
 export interface CreateGameInput {
@@ -298,26 +310,32 @@ export interface CreateGameInput {
 }
 
 export type GameCommand =
-  | { type: 'createGame'; payload: CreateGameInput }
-  | { type: 'rollTurnDice' }
-  | { type: 'buyLandedAsset' }
-  | { type: 'declineLandedAsset' }
-  | { type: 'submitAuctionBid'; amount: number }
-  | { type: 'passAuction' }
-  | { type: 'payJailFine' }
-  | { type: 'useJailFreeCard' }
-  | { type: 'attemptJailRoll' }
-  | { type: 'endTurn' }
-  | { type: 'buildHouse'; spaceId: SpaceId }
-  | { type: 'buildHotel'; spaceId: SpaceId }
-  | { type: 'sellHouse'; spaceId: SpaceId }
-  | { type: 'sellHotel'; spaceId: SpaceId }
-  | { type: 'mortgageAsset'; spaceId: SpaceId }
-  | { type: 'unmortgageAsset'; spaceId: SpaceId }
-  | { type: 'proposeTrade'; payload: TradeState }
-  | { type: 'acceptTrade' }
-  | { type: 'rejectTrade' }
-  | { type: 'confirmBankruptcy' };
+  | { type: GameCommandType.CreateGame; payload: CreateGameInput }
+  | { type: GameCommandType.RollTurnDice }
+  | { type: GameCommandType.BuyLandedAsset }
+  | { type: GameCommandType.DeclineLandedAsset }
+  | { type: GameCommandType.SubmitAuctionBid; amount: number }
+  | { type: GameCommandType.PassAuction }
+  | { type: GameCommandType.PayJailFine }
+  | { type: GameCommandType.UseJailFreeCard }
+  | { type: GameCommandType.AttemptJailRoll }
+  | { type: GameCommandType.EndTurn }
+  | { type: GameCommandType.BuildHouse; spaceId: SpaceId }
+  | { type: GameCommandType.BuildHotel; spaceId: SpaceId }
+  | { type: GameCommandType.SellHouse; spaceId: SpaceId }
+  | { type: GameCommandType.SellHotel; spaceId: SpaceId }
+  | { type: GameCommandType.MortgageAsset; spaceId: SpaceId }
+  | { type: GameCommandType.UnmortgageAsset; spaceId: SpaceId }
+  | { type: GameCommandType.ProposeTrade; payload: TradeState }
+  | { type: GameCommandType.AcceptTrade }
+  | { type: GameCommandType.RejectTrade }
+  | { type: GameCommandType.ConfirmBankruptcy };
+
+/** Any command the UI may dispatch after the game exists. */
+export type RuntimeGameCommand = Exclude<
+  GameCommand,
+  { type: GameCommandType.CreateGame }
+>;
 
 export interface GameCommandResult {
   nextState: GameState;

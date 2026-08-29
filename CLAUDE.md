@@ -6,7 +6,7 @@ Guidance for Claude Code working in this repository.
 > Binding rules: [docs/coding-guidelines.md](docs/coding-guidelines.md) — read before writing code.
 > **Lost? Start with [docs/file-index.md](docs/file-index.md)** — one line per file, what each one does.
 >
-> [Architecture](docs/architecture.md) · [Features](docs/features/README.md) · [Theming](docs/theming.md) · [Ruleset](docs/india-edition-rules.md) · [Documentation contract](#documentation-contract)
+> [Conventions](docs/conventions.md) · [Architecture](docs/architecture.md) · [Features](docs/features/README.md) · [Theming](docs/theming.md) · [Ruleset](docs/india-edition-rules.md) · [Documentation contract](#documentation-contract)
 
 ---
 
@@ -142,9 +142,7 @@ Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc`
 **DRY — known duplication, fix on contact**
 | Duplicated | Locations |
 |---|---|
-| Electric-Company / Super-Tax icon ternary | [GamePage.tsx:269](src/features/game/GamePage.tsx:269), [SpaceDetailCard.tsx:53](src/components/game/SpaceDetailCard.tsx:53) |
 | `availableThemes.find(...)` theme lookup | [gameEngine.ts:37](src/domain/rules/gameEngine.ts:37), [GamePage.tsx:63](src/features/game/GamePage.tsx:63), [HomePage.tsx:48](src/features/setup/HomePage.tsx:48) |
-| `kind === 'street' \|\| 'railway' \|\| 'utility'` inline check (a `propertySpaceKinds` set already exists in the engine) | [gameEngine.ts:558](src/domain/rules/gameEngine.ts:558), [gameEngine.ts:751](src/domain/rules/gameEngine.ts:751), [GamePage.tsx:101](src/features/game/GamePage.tsx:101) |
 | `theme?.currencySymbol ?? 'M'` — 5× in one file; a `formatMoney` helper exists but only in `SpaceDetailCard` | GamePage.tsx |
 
 _Resolved:_ the duplicated street colour-group hex maps are gone — colours are now theme tokens with generated `.group-*` classes (see [docs/theming.md](docs/theming.md)).

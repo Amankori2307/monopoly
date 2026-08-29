@@ -25,7 +25,8 @@ $theme-contract: surface-app surface-panel surface-board surface-input surface-m
   border-space border-dashed focus-ring shadow-panel shadow-board board-space-bg
   board-space-hover board-active-outline ribbon-bg ribbon-border ribbon-outline
   ribbon-text deck-community-bg deck-chance-bg decision-bg decision-border badge-bg
-  token-bg danger-bg error-text;
+  token-bg danger-bg error-text action-build action-sell action-mortgage action-redeem
+  action-text;
 
 $themes: (
   // -- India Edition: the shipped look. -------------------------------------
@@ -79,6 +80,12 @@ $themes: (
       token-bg: #f1df9d,
       danger-bg: #2b3127,
       error-text: #9a2e24,
+
+      action-build: #1f7a3d,
+      action-sell: #e0b90c,
+      action-mortgage: #c8382c,
+      action-redeem: #2547a8,
+      action-text: #fffaf0,
 
       group-brown: #8d5a2b,
       group-light-blue: #8fd3ff,
@@ -144,6 +151,12 @@ $themes: (
       danger-bg: #0e1116,
       error-text: #ff8b7d,
 
+      action-build: #2e9257,
+      action-sell: #c9a227,
+      action-mortgage: #d4483c,
+      action-redeem: #4a6fd4,
+      action-text: #f4f7fb,
+
       group-brown: #9c6a3a,
       group-light-blue: #6bb6e8,
       group-pink: #d8629b,
@@ -187,4 +200,3 @@ $default-theme: 'india-edition';
     @include emit-theme-vars($tokens);
   }
 }
-

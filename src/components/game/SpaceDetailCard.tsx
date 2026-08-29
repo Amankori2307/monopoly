@@ -1,12 +1,10 @@
-import { useEffect } from 'react';
-import type { BoardSpace } from '../../domain/types/game';
-import railwayIcon from '../../assets/images/board-icons/railway.svg';
-import communityChestIcon from '../../assets/images/board-icons/community-chest.svg';
-import chanceIcon from '../../assets/images/board-icons/chance.svg';
-import waterWorksIcon from '../../assets/images/board-icons/water-works.svg';
-import electricCompanyIcon from '../../assets/images/board-icons/electric-company.svg';
-import taxIcon from '../../assets/images/board-icons/tax.svg';
-import superTaxIcon from '../../assets/images/board-icons/super-tax.svg';
+import { SpaceKind } from '../../domain/types/game.enums';
+import type { BoardSpace } from '../../domain/types/game.interfaces';
+import { GO_SALARY_DISPLAY_AMOUNT } from '../../domain/constants/display.constants';
+import { formatMoney } from '../../shared/utils/money.utils';
+import { TEST_IDS } from '../../shared/constants/testIds.constants';
+import { useEscapeKey } from '../../shared/hooks/useEscapeKey';
+import { getSpaceIcon } from './spaceIcons.constants';
 
 interface SpaceDetailCardProps {
   currencySymbol: string;
@@ -14,48 +12,19 @@ interface SpaceDetailCardProps {
   space: BoardSpace | null;
 }
 
-const formatMoney = (amount: number, currencySymbol: string) =>
-  `${currencySymbol}${amount}`;
-
-const detailIcons: Partial<Record<BoardSpace['kind'], string>> = {
-  railway: railwayIcon,
-  chance: chanceIcon,
-  'community-chest': communityChestIcon,
-  utility: waterWorksIcon,
-  tax: taxIcon,
-};
-
 export function SpaceDetailCard({
   currencySymbol,
   onClose,
   space,
 }: SpaceDetailCardProps) {
-  useEffect(() => {
-    if (!space) {
-      return undefined;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose, space]);
+  useEscapeKey(Boolean(space), onClose);
 
   if (!space) {
     return null;
   }
 
-  const icon =
-    space.kind === 'utility' && space.name === 'Electric Company'
-      ? electricCompanyIcon
-      : space.kind === 'tax' && space.name === 'Super Tax'
-        ? superTaxIcon
-        : detailIcons[space.kind];
-  const title = space.kind === 'street' ? 'Title deed' : 'Board space';
+  const icon = getSpaceIcon(space);
+  const title = space.kind === SpaceKind.Street ? 'Title deed' : 'Board space';
 
   return (
     <div
@@ -71,6 +40,7 @@ export function SpaceDetailCard({
         aria-labelledby="space-detail-title"
         aria-modal="true"
         className={`space-detail-card detail-${space.kind}`}
+        data-testid={TEST_IDS.spaceDetailCard}
         role="dialog"
       >
         <button
@@ -89,9 +59,12 @@ export function SpaceDetailCard({
           <h2 id="space-detail-title">{space.name}</h2>
         </div>
 
-        {space.kind === 'street' ? (
+        {space.kind === SpaceKind.Street ? (
           <>
-            <div className={`deed-band group-${space.colorGroup}`} />
+            <div
+              className={`deed-band group-${space.colorGroup}`}
+              data-testid={TEST_IDS.deedBand}
+            />
             <div className="deed-primary-stats">
               <span>
                 Site value<strong>{formatMoney(space.price, currencySymbol)}</strong>
@@ -102,7 +75,7 @@ export function SpaceDetailCard({
               </span>
             </div>
             <p className="deed-rent-title">Rent schedule</p>
-            <dl className="rent-schedule">
+            <dl className="rent-schedule" data-testid={TEST_IDS.rentSchedule}>
               <div>
                 <dt>Rent</dt>
                 <dd>{formatMoney(space.rents.baseRent, currencySymbol)}</dd>
@@ -139,7 +112,7 @@ export function SpaceDetailCard({
           </>
         ) : null}
 
-        {space.kind === 'railway' ? (
+        {space.kind === SpaceKind.Railway ? (
           <>
             <div className="deed-primary-stats">
               <span>
@@ -151,7 +124,7 @@ export function SpaceDetailCard({
               </span>
             </div>
             <p className="deed-rent-title">Rent by stations owned</p>
-            <dl className="rent-schedule">
+            <dl className="rent-schedule" data-testid={TEST_IDS.rentSchedule}>
               {space.rentByCount.map((rent, index) => (
                 <div key={rent}>
                   <dt>
@@ -164,7 +137,7 @@ export function SpaceDetailCard({
           </>
         ) : null}
 
-        {space.kind === 'utility' ? (
+        {space.kind === SpaceKind.Utility ? (
           <>
             <div className="deed-primary-stats">
               <span>
@@ -176,7 +149,7 @@ export function SpaceDetailCard({
               </span>
             </div>
             <p className="detail-copy">Rent is based on the dice roll.</p>
-            <dl className="rent-schedule">
+            <dl className="rent-schedule" data-testid={TEST_IDS.rentSchedule}>
               <div>
                 <dt>One utility owned</dt>
                 <dd>{space.rentMultiplierOne}x dice</dd>
@@ -189,7 +162,7 @@ export function SpaceDetailCard({
           </>
         ) : null}
 
-        {space.kind === 'community-chest' || space.kind === 'chance' ? (
+        {space.kind === SpaceKind.CommunityChest || space.kind === SpaceKind.Chance ? (
           <p className="detail-copy">
             Land here to draw the top card, follow its instruction immediately, then
             return it to the bottom of its deck. Get Out of Jail Free cards are kept until
@@ -197,26 +170,27 @@ export function SpaceDetailCard({
           </p>
         ) : null}
 
-        {space.kind === 'tax' ? (
+        {space.kind === SpaceKind.Tax ? (
           <p className="detail-copy">
             Pay the Bank {formatMoney(space.amount, currencySymbol)}.
           </p>
         ) : null}
-        {space.kind === 'go' ? (
+        {space.kind === SpaceKind.Go ? (
           <p className="detail-copy">
-            Collect {formatMoney(200, currencySymbol)} when you land on or pass GO.
+            Collect {formatMoney(GO_SALARY_DISPLAY_AMOUNT, currencySymbol)} when you land
+            on or pass GO.
           </p>
         ) : null}
-        {space.kind === 'free-parking' ? (
+        {space.kind === SpaceKind.FreeParking ? (
           <p className="detail-copy">Free Parking has no effect in this ruleset.</p>
         ) : null}
-        {space.kind === 'jail' ? (
+        {space.kind === SpaceKind.Jail ? (
           <p className="detail-copy">
             Just visiting is safe. Players sent here must use a jail exit option on their
             turn.
           </p>
         ) : null}
-        {space.kind === 'go-to-jail' ? (
+        {space.kind === SpaceKind.GoToJail ? (
           <p className="detail-copy">
             Move directly to Jail. Do not collect salary for passing GO.
           </p>

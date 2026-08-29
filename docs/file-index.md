@@ -6,6 +6,8 @@ Grouped by layer. Legacy-island files are listed last and are **not** part of th
 Keep this current — adding or removing a file means editing this table in the same change
 (see the Documentation contract in [CLAUDE.md](../CLAUDE.md)).
 
+File-naming rules are in [conventions.md](conventions.md).
+
 ---
 
 ## Entry points
@@ -25,66 +27,133 @@ Keep this current — adding or removing a file means editing this table in the 
 
 ## `src/domain/` — pure game logic (no React, no Redux, no DOM)
 
-| File                                                                     | What it does                                                                                                          |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| [types/game.ts](../src/domain/types/game.ts)                             | **All game types.** Board spaces, players, ownership, turn state, decisions, commands. Single source of truth.        |
-| [rules/gameEngine.ts](../src/domain/rules/gameEngine.ts)                 | **The rules engine.** `createGameState` + `executeGameCommand`. All turn, rent, auction, jail, and card logic.        |
-| [rules/rng.ts](../src/domain/rules/rng.ts)                               | Dice randomness: `RandomSource` interface, `DefaultRandomSource`, `SeededRandomSource` (tests), `rollDie`, `shuffle`. |
-| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)   | The 40 board spaces with prices, rents, and colour groups.                                                            |
-| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)   | Chance and Community Chest deck contents and their effects.                                                           |
-| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts) | Game-facing theme data: name, currency symbol, player token catalog. Colours live in SCSS.                            |
-| [rules/gameEngine.test.ts](../src/domain/rules/gameEngine.test.ts)       | Unit tests for the engine, using a seeded dice source.                                                                |
+### Types and constants
+
+| File                                                                           | What it does                                                                                                                                     |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [types/game.interfaces.ts](../src/domain/types/game.interfaces.ts)             | **All game shapes.** Board spaces, players, ownership, turn state, decisions, commands.                                                          |
+| [types/game.enums.ts](../src/domain/types/game.enums.ts)                       | **All closed value sets.** `SpaceKind`, `ColorGroup`, `TurnPhase`, `PendingDecisionType`, `GameCommandType`, `CardEffectKind`, `PropertyAction`. |
+| [constants/game.constants.ts](../src/domain/constants/game.constants.ts)       | Ruleset numbers: starting cash, GO salary, jail fine, board size, bank inventory, history cap.                                                   |
+| [constants/board.constants.ts](../src/domain/constants/board.constants.ts)     | Railway and utility prices, mortgage values, rent multipliers.                                                                                   |
+| [constants/display.constants.ts](../src/domain/constants/display.constants.ts) | Amounts quoted in explanatory copy, derived from the ruleset constants.                                                                          |
+
+### Rules
+
+| File                                                                       | What it does                                                                                               |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| [rules/gameEngine.ts](../src/domain/rules/gameEngine.ts)                   | **The rules engine.** `createGameState` + `executeGameCommand`: turn, rent, auction, jail, and card logic. |
+| [rules/rng.ts](../src/domain/rules/rng.ts)                                 | Dice randomness: `RandomSource`, `DefaultRandomSource`, `SeededRandomSource`, `rollDie`, `shuffle`.        |
+| [rules/space.utils.ts](../src/domain/rules/space.utils.ts)                 | Board-space type guards: `isOwnableSpace`, `isStreetSpace`.                                                |
+| [rules/playerActions.utils.ts](../src/domain/rules/playerActions.utils.ts) | Which property actions a player may take and why one is unavailable. Drives the action rail.               |
+
+### Data
+
+| File                                                                     | What it does                                                                        |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)   | The 40 board spaces with prices, rents, and colour groups.                          |
+| [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)   | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                        |
+| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)   | Chance and Community Chest deck contents and effects.                               |
+| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts) | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS. |
+
+### Domain tests
+
+| File                                                                                 | Covers                                                           |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| [rules/gameEngine.test.ts](../src/domain/rules/gameEngine.test.ts)                   | Engine defaults, buy decision, auction on decline (seeded dice). |
+| [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.             |
+| [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.               |
+| [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.              |
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
-| File                                                                     | What it does                                                                                                         |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                 | New-game setup form (names, tokens, theme) plus the saved-game list with resume/delete.                              |
-| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)       | Integration tests for setup rendering and name validation.                                                           |
-| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                   | The game screen: board grid, decision panels, player/holdings/activity panels.                                       |
-| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                   | Game state slice + the thunks that bridge UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`). |
-| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                       | Ephemeral UI state that isn't part of the saved game (currently the auction bid input).                              |
-| [persistence/persistence.ts](../src/features/persistence/persistence.ts) | localStorage read/write: save, load, delete, and the saved-game index.                                               |
-| [persistence/schema.ts](../src/features/persistence/schema.ts)           | Zod schemas validating anything read back out of storage.                                                            |
-| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)               | Static rules booklet page.                                                                                           |
+| File                                                                               | What it does                                                                                            |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                           | New-game setup form plus the saved-game list with resume/delete.                                        |
+| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                 | Integration tests for setup rendering and name validation.                                              |
+| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                             | Game screen **wiring only**: selects state, derives view models, dispatches commands.                   |
+| [game/gameView.selectors.ts](../src/features/game/gameView.selectors.ts)           | **Pure derivations**: game state → the view models the panels render. Where the screen's logic lives.   |
+| [game/gameView.selectors.test.ts](../src/features/game/gameView.selectors.test.ts) | Unit tests for every selector, including each decision view model.                                      |
+| [game/game.constants.ts](../src/features/game/game.constants.ts)                   | Game-screen copy constants (board centre title and subtitle).                                           |
+| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                             | Game slice + thunks bridging UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`). |
+| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                 | Ephemeral UI state not part of the saved game (auction bid input).                                      |
+| [persistence/persistence.ts](../src/features/persistence/persistence.ts)           | localStorage read/write: save, load, delete, and the saved-game index.                                  |
+| [persistence/schema.ts](../src/features/persistence/schema.ts)                     | Zod schemas validating anything read back out of storage.                                               |
+| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                         | Static rules booklet page.                                                                              |
 
 ## `src/components/game/` — presentational (props in, callbacks out, no store)
 
-| File                                                                        | What it does                                                                                                    |
-| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| [DiceDock.tsx](../src/components/game/DiceDock.tsx)                         | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.                        |
-| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx)           | Title-deed modal for a clicked space: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape. |
-| [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx) | Unit tests: per-kind rendering, themed colour-group class, close on button/Escape/backdrop.                     |
+| File                                                                        | What it does                                                                                |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [DiceDock.tsx](../src/components/game/DiceDock.tsx)                         | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.    |
+| [diceDock.constants.ts](../src/components/game/diceDock.constants.ts)       | Dice animation timing and volume.                                                           |
+| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx)           | Title-deed modal: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape. |
+| [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx) | Per-kind rendering, themed colour-group class, close on button/Escape/backdrop.             |
+| [spaceIcons.constants.ts](../src/components/game/spaceIcons.constants.ts)   | Icon lookup for board spaces, shared by the board cell and the title deed.                  |
+
+### Board
+
+| File                                                                        | What it does                                                      |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)           | The 11x11 board: centre plus all 40 space cells.                  |
+| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx) | One square: colour bar (streets only), icon, name, player tokens. |
+| [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)       | Decorative centre: deck markers and logo ribbon.                  |
+
+### Panels
+
+| File                                                                                                          | What it does                                                   |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                         | Left rail of property actions (Build/Sell/Mortgage/Redeem).    |
+| [panels/TurnPanel.tsx](../src/components/game/panels/TurnPanel.tsx)                                           | Whose turn it is, where they are, and the end-turn control.    |
+| [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                     | Player cards: cash, property count, position, jail status.     |
+| [panels/HoldingsPanel.tsx](../src/components/game/panels/HoldingsPanel.tsx)                                   | The active player's owned properties.                          |
+| [panels/ActivityPanel.tsx](../src/components/game/panels/ActivityPanel.tsx)                                   | Scrolling game event log.                                      |
+| [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                         | Surfaces engine `uiHints` (the "not implemented yet" notices). |
+| [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                             | Shared panel view models and decision handler types.           |
+| [panels/decisions/DecisionPanel.tsx](../src/components/game/panels/decisions/DecisionPanel.tsx)               | Picks the right decision UI for the pending decision.          |
+| [panels/decisions/BuyOrAuctionDecision.tsx](../src/components/game/panels/decisions/BuyOrAuctionDecision.tsx) | Buy-or-auction prompt on landing unowned.                      |
+| [panels/decisions/AuctionDecision.tsx](../src/components/game/panels/decisions/AuctionDecision.tsx)           | Auction bidding controls.                                      |
+| [panels/decisions/JailDecision.tsx](../src/components/game/panels/decisions/JailDecision.tsx)                 | Jail exit choices.                                             |
+| [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)   | Asset-liquidation notice.                                      |
+
+## `src/shared/` — cross-cutting helpers
+
+| File                                                                           | What it does                                                                            |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts) | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
+| [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                     | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
+| [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)           | Unit tests for money formatting.                                                        |
 
 ## `src/styles/` — SCSS
 
-| File                                                                          | What it does                                                                                                                      |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [main.scss](../src/styles/main.scss)                                          | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.                                                   |
-| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                     | **The theme engine.** Theme token maps, the contract guard, `[data-theme]` emission, and the generated `.group-*` colour classes. |
-| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)               | Non-themeable tokens: fonts, radii, spacing, breakpoints, board geometry, colour-group list.                                      |
-| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)               | Shared mixins: `below()` breakpoints, `mono-label()`, `card-surface()`.                                                           |
-| [base/\_reset.scss](../src/styles/base/_reset.scss)                           | Box-sizing, body, and default control resets.                                                                                     |
-| [base/\_typography.scss](../src/styles/base/_typography.scss)                 | Headings, `.eyebrow`, helper and error text.                                                                                      |
-| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                       | `.app-shell`, `.page`, and the shared grid/flex layout helpers.                                                                   |
-| [components/\_board.scss](../src/styles/components/_board.scss)               | Board grid, centre ribbon, deck markers, and **board space row templates** (streets get a colour bar, everything else does not).  |
-| [components/\_buttons.scss](../src/styles/components/_buttons.scss)           | Primary / secondary / danger buttons.                                                                                             |
-| [components/\_forms.scss](../src/styles/components/_forms.scss)               | Inputs, selects, labels, and the setup form grids.                                                                                |
-| [components/\_panels.scss](../src/styles/components/_panels.scss)             | Panel/hero/summary/decision card surfaces, headings, badges, empty states.                                                        |
-| [components/\_dice.scss](../src/styles/components/_dice.scss)                 | Dice dock, die faces, pip grid positions, tumble keyframes.                                                                       |
-| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss) | Title-deed modal: backdrop, card, colour band, rent table.                                                                        |
-| [components/\_player.scss](../src/styles/components/_player.scss)             | Player cards, metrics, and owned-property cards.                                                                                  |
-| [pages/\_game.scss](../src/styles/pages/_game.scss)                           | Game screen layout: board/side split, turn panel, activity list, responsive rules.                                                |
-| [pages/\_home.scss](../src/styles/pages/_home.scss)                           | Recent-games list styling.                                                                                                        |
-| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                         | Rules booklet typography and tables.                                                                                              |
+| File                                                                          | What it does                                                                                 |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [main.scss](../src/styles/main.scss)                                          | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.              |
+| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                     | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                   |
+| [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)   | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.  |
+| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)               | Non-themeable tokens: fonts, radii, spacing, breakpoints, board geometry, colour-group list. |
+| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)               | Shared mixins: `below()`, `mono-label()`, `card-surface()`.                                  |
+| [base/\_reset.scss](../src/styles/base/_reset.scss)                           | Box-sizing, body, default control resets.                                                    |
+| [base/\_typography.scss](../src/styles/base/_typography.scss)                 | Headings, `.eyebrow`, helper and error text.                                                 |
+| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                       | `.app-shell`, `.page`, shared grid/flex helpers.                                             |
+| [components/\_board.scss](../src/styles/components/_board.scss)               | Board grid, centre ribbon, deck markers, and **space row templates**.                        |
+| [components/\_action-rail.scss](../src/styles/components/_action-rail.scss)   | Property-action rail buttons and their responsive collapse.                                  |
+| [components/\_buttons.scss](../src/styles/components/_buttons.scss)           | Primary / secondary / danger buttons.                                                        |
+| [components/\_forms.scss](../src/styles/components/_forms.scss)               | Inputs, selects, labels, setup form grids.                                                   |
+| [components/\_panels.scss](../src/styles/components/_panels.scss)             | Panel/hero/summary/decision surfaces, headings, badges, empty states.                        |
+| [components/\_dice.scss](../src/styles/components/_dice.scss)                 | Dice dock, die faces, pip grid positions, tumble keyframes.                                  |
+| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss) | Title-deed modal: backdrop, card, colour band, rent table.                                   |
+| [components/\_player.scss](../src/styles/components/_player.scss)             | Player cards, metrics, owned-property cards.                                                 |
+| [pages/\_game.scss](../src/styles/pages/_game.scss)                           | Three-column game layout, turn panel, activity list, responsive rules.                       |
+| [pages/\_home.scss](../src/styles/pages/_home.scss)                           | Recent-games list styling.                                                                   |
+| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                         | Rules booklet typography and tables.                                                         |
 
 ## Test infrastructure
 
-| File                                                                    | What it does                                                                     |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx) | RTL helper wrapping a component in the Redux `Provider` + `MemoryRouter`.        |
-| [src/setupTests.ts](../src/setupTests.ts)                               | Vitest setup; loads jest-dom matchers.                                           |
-| [tests/e2e/app.spec.ts](../tests/e2e/app.spec.ts)                       | Playwright smoke journey: create a game, land on the board, open a space detail. |
+| File                                                                    | What it does                                                                                                               |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx) | RTL helper wrapping a component in the Redux `Provider` + `MemoryRouter`.                                                  |
+| [src/setupTests.ts](../src/setupTests.ts)                               | Vitest setup; loads jest-dom matchers.                                                                                     |
+| [tests/e2e/app.spec.ts](../tests/e2e/app.spec.ts)                       | Playwright journeys: create game, deed colour band, corner geometry, three-column layout, action rail, theming, dice roll. |
 
 ## Config
 
@@ -94,7 +163,7 @@ Keep this current — adding or removing a file means editing this table in the 
 | [project.json](../project.json)                 | NX targets wrapping Vite: serve, build, test, lint, preview.                              |
 | [nx.json](../nx.json)                           | NX workspace config: caching, target defaults.                                            |
 | [tsconfig.json](../tsconfig.json)               | TypeScript config. `strict: false` (gradual migration); path aliases declared but unused. |
-| [.eslintrc.json](../.eslintrc.json)             | ESLint rules, including the import bans that enforce layer boundaries.                    |
+| [.eslintrc.json](../.eslintrc.json)             | Lint rules: layer boundaries, naming conventions, file naming, size limits.               |
 | [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                              |
 | [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                          |
 | [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                              |

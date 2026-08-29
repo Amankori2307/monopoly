@@ -1,82 +1,39 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import {
-  availableThemes,
-  indiaEditionTheme,
-} from '../../domain/themes/indiaEditionTheme';
+import { PlayerConfigRow } from '../../components/setup/PlayerConfigRow';
+import { RecentGamesList } from '../../components/setup/RecentGamesList';
+import { SetupHero } from '../../components/setup/SetupHero';
+import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
+import { availableThemes } from '../../domain/themes/indiaEditionTheme';
+import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
+import { useGameSetupForm } from './hooks/useGameSetupForm';
 
-const clampPlayerCount = (value: number) => Math.max(2, Math.min(8, value));
-
+/** Wiring only: form state lives in useGameSetupForm, rendering in components/setup. */
 export function HomePage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const recentGames = useAppSelector((state) => state.game.recentGames);
   const loadError = useAppSelector((state) => state.game.loadError);
-
-  const [gameName, setGameName] = useState('');
-  const [playerCount, setPlayerCount] = useState(2);
-  const [themeId, setThemeId] = useState(indiaEditionTheme.id);
-  const [playerNames, setPlayerNames] = useState(['Player 1', 'Player 2']);
-  const [playerTokens, setPlayerTokens] = useState([
-    indiaEditionTheme.tokenCatalog[0].id,
-    indiaEditionTheme.tokenCatalog[1].id,
-  ]);
-  const [formError, setFormError] = useState<string | null>(null);
+  const form = useGameSetupForm();
 
   useEffect(() => {
     dispatch(bootstrapRecentGames());
   }, [dispatch]);
 
-  useEffect(() => {
-    setPlayerNames((currentNames) =>
-      Array.from(
-        { length: playerCount },
-        (_, index) => currentNames[index] ?? `Player ${index + 1}`
-      )
-    );
-    setPlayerTokens((currentTokens) =>
-      Array.from(
-        { length: playerCount },
-        (_, index) => currentTokens[index] ?? indiaEditionTheme.tokenCatalog[index].id
-      )
-    );
-  }, [playerCount]);
-
-  const selectedTheme = useMemo(
-    () => availableThemes.find((theme) => theme.id === themeId) ?? indiaEditionTheme,
-    [themeId]
-  );
-
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedNames = playerNames.map((name) => name.trim());
-    const uniqueNames = new Set(trimmedNames.map((name) => name.toLowerCase()));
-    const uniqueTokens = new Set(playerTokens);
-
-    if (trimmedNames.some((name) => name.length === 0)) {
-      setFormError('Every player needs a name.');
-      return;
-    }
-    if (uniqueNames.size !== trimmedNames.length) {
-      setFormError('Player names must be unique.');
-      return;
-    }
-    if (uniqueTokens.size !== playerTokens.length) {
-      setFormError('Each player must use a different token.');
+    const playerConfigs = form.validate();
+    if (!playerConfigs) {
       return;
     }
 
-    setFormError(null);
     const nextGame = dispatch(
       createNewGame({
-        name: gameName,
-        playerConfigs: trimmedNames.map((name, index) => ({
-          name,
-          tokenId: playerTokens[index],
-        })),
-        themeId,
+        name: form.gameName,
+        playerConfigs,
+        themeId: form.themeId,
         createdAt: new Date().toISOString(),
       })
     );
@@ -84,56 +41,34 @@ export function HomePage() {
   };
 
   return (
-    <div className="app-shell" data-theme={themeId}>
+    <div className="app-shell" data-theme={form.themeId}>
       <div className="page">
-        <section className="hero-card">
-          <div>
-            <h1>Monopoly India Edition</h1>
-            <p>
-              A typed, resumable rebuild of Monopoly India Edition with local saves,
-              stable game ids, and the rules engine separated from the UI.
-            </p>
-            <div className="button-row hero-actions">
-              <Link className="secondary-button" to="/rules">
-                Read the rules
-              </Link>
-            </div>
-          </div>
-          <div className="summary-card">
-            <h2>Locked v1 scope</h2>
-            <div className="summary-grid">
-              <span>Players</span>
-              <strong>2 to 8</strong>
-              <span>Persistence</span>
-              <strong>LocalStorage</strong>
-              <span>Ruleset</span>
-              <strong>India Edition</strong>
-              <span>Speed Die</span>
-              <strong>Planned later</strong>
-            </div>
-          </div>
-        </section>
+        <SetupHero />
 
         <div className="layout-grid">
           <section className="panel">
             <h2>Start a new game</h2>
-            <form className="setup-form" onSubmit={onSubmit}>
+            <form
+              className="setup-form"
+              data-testid={TEST_IDS.setupForm}
+              onSubmit={onSubmit}
+            >
               <div className="field-grid two">
                 <label>
                   Game name
                   <input
                     className="text-input"
-                    value={gameName}
-                    onChange={(event) => setGameName(event.target.value)}
+                    onChange={(event) => form.setGameName(event.target.value)}
                     placeholder="Optional"
+                    value={form.gameName}
                   />
                 </label>
                 <label>
                   Theme
                   <select
                     className="select-input"
-                    value={themeId}
-                    onChange={(event) => setThemeId(event.target.value)}
+                    onChange={(event) => form.setThemeId(event.target.value)}
+                    value={form.themeId}
                   >
                     {availableThemes.map((theme) => (
                       <option key={theme.id} value={theme.id}>
@@ -149,17 +84,15 @@ export function HomePage() {
                   Players
                   <input
                     className="text-input"
+                    max={MAX_PLAYERS}
+                    min={MIN_PLAYERS}
+                    onChange={(event) => form.setPlayerCount(Number(event.target.value))}
                     type="number"
-                    min={2}
-                    max={8}
-                    value={playerCount}
-                    onChange={(event) =>
-                      setPlayerCount(clampPlayerCount(Number(event.target.value)))
-                    }
+                    value={form.playerCount}
                   />
                 </label>
                 <div className="summary-card">
-                  <h3>{selectedTheme.name}</h3>
+                  <h3>{form.selectedTheme.name}</h3>
                   <p className="helper-text">
                     Starting cash M1500, GO salary M200, Jail fine M50.
                   </p>
@@ -167,45 +100,20 @@ export function HomePage() {
               </div>
 
               <div className="player-config-grid">
-                {Array.from({ length: playerCount }, (_, index) => (
-                  <div className="player-config-row" key={`player-${index + 1}`}>
-                    <label>
-                      Player {index + 1} name
-                      <input
-                        className="text-input"
-                        value={playerNames[index] ?? ''}
-                        onChange={(event) => {
-                          const nextNames = [...playerNames];
-                          nextNames[index] = event.target.value;
-                          setPlayerNames(nextNames);
-                        }}
-                      />
-                    </label>
-                    <label>
-                      Token
-                      <select
-                        className="select-input"
-                        value={
-                          playerTokens[index] ?? selectedTheme.tokenCatalog[index].id
-                        }
-                        onChange={(event) => {
-                          const nextTokens = [...playerTokens];
-                          nextTokens[index] = event.target.value;
-                          setPlayerTokens(nextTokens);
-                        }}
-                      >
-                        {selectedTheme.tokenCatalog.map((token) => (
-                          <option key={token.id} value={token.id}>
-                            {token.emoji} {token.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
+                {form.playerNames.map((name, index) => (
+                  <PlayerConfigRow
+                    index={index}
+                    key={`player-${index + 1}`}
+                    name={name}
+                    onNameChange={form.setPlayerName}
+                    onTokenChange={form.setPlayerToken}
+                    tokenCatalog={form.selectedTheme.tokenCatalog}
+                    tokenId={form.playerTokens[index] ?? ''}
+                  />
                 ))}
               </div>
 
-              {formError ? <div className="error-text">{formError}</div> : null}
+              {form.formError ? <div className="error-text">{form.formError}</div> : null}
               {loadError ? <div className="error-text">{loadError}</div> : null}
 
               <div className="button-row">
@@ -218,40 +126,11 @@ export function HomePage() {
 
           <section className="panel">
             <h2>Recent games</h2>
-            {recentGames.length === 0 ? (
-              <div className="empty-state">
-                No saved games yet. Create one to get started.
-              </div>
-            ) : (
-              <div className="recent-games">
-                {recentGames.map((game) => (
-                  <article className="recent-game-item" key={game.id}>
-                    <strong>{game.name}</strong>
-                    <div className="recent-game-meta">
-                      <span>{game.playerCount} players</span>
-                      <span>Turn {game.turnNumber}</span>
-                      <span>Updated {new Date(game.updatedAt).toLocaleString()}</span>
-                    </div>
-                    <div className="button-row">
-                      <button
-                        className="primary-button"
-                        type="button"
-                        onClick={() => navigate(`/game/${game.id}`)}
-                      >
-                        Continue
-                      </button>
-                      <button
-                        className="danger-button"
-                        type="button"
-                        onClick={() => dispatch(removeSavedGame(game.id))}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
+            <RecentGamesList
+              games={recentGames}
+              onContinue={(id) => navigate(`/game/${id}`)}
+              onDelete={(id) => dispatch(removeSavedGame(id))}
+            />
           </section>
         </div>
       </div>

@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../domain/board/indiaEditionBoard';
-import type { BoardSpace, StreetSpace } from '../../domain/types/game';
+import { SpaceKind } from '../../domain/types/game.enums';
+import type { BoardSpace, StreetSpace } from '../../domain/types/game.interfaces';
 import { SpaceDetailCard } from './SpaceDetailCard';
 
-const findSpace = (kind: BoardSpace['kind']): BoardSpace => {
+const findSpace = (kind: SpaceKind): BoardSpace => {
   const space = indiaEditionBoard.find((candidate) => candidate.kind === kind);
   if (!space) {
     throw new Error(`No ${kind} space on the board`);
@@ -25,7 +26,7 @@ describe('SpaceDetailCard', () => {
   });
 
   it('shows the full rent schedule for a street', () => {
-    const street = findSpace('street') as StreetSpace;
+    const street = findSpace(SpaceKind.Street) as StreetSpace;
     renderCard(street);
 
     expect(screen.getByRole('dialog', { name: street.name })).toBeInTheDocument();
@@ -37,7 +38,7 @@ describe('SpaceDetailCard', () => {
   // The colour band must carry the theme-driven group class rather than an inline
   // hex, otherwise the deed stops following the active theme.
   it('applies the themed colour-group class to a street colour band', () => {
-    const street = findSpace('street') as StreetSpace;
+    const street = findSpace(SpaceKind.Street) as StreetSpace;
     const { container } = render(
       <SpaceDetailCard currencySymbol="M" onClose={vi.fn()} space={street} />
     );
@@ -48,14 +49,14 @@ describe('SpaceDetailCard', () => {
   });
 
   it('describes rent as dice-based for a utility', () => {
-    renderCard(findSpace('utility'));
+    renderCard(findSpace(SpaceKind.Utility));
 
     expect(screen.getByText('Rent is based on the dice roll.')).toBeInTheDocument();
     expect(screen.getByText('Both utilities owned')).toBeInTheDocument();
   });
 
   it('closes on the close button', () => {
-    const onClose = renderCard(findSpace('railway'));
+    const onClose = renderCard(findSpace(SpaceKind.Railway));
 
     fireEvent.click(screen.getByRole('button', { name: 'Close space details' }));
 
@@ -63,7 +64,7 @@ describe('SpaceDetailCard', () => {
   });
 
   it('closes when Escape is pressed', () => {
-    const onClose = renderCard(findSpace('street'));
+    const onClose = renderCard(findSpace(SpaceKind.Street));
 
     fireEvent.keyDown(window, { key: 'Escape' });
 
@@ -71,7 +72,7 @@ describe('SpaceDetailCard', () => {
   });
 
   it('does not close when a click starts inside the card', () => {
-    const onClose = renderCard(findSpace('street'));
+    const onClose = renderCard(findSpace(SpaceKind.Street));
 
     fireEvent.mouseDown(screen.getByRole('dialog'));
 

@@ -1,30 +1,47 @@
 import { communityChestCards, chanceCards } from '../cards/indiaEditionCards';
 import { indiaEditionBoard, indiaEditionRulesetId } from '../board/indiaEditionBoard';
 import { availableThemes, indiaEditionTheme } from '../themes/indiaEditionTheme';
+import {
+  AUCTION_MIN_INCREMENT,
+  AUCTION_START_PRICE,
+  DOUBLES_BEFORE_JAIL,
+  GAME_STATE_VERSION,
+  HOTEL_BUILD_LEVEL,
+  HOTELS_AVAILABLE,
+  HOUSES_AVAILABLE,
+  JAIL_FINE,
+  JAIL_POSITION,
+  MAX_HISTORY_EVENTS,
+  MAX_JAIL_TURNS,
+  PASS_GO_AMOUNT,
+  STARTING_CASH,
+} from '../constants/game.constants';
+import {
+  CardEffectKind,
+  DeckName,
+  GameCommandType,
+  GameStatus,
+  PendingDecisionType,
+  SpaceKind,
+  TurnPhase,
+} from '../types/game.enums';
 import type {
   AuctionState,
   BoardSpace,
   CreateGameInput,
-  GameCommand,
   GameCommandResult,
   GameEvent,
   GameState,
+  OwnableSpace,
   OwnershipState,
   PlayerId,
   PlayerState,
+  RuntimeGameCommand,
   StreetSpace,
   ThemeConfig,
-} from '../types/game';
+} from '../types/game.interfaces';
+import { isOwnableSpace } from './space.utils';
 import { DefaultRandomSource, rollDie, shuffle, type RandomSource } from './rng';
-
-const GAME_STATE_VERSION = 1;
-const STARTING_CASH = 1500;
-const PASS_GO_AMOUNT = 200;
-const JAIL_FINE = 50;
-const AUCTION_START_PRICE = 10;
-const AUCTION_MIN_INCREMENT = 1;
-
-const propertySpaceKinds = new Set(['street', 'railway', 'utility']);
 
 const createEvent = (turnNumber: number, message: string): GameEvent => ({
   id: crypto.randomUUID(),
@@ -38,7 +55,7 @@ const getThemeOrDefault = (themeId: string): ThemeConfig =>
 
 const createOwnershipMap = (board: BoardSpace[]): Record<string, OwnershipState> =>
   board.reduce<Record<string, OwnershipState>>((accumulator, space) => {
-    if (propertySpaceKinds.has(space.kind)) {
+    if (isOwnableSpace(space)) {
       accumulator[space.id] = {
         ownerPlayerId: null,
         mortgaged: false,
@@ -116,7 +133,7 @@ const updateSpaceOwnership = (
 const appendEvents = (state: GameState, events: GameEvent[]): GameState => ({
   ...state,
   updatedAt: new Date().toISOString(),
-  history: [...events, ...state.history].slice(0, 120),
+  history: [...events, ...state.history].slice(0, MAX_HISTORY_EVENTS),
 });
 
 const getSpaceById = (state: GameState, spaceId: string): BoardSpace => {
@@ -169,7 +186,7 @@ const resolveBankPayment = (
   return {
     ...state,
     pendingDecision: {
-      type: 'asset-liquidation',
+      type: PendingDecisionType.AssetLiquidation,
       playerId,
       amountDue: amount,
       creditorPlayerId: null,
@@ -177,7 +194,7 @@ const resolveBankPayment = (
     },
     turn: {
       ...state.turn,
-      phase: 'await_decision',
+      phase: TurnPhase.AwaitDecision,
       reason,
     },
   };
@@ -206,7 +223,7 @@ const resolvePlayerPayment = (
   return {
     ...state,
     pendingDecision: {
-      type: 'asset-liquidation',
+      type: PendingDecisionType.AssetLiquidation,
       playerId: fromPlayerId,
       amountDue: amount,
       creditorPlayerId: toPlayerId,
@@ -214,7 +231,7 @@ const resolvePlayerPayment = (
     },
     turn: {
       ...state.turn,
-      phase: 'await_decision',
+      phase: TurnPhase.AwaitDecision,
       reason,
     },
   };
@@ -227,7 +244,7 @@ const ownsEntireColorSet = (
 ): boolean => {
   const matchingSpaces = state.board.filter(
     (space): space is StreetSpace =>
-      space.kind === 'street' && space.colorGroup === colorGroup
+      space.kind === SpaceKind.Street && space.colorGroup === colorGroup
   );
 
   return matchingSpaces.every(
@@ -241,7 +258,7 @@ const getStreetRent = (
   ownerPlayerId: PlayerId
 ): number => {
   const buildLevel = state.ownership[space.id]?.buildLevel ?? 0;
-  if (buildLevel === 5) return space.rents.withHotel;
+  if (buildLevel === HOTEL_BUILD_LEVEL) return space.rents.withHotel;
   if (buildLevel === 4) return space.rents.with4Houses;
   if (buildLevel === 3) return space.rents.with3Houses;
   if (buildLevel === 2) return space.rents.with2Houses;
@@ -254,10 +271,11 @@ const getStreetRent = (
 const getRailwayRent = (state: GameState, playerId: PlayerId): number => {
   const railwaysOwned = state.board.filter(
     (space) =>
-      space.kind === 'railway' && state.ownership[space.id]?.ownerPlayerId === playerId
+      space.kind === SpaceKind.Railway &&
+      state.ownership[space.id]?.ownerPlayerId === playerId
   ).length;
-  const firstRailway = state.board.find((space) => space.kind === 'railway');
-  return firstRailway?.kind === 'railway'
+  const firstRailway = state.board.find((space) => space.kind === SpaceKind.Railway);
+  return firstRailway?.kind === SpaceKind.Railway
     ? (firstRailway.rentByCount[Math.max(railwaysOwned - 1, 0)] ??
         firstRailway.rentByCount[0])
     : 25;
@@ -270,10 +288,11 @@ const getUtilityRent = (
 ): number => {
   const utilitiesOwned = state.board.filter(
     (space) =>
-      space.kind === 'utility' && state.ownership[space.id]?.ownerPlayerId === playerId
+      space.kind === SpaceKind.Utility &&
+      state.ownership[space.id]?.ownerPlayerId === playerId
   ).length;
-  const utility = state.board.find((space) => space.kind === 'utility');
-  if (!utility || utility.kind !== 'utility') {
+  const utility = state.board.find((space) => space.kind === SpaceKind.Utility);
+  if (!utility || utility.kind !== SpaceKind.Utility) {
     return 0;
   }
   return (
@@ -289,17 +308,17 @@ const sendPlayerToJail = (
 ): GameState => {
   let nextState = updatePlayer(state, playerId, (player) => ({
     ...player,
-    position: 10,
+    position: JAIL_POSITION,
     inJail: true,
     jailTurnsServed: 0,
   }));
 
   nextState = {
     ...nextState,
-    pendingDecision: { type: 'none' },
+    pendingDecision: { type: PendingDecisionType.None },
     turn: {
       ...nextState.turn,
-      phase: 'turn_complete',
+      phase: TurnPhase.TurnComplete,
       canRollAgain: false,
       reason,
     },
@@ -331,10 +350,12 @@ const completeAuctionIfPossible = (state: GameState): GameState => {
     return {
       ...state,
       auctionState: null,
-      pendingDecision: { type: 'none' },
+      pendingDecision: { type: PendingDecisionType.None },
       turn: {
         ...state.turn,
-        phase: state.turn.canRollAgain ? 'await_extra_roll_or_end' : 'turn_complete',
+        phase: state.turn.canRollAgain
+          ? TurnPhase.AwaitExtraRollOrEnd
+          : TurnPhase.TurnComplete,
         reason: null,
       },
     };
@@ -356,10 +377,12 @@ const completeAuctionIfPossible = (state: GameState): GameState => {
   nextState = {
     ...nextState,
     auctionState: null,
-    pendingDecision: { type: 'none' },
+    pendingDecision: { type: PendingDecisionType.None },
     turn: {
       ...nextState.turn,
-      phase: nextState.turn.canRollAgain ? 'await_extra_roll_or_end' : 'turn_complete',
+      phase: nextState.turn.canRollAgain
+        ? TurnPhase.AwaitExtraRollOrEnd
+        : TurnPhase.TurnComplete,
       reason: null,
     },
   };
@@ -392,10 +415,13 @@ const startAuction = (state: GameState, spaceId: string): GameState => {
     {
       ...state,
       auctionState,
-      pendingDecision: { type: 'auction-bid', auctionId: auctionState.id },
+      pendingDecision: {
+        type: PendingDecisionType.AuctionBid,
+        auctionId: auctionState.id,
+      },
       turn: {
         ...state.turn,
-        phase: 'await_decision',
+        phase: TurnPhase.AwaitDecision,
         reason: 'Auction in progress',
       },
     },
@@ -418,10 +444,10 @@ const advanceToNextTurn = (state: GameState): GameState => {
     activePlayerIndex: nextIndex,
     turnNumber: state.turnNumber + 1,
     pendingDecision: nextPlayer.inJail
-      ? { type: 'jail-choice', playerId: nextPlayer.id }
-      : { type: 'none' },
+      ? { type: PendingDecisionType.JailChoice, playerId: nextPlayer.id }
+      : { type: PendingDecisionType.None },
     turn: {
-      phase: nextPlayer.inJail ? 'await_decision' : 'await_roll',
+      phase: nextPlayer.inJail ? TurnPhase.AwaitDecision : TurnPhase.AwaitRoll,
       doublesCount: 0,
       lastRoll: null,
       canRollAgain: false,
@@ -432,10 +458,7 @@ const advanceToNextTurn = (state: GameState): GameState => {
   };
 };
 
-const resolveCard = (
-  state: GameState,
-  deckName: 'chance' | 'communityChest'
-): GameState => {
+const resolveCard = (state: GameState, deckName: DeckName): GameState => {
   const card = state.decks[deckName][0];
   const remainingCards = state.decks[deckName].slice(1);
   const activePlayer = getActivePlayer(state);
@@ -444,7 +467,9 @@ const resolveCard = (
     decks: {
       ...state.decks,
       [deckName]:
-        card.effect.kind === 'jail-free' ? remainingCards : [...remainingCards, card],
+        card.effect.kind === CardEffectKind.JailFree
+          ? remainingCards
+          : [...remainingCards, card],
     },
   };
 
@@ -455,21 +480,21 @@ const resolveCard = (
   const { effect } = card;
 
   switch (effect.kind) {
-    case 'collect':
+    case CardEffectKind.Collect:
       return updatePlayer(nextState, activePlayer.id, (player) => {
         return {
           ...player,
           cash: player.cash + effect.amount,
         };
       });
-    case 'pay':
+    case CardEffectKind.Pay:
       return resolveBankPayment(
         nextState,
         activePlayer.id,
         effect.amount,
         card.description
       );
-    case 'move-to': {
+    case CardEffectKind.MoveTo: {
       nextState = movePlayerTo(
         nextState,
         activePlayer.id,
@@ -478,21 +503,21 @@ const resolveCard = (
       );
       return resolveCurrentSpace(nextState, activePlayer.id, false);
     }
-    case 'move-steps': {
+    case CardEffectKind.MoveSteps: {
       const destination =
         (activePlayer.position + effect.steps + nextState.board.length) %
         nextState.board.length;
       nextState = movePlayerTo(nextState, activePlayer.id, destination, false);
       return resolveCurrentSpace(nextState, activePlayer.id, false);
     }
-    case 'go-to-jail':
+    case CardEffectKind.GoToJail:
       return sendPlayerToJail(nextState, activePlayer.id, 'Card sent player to Jail');
-    case 'jail-free':
+    case CardEffectKind.JailFree:
       return updatePlayer(nextState, activePlayer.id, (player) => ({
         ...player,
         jailFreeCards: player.jailFreeCards + 1,
       }));
-    case 'collect-from-each': {
+    case CardEffectKind.CollectFromEach: {
       state.playerOrder
         .filter(
           (playerId) =>
@@ -509,7 +534,7 @@ const resolveCard = (
         });
       return nextState;
     }
-    case 'pay-each': {
+    case CardEffectKind.PayEach: {
       state.playerOrder
         .filter(
           (playerId) =>
@@ -531,6 +556,33 @@ const resolveCard = (
   }
 };
 
+/** Rent owed on an ownable space, dispatched by the space's kind. */
+const getRentForSpace = (
+  state: GameState,
+  space: OwnableSpace,
+  ownerPlayerId: PlayerId,
+  diceTotal: number
+): number => {
+  if (space.kind === SpaceKind.Street) {
+    return getStreetRent(state, space, ownerPlayerId);
+  }
+  if (space.kind === SpaceKind.Railway) {
+    return getRailwayRent(state, ownerPlayerId);
+  }
+  return getUtilityRent(state, ownerPlayerId, diceTotal);
+};
+
+/** Which phase the turn lands in once the current space has resolved. */
+const resolvePhaseAfterLanding = (
+  isBlockedByDecision: boolean,
+  canRollAgain: boolean
+): TurnPhase => {
+  if (isBlockedByDecision) {
+    return TurnPhase.AwaitDecision;
+  }
+  return canRollAgain ? TurnPhase.AwaitExtraRollOrEnd : TurnPhase.TurnComplete;
+};
+
 const resolveCurrentSpace = (
   state: GameState,
   playerId: PlayerId,
@@ -541,47 +593,38 @@ const resolveCurrentSpace = (
   const lastRollTotal = state.turn.lastRoll?.reduce((sum, roll) => sum + roll, 0) ?? 0;
   let nextState = state;
 
-  if (space.kind === 'tax') {
+  if (space.kind === SpaceKind.Tax) {
     nextState = resolveBankPayment(
       nextState,
       player.id,
       space.amount,
       `${space.name} due`
     );
-  } else if (space.kind === 'go-to-jail') {
+  } else if (space.kind === SpaceKind.GoToJail) {
     return sendPlayerToJail(nextState, player.id, 'Landed on Go To Jail');
-  } else if (space.kind === 'chance') {
-    nextState = resolveCard(nextState, 'chance');
-  } else if (space.kind === 'community-chest') {
-    nextState = resolveCard(nextState, 'communityChest');
-  } else if (
-    space.kind === 'street' ||
-    space.kind === 'railway' ||
-    space.kind === 'utility'
-  ) {
+  } else if (space.kind === SpaceKind.Chance) {
+    nextState = resolveCard(nextState, DeckName.Chance);
+  } else if (space.kind === SpaceKind.CommunityChest) {
+    nextState = resolveCard(nextState, DeckName.CommunityChest);
+  } else if (isOwnableSpace(space)) {
     const ownership = nextState.ownership[space.id];
     if (!ownership.ownerPlayerId) {
       nextState = {
         ...nextState,
         pendingDecision: {
-          type: 'landed-unowned-property',
+          type: PendingDecisionType.LandedUnownedProperty,
           spaceId: space.id,
           playerId: player.id,
         },
         turn: {
           ...nextState.turn,
-          phase: 'await_decision',
+          phase: TurnPhase.AwaitDecision,
           reason: `Decide whether to buy ${space.name}.`,
         },
       };
     } else if (ownership.ownerPlayerId !== player.id && !ownership.mortgaged) {
       const owner = getPlayerById(nextState, ownership.ownerPlayerId);
-      const rent =
-        space.kind === 'street'
-          ? getStreetRent(nextState, space, owner.id)
-          : space.kind === 'railway'
-            ? getRailwayRent(nextState, owner.id)
-            : getUtilityRent(nextState, owner.id, lastRollTotal);
+      const rent = getRentForSpace(nextState, space, owner.id, lastRollTotal);
 
       nextState = resolvePlayerPayment(
         nextState,
@@ -599,18 +642,14 @@ const resolveCurrentSpace = (
     }
   }
 
-  const isBlockedByDecision = nextState.pendingDecision.type !== 'none';
+  const isBlockedByDecision = nextState.pendingDecision.type !== PendingDecisionType.None;
   const canRollAgain = allowExtraRoll && !isBlockedByDecision;
 
   return {
     ...nextState,
     turn: {
       ...nextState.turn,
-      phase: isBlockedByDecision
-        ? 'await_decision'
-        : canRollAgain
-          ? 'await_extra_roll_or_end'
-          : 'turn_complete',
+      phase: resolvePhaseAfterLanding(isBlockedByDecision, canRollAgain),
       canRollAgain,
       reason: isBlockedByDecision ? nextState.turn.reason : null,
     },
@@ -635,7 +674,7 @@ export const createGameState = (
     name,
     themeId: input.themeId,
     rulesetId: indiaEditionRulesetId,
-    status: 'in_progress',
+    status: GameStatus.InProgress,
     createdAt: now,
     updatedAt: now,
     players,
@@ -646,21 +685,21 @@ export const createGameState = (
     ownership: createOwnershipMap(board),
     bank: {
       cash: 'unlimited',
-      housesAvailable: 32,
-      hotelsAvailable: 12,
+      housesAvailable: HOUSES_AVAILABLE,
+      hotelsAvailable: HOTELS_AVAILABLE,
     },
     decks: {
       chance: shuffle(chanceCards, randomSource),
       communityChest: shuffle(communityChestCards, randomSource),
     },
     turn: {
-      phase: 'await_roll',
+      phase: TurnPhase.AwaitRoll,
       doublesCount: 0,
       lastRoll: null,
       canRollAgain: false,
       reason: null,
     },
-    pendingDecision: { type: 'none' },
+    pendingDecision: { type: PendingDecisionType.None },
     tradeState: null,
     auctionState: null,
     history: [
@@ -675,14 +714,14 @@ export const createGameState = (
 };
 
 const ensureGameNotFinished = (state: GameState) => {
-  if (state.status !== 'in_progress') {
+  if (state.status !== GameStatus.InProgress) {
     throw new Error('This game is already complete.');
   }
 };
 
 export const executeGameCommand = (
   state: GameState,
-  command: Exclude<GameCommand, { type: 'createGame' }>,
+  command: RuntimeGameCommand,
   randomSource: RandomSource = new DefaultRandomSource()
 ): GameCommandResult => {
   ensureGameNotFinished(state);
@@ -691,14 +730,14 @@ export const executeGameCommand = (
   const uiHints: string[] = [];
 
   switch (command.type) {
-    case 'rollTurnDice': {
+    case GameCommandType.RollTurnDice: {
       const activePlayer = getActivePlayer(nextState);
       if (activePlayer.inJail) {
         throw new Error('Player must choose a Jail action first.');
       }
       if (
-        nextState.turn.phase !== 'await_roll' &&
-        nextState.turn.phase !== 'await_extra_roll_or_end'
+        nextState.turn.phase !== TurnPhase.AwaitRoll &&
+        nextState.turn.phase !== TurnPhase.AwaitExtraRollOrEnd
       ) {
         throw new Error('Rolling is not available right now.');
       }
@@ -711,7 +750,7 @@ export const executeGameCommand = (
       nextState = {
         ...nextState,
         turn: {
-          phase: 'resolving_movement',
+          phase: TurnPhase.ResolvingMovement,
           doublesCount: nextDoublesCount,
           lastRoll: [dieOne, dieTwo],
           canRollAgain: false,
@@ -719,7 +758,7 @@ export const executeGameCommand = (
         },
       };
 
-      if (nextDoublesCount === 3) {
+      if (nextDoublesCount === DOUBLES_BEFORE_JAIL) {
         nextState = sendPlayerToJail(
           nextState,
           activePlayer.id,
@@ -740,16 +779,14 @@ export const executeGameCommand = (
       nextState = resolveCurrentSpace(nextState, activePlayer.id, isDouble);
       break;
     }
-    case 'buyLandedAsset': {
-      if (nextState.pendingDecision.type !== 'landed-unowned-property') {
+    case GameCommandType.BuyLandedAsset: {
+      if (nextState.pendingDecision.type !== PendingDecisionType.LandedUnownedProperty) {
         throw new Error('There is no property awaiting purchase.');
       }
       const decision = nextState.pendingDecision;
       const buyer = getPlayerById(nextState, decision.playerId);
       const space = getSpaceById(nextState, decision.spaceId);
-      if (
-        !(space.kind === 'street' || space.kind === 'railway' || space.kind === 'utility')
-      ) {
+      if (!isOwnableSpace(space)) {
         throw new Error('Current space is not buyable.');
       }
       if (buyer.cash < space.price) {
@@ -766,11 +803,13 @@ export const executeGameCommand = (
       }));
       nextState = {
         ...nextState,
-        pendingDecision: { type: 'none' },
+        pendingDecision: { type: PendingDecisionType.None },
         turn: {
           ...nextState.turn,
           phase:
-            nextState.turn.doublesCount > 0 ? 'await_extra_roll_or_end' : 'turn_complete',
+            nextState.turn.doublesCount > 0
+              ? TurnPhase.AwaitExtraRollOrEnd
+              : TurnPhase.TurnComplete,
           canRollAgain: nextState.turn.doublesCount > 0,
           reason: null,
         },
@@ -783,15 +822,15 @@ export const executeGameCommand = (
       ]);
       break;
     }
-    case 'declineLandedAsset':
-      if (nextState.pendingDecision.type !== 'landed-unowned-property') {
+    case GameCommandType.DeclineLandedAsset:
+      if (nextState.pendingDecision.type !== PendingDecisionType.LandedUnownedProperty) {
         throw new Error('There is no property awaiting decline.');
       }
       nextState = startAuction(nextState, nextState.pendingDecision.spaceId);
       break;
-    case 'submitAuctionBid': {
+    case GameCommandType.SubmitAuctionBid: {
       const auction = nextState.auctionState;
-      if (!auction || nextState.pendingDecision.type !== 'auction-bid') {
+      if (!auction || nextState.pendingDecision.type !== PendingDecisionType.AuctionBid) {
         throw new Error('There is no auction in progress.');
       }
       const activeBidderId = auction.activeBidderOrder[auction.activeBidderIndex];
@@ -826,9 +865,9 @@ export const executeGameCommand = (
       nextState = completeAuctionIfPossible(nextState);
       break;
     }
-    case 'passAuction': {
+    case GameCommandType.PassAuction: {
       const auction = nextState.auctionState;
-      if (!auction || nextState.pendingDecision.type !== 'auction-bid') {
+      if (!auction || nextState.pendingDecision.type !== PendingDecisionType.AuctionBid) {
         throw new Error('There is no auction in progress.');
       }
       const activeBidderId = auction.activeBidderOrder[auction.activeBidderIndex];
@@ -850,7 +889,7 @@ export const executeGameCommand = (
       nextState = completeAuctionIfPossible(nextState);
       break;
     }
-    case 'payJailFine': {
+    case GameCommandType.PayJailFine: {
       const activePlayer = getActivePlayer(nextState);
       if (!activePlayer.inJail) {
         throw new Error('Active player is not in Jail.');
@@ -863,16 +902,16 @@ export const executeGameCommand = (
       }));
       nextState = {
         ...nextState,
-        pendingDecision: { type: 'none' },
+        pendingDecision: { type: PendingDecisionType.None },
         turn: {
           ...nextState.turn,
-          phase: 'await_roll',
+          phase: TurnPhase.AwaitRoll,
           reason: null,
         },
       };
       break;
     }
-    case 'useJailFreeCard': {
+    case GameCommandType.UseJailFreeCard: {
       const activePlayer = getActivePlayer(nextState);
       if (!activePlayer.inJail || activePlayer.jailFreeCards < 1) {
         throw new Error('Get Out of Jail Free card is not available.');
@@ -885,16 +924,16 @@ export const executeGameCommand = (
       }));
       nextState = {
         ...nextState,
-        pendingDecision: { type: 'none' },
+        pendingDecision: { type: PendingDecisionType.None },
         turn: {
           ...nextState.turn,
-          phase: 'await_roll',
+          phase: TurnPhase.AwaitRoll,
           reason: null,
         },
       };
       break;
     }
-    case 'attemptJailRoll': {
+    case GameCommandType.AttemptJailRoll: {
       const activePlayer = getActivePlayer(nextState);
       if (!activePlayer.inJail) {
         throw new Error('Active player is not in Jail.');
@@ -904,7 +943,7 @@ export const executeGameCommand = (
       nextState = {
         ...nextState,
         turn: {
-          phase: 'resolving_movement',
+          phase: TurnPhase.ResolvingMovement,
           doublesCount: 0,
           lastRoll: [dieOne, dieTwo],
           canRollAgain: false,
@@ -927,7 +966,7 @@ export const executeGameCommand = (
         nextState = movePlayerTo(
           nextState,
           activePlayer.id,
-          (10 + dieOne + dieTwo) % nextState.board.length,
+          (JAIL_POSITION + dieOne + dieTwo) % nextState.board.length,
           true
         );
         nextState = resolveCurrentSpace(nextState, activePlayer.id, false);
@@ -937,7 +976,7 @@ export const executeGameCommand = (
           ...player,
           jailTurnsServed,
         }));
-        if (jailTurnsServed >= 3) {
+        if (jailTurnsServed >= MAX_JAIL_TURNS) {
           nextState = resolveBankPayment(
             nextState,
             activePlayer.id,
@@ -952,17 +991,17 @@ export const executeGameCommand = (
           nextState = movePlayerTo(
             nextState,
             activePlayer.id,
-            (10 + dieOne + dieTwo) % nextState.board.length,
+            (JAIL_POSITION + dieOne + dieTwo) % nextState.board.length,
             true
           );
           nextState = resolveCurrentSpace(nextState, activePlayer.id, false);
         } else {
           nextState = {
             ...nextState,
-            pendingDecision: { type: 'none' },
+            pendingDecision: { type: PendingDecisionType.None },
             turn: {
               ...nextState.turn,
-              phase: 'turn_complete',
+              phase: TurnPhase.TurnComplete,
               reason: null,
             },
           };
@@ -970,10 +1009,10 @@ export const executeGameCommand = (
       }
       break;
     }
-    case 'endTurn':
+    case GameCommandType.EndTurn:
       if (
-        nextState.turn.phase !== 'turn_complete' &&
-        nextState.turn.phase !== 'await_extra_roll_or_end'
+        nextState.turn.phase !== TurnPhase.TurnComplete &&
+        nextState.turn.phase !== TurnPhase.AwaitExtraRollOrEnd
       ) {
         throw new Error('Turn cannot be ended yet.');
       }
@@ -982,7 +1021,7 @@ export const executeGameCommand = (
           ...nextState,
           turn: {
             ...nextState.turn,
-            phase: 'await_roll',
+            phase: TurnPhase.AwaitRoll,
             canRollAgain: false,
           },
         };
@@ -990,16 +1029,16 @@ export const executeGameCommand = (
         nextState = advanceToNextTurn(nextState);
       }
       break;
-    case 'mortgageAsset':
-    case 'unmortgageAsset':
-    case 'buildHouse':
-    case 'buildHotel':
-    case 'sellHouse':
-    case 'sellHotel':
-    case 'proposeTrade':
-    case 'acceptTrade':
-    case 'rejectTrade':
-    case 'confirmBankruptcy':
+    case GameCommandType.MortgageAsset:
+    case GameCommandType.UnmortgageAsset:
+    case GameCommandType.BuildHouse:
+    case GameCommandType.BuildHotel:
+    case GameCommandType.SellHouse:
+    case GameCommandType.SellHotel:
+    case GameCommandType.ProposeTrade:
+    case GameCommandType.AcceptTrade:
+    case GameCommandType.RejectTrade:
+    case GameCommandType.ConfirmBankruptcy:
       uiHints.push(
         `${command.type} is scaffolded in the engine contract and will be implemented in the next phase.`
       );

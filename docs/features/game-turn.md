@@ -25,8 +25,9 @@ Inside the engine, `rollTurnDice` moves the player then calls `resolveCurrentSpa
 branches on `space.kind` and may set a `pendingDecision`. While `pendingDecision.type !== 'none'`
 the turn is gated in `await_decision` and extra rolls are blocked.
 
-`GamePage.renderDecisionPanel()` switches on that same `pendingDecision.type` to render the
-matching panel. **A new decision type without a branch here silently stalls the game.**
+`gameView.selectors.selectDecisionViewModel` turns the pending decision into a view model, and
+`DecisionPanel` renders the matching variant. **A new decision type needs both a case in the
+selector and a branch in `DecisionPanel`, or the game silently stalls with no way to advance.**
 
 Phase machine and helper inventory: [../architecture.md](../architecture.md) sections 3-4.
 

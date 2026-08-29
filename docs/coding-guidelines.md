@@ -35,6 +35,29 @@ Copy this into your working notes and satisfy every line before reporting a task
 - [ ] **[file-index.md](file-index.md)** updated if any file was added, removed, or repurposed
 - [ ] No new entry added to the DRY debt table — existing duplication touched is extracted
 
+### Every fix ships with a regression test
+
+**A bug fix is not done until a test fails without it.** Write the test first if you can; if you
+fixed it first, break the fix again and confirm the test goes red. Pick the cheapest level that
+would actually have caught it:
+
+| Bug was in                       | Test at                                 |
+| -------------------------------- | --------------------------------------- |
+| A rule or calculation            | Unit, on the pure function              |
+| Layer wiring, persistence        | Integration                             |
+| Layout, cascade, computed styles | E2E, asserting geometry or computed CSS |
+
+Some classes of bug are invisible to the type checker and the compiler, and only a rendered
+assertion catches them. Fixes in this repo that now have regression tests:
+
+| Bug                                                                                   | Test                                                    |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Corner spaces clipped by a row template that assumed a colour bar                     | e2e: every corner is square, aligned, and labelled      |
+| Title-deed band painted the panel colour because an equal-specificity rule came later | e2e: Delhi's band computes to `rgb(49, 80, 182)`        |
+| A theme token declared in SCSS but missing from the theme maps rendered transparent   | e2e: every rail button has a non-transparent background |
+| Disabled rail buttons erased by the reset's 0.45 opacity                              | e2e: disabled opacity stays ≥ 0.6                       |
+| Overlay Escape listener leaking after unmount                                         | unit: `useEscapeKey` removes its listener               |
+
 ### Test naming
 
 Describe the behaviour, not the function. `it('starts an auction when the landed property is declined')`, never `it('works')` or `it('tests declineLandedAsset')`. The test name is the specification.
@@ -131,6 +154,10 @@ Reserve `data-testid` for things with no accessible handle (the board grid). Nev
 ---
 
 ## 3. Coding conventions
+
+> **File naming, identifier naming, enum/constant discipline, and the "no logic in components"
+> rule now live in [conventions.md](conventions.md), and most of it is enforced by `pnpm lint`.**
+> What follows is the layer and tooling detail.
 
 ### Layer discipline
 

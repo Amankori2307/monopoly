@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { GameCommandType, PendingDecisionType, TurnPhase } from '../types/game.enums';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { SeededRandomSource } from './rng';
 
@@ -24,7 +25,7 @@ describe('gameEngine', () => {
     expect(game.board).toHaveLength(40);
     expect(game.bank.housesAvailable).toBe(32);
     expect(game.players[game.playerOrder[0]].cash).toBe(1500);
-    expect(game.turn.phase).toBe('await_roll');
+    expect(game.turn.phase).toBe(TurnPhase.AwaitRoll);
   });
 
   it('opens a buy decision when landing on an unowned property', () => {
@@ -34,11 +35,13 @@ describe('gameEngine', () => {
 
     const result = executeGameCommand(
       game,
-      { type: 'rollTurnDice' },
+      { type: GameCommandType.RollTurnDice },
       new SeededRandomSource(2)
     );
 
-    expect(result.nextState.pendingDecision.type).toBe('landed-unowned-property');
+    expect(result.nextState.pendingDecision.type).toBe(
+      PendingDecisionType.LandedUnownedProperty
+    );
   });
 
   it('starts an auction when the landed property is declined', () => {
@@ -47,13 +50,15 @@ describe('gameEngine', () => {
     game.players[activePlayerId].position = 0;
     const rolled = executeGameCommand(
       game,
-      { type: 'rollTurnDice' },
+      { type: GameCommandType.RollTurnDice },
       new SeededRandomSource(2)
     );
 
-    const declined = executeGameCommand(rolled.nextState, { type: 'declineLandedAsset' });
+    const declined = executeGameCommand(rolled.nextState, {
+      type: GameCommandType.DeclineLandedAsset,
+    });
 
-    expect(declined.nextState.pendingDecision.type).toBe('auction-bid');
+    expect(declined.nextState.pendingDecision.type).toBe(PendingDecisionType.AuctionBid);
     expect(declined.nextState.auctionState?.startPrice).toBe(10);
   });
 });

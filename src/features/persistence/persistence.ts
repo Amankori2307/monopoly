@@ -1,4 +1,4 @@
-import type { GameState, StoredGameIndexEntry } from '../../domain/types/game';
+import type { GameState, StoredGameIndexEntry } from '../../domain/types/game.interfaces';
 import { gameStateSchema, storedGameIndexSchema } from './schema';
 
 export const STORAGE_INDEX_KEY = 'monopoly.games.index.v1';

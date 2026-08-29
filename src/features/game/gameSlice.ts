@@ -4,10 +4,10 @@ import { createGameState, executeGameCommand } from '../../domain/rules/gameEngi
 import { DefaultRandomSource } from '../../domain/rules/rng';
 import type {
   CreateGameInput,
-  GameCommand,
   GameState,
+  RuntimeGameCommand,
   StoredGameIndexEntry,
-} from '../../domain/types/game';
+} from '../../domain/types/game.interfaces';
 import {
   deleteSavedGame,
   loadGame,
@@ -95,7 +95,7 @@ export const loadGameById = (gameId: string) => (dispatch: AppDispatch) => {
 };
 
 export const runGameCommand =
-  (command: Exclude<GameCommand, { type: 'createGame' }>) =>
+  (command: RuntimeGameCommand) =>
   (dispatch: AppDispatch, getState: () => { game: GameSliceState }) => {
     const currentGame = getState().game.activeGame;
     if (!currentGame) {

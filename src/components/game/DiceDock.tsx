@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
 import diceRollSound from '../../assets/audio/dice-roll.wav';
+import { scopedTestId, TEST_IDS } from '../../shared/constants/testIds.constants';
+import { useDiceRoller } from './hooks/useDiceRoller';
 
 interface DiceDockProps {
   canRoll: boolean;
@@ -8,82 +9,49 @@ interface DiceDockProps {
   rollLabel: string;
 }
 
-const randomDie = () => Math.floor(Math.random() * 6) + 1;
+interface DieProps {
+  index: number;
+  isRolling: boolean;
+  value: number;
+}
 
-function Die({ value, rolling }: { value: number; rolling: boolean }) {
+function Die({ index, isRolling, value }: DieProps) {
   return (
     <div
-      className={`die-face face-${value} ${rolling ? 'is-rolling' : ''}`}
       aria-label={`${value}`}
+      className={`die-face face-${value} ${isRolling ? 'is-rolling' : ''}`}
+      data-testid={scopedTestId(TEST_IDS.dieFace, index)}
     >
-      {Array.from({ length: value }, (_, index) => (
-        <span className={`pip pip-${index + 1}`} key={index} />
+      {Array.from({ length: value }, (_, pipIndex) => (
+        <span className={`pip pip-${pipIndex + 1}`} key={pipIndex} />
       ))}
     </div>
   );
 }
 
+/** Markup only - the animation and timing live in useDiceRoller. */
 export function DiceDock({ canRoll, lastRoll, onRoll, rollLabel }: DiceDockProps) {
-  const [rolling, setRolling] = useState(false);
-  const [displayValues, setDisplayValues] = useState<[number, number]>([1, 1]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const timerRef = useRef<number | null>(null);
-  const shuffleRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    audioRef.current = new Audio(diceRollSound);
-    audioRef.current.volume = 0.42;
-
-    return () => {
-      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
-      if (shuffleRef.current !== null) window.clearInterval(shuffleRef.current);
-      audioRef.current?.pause();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rolling && lastRoll?.length === 2) {
-      setDisplayValues([lastRoll[0], lastRoll[1]]);
-    }
-  }, [lastRoll, rolling]);
-
-  const handleRoll = () => {
-    if (!canRoll || rolling) return;
-
-    setRolling(true);
-    setDisplayValues([randomDie(), randomDie()]);
-    const audio = audioRef.current;
-    if (audio) {
-      audio.currentTime = 0;
-      void audio.play().catch(() => undefined);
-    }
-
-    shuffleRef.current = window.setInterval(() => {
-      setDisplayValues([randomDie(), randomDie()]);
-    }, 80);
-
-    timerRef.current = window.setTimeout(() => {
-      if (shuffleRef.current !== null) window.clearInterval(shuffleRef.current);
-      shuffleRef.current = null;
-      onRoll();
-      setRolling(false);
-      timerRef.current = null;
-    }, 520);
-  };
+  const { displayValues, isRolling, roll } = useDiceRoller({
+    canRoll,
+    lastRoll,
+    onRoll,
+    soundSrc: diceRollSound,
+  });
 
   return (
-    <section className="dice-dock" aria-label="Dice roller">
-      <div className="dice-pair" aria-live="polite">
-        <Die rolling={rolling} value={displayValues[0]} />
-        <Die rolling={rolling} value={displayValues[1]} />
+    <section aria-label="Dice roller" className="dice-dock" data-testid={TEST_IDS.diceDock}>
+      <div aria-live="polite" className="dice-pair">
+        <Die index={0} isRolling={isRolling} value={displayValues[0]} />
+        <Die index={1} isRolling={isRolling} value={displayValues[1]} />
       </div>
       <button
         className="dice-roll-button"
-        disabled={!canRoll || rolling}
-        onClick={handleRoll}
+        data-testid={TEST_IDS.rollButton}
+        disabled={!canRoll || isRolling}
+        onClick={roll}
         type="button"
       >
-        {rolling ? 'Rolling…' : rollLabel}
+        {isRolling ? 'Rolling…' : rollLabel}
       </button>
     </section>
   );

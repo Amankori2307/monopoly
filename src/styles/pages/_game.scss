@@ -27,9 +27,13 @@
   }
 }
 
+// Three columns: action rail | board | player sidebar.
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(0, calc(100dvh - 72px)) minmax(340px, 1fr);
+  grid-template-columns:
+    t.$action-rail-width
+    minmax(0, 1fr)
+    minmax(320px, 380px);
   gap: t.$gap-lg;
   align-items: start;
 
@@ -56,10 +60,15 @@
   }
 }
 
+// The board is square, so cap it by viewport height and centre it in its column.
+.board-card {
+  max-width: min(100%, calc(100dvh - 72px));
+  margin-inline: auto;
+}
+
 @include m.below(t.$breakpoint-board) {
   .board-card {
-    width: min(100%, 820px);
-    margin: auto;
+    max-width: min(100%, 820px);
   }
 
   .decision-card,

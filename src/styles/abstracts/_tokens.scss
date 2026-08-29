@@ -22,7 +22,10 @@ $board-corner-track: 1.7fr;
 $board-color-bar: 7px;
 $board-color-bar-compact: 4px;
 
-$breakpoint-board: 1050px;
+// Width of the property-action rail beside the board.
+$action-rail-width: 168px;
+
+$breakpoint-board: 1250px;
 $breakpoint-tablet: 720px;
 $breakpoint-mobile: 620px;
 
