@@ -2,10 +2,10 @@ import type { PendingDecisionType } from '../../../domain/types/game.enums';
 import type {
   AuctionState,
   BoardSpace,
+  OwnableSpace,
   OwnershipState,
   PlayerId,
   PlayerState,
-  SpaceId,
   ThemeToken,
 } from '../../../domain/types/game.interfaces';
 
@@ -32,9 +32,8 @@ export interface HoldingEntry {
 export interface BuyDecisionViewModel {
   type: PendingDecisionType.LandedUnownedProperty;
   playerName: string;
-  spaceId: SpaceId;
-  spaceName: string;
-  price: number;
+  /** The whole space, so the decision can show the same card as the board does. */
+  space: OwnableSpace;
 }
 
 export interface AuctionDecisionViewModel {

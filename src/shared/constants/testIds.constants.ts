@@ -50,6 +50,10 @@ export const TEST_IDS = {
 
   // Space detail
   spaceDetailCard: 'space-detail-card',
+  spaceCard: 'space-card',
+  buyDecision: 'buy-decision',
+  buyButton: 'buy-button',
+  declineButton: 'decline-button',
   deedBand: 'deed-band',
   rentSchedule: 'rent-schedule',
 

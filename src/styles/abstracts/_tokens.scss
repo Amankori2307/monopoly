@@ -5,11 +5,22 @@ $font-sans: Manrope, 'Avenir Next', sans-serif;
 $font-serif: Fraunces, 'Iowan Old Style', Georgia, serif;
 $font-mono: 'DM Mono', monospace;
 
-$radius-sm: 6px;
-$radius-md: 10px;
-$radius-lg: 16px;
-$radius-xl: 20px;
-$radius-pill: 26px;
+// ---------------------------------------------------------------------------
+// Corner radius.
+//
+// The design system is deliberately SHARP: every surface has square corners,
+// including elements that would conventionally be round (badges, player tokens,
+// pills). Nothing should hardcode a border-radius - use these tokens, so
+// softening the whole UI later is a one-line change here.
+// ---------------------------------------------------------------------------
+$radius-sharp: 0;
+$radius-sm: $radius-sharp;
+$radius-md: $radius-sharp;
+$radius-lg: $radius-sharp;
+$radius-xl: $radius-sharp;
+$radius-pill: $radius-sharp;
+/** Was 50% - circular elements are squared off under the sharp system. */
+$radius-round: $radius-sharp;
 
 $gap-xs: 5px;
 $gap-sm: 9px;

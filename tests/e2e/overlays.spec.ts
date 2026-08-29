@@ -97,3 +97,47 @@ test('rolls the dice and records the roll', async ({ page }) => {
   // The roll animation commits to the engine, which then logs the roll.
   await expect.poll(eventCount).toBeGreaterThan(before);
 });
+
+// The buy decision reuses the same SpaceCard the board shows, so a player
+// decides against the full deed rather than a bare name and price.
+test('shows the full title deed inside the buy decision', async ({ page }) => {
+  await startGame(page);
+
+  const buyButton = page.getByTestId(TEST_IDS.buyButton);
+  const rollButton = page.getByTestId(TEST_IDS.rollButton);
+  const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
+
+  // Dice are real random, so roll through turns until a buy decision appears.
+  for (let attempt = 0; attempt < 15; attempt += 1) {
+    if (await buyButton.isVisible()) {
+      break;
+    }
+    if (await rollButton.isEnabled()) {
+      await rollButton.click();
+      await page.waitForTimeout(700);
+    } else if (await endTurnButton.isVisible()) {
+      await endTurnButton.click();
+    } else {
+      break;
+    }
+  }
+
+  await expect(buyButton).toBeVisible();
+  await expect(page.getByTestId(TEST_IDS.declineButton)).toBeVisible();
+
+  // The deed itself, not just a price.
+  const card = page.getByTestId(TEST_IDS.spaceCard);
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('Mortgage value');
+  await expect(buyButton).toContainText(/Buy for M\d+/);
+
+  // Two columns: site card on one side, the choice on the other.
+  const [cardBox, choiceBox] = await Promise.all([
+    card.boundingBox(),
+    page.locator('.buy-decision-choice').boundingBox(),
+  ]);
+  if (!cardBox || !choiceBox) {
+    throw new Error('Buy decision columns have no layout box');
+  }
+  expect(cardBox.x + cardBox.width).toBeLessThanOrEqual(choiceBox.x + 1);
+});

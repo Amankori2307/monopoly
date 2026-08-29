@@ -90,7 +90,7 @@
   z-index: t.$max-players + 1;
   padding: 0;
   border: 0;
-  border-radius: 13px;
+  border-radius: t.$radius-sharp;
   background: transparent;
 
   &:focus-visible {
@@ -104,7 +104,7 @@
   justify-self: start;
   padding: 4px 10px;
   border: 1px solid var(--border-subtle);
-  border-radius: 999px;
+  border-radius: t.$radius-sharp;
   background: transparent;
   color: var(--text-muted);
   font: 500 0.68rem t.$font-mono;
@@ -139,7 +139,7 @@
   // Left edge is tinted with the player's token colour, set inline from
   // ThemeToken.color so each player is identifiable at a glance.
   border-left: 5px solid var(--border-input);
-  border-radius: 13px;
+  border-radius: t.$radius-sharp;
   background: var(--surface-raised);
 
   > strong {
@@ -173,7 +173,7 @@
 
 .player-badge {
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: t.$radius-sharp;
   font: 500 0.64rem t.$font-mono;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -198,7 +198,7 @@
 .space-card {
   padding: 12px;
   border-left: 5px solid var(--text-eyebrow);
-  border-radius: t.$radius-sm + 3px;
+  border-radius: t.$radius-sharp;
   background: var(--surface-muted);
   font-size: 0.82rem;
 

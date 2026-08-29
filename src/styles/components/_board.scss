@@ -7,7 +7,7 @@
   padding: 0;
   overflow: hidden;
   border: 0;
-  border-radius: 0;
+  border-radius: t.$radius-sharp;
   background: var(--surface-board);
   box-shadow: var(--shadow-board);
 }
@@ -221,7 +221,7 @@
  */
 .space-color {
   flex: 0 0 t.$board-color-bar;
-  border-radius: 0;
+  border-radius: t.$radius-sharp;
 
   .side-bottom &,
   .side-top & {
@@ -417,7 +417,7 @@
   width: clamp(11px, 1.35vw, 18px);
   height: clamp(11px, 1.35vw, 18px);
   border: 1px solid var(--border-space);
-  border-radius: 50%;
+  border-radius: t.$radius-sharp;
   background: var(--surface-raised);
   font-size: clamp(0.42rem, 0.6vw, 0.65rem);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);

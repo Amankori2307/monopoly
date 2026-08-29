@@ -1,3 +1,4 @@
+@use '../abstracts/mixins' as m;
 @use '../abstracts/tokens' as t;
 
 .space-detail-backdrop {
@@ -31,7 +32,7 @@
   width: 30px;
   height: 30px;
   border: 1px solid var(--border-input);
-  border-radius: 50%;
+  border-radius: t.$radius-sharp;
   background: var(--surface-panel);
   color: var(--text-body);
   font: 700 1rem/1 t.$font-sans;
@@ -39,6 +40,57 @@
   &:hover {
     background: var(--surface-muted);
   }
+}
+
+/** Actions rendered under a deed when a caller passes them to SpaceCard. */
+.space-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-input);
+}
+
+.space-card-actions > * {
+  flex: 1 1 auto;
+}
+
+// Buy decision: site card on one side, the choice on the other.
+.buy-decision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: t.$gap-lg;
+  align-items: start;
+}
+
+.buy-decision-choice {
+  display: grid;
+  align-content: center;
+  gap: t.$gap-md;
+  min-width: 0;
+}
+
+.buy-decision-buttons {
+  display: grid;
+  gap: 10px;
+}
+
+.buy-decision-buttons > * {
+  width: 100%;
+  min-height: 52px;
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  .buy-decision {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.decision-lede {
+  margin: 0 0 16px;
+  color: var(--text-body);
+  line-height: 1.45;
 }
 
 .space-detail-title-row {

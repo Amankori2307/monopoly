@@ -37,8 +37,7 @@ export function DecisionPanel({
           onBuy={handlers.onBuy}
           onDecline={handlers.onDecline}
           playerName={decision.playerName}
-          price={decision.price}
-          spaceName={decision.spaceName}
+          space={decision.space}
         />
       ) : null}
 

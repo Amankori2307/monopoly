@@ -105,9 +105,7 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
       return {
         type: PendingDecisionType.LandedUnownedProperty,
         playerName: activePlayer.name,
-        spaceId: space.id,
-        spaceName: space.name,
-        price: space.price,
+        space,
       };
     }
     case PendingDecisionType.AuctionBid: {

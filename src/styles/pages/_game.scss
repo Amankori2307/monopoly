@@ -129,7 +129,7 @@
   place-items: center;
   width: 42px;
   height: 42px;
-  border-radius: 50%;
+  border-radius: t.$radius-sharp;
   background: var(--token-bg);
   font-size: 1.35rem;
 }

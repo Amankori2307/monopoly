@@ -13,7 +13,7 @@
 
 .panel {
   padding: t.$gap-lg;
-  border-radius: t.$radius-xl;
+  border-radius: t.$radius-sharp;
 
   @include m.below(t.$breakpoint-tablet) {
     padding: 16px;
@@ -25,7 +25,7 @@
   grid-template-columns: 1.3fr 0.7fr;
   gap: t.$gap-xl;
   padding: 34px;
-  border-radius: t.$radius-pill;
+  border-radius: t.$radius-sharp;
 
   @include m.below(t.$breakpoint-tablet) {
     grid-template-columns: 1fr;
@@ -53,7 +53,7 @@
 
 .summary-card {
   padding: 18px;
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-sharp;
 
   h2 {
     margin-bottom: 16px;
@@ -77,7 +77,7 @@
   place-items: center;
   min-width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: t.$radius-sharp;
   background: var(--badge-bg);
   font: 500 0.72rem t.$font-mono;
 }
@@ -85,7 +85,7 @@
 .decision-card {
   padding: 18px;
   border: 2px solid var(--decision-border);
-  border-radius: t.$radius-lg;
+  border-radius: t.$radius-sharp;
   background: var(--decision-bg);
   box-shadow: 0 10px 25px rgba(90, 36, 23, 0.13);
 
@@ -105,7 +105,7 @@
 .empty-state {
   padding: t.$gap-lg;
   border: 1px dashed var(--border-dashed);
-  border-radius: 12px;
+  border-radius: t.$radius-sharp;
   color: var(--text-muted);
   text-align: center;
 }

@@ -322,3 +322,21 @@ test('orders and rotates the icon to match the text', async ({ page }) => {
   expect(bySide['side-left'].rotation).toBe('none');
   expect(bySide['side-right'].rotation).toBe('none');
 });
+
+// The design system is deliberately sharp: no surface has rounded corners,
+// including elements that would conventionally be circular.
+test('renders every surface with square corners', async ({ page }) => {
+  await startGame(page);
+
+  const rounded = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('body *'))
+      .filter((element) => {
+        const radius = getComputedStyle(element).borderRadius;
+        return radius !== '' && radius !== '0px';
+      })
+      .map((element) => `${element.tagName.toLowerCase()}.${element.className}`)
+      .slice(0, 10)
+  );
+
+  expect(rounded).toEqual([]);
+});

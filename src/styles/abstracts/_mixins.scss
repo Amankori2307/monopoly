@@ -14,7 +14,7 @@
 
 @mixin card-surface($radius: t.$radius-xl) {
   border: 1px solid var(--border-subtle);
-  border-radius: $radius;
+  border-radius: t.$radius-sharp;
   background: var(--surface-panel);
   box-shadow: var(--shadow-panel);
 }

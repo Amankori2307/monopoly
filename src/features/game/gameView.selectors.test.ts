@@ -145,8 +145,10 @@ describe('selectDecisionViewModel', () => {
 
     expect(decision?.type).toBe(PendingDecisionType.LandedUnownedProperty);
     if (decision?.type === PendingDecisionType.LandedUnownedProperty) {
-      expect(decision.price).toBeGreaterThan(0);
-      expect(decision.spaceName).toBeTruthy();
+      // The whole space travels with the decision so the UI can show the deed.
+      expect(decision.space.price).toBeGreaterThan(0);
+      expect(decision.space.name).toBeTruthy();
+      expect(decision.space.id).toBeTruthy();
     }
   });
 
