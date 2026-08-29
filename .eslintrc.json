@@ -1,0 +1,117 @@
+{
+  "root": true,
+  "env": { "browser": true, "es2022": true, "node": true },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "ecmaFeatures": { "jsx": true }
+  },
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended",
+    "prettier"
+  ],
+  "settings": { "react": { "version": "detect" } },
+  "ignorePatterns": [
+    "build",
+    "coverage",
+    "node_modules",
+    "public",
+    "src/redux",
+    "src/utility",
+    "src/components/monopoly",
+    "src/components/home",
+    "src/components/not_found",
+    "src/assets/css",
+    "*.config.mjs"
+  ],
+  "rules": {
+    "eqeqeq": ["error", "smart"],
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-param-reassign": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
+    ],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "**/redux/**",
+              "**/utility/**",
+              "**/components/monopoly/**",
+              "**/components/home/**",
+              "**/components/not_found/**",
+              "**/assets/css/**",
+              "**/assets/data/**"
+            ],
+            "message": "Legacy island: this code is unreachable from App.tsx and ships nothing. See CLAUDE.md section 2."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/domain/**/*.ts", "src/domain/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "message": "src/domain must stay pure - no React. See docs/architecture.md section 1." },
+              { "name": "react-dom", "message": "src/domain must stay pure - no React. See docs/architecture.md section 1." },
+              { "name": "react-redux", "message": "src/domain must stay pure - no Redux. See docs/architecture.md section 1." },
+              { "name": "@reduxjs/toolkit", "message": "src/domain must stay pure - no Redux. See docs/architecture.md section 1." },
+              { "name": "react-router-dom", "message": "src/domain must stay pure - no routing. See docs/architecture.md section 1." }
+            ],
+            "patterns": [
+              {
+                "group": ["**/features/**", "**/components/**", "**/app/**"],
+                "message": "Dependency direction is one-way: domain must not import from features, components, or app."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/app/hooks", "**/app/appStore", "**/features/**"],
+                "message": "Presentational components take props and callbacks - no store access. See docs/coding-guidelines.md section 3."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "tests/**/*.ts", "src/setupTests.ts"],
+      "env": { "node": true },
+      "globals": {
+        "describe": "readonly", "it": "readonly", "expect": "readonly",
+        "beforeEach": "readonly", "afterEach": "readonly",
+        "beforeAll": "readonly", "afterAll": "readonly", "vi": "readonly"
+      }
+    }
+  ]
+}
