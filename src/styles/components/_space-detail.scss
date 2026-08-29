@@ -61,10 +61,11 @@
 
 // Colour band on a title deed. The colour itself comes from a .group-* class
 // generated in themes/_themes.scss, so it follows the active theme.
+// Colour comes from the .group-* utility applied alongside this class, so the
+// band always matches the street's colour group under the active theme.
 .deed-band {
   height: 18px;
   margin: 18px -24px;
-  background: var(--surface-muted);
 }
 
 .deed-primary-stats {

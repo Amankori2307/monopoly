@@ -27,3 +27,6 @@
 @use 'pages/home';
 @use 'pages/game';
 @use 'pages/rules';
+
+// Utilities last: they must win over equal-specificity component rules.
+@use 'utilities/color-groups';

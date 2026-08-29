@@ -188,10 +188,3 @@ $default-theme: 'india-edition';
   }
 }
 
-// Street colour-group helpers. Replaces the hex maps that used to be duplicated
-// in GamePage.tsx and SpaceDetailCard.tsx.
-@each $group in t.$color-groups {
-  .group-#{$group} {
-    background: var(--group-#{$group});
-  }
-}

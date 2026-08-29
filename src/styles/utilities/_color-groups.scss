@@ -1,0 +1,17 @@
+@use '../abstracts/tokens' as t;
+
+// ---------------------------------------------------------------------------
+// Street colour-group utilities.
+//
+// MUST be the last layer in main.scss. These are single-class selectors, so a
+// component rule of equal specificity declared later would silently win - which
+// is exactly how the title-deed band ended up painted with the panel colour
+// instead of its street colour.
+//
+// Utilities last = utilities win. Do not move this import.
+// ---------------------------------------------------------------------------
+@each $group in t.$color-groups {
+  .group-#{$group} {
+    background: var(--group-#{$group});
+  }
+}
