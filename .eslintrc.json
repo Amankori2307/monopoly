@@ -207,11 +207,7 @@
       }
     },
     {
-      "files": [
-        "src/domain/board/**",
-        "src/domain/cards/**",
-        "src/domain/rules/gameEngine.ts"
-      ],
+      "files": ["src/domain/rules/gameEngine.ts"],
       "rules": {
         "max-lines": "off",
         "max-lines-per-function": "off",

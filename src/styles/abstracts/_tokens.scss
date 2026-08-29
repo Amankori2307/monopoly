@@ -25,6 +25,19 @@ $board-color-bar-compact: 4px;
 // Width of the property-action rail beside the board.
 $action-rail-width: 168px;
 
+// Player card stack. $max-players must match MAX_PLAYERS in
+// src/domain/constants/game.constants.ts - a unit test asserts the stack still
+// renders correctly at that count.
+$max-players: 8;
+// A collapsed sliver shows only its colour strip plus a little card edge.
+$stack-peek: 15px;
+// Each sliver tucks under the one above it and tapers inward, so the stack
+// reads as a fanned deck rather than a cropped list.
+$stack-tuck: 7px;
+$stack-inset: 9px;
+$stack-strip-height: 5px;
+$stack-expanded-max-height: 420px;
+
 $breakpoint-board: 1250px;
 $breakpoint-tablet: 720px;
 $breakpoint-mobile: 620px;

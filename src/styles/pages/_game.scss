@@ -42,16 +42,46 @@
   }
 }
 
+// Column beside the board, mirroring the reference layout: players pinned at
+// the top, turn controls pinned at the bottom level with the board's lower
+// edge, and everything between them scrolling.
 .game-side {
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-md;
   min-width: 0;
   max-height: calc(100dvh - 72px);
+
+  @include m.below(t.$breakpoint-board) {
+    max-height: none;
+  }
+}
+
+// Pushed to the bottom of the column, whatever the scroll area's height.
+.turn-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.turn-controls .end-turn-button {
+  min-height: 58px;
+  padding-inline: 20px;
+  white-space: nowrap;
+}
+
+.game-side-scroll {
+  display: grid;
+  gap: t.$gap-md;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
 
   @include m.below(t.$breakpoint-board) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
-    max-height: none;
     overflow: visible;
   }
 

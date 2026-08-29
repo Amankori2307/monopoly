@@ -37,6 +37,12 @@ Composition:
   once those commands land. Disabled buttons keep their colour (the base reset's 0.45 opacity
   made the rail unreadable).
 - **Rail colours are theme tokens** (`--action-build` and friends), so a new theme restyles them.
+- **The dice have no panel of their own.** They sit in the flow beside the board rather than
+  floating on a blurred card, which is what the reference shows.
+- **`max-height` animates the stack, not `height`.** Cards vary slightly in height with name
+  length, and `max-height` needs no measurement to transition cleanly.
+- **The stack has a real `<button>` overlay** rather than a click handler on a `div`, so
+  keyboard and screen-reader users can expand it too.
 
 ## State and data
 

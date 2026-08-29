@@ -11,6 +11,7 @@ import type { GameState } from '../../domain/types/game.interfaces';
 import {
   makeTokenFinder,
   selectActivePlayer,
+  selectPlayerOrderFromActive,
   selectCanEndTurn,
   selectCanRollDice,
   selectDecisionViewModel,
@@ -45,21 +46,60 @@ describe('selectPlayersByPosition', () => {
 });
 
 describe('selectPlayerSummaries', () => {
-  it('returns one summary per player in turn order', () => {
+  it('returns one summary per player', () => {
     const game = createGame();
 
     const summaries = selectPlayerSummaries(game, indiaEditionTheme);
 
     expect(summaries).toHaveLength(2);
-    expect(summaries.map((s) => s.player.id)).toEqual(game.playerOrder);
     expect(summaries.every((s) => s.propertyCount === 0)).toBe(true);
     expect(summaries[0].token?.emoji).toBeTruthy();
+  });
+
+  // The card stack has no active-player marker: the player on top is the active
+  // one, so this ordering is the only thing conveying whose turn it is.
+  it('puts the active player first', () => {
+    const game = createGame();
+    game.activePlayerIndex = 1;
+
+    const summaries = selectPlayerSummaries(game, indiaEditionTheme);
+
+    expect(summaries[0].player.id).toBe(game.playerOrder[1]);
+    expect(summaries[1].player.id).toBe(game.playerOrder[0]);
   });
 
   it('leaves the token undefined when no theme is supplied', () => {
     const game = createGame();
 
     expect(selectPlayerSummaries(game, undefined)[0].token).toBeUndefined();
+  });
+});
+
+describe('selectPlayerOrderFromActive', () => {
+  it('starts at the active player and keeps turn order after them', () => {
+    const game = createGame();
+    game.activePlayerIndex = 1;
+
+    expect(selectPlayerOrderFromActive(game)).toEqual([
+      game.playerOrder[1],
+      game.playerOrder[0],
+    ]);
+  });
+
+  it('is unchanged when the first player is active', () => {
+    const game = createGame();
+    game.activePlayerIndex = 0;
+
+    expect(selectPlayerOrderFromActive(game)).toEqual(game.playerOrder);
+  });
+
+  it('includes every player exactly once', () => {
+    const game = createGame();
+    game.activePlayerIndex = 1;
+
+    const rotated = selectPlayerOrderFromActive(game);
+
+    expect(new Set(rotated).size).toBe(game.playerOrder.length);
   });
 });
 

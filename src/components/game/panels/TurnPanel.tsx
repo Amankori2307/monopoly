@@ -1,20 +1,15 @@
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 
 interface TurnPanelProps {
-  canEndTurn: boolean;
-  canRollAgain: boolean;
   locationName: string;
-  onEndTurn: () => void;
   playerName: string;
   tokenEmoji: string;
   turnNumber: number;
 }
 
+/** Whose turn it is and where they stand. Turn controls live in TurnControls. */
 export function TurnPanel({
-  canEndTurn,
-  canRollAgain,
   locationName,
-  onEndTurn,
   playerName,
   tokenEmoji,
   turnNumber,
@@ -29,18 +24,6 @@ export function TurnPanel({
         <span className="turn-token">{tokenEmoji}</span>
       </div>
       <p className="turn-location">At {locationName}</p>
-      {canEndTurn ? (
-        <div className="button-row">
-          <button
-            className="primary-button"
-            data-testid={TEST_IDS.endTurnButton}
-            onClick={onEndTurn}
-            type="button"
-          >
-            {canRollAgain ? 'Take extra roll' : 'End turn'}
-          </button>
-        </div>
-      ) : null}
     </section>
   );
 }

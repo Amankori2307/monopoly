@@ -129,6 +129,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [panels/decisions/JailDecision.tsx](../src/components/game/panels/decisions/JailDecision.tsx)                 | Jail exit choices.                                                             |
 | [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)   | Asset-liquidation notice.                                                      |
 | [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                       | Dice animation state: tumbling faces, roll sound, timers, committing the roll. |
+| [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                     | Bottom-right cluster: end-turn button plus the dice, level with the board.     |
+| [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                           | Stack collapse/expand, click target, token colours, full-table support.        |
 
 ## `src/components/setup/` — presentational setup components
 

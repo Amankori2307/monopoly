@@ -41,12 +41,25 @@ export const makeTokenFinder =
   (tokenId: string): ThemeToken | undefined =>
     theme?.tokenCatalog.find((token) => token.id === tokenId);
 
+/**
+ * Turn order rotated so the active player comes first, then whoever plays next.
+ * The card stack shows position rather than a separate "active" marker, so this
+ * ordering is what tells you whose turn it is.
+ */
+export const selectPlayerOrderFromActive = (game: GameState): PlayerId[] => {
+  const { playerOrder, activePlayerIndex } = game;
+  return [
+    ...playerOrder.slice(activePlayerIndex),
+    ...playerOrder.slice(0, activePlayerIndex),
+  ];
+};
+
 export const selectPlayerSummaries = (
   game: GameState,
   theme: ThemeConfig | undefined
 ): PlayerSummary[] => {
   const findToken = makeTokenFinder(theme);
-  return game.playerOrder.map((playerId) => {
+  return selectPlayerOrderFromActive(game).map((playerId) => {
     const player = game.players[playerId];
     return {
       player,

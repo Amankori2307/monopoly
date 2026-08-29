@@ -24,12 +24,16 @@ export const TEST_IDS = {
   turnPanel: 'turn-panel',
   decisionPanel: 'decision-panel',
   playersPanel: 'players-panel',
+  playerStack: 'player-stack',
+  playerStackToggle: 'player-stack-toggle',
+  playerStackExpand: 'player-stack-expand',
   playerCard: 'player-card',
   holdingsPanel: 'holdings-panel',
   activityPanel: 'activity-panel',
   hintsPanel: 'hints-panel',
 
   // Controls
+  turnControls: 'turn-controls',
   diceDock: 'dice-dock',
   dieFace: 'die-face',
   rollButton: 'roll-button',

@@ -1,21 +1,146 @@
 @use '../abstracts/tokens' as t;
 
+// ---------------------------------------------------------------------------
+// Player card stack
+//
+// Collapsed: the first card shows in full and every card after it is clipped to
+// a peek and tucked underneath, painted in reverse order so the top card wins.
+// Expanded: the clip is released and the normal gap returns.
+//
+// max-height is what animates - it transitions cleanly and, unlike height, needs
+// no measured value. The expanded ceiling is generous rather than exact.
+// ---------------------------------------------------------------------------
+// No panel around the stack: the cards are the only surface.
+.player-stack-region {
+  display: grid;
+  gap: t.$gap-sm;
+  min-width: 0;
+}
+
+.player-stack {
+  position: relative;
+  display: grid;
+  gap: t.$gap-sm;
+}
+
+// Whoever is on top is the active player, so the top card carries the emphasis
+// rather than a separate highlight class.
+.player-stack .player-card:first-of-type {
+  z-index: t.$max-players + 1;
+  box-shadow: 0 8px 22px rgba(28, 34, 27, 0.16);
+}
+
+.player-stack .player-card {
+  position: relative;
+  max-height: t.$stack-expanded-max-height;
+  overflow: hidden;
+  transition:
+    max-height 0.32s cubic-bezier(0.22, 0.7, 0.3, 1),
+    opacity 0.24s ease,
+    margin-top 0.32s cubic-bezier(0.22, 0.7, 0.3, 1),
+    margin-inline 0.32s cubic-bezier(0.22, 0.7, 0.3, 1),
+    box-shadow 0.32s ease,
+    opacity 0.28s ease;
+}
+
+.player-stack.is-collapsed {
+  gap: 0;
+  cursor: pointer;
+
+  // Painted back-to-front so earlier cards sit above later ones.
+  @for $index from 1 through t.$max-players {
+    .player-card:nth-of-type(#{$index}) {
+      z-index: t.$max-players - $index;
+    }
+  }
+
+  .player-card:not(:first-of-type) {
+    max-height: t.$stack-peek;
+    margin-top: -1 * t.$stack-tuck;
+    box-shadow: 0 -1px 4px rgba(24, 30, 23, 0.1);
+
+    // A sliver should read as colour, not as a cropped line of text.
+    .player-card-strip {
+      height: t.$stack-peek;
+    }
+
+    > strong,
+    .player-metrics {
+      opacity: 0;
+    }
+  }
+
+  // Each sliver tapers inward so the deck fans, as in the reference.
+  @for $index from 2 through t.$max-players {
+    .player-card:nth-of-type(#{$index}) {
+      margin-inline: ($index - 1) * t.$stack-inset;
+    }
+  }
+
+  // Beyond a few slivers the fan stops growing and simply fades.
+  .player-card:nth-of-type(n + 5) {
+    opacity: 0.55;
+  }
+}
+
+/** Invisible click target covering the collapsed stack. */
+.player-stack-expand {
+  position: absolute;
+  inset: 0;
+  z-index: t.$max-players + 1;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+/** Small text control, shown only while the stack is expanded. */
+.player-stack-collapse {
+  justify-self: start;
+  padding: 4px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 0.68rem t.$font-mono;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-stack .player-card {
+    transition: none;
+  }
+}
+
 .player-list {
   gap: t.$gap-sm;
 }
 
 .player-card {
   position: relative;
-  padding: 14px;
+  overflow: hidden;
+  padding: 14px 14px 14px 16px;
   border: 1px solid var(--border-input);
+  // Left edge is tinted with the player's token colour, set inline from
+  // ThemeToken.color so each player is identifiable at a glance.
+  border-left: 5px solid var(--border-input);
   border-radius: 13px;
   background: var(--surface-raised);
-
-  &.is-active {
-    border: 2px solid var(--accent-strong);
-    background: var(--decision-bg);
-    box-shadow: 3px 3px 0 var(--accent-strong);
-  }
 
   > strong {
     display: block;
