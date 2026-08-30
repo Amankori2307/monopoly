@@ -328,20 +328,49 @@ test('orders and rotates the icon to match the text', async ({ page }) => {
 test('renders every surface with square corners', async ({ page }) => {
   await startGame(page);
 
-  const rounded = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('body *'))
-      // Player tokens are the one documented exception: a playing piece is a
-      // physical object, not a UI surface, so it is round.
-      .filter((element) => !element.classList.contains('token-chip'))
+  const rounded = await page.evaluate(() => {
+    // Physical game pieces are the documented exception: a pawn, a die, and its
+    // pips are real objects, not UI surfaces. Nothing else may be round.
+    const physicalPieces = ['token-chip', 'die-face', 'pip'];
+    return Array.from(document.querySelectorAll('body *'))
+      .filter(
+        (element) => !physicalPieces.some((name) => element.classList.contains(name))
+      )
       .filter((element) => {
         const radius = getComputedStyle(element).borderRadius;
         return radius !== '' && radius !== '0px';
       })
       .map((element) => `${element.tagName.toLowerCase()}.${element.className}`)
-      .slice(0, 10)
-  );
+      .slice(0, 10);
+  });
 
   expect(rounded).toEqual([]);
+});
+
+// The exclusion above only proves the pieces are allowed to be round. This
+// proves they actually are - otherwise squaring the dice again would still pass.
+test('renders the dice as real dice: rounded face, circular pips', async ({ page }) => {
+  await startGame(page);
+
+  const shapes = await page.evaluate(() => {
+    const radiusOf = (selector: string) => {
+      const element = document.querySelector(selector);
+      return element ? getComputedStyle(element).borderRadius : null;
+    };
+    return {
+      die: radiusOf('.die-face'),
+      pip: radiusOf('.pip'),
+      rollButton: radiusOf('.dice-roll-button'),
+    };
+  });
+
+  // Rounded like a real die - but not a circle.
+  expect(shapes.die).not.toBe('0px');
+  expect(shapes.die).not.toBe('50%');
+  // Dots are circles.
+  expect(shapes.pip).toBe('50%');
+  // The exception must not leak into UI controls.
+  expect(shapes.rollButton).toBe('0px');
 });
 
 // Cards used to size to their content - a street (7 rent rows) was 507px, a
