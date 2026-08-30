@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
 import { isOwnableSpace } from '../../../domain/rules/space.utils';
 import { SpaceKind } from '../../../domain/types/game.enums';
-import type { BoardSpace } from '../../../domain/types/game.interfaces';
+import type { BoardSpace, StreetSpace } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { SpaceCard } from './SpaceCard';
 
@@ -44,6 +44,62 @@ describe('SpaceCard', () => {
     expect(card).not.toHaveClass('is-deed');
     // ...but it is still the same card shell, so it still measures the same.
     expect(card).toHaveClass('deed-card');
+  });
+
+  // The strip is the card's top edge now, not a street-deed detail, so the card
+  // owns it - that is what lets a railway have one at all.
+  it('renders the colour strip as its own first child', () => {
+    const card = renderCard(findSpace(SpaceKind.Street));
+    const band = card.querySelector(`[data-testid="${TEST_IDS.deedBand}"]`);
+
+    expect(band).not.toBeNull();
+    expect(card.firstElementChild).toBe(band);
+  });
+
+  it('gives a street the strip for its colour group', () => {
+    const street = findSpace(SpaceKind.Street) as StreetSpace;
+    const card = renderCard(street);
+
+    const band = card.querySelector(`[data-testid="${TEST_IDS.deedBand}"]`);
+    expect(band).toHaveClass(`group-${street.colorGroup}`);
+    // Themed via the class, never an inline hex, or the strip stops following
+    // the active theme.
+    expect(band?.getAttribute('style')).toBeNull();
+  });
+
+  // --accent sits within a few points of --group-red, so a railway tinted with
+  // it would have read as a red street. Ink is distinct from all eight groups.
+  it.each([SpaceKind.Railway, SpaceKind.Utility])(
+    'gives a %s the ink strip rather than a colour group',
+    (kind) => {
+      const band = renderCard(findSpace(kind)).querySelector(
+        `[data-testid="${TEST_IDS.deedBand}"]`
+      );
+
+      expect(band).toHaveClass('is-ink');
+      expect(band?.className).not.toMatch(/group-/);
+    }
+  );
+
+  it('renders no strip for a space nobody can own', () => {
+    const card = renderCard(findSpace(SpaceKind.Chance));
+
+    expect(card.querySelector(`[data-testid="${TEST_IDS.deedBand}"]`)).toBeNull();
+  });
+
+  // Railways and utilities are bought, mortgaged, and collect rent, so calling
+  // them a plain board space read as wrong in the holdings deck.
+  it.each([SpaceKind.Street, SpaceKind.Railway, SpaceKind.Utility])(
+    'labels a %s as a title deed',
+    (kind) => {
+      renderCard(findSpace(kind));
+      expect(screen.getByText('Title deed')).toBeInTheDocument();
+    }
+  );
+
+  it('labels a space nobody can own as a board space', () => {
+    renderCard(findSpace(SpaceKind.Chance));
+    expect(screen.getByText('Board space')).toBeInTheDocument();
   });
 
   it('renders actions only when the caller supplies them', () => {

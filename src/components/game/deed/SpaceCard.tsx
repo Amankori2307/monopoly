@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { isOwnableSpace } from '../../../domain/rules/space.utils';
+import { isOwnableSpace, isStreetSpace } from '../../../domain/rules/space.utils';
 import { SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
@@ -27,6 +27,16 @@ interface SpaceCardProps {
  * surface and fixed dimensions - callers position it, they do not dress it.
  * Presentation only: the caller supplies any actions.
  */
+/**
+ * Which colour the card's top strip takes. Streets carry their group's colour;
+ * railways and utilities have no group, so they take ink - distinct from all
+ * eight group colours, and the colour railways wear on a real board. The theme
+ * accent is deliberately not used here: it is a red within a few points of
+ * --group-red, so a railway would have read as a red street.
+ */
+const bandModifier = (space: BoardSpace): string =>
+  isStreetSpace(space) ? `group-${space.colorGroup}` : 'is-ink';
+
 export function SpaceCard({
   actions,
   currencySymbol,
@@ -34,16 +44,26 @@ export function SpaceCard({
   space,
 }: SpaceCardProps) {
   const icon = getSpaceIcon(space);
-  const title = space.kind === SpaceKind.Street ? 'Title deed' : 'Board space';
   // Every card is the same size; this only pins a deed's house/hotel footer to
   // the bottom of it. A Chance or tax card has no footer to pin.
   const isDeed = isOwnableSpace(space);
+  // Railways and utilities are deeds too - owned, mortgaged, and collecting
+  // rent - so the label follows ownability, not just streets.
+  const title = isDeed ? 'Title deed' : 'Board space';
 
   return (
     <div
       className={`deed-card space-card-body ${isDeed ? 'is-deed' : ''}`}
       data-testid={TEST_IDS.spaceCard}
     >
+      {/* The card opens with its colour, flush to the top edge. The colour
+          itself comes from a .group-* utility, so it follows the active theme. */}
+      {isDeed ? (
+        <div
+          className={`deed-band ${bandModifier(space)}`}
+          data-testid={TEST_IDS.deedBand}
+        />
+      ) : null}
       <p className="eyebrow">{title}</p>
       <div className="space-detail-title-row">
         {icon ? (

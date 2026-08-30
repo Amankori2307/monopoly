@@ -57,6 +57,11 @@
 .space-card-body {
   display: flex;
   flex-direction: column;
+
+  // Scoped: .eyebrow is shared with the panels and the drawer header.
+  .eyebrow {
+    margin-bottom: 5px;
+  }
 }
 
 // Street footer (house/hotel costs) sits at the bottom of that shared height.
@@ -138,34 +143,43 @@
 .space-detail-title-row {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding-right: 34px;
+  gap: 9px;
+  padding-right: 30px;
 
+  // Fixed, not viewport-relative: the card is a fixed width, so the name must
+  // size to the card rather than to the window it happens to be shown in.
   h2 {
-    font-size: clamp(1.9rem, 5vw, 2.7rem);
-    letter-spacing: -0.055em;
+    font-size: 1.65rem;
+    letter-spacing: -0.045em;
+    line-height: 1.15;
   }
 }
 
 .space-detail-icon {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   opacity: 0.8;
 }
 
-// Colour band on a title deed. The colour itself comes from a .group-* class
-// generated in themes/_themes.scss, so it follows the active theme.
-// Colour comes from the .group-* utility applied alongside this class, so the
-// band always matches the street's colour group under the active theme.
+// The card's top edge. Colour comes from the .group-* utility applied alongside
+// this class, so the strip always matches the street's colour group under the
+// active theme.
 .deed-band {
-  height: 18px;
+  height: 14px;
   // No content of its own, so a flex column under any height pressure collapses
   // it to nothing rather than clipping the card - and the deed silently loses
   // its colour. Pin it.
   flex-shrink: 0;
-  // Bleeds to the card edge by negating the card's padding - keep it derived,
-  // or the band stops lining up the moment that padding changes.
-  margin: 18px (-1 * t.$deed-card-pad);
+  // Flush to the card's top and side edges by negating its padding - keep this
+  // derived, or the strip stops lining up the moment that padding changes.
+  margin: (-1 * t.$deed-card-pad) (-1 * t.$deed-card-pad) 11px;
+}
+
+// Railways and utilities have no colour group, so they take ink: distinct from
+// all eight group colours in every theme, and the colour railways wear on a
+// real board. Not --accent, which sits within a few points of --group-red.
+.deed-band.is-ink {
+  background: var(--text-primary);
 }
 
 .deed-primary-stats {
@@ -176,27 +190,27 @@
 
   span {
     display: grid;
-    gap: 5px;
-    padding: 12px;
+    gap: 3px;
+    padding: 8px 9px;
     border-right: 1px solid var(--border-input);
     border-bottom: 1px solid var(--border-input);
     color: var(--text-muted);
-    font: 500 0.66rem/1.25 t.$font-mono;
+    font: 500 0.6rem/1.2 t.$font-mono;
     text-transform: uppercase;
   }
 
   strong {
     color: var(--text-primary);
-    font: 700 1rem/1.2 t.$font-sans;
+    font: 700 0.9rem/1.2 t.$font-sans;
     text-transform: none;
   }
 }
 
 .deed-rent-title {
-  margin: 20px 0 7px;
+  margin: 10px 0 4px;
   color: var(--text-muted);
-  font: 500 0.7rem t.$font-mono;
-  letter-spacing: 0.12em;
+  font: 500 0.62rem t.$font-mono;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -204,23 +218,25 @@
   margin: 0;
   border-top: 1px solid var(--border-input);
 
+  // Seven rows on a street, so this is where the card's height is won or lost.
   div {
     display: flex;
     justify-content: space-between;
-    gap: 18px;
-    padding: 8px 0;
+    gap: 12px;
+    padding: 4px 0;
     border-bottom: 1px solid var(--border-input);
   }
 
   dt {
     color: var(--text-body);
-    font-size: 0.86rem;
+    font-size: 0.78rem;
+    line-height: 1.35;
   }
 
   dd {
     margin: 0;
     color: var(--text-primary);
-    font: 500 0.86rem t.$font-mono;
+    font: 500 0.78rem/1.35 t.$font-mono;
   }
 }
 
@@ -228,13 +244,14 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 10px;
   color: var(--text-muted);
-  font: 500 0.71rem/1.45 t.$font-mono;
+  font: 500 0.66rem/1.35 t.$font-mono;
 }
 
 .detail-copy {
-  margin: 19px 0 0;
+  margin: 12px 0 0;
   color: var(--text-body);
-  line-height: 1.6;
+  font-size: 0.86rem;
+  line-height: 1.5;
 }

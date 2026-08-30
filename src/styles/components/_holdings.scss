@@ -88,6 +88,14 @@
     transform: scale(1);
   }
 
+  // The peek is one title line tall, so a long name - the railways run to three
+  // words - must end in an ellipsis rather than be sliced through its second.
+  h2 {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
   // The featured card is still in the deck, marked rather than removed, so the
   // stack never changes length as you pick your way through it.
   &.is-selected {

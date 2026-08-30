@@ -22,11 +22,6 @@ const rentRows = (space: StreetSpace): Array<[string, number]> => [
 export function StreetDeed({ currencySymbol, space }: StreetDeedProps) {
   return (
     <>
-      {/* Colour comes from the .group-* utility, so it follows the active theme. */}
-      <div
-        className={`deed-band group-${space.colorGroup}`}
-        data-testid={TEST_IDS.deedBand}
-      />
       <DeedPrimaryStats
         currencySymbol={currencySymbol}
         mortgageValue={space.mortgageValue}

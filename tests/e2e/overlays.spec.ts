@@ -396,9 +396,11 @@ test("opens any player's holdings from any player card", async ({ page }) => {
 // started restyling a card it is only supposed to be positioning.
 // Mirrors $deed-card-width / $deed-card-height / $holdings-peek / $drawer-pad
 // in src/styles/abstracts/_tokens.scss.
-const DEED_CARD_WIDTH = 420;
-const DEED_CARD_HEIGHT = 545;
-const HOLDINGS_PEEK = 108;
+const DEED_CARD_WIDTH = 340;
+const DEED_CARD_HEIGHT = 380;
+const HOLDINGS_PEEK = 78;
+/** The card's own 1px border, inside its width and height box. */
+const CARD_BORDER = 1;
 const DRAWER_PAD = 28;
 /** The drawer's border-left is inside its width box, like the padding. */
 const DRAWER_BORDER = 1;
@@ -463,6 +465,16 @@ test('renders the site card at one fixed size in the drawer and the modal', asyn
     expect(Math.round(box.width)).toBe(DEED_CARD_WIDTH);
     expect(Math.round(box.height)).toBe(DEED_CARD_HEIGHT);
   }
+
+  // The colour strip is the card's top edge: flush to the top, bleeding the
+  // full width. If the card's padding and the strip's negative margin ever
+  // stop being derived from one token, this is what catches it.
+  const bandBox = await featured.getByTestId(TEST_IDS.deedBand).boundingBox();
+  if (!bandBox) {
+    throw new Error('Colour strip has no layout box');
+  }
+  expect(Math.round(bandBox.y - featuredBox.y)).toBe(CARD_BORDER);
+  expect(Math.round(bandBox.width)).toBe(DEED_CARD_WIDTH - 2 * CARD_BORDER);
 
   // The drawer is sized by its card, not the other way round...
   expect(Math.round(drawerBox.width)).toBe(

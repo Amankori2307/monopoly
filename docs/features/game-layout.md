@@ -121,7 +121,7 @@ player's portfolio — holdings are public information on a physical board.
 stack ([HoldingsStack](../../src/components/game/overlays/HoldingsStack.tsx)) where the cards
 overlap so only each title shows, the way a hand of cards fans out. Picking one promotes it to the
 featured card. Rendering every deed in full made a large portfolio an unnavigable scroll — at
-545px each, twenty sites is 10,000px.
+380px each, twenty sites is 7,600px.
 
 The featured card **stays in the stack**, marked rather than lifted out, so the deck never changes
 length and nothing shifts under the pointer as you read through it. The stack stays in colour-group
@@ -129,20 +129,35 @@ order (board order, then railways, then utilities) and each card carries its gro
 so the grouping reads without splitting the stack into separate lists.
 
 **The `SpaceCard` is one fixed object.** It carries its own surface — border, background, padding —
-and renders at exactly `$deed-card-width` × `$deed-card-height` (420×545) in the title-deed modal,
+and renders at exactly `$deed-card-width` × `$deed-card-height` (340×380) in the title-deed modal,
 the buy decision, the featured holding, and a stacked holding alike. Stacked cards are that same
 card *clipped* to `$holdings-peek`, never a smaller card. Callers position it; they never restyle
 it, which is what stops the three call sites drifting into three different cards.
+
+**The card opens with its colour strip**, flush to the top edge, above the eyebrow and the name.
+That placement is what makes the deck readable: scrolling the stack, the strips alone show which
+sites belong to which colour set, so grouping needs no headers. The strip belongs to `SpaceCard`
+rather than to `StreetDeed`, because a railway needs one too — railways and utilities have no
+colour group and take **ink** (`--text-primary`), the colour railways wear on a real board. Not
+`--accent`: it sits within a few points of `--group-red`, so an accent-tinted railway read as a
+red street. Every ownable space is labelled *Title deed*; only spaces nobody can own are a *Board
+space*.
+
+Stacked cards clamp their name to one line with an ellipsis. The peek is a single title line tall,
+so a long name — the railways run to three words — would otherwise be sliced through its second.
 
 The drawer is sized **by** its card rather than guessed at: `.side-drawer.is-wide` is one card wide
 plus `$drawer-pad` either side (and its `border-left`), and the card is centred in it. Below
 `$breakpoint-mobile` a 420px card cannot fit, so the card goes fluid and the drawer follows.
 
 The height is a fixed `height`, not a `min-height`, so a deed that outgrew it would be clipped
-rather than grow. Two consequences worth knowing before changing it: the colour band needs
+rather than grow — **measure before changing it**: the tallest card is a street (seven rent rows),
+at 364px inside the current 380. Two consequences worth knowing: the colour strip needs
 `flex-shrink: 0` (it has no content, so under height pressure the flex column collapses it to
-nothing and the deed silently loses its colour), and the band's bleed to the card edge is derived
-from `$deed-card-pad` rather than hardcoded.
+nothing and the deed silently loses its colour), and its bleed to the card edges is derived from
+`$deed-card-pad` rather than hardcoded. The deed heading is a fixed `1.65rem` rather than a
+viewport-relative clamp, because the card is a fixed width — it must size to the card, not to the
+window it happens to be shown in.
 
 All the maths behind this — net worth, mortgaged count, set progress, grouping — lives in
 [holdings.utils.ts](../../src/domain/rules/holdings.utils.ts) as pure functions. `gameEngine` also
