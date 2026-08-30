@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import type { PlayerId } from '../../../domain/types/game.interfaces';
-import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
-import { formatMoney } from '../../../shared/utils/money.utils';
+import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { PlayerSummary } from './panels.interfaces';
-import { PlayerBadges } from './PlayerBadges';
+import { PlayerCard } from './PlayerCard';
 
 interface PlayersPanelProps {
   currencySymbol: string;
@@ -49,40 +48,14 @@ export function PlayersPanel({
           />
         )}
 
-        {summaries.map(({ player, token, propertyCount }) => (
-          <article
-            className="player-card"
-            data-testid={scopedTestId(TEST_IDS.playerCard, player.id)}
-            key={player.id}
-            style={{ borderLeftColor: token?.color }}
-          >
-            {/* Colour strip: the only thing visible on a collapsed sliver. */}
-            <span
-              aria-hidden="true"
-              className="player-card-strip"
-              style={{ background: token?.color }}
-            />
-
-            {/* Only reachable once expanded; the overlay covers it while collapsed. */}
-            <button
-              aria-label={`View ${player.name} details`}
-              className="player-card-open"
-              onClick={() => onSelectPlayer(player.id)}
-              tabIndex={isExpanded ? 0 : -1}
-              type="button"
-            />
-
-            <strong>
-              {token?.emoji} {player.name}
-            </strong>
-            <div className="player-metrics">
-              <span>Cash</span>
-              <strong>{formatMoney(player.cash, currencySymbol)}</strong>
-              <span>Properties</span>
-              <strong>{propertyCount}</strong>
-            </div>
-            <PlayerBadges player={player} />
-          </article>
+        {summaries.map((summary) => (
+          <PlayerCard
+            currencySymbol={currencySymbol}
+            isInteractive={isExpanded}
+            key={summary.player.id}
+            onOpen={onSelectPlayer}
+            summary={summary}
+          />
         ))}
       </div>
 

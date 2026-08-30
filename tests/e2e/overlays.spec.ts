@@ -31,13 +31,16 @@ test("opens a player's holdings by clicking their card", async ({ page }) => {
 
   await page.getByTestId(TEST_IDS.playerStackExpand).click();
   await page
-    .getByRole('button', { name: /View .* details/ })
+    .getByRole('button', { name: /View .* holdings/ })
     .first()
     .click();
 
   const drawer = page.getByTestId(TEST_IDS.playerDetailDrawer);
   await expect(drawer).toBeVisible();
-  await expect(drawer).toContainText('Holdings');
+  // Grouped sections replaced the old flat "Holdings" list; a fresh game owns
+  // nothing, so the empty state shows alongside the headline stats.
+  await expect(drawer).toContainText('Net worth');
+  await expect(drawer).toContainText('No owned assets yet.');
 
   await page.getByTestId(TEST_IDS.drawerClose).click();
   await expect(drawer).toHaveCount(0);
@@ -364,4 +367,26 @@ test('opens the buy decision only after the token finishes moving', async ({ pag
 
     await advanceGame(page);
   }
+});
+
+// Holdings are public information on a physical board, so any player's
+// portfolio can be inspected - not just the one whose turn it is.
+test("opens any player's holdings, grouped by colour set", async ({ page }) => {
+  await startGame(page);
+
+  // Expand the stack so every card's own control is reachable.
+  await page.getByTestId(TEST_IDS.playerStackExpand).click();
+
+  const openButtons = page.getByRole('button', { name: /View .* holdings/ });
+  const count = await openButtons.count();
+  expect(count).toBeGreaterThan(1);
+
+  // The second card is not the active player, and must still open.
+  await openButtons.nth(1).click();
+
+  const drawer = page.getByTestId(TEST_IDS.playerDetailDrawer);
+  await expect(drawer).toBeVisible();
+  // Board position is deliberately absent.
+  await expect(drawer).not.toContainText('Position');
+  await expect(drawer).toContainText('Net worth');
 });

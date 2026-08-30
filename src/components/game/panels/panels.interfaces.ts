@@ -1,3 +1,4 @@
+import type { ColorGroupProgress } from '../../../domain/rules/holdings.utils';
 import type { PendingDecisionType } from '../../../domain/types/game.enums';
 import type {
   AuctionState,
@@ -22,6 +23,11 @@ export interface PlayerSummary {
   player: PlayerState;
   token: ThemeToken | undefined;
   propertyCount: number;
+  /** Cash plus site and building value - who is actually winning. */
+  netWorth: number;
+  mortgagedCount: number;
+  /** Colour groups they hold any of, and how close each is to a full set. */
+  setProgress: ColorGroupProgress[];
 }
 
 export interface HoldingEntry {

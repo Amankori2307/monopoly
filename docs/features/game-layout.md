@@ -66,6 +66,66 @@ Composition:
 - **The stack has a real `<button>` overlay** rather than a click handler on a `div`, so
   keyboard and screen-reader users can expand it too.
 
+## Board and card details
+
+### Player tokens
+
+Drawn by [BoardTokenLayer](../../src/components/game/board/BoardTokenLayer.tsx), an overlay above
+the board. Each token is positioned absolutely at its space's centre (`getBoardCellCenter`), so
+moving is a real CSS transition rather than a jump between grid cells. Tokens used to sit in the
+cell's flow, which made an occupied cell taller than its neighbours and shifted the board.
+
+A token is a small **shaded sphere in the player's colour** — one of the documented physical-piece
+exceptions to the sharp-corner system. The base colour is set inline from `ThemeToken.color`; the
+gradients and inset shading are colour-agnostic overlays, so the sphere reads over any colour.
+Colour is the only thing distinguishing pieces, so the token catalog uses vivid, separable colours.
+
+After a roll the token **walks one space at a time** with a tick per step
+([useAnimatedTokenPositions](../../src/components/game/hooks/useAnimatedTokenPositions.ts)), each
+hop eased fast → slow → fast. Only dice-sized forward hops are walked; a teleport (Go To Jail, a
+card advancing you to GO) snaps, because walking it would misrepresent what happened.
+
+**The decision modal waits for the walk.** The hook reports `isMoving` and `GamePage` withholds the
+decision until it settles, so the buy prompt never covers a piece still in transit.
+
+_Limitation:_ the engine reports only the final position, so a roll that lands on Chance and is
+then moved on by the card animates the net move, not both legs.
+
+### Space card
+
+Every space card renders at one height (`$space-card-min-height`, sized to the tallest — a street
+with seven rent rows). Railways, utilities, tax, Chance and corners all pad out to match, so the
+card never resizes as you move around the board.
+
+### Player card
+
+Cards lead with **net worth** (cash + site and building value) rather than cash, which misleads
+when a player is property-rich. Below it: cash, site count with a mortgaged count shown only when
+non-zero, **colour-set pips**, and status badges that appear only when they apply (jail card, in
+jail, bankrupt). Board position was dropped — a number nobody acts on.
+
+The pips are one swatch per colour group the player holds any of, filled when the set is complete.
+Set progress is the strongest strategic signal in Monopoly, so it belongs on the card rather than
+only behind a click.
+
+Cards render as a **collapsible stack**: the top card is the active player
+(`selectPlayerOrderFromActive`), so order alone conveys whose turn it is and no separate marker is
+needed. Clicking a card opens that player's holdings.
+
+### Holdings drawer
+
+[PlayerDetailDrawer](../../src/components/game/overlays/PlayerDetailDrawer.tsx) shows **any**
+player's portfolio — holdings are public information on a physical board. Sites are grouped by
+colour set in board order, then railways, then utilities, each group headed with its progress
+(`2/3`) and a **Monopoly** marker when complete. Each site renders as its full `SpaceCard` deed.
+
+Group headers are **sticky** and the drawer uses a wider variant (560px), because a full deed is
+~510px tall and a large portfolio would otherwise be an unnavigable scroll.
+
+All the maths behind this — net worth, mortgaged count, set progress, grouping — lives in
+[holdings.utils.ts](../../src/domain/rules/holdings.utils.ts) as pure functions. `gameEngine` also
+imports `ownsEntireColorSet` from there, so monopoly rent and the UI cannot disagree.
+
 ## State and data
 
 Reads `activeGame` and `uiHints` from `game`, and `auctionBidInput` from `ui`. Holds one piece of

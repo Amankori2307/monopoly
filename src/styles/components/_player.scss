@@ -65,6 +65,25 @@
     }
 
     > strong,
+    // Net worth is the headline figure; cash sits below it as a secondary metric.
+.player-card-worth {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 4px 0 8px;
+
+      strong {
+        font-family: t.$font-serif;
+        font-size: 1.25rem;
+      }
+    }
+
+    .player-card-mortgaged {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
     .player-metrics {
       opacity: 0;
     }
@@ -148,6 +167,25 @@
     font-family: t.$font-serif;
     font-size: 1.04rem;
   }
+}
+
+// Net worth is the headline figure; cash sits below it as a secondary metric.
+.player-card-worth {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 8px;
+
+  strong {
+    font-family: t.$font-serif;
+    font-size: 1.25rem;
+  }
+}
+
+.player-card-mortgaged {
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .player-metrics {

@@ -21,6 +21,9 @@ const makeSummary = (index: number): PlayerSummary => ({
   },
   token: indiaEditionTheme.tokenCatalog[index],
   propertyCount: 0,
+  netWorth: 1500,
+  mortgagedCount: 0,
+  setProgress: [],
 });
 
 const renderPanel = (playerCount = 2, onSelectPlayer = vi.fn()) => {

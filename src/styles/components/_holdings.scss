@@ -1,0 +1,81 @@
+@use '../abstracts/tokens' as t;
+
+// ---------------------------------------------------------------------------
+// Colour-set pips on the player card
+//
+// One swatch per group the player holds any of. A complete set is filled and
+// ringed; a partial set is muted, so a full monopoly reads instantly.
+// ---------------------------------------------------------------------------
+.group-pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.group-pip {
+  width: 14px;
+  height: 8px;
+  border: 1px solid var(--border-space);
+  border-radius: t.$radius-sharp;
+  // Partial sets are dimmed so a complete one stands out.
+  opacity: 0.45;
+
+  &.is-complete {
+    opacity: 1;
+    box-shadow: 0 0 0 1px var(--text-primary);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Holdings drawer
+// ---------------------------------------------------------------------------
+.holdings-section {
+  margin-top: t.$gap-lg;
+}
+
+// Sticky: a full deed is tall, so the group heading has to stay on screen or
+// you lose track of which set you are scrolling through.
+.holdings-section-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-panel);
+
+  h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.holdings-swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border-space);
+}
+
+.holdings-progress {
+  color: var(--text-muted);
+  font: 500 0.72rem t.$font-mono;
+}
+
+.holdings-monopoly {
+  padding: 3px 8px;
+  background: var(--badge-bg);
+  color: var(--text-primary);
+  font: 500 0.62rem t.$font-mono;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.holdings-deeds {
+  display: grid;
+  gap: t.$gap-lg;
+  margin-top: t.$gap-md;
+}

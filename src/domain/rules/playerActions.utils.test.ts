@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PropertyAction } from '../types/game.enums';
 import type { GameState } from '../types/game.interfaces';
 import { createGameState } from './gameEngine';
-import {
-  countPlayerProperties,
-  getPlayerOwnedSpaces,
-  getPropertyActions,
-} from './playerActions.utils';
+import { getPropertyActions } from './playerActions.utils';
 import { SeededRandomSource } from './rng';
 
 const createGame = (): GameState =>
@@ -28,35 +24,6 @@ const giveFirstStreetTo = (game: GameState, playerId: string) => {
   game.ownership[street!.id].ownerPlayerId = playerId;
   return street!.id;
 };
-
-describe('countPlayerProperties', () => {
-  it('starts at zero for a new game', () => {
-    const game = createGame();
-
-    expect(countPlayerProperties(game, game.playerOrder[0])).toBe(0);
-  });
-
-  it('counts only spaces owned by that player', () => {
-    const game = createGame();
-    const [first, second] = game.playerOrder;
-    giveFirstStreetTo(game, first);
-
-    expect(countPlayerProperties(game, first)).toBe(1);
-    expect(countPlayerProperties(game, second)).toBe(0);
-  });
-});
-
-describe('getPlayerOwnedSpaces', () => {
-  it('returns the owned space', () => {
-    const game = createGame();
-    const playerId = game.playerOrder[0];
-    const spaceId = giveFirstStreetTo(game, playerId);
-
-    const owned = getPlayerOwnedSpaces(game, playerId);
-
-    expect(owned.map((space) => space.id)).toEqual([spaceId]);
-  });
-});
 
 describe('getPropertyActions', () => {
   it('offers exactly the four property actions', () => {

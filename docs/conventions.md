@@ -63,6 +63,32 @@ Enforced by `@typescript-eslint/naming-convention`.
 
 String enums serialise to their plain values, so they are safe in persisted state.
 
+## 3b. Design system
+
+| Decision        | Rule                                                                                                                                                                                                                                                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Corners**     | **Sharp everywhere.** Every radius comes from `$radius-*` in `abstracts/_tokens.scss`, and they are all `0`. Never hardcode a radius. The one exception is **physical game pieces** — a pawn, a die, and its pips are real objects, not UI surfaces (`$token-radius`, `$die-radius`, `$pip-radius`). An e2e sweep fails if anything else renders a non-zero radius. |
+| **Buttons**     | Two roles, both theme tokens: `--button-primary` (blue) for the action you want taken, `--button-secondary` (neutral) for the alternative. Never style a button with `--accent` — that is the board's brand red, not a button colour.                                                                                                                               |
+| **Surfaces**    | Cards and modals are white (`--surface-panel`) with a subtle border. Tinted backgrounds and accent-coloured rings make the same content look different depending on where it appears.                                                                                                                                                                               |
+| **Colour**      | Only theme tokens. No hex in a component partial. See [theming.md](theming.md).                                                                                                                                                                                                                                                                                     |
+| **Geometry**    | Fonts, spacing, breakpoints and board metrics are tokens in `abstracts/_tokens.scss`.                                                                                                                                                                                                                                                                               |
+| **Composition** | One card component per concept, reused rather than re-styled — `SpaceCard` is the title deed, the body of the buy decision, _and_ each holding in the player drawer.                                                                                                                                                                                                |
+
+## 3c. Styling (SCSS)
+
+Styles live in `src/styles/`, entry `main.scss`, imported once in `App.tsx`. Layer order is
+`abstracts` → `themes` → `base` → `layout` → `components` → `pages` → `utilities`; tokens and
+themes come first so later partials can use them, and **`utilities/` must stay last** so its
+single-class rules win over equal-specificity component rules.
+
+- **Never hardcode a colour in a partial.** Use `var(--token)`; a literal hex silently breaks theming.
+- One partial per component or page; register it in `main.scss`.
+- Prefer nesting that mirrors the component's markup over long `:not()` selector chains.
+- **Grid row templates must match the number of children actually rendered.** The corner-space bug
+  came from a 3-row template on a 2-child element. A conditional child needs a modifier class.
+- Adding a theme: [theming.md](theming.md). The `.scss` under `src/assets/css/` is the dead legacy
+  island — do not add to it.
+
 ## 4. Keep logic out of components
 
 This is what makes the code testable — a pure function needs no DOM, no store, no render.

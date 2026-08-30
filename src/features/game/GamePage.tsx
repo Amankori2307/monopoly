@@ -22,7 +22,7 @@ import {
   selectCanEndTurn,
   selectCanRollDice,
   selectDecisionViewModel,
-  selectHoldings,
+  selectGroupedHoldings,
   selectIsJailRoll,
   selectPlayerSummaries,
 } from './gameView.selectors';
@@ -137,8 +137,10 @@ export function GamePage() {
 
         <PlayerDetailDrawer
           currencySymbol={currencySymbol}
-          holdings={
-            selectedSummary ? selectHoldings(activeGame, selectedSummary.player.id) : []
+          sections={
+            selectedSummary
+              ? selectGroupedHoldings(activeGame, selectedSummary.player.id)
+              : []
           }
           onClose={overlays.closePlayer}
           summary={selectedSummary}

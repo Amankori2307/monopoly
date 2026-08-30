@@ -17,7 +17,7 @@ import {
   selectCanEndTurn,
   selectCanRollDice,
   selectDecisionViewModel,
-  selectHoldings,
+  selectGroupedHoldings,
   selectPlayerSummaries,
 } from './gameView.selectors';
 
@@ -90,14 +90,6 @@ describe('selectPlayerOrderFromActive', () => {
     const rotated = selectPlayerOrderFromActive(game);
 
     expect(new Set(rotated).size).toBe(game.playerOrder.length);
-  });
-});
-
-describe('selectHoldings', () => {
-  it('is empty before anything is bought', () => {
-    const game = createGame();
-
-    expect(selectHoldings(game, game.playerOrder[0])).toEqual([]);
   });
 });
 
@@ -244,5 +236,13 @@ describe('selectHasAvailableAction', () => {
         true
       );
     }
+  });
+});
+
+describe('selectGroupedHoldings', () => {
+  it('is empty before anything is bought', () => {
+    const game = createGame();
+
+    expect(selectGroupedHoldings(game, game.playerOrder[0])).toEqual([]);
   });
 });

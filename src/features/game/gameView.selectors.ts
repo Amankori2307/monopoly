@@ -1,4 +1,10 @@
-import { getPlayerOwnedSpaces } from '../../domain/rules/playerActions.utils';
+import {
+  getColorGroupProgress,
+  getGroupedHoldings,
+  getMortgagedCount,
+  getNetWorth,
+  getPlayerOwnedSpaces,
+} from '../../domain/rules/holdings.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
 import { PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
 import type {
@@ -10,7 +16,6 @@ import type {
 } from '../../domain/types/game.interfaces';
 import type {
   DecisionViewModel,
-  HoldingEntry,
   PlayerSummary,
 } from '../../components/game/panels/panels.interfaces';
 
@@ -50,18 +55,13 @@ export const selectPlayerSummaries = (
     return {
       player,
       token: findToken(player.tokenId),
-      propertyCount: Object.values(game.ownership).filter(
-        (ownership) => ownership.ownerPlayerId === playerId
-      ).length,
+      propertyCount: getPlayerOwnedSpaces(game, playerId).length,
+      netWorth: getNetWorth(game, playerId),
+      mortgagedCount: getMortgagedCount(game, playerId),
+      setProgress: getColorGroupProgress(game, playerId),
     };
   });
 };
-
-export const selectHoldings = (game: GameState, playerId: PlayerId): HoldingEntry[] =>
-  getPlayerOwnedSpaces(game, playerId).map((space) => ({
-    space,
-    ownership: game.ownership[space.id],
-  }));
 
 export const selectCanEndTurn = (game: GameState) =>
   game.turn.phase === TurnPhase.TurnComplete ||
@@ -179,3 +179,7 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
 
   return activePlayer.inJail ? jailDecision(activePlayer) : null;
 };
+
+/** A player's holdings grouped for the holdings drawer. */
+export const selectGroupedHoldings = (game: GameState, playerId: PlayerId) =>
+  getGroupedHoldings(game, playerId);

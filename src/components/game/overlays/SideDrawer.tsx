@@ -9,6 +9,8 @@ interface SideDrawerProps {
   onClose: () => void;
   testId: string;
   title: string;
+  /** Wider panel, for content that needs the room - e.g. full title deeds. */
+  wide?: boolean;
 }
 
 /**
@@ -22,6 +24,7 @@ export function SideDrawer({
   onClose,
   testId,
   title,
+  wide = false,
 }: SideDrawerProps) {
   useEscapeKey(isOpen, onClose);
 
@@ -42,7 +45,7 @@ export function SideDrawer({
       <aside
         aria-labelledby={`${testId}-title`}
         aria-modal="true"
-        className="side-drawer"
+        className={`side-drawer ${wide ? 'is-wide' : ''}`}
         data-testid={testId}
         role="dialog"
       >

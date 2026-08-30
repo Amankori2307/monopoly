@@ -1,6 +1,6 @@
 import { GameCommandType, PropertyAction } from '../types/game.enums';
 import type { GameState, PlayerId } from '../types/game.interfaces';
-import { isOwnableSpace } from './space.utils';
+import { getPlayerOwnedSpaces } from './holdings.utils';
 
 export interface PropertyActionDescriptor {
   action: PropertyAction;
@@ -44,16 +44,6 @@ const SCAFFOLDED_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   GameCommandType.UnmortgageAsset,
 ]);
 
-export const countPlayerProperties = (state: GameState, playerId: PlayerId): number =>
-  Object.values(state.ownership).filter(
-    (ownership) => ownership.ownerPlayerId === playerId
-  ).length;
-
-export const getPlayerOwnedSpaces = (state: GameState, playerId: PlayerId) =>
-  state.board
-    .filter(isOwnableSpace)
-    .filter((space) => state.ownership[space.id]?.ownerPlayerId === playerId);
-
 /**
  * Pure: what the action rail should show for a player. Keeping this out of the
  * component means the availability rules are unit-testable on their own.
@@ -62,7 +52,7 @@ export const getPropertyActions = (
   state: GameState,
   playerId: PlayerId
 ): PropertyActionDescriptor[] => {
-  const ownsAnything = countPlayerProperties(state, playerId) > 0;
+  const ownsAnything = getPlayerOwnedSpaces(state, playerId).length > 0;
 
   return ACTION_DEFINITIONS.map(({ action, label, command }) => {
     if (SCAFFOLDED_COMMANDS.has(command)) {
