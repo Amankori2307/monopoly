@@ -40,6 +40,7 @@ import type {
   StreetSpace,
   ThemeConfig,
 } from '../types/game.interfaces';
+import { ownsEntireColorSet } from './holdings.utils';
 import { isOwnableSpace } from './space.utils';
 import { DefaultRandomSource, rollDie, shuffle, type RandomSource } from './rng';
 
@@ -235,21 +236,6 @@ const resolvePlayerPayment = (
       reason,
     },
   };
-};
-
-const ownsEntireColorSet = (
-  state: GameState,
-  playerId: PlayerId,
-  colorGroup: string
-): boolean => {
-  const matchingSpaces = state.board.filter(
-    (space): space is StreetSpace =>
-      space.kind === SpaceKind.Street && space.colorGroup === colorGroup
-  );
-
-  return matchingSpaces.every(
-    (space) => state.ownership[space.id]?.ownerPlayerId === playerId
-  );
 };
 
 const getStreetRent = (
