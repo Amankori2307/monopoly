@@ -39,11 +39,29 @@ $board-color-bar-compact: 7px;
 // Width of the property-action rail beside the board.
 $action-rail-width: 168px;
 
-// Every space card shares one height so the card never resizes as you move
-// around the board. Sized to the tallest: a street, whose rent schedule has
-// seven rows. Everything else - railways, utilities, tax, Chance, corners -
-// pads out to match.
-$space-card-min-height: 510px;
+// The site card is one fixed object. It measures the same in the title-deed
+// modal, the buy decision, the featured holding, and a stacked holding - that
+// uniformity is the point of having a single card component. The height is
+// sized to the tallest card: a street at this width, whose seven-row rent
+// schedule measures 541px. Every other kind - railway, utility, tax, Chance,
+// corner - pads out to match, so the card never resizes as you move around the
+// board. Shrinking this clips the tallest deed rather than growing the card, so
+// re-measure before you change either dimension.
+$deed-card-width: 420px;
+$deed-card-height: 545px;
+// The deed's colour band bleeds to the card edge by negating this padding, so
+// the two must stay derived from one value.
+$deed-card-pad: 24px;
+
+// The holdings drawer is sized by its card, not the other way round: the panel
+// is exactly one card plus this padding either side.
+$drawer-pad: $gap-xl;
+
+// Collapsed holding in the stack: tall enough to clear the card padding, the
+// eyebrow, and the full-size deed heading, plus how far each card tucks under
+// the one in front of it.
+$holdings-peek: 108px;
+$holdings-tuck: 10px;
 
 // Player card stack. $max-players must match MAX_PLAYERS in
 // src/domain/constants/game.constants.ts - a unit test asserts the stack still

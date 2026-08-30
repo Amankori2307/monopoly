@@ -30,9 +30,10 @@
   }
 }
 
-// The buy decision is two columns (site card | choice), so it needs the room.
+// The buy decision is two columns (site card | choice), so it needs the room:
+// one fixed card, the gap, and a choice column of about the same width.
 .decision-modal:has(.buy-decision) {
-  width: min(100%, 840px);
+  width: min(100%, calc(2 * #{t.$deed-card-width} + #{t.$gap-xl}));
 }
 
 // ---------------------------------------------------------------------------
@@ -53,9 +54,11 @@
   flex-direction: column;
   width: min(100%, 420px);
 
-  // Wider variant for the holdings drawer, where each site is a full title deed.
+  // Wider variant for the holdings drawer: exactly one title deed plus the
+  // drawer's padding either side. The card is the constraint, not the panel.
+  // The border-left is in the box too, or the card sits a pixel off centre.
   &.is-wide {
-    width: min(100%, 560px);
+    width: min(100%, calc(#{t.$deed-card-width} + 2 * #{t.$drawer-pad} + 1px));
   }
   height: 100%;
   border-left: 1px solid var(--border-subtle);
@@ -69,7 +72,7 @@
   align-items: start;
   justify-content: space-between;
   gap: 16px;
-  padding: 22px 22px 14px;
+  padding: 22px t.$drawer-pad 14px;
   border-bottom: 1px solid var(--border-subtle);
 
   .space-detail-close {
@@ -81,7 +84,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 22px 24px;
+  // Horizontal padding is the same value .is-wide derives its width from.
+  padding: 18px t.$drawer-pad 24px;
 }
 
 .drawer-stats {

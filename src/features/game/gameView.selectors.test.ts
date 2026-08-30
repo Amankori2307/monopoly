@@ -4,11 +4,13 @@ import { SeededRandomSource } from '../../domain/rules/rng';
 import {
   GameCommandType,
   PendingDecisionType,
+  SpaceKind,
   TurnPhase,
 } from '../../domain/types/game.enums';
 import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { isStreetSpace } from '../../domain/rules/space.utils';
 import { selectIsJailRoll } from './gameView.selectors';
-import type { GameState } from '../../domain/types/game.interfaces';
+import type { GameState, OwnableSpace } from '../../domain/types/game.interfaces';
 import {
   makeTokenFinder,
   selectHasAvailableAction,
@@ -244,5 +246,51 @@ describe('selectGroupedHoldings', () => {
     const game = createGame();
 
     expect(selectGroupedHoldings(game, game.playerOrder[0])).toEqual([]);
+  });
+
+  // The holdings drawer draws one deck rather than per-group lists, so the
+  // grouping only survives if the selector emits colour groups contiguously in
+  // board order. This is the seam the drawer relies on.
+  it('groups a mixed portfolio into contiguous colour sets, then railways', () => {
+    const game = createGame();
+    const owner = game.playerOrder[0];
+    const streets = game.board.filter(isStreetSpace);
+    const railway = game.board.find(
+      (space) => space.kind === SpaceKind.Railway
+    ) as OwnableSpace;
+
+    // Interleave the picks so a selector that merely preserved input order
+    // would fail: two groups taken alternately, plus a railway in the middle.
+    const [firstA, secondA] = streets.filter(
+      (s) => s.colorGroup === streets[0].colorGroup
+    );
+    const otherGroup = streets.find((s) => s.colorGroup !== streets[0].colorGroup);
+    if (!firstA || !secondA || !otherGroup) {
+      throw new Error('Board has too few streets to group');
+    }
+    const owned: GameState = {
+      ...game,
+      ownership: { ...game.ownership },
+    };
+    for (const space of [firstA, otherGroup, railway, secondA]) {
+      owned.ownership[space.id] = {
+        ...owned.ownership[space.id],
+        ownerPlayerId: owner,
+      };
+    }
+
+    const sections = selectGroupedHoldings(owned, owner);
+    const flattened = sections.flatMap((section) => section.spaces);
+
+    // Same-colour sites end up adjacent even though they were bought apart...
+    expect(flattened.map((space) => space.id)).toEqual([
+      firstA.id,
+      secondA.id,
+      otherGroup.id,
+      railway.id,
+    ]);
+    // ...and railways sort after every street group, never among them.
+    expect(sections[sections.length - 1].spaces).toEqual([railway]);
+    expect(flattened).toHaveLength(4);
   });
 });

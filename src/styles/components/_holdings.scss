@@ -1,3 +1,4 @@
+@use '../abstracts/mixins' as m;
 @use '../abstracts/tokens' as t;
 
 // ---------------------------------------------------------------------------
@@ -28,54 +29,101 @@
 }
 
 // ---------------------------------------------------------------------------
-// Holdings drawer
+// Holdings drawer: one featured deed, everything else in a single stack.
+//
+// The stack overlaps its cards so only each title shows, the way a hand of
+// cards fans out. Rendering every deed in full made a large portfolio an
+// unnavigable scroll. Every card here is the same fixed-size `.deed-card` used
+// in the title-deed modal - the stacked ones are merely clipped, never shrunk.
 // ---------------------------------------------------------------------------
-.holdings-section {
+.holdings-featured,
+.holdings-stack {
+  display: flex;
+  flex-direction: column;
+  // The drawer is exactly one card plus its padding, but centre anyway so the
+  // cards stay put if the drawer ever has to narrow.
+  align-items: center;
+}
+
+.holdings-featured {
   margin-top: t.$gap-lg;
 }
 
-// Sticky: a full deed is tall, so the group heading has to stay on screen or
-// you lose track of which set you are scrolling through.
-.holdings-section-header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--surface-panel);
+.holdings-stack {
+  margin-top: t.$gap-xl;
+  padding-bottom: t.$gap-lg;
+}
 
-  h3 {
-    flex: 1;
-    margin: 0;
-    font-size: 1rem;
+// A positioning wrapper, not a surface: the `.deed-card` inside paints the
+// border and background, so this only clips the card and stacks it.
+.holdings-stack-card {
+  position: relative;
+  width: t.$deed-card-width;
+  max-height: t.$holdings-peek;
+  overflow: hidden;
+  box-shadow: 0 -6px 14px rgba(24, 30, 23, 0.12);
+  transition: transform 0.18s ease;
+
+  & + & {
+    margin-top: -1 * t.$holdings-tuck;
+  }
+
+  // The deck recedes: each card a touch narrower than the one in front. Scale
+  // rather than the player stack's margin inset, so the fixed width survives.
+  &:nth-of-type(n + 2) {
+    transform: scale(0.985);
+  }
+
+  &:nth-of-type(n + 4) {
+    transform: scale(0.97);
+  }
+
+  &:nth-of-type(n + 6) {
+    transform: scale(0.955);
+  }
+
+  &:hover,
+  &:focus-within {
+    z-index: 3;
+    transform: scale(1);
+  }
+
+  // The featured card is still in the deck, marked rather than removed, so the
+  // stack never changes length as you pick your way through it.
+  &.is-selected {
+    z-index: 4;
+    transform: scale(1);
+
+    .deed-card {
+      border-color: var(--text-primary);
+    }
   }
 }
 
-.holdings-swatch {
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--border-space);
+/** Covers the clipped deed so a click anywhere on it promotes that card. */
+.holdings-stack-open {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 0;
+  border: 0;
+  background: transparent;
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: -3px;
+  }
 }
 
-.holdings-progress {
-  color: var(--text-muted);
-  font: 500 0.72rem t.$font-mono;
+// Below this the card itself stops being fixed, so the stack follows it.
+@include m.below(t.$breakpoint-mobile) {
+  .holdings-stack-card {
+    width: 100%;
+  }
 }
 
-.holdings-monopoly {
-  padding: 3px 8px;
-  background: var(--badge-bg);
-  color: var(--text-primary);
-  font: 500 0.62rem t.$font-mono;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.holdings-deeds {
-  display: grid;
-  gap: t.$gap-lg;
-  margin-top: t.$gap-md;
+@media (prefers-reduced-motion: reduce) {
+  .holdings-stack-card {
+    transition: none;
+  }
 }

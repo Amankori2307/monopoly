@@ -115,12 +115,34 @@ needed. Clicking a card opens that player's holdings.
 ### Holdings drawer
 
 [PlayerDetailDrawer](../../src/components/game/overlays/PlayerDetailDrawer.tsx) shows **any**
-player's portfolio — holdings are public information on a physical board. Sites are grouped by
-colour set in board order, then railways, then utilities, each group headed with its progress
-(`2/3`) and a **Monopoly** marker when complete. Each site renders as its full `SpaceCard` deed.
+player's portfolio — holdings are public information on a physical board.
 
-Group headers are **sticky** and the drawer uses a wider variant (560px), because a full deed is
-~510px tall and a large portfolio would otherwise be an unnavigable scroll.
+**One holding is featured** as a full `SpaceCard` deed; everything else sits below in a single
+stack ([HoldingsStack](../../src/components/game/overlays/HoldingsStack.tsx)) where the cards
+overlap so only each title shows, the way a hand of cards fans out. Picking one promotes it to the
+featured card. Rendering every deed in full made a large portfolio an unnavigable scroll — at
+545px each, twenty sites is 10,000px.
+
+The featured card **stays in the stack**, marked rather than lifted out, so the deck never changes
+length and nothing shifts under the pointer as you read through it. The stack stays in colour-group
+order (board order, then railways, then utilities) and each card carries its group's colour band,
+so the grouping reads without splitting the stack into separate lists.
+
+**The `SpaceCard` is one fixed object.** It carries its own surface — border, background, padding —
+and renders at exactly `$deed-card-width` × `$deed-card-height` (420×545) in the title-deed modal,
+the buy decision, the featured holding, and a stacked holding alike. Stacked cards are that same
+card *clipped* to `$holdings-peek`, never a smaller card. Callers position it; they never restyle
+it, which is what stops the three call sites drifting into three different cards.
+
+The drawer is sized **by** its card rather than guessed at: `.side-drawer.is-wide` is one card wide
+plus `$drawer-pad` either side (and its `border-left`), and the card is centred in it. Below
+`$breakpoint-mobile` a 420px card cannot fit, so the card goes fluid and the drawer follows.
+
+The height is a fixed `height`, not a `min-height`, so a deed that outgrew it would be clipped
+rather than grow. Two consequences worth knowing before changing it: the colour band needs
+`flex-shrink: 0` (it has no content, so under height pressure the flex column collapses it to
+nothing and the deed silently loses its colour), and the band's bleed to the card edge is derived
+from `$deed-card-pad` rather than hardcoded.
 
 All the maths behind this — net worth, mortgaged count, set progress, grouping — lives in
 [holdings.utils.ts](../../src/domain/rules/holdings.utils.ts) as pure functions. `gameEngine` also

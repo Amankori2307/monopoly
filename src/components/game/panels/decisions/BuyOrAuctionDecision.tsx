@@ -13,7 +13,10 @@ interface BuyOrAuctionDecisionProps {
 
 const HEADING_ID = 'buy-decision-title';
 
-/** Two columns: the site card on one side, the choice on the other. */
+/**
+ * Two columns: the site card on one side, the choice on the other. The card is
+ * a direct grid child - it brings its own surface, so it needs no wrapper.
+ */
 export function BuyOrAuctionDecision({
   currencySymbol,
   onBuy,
@@ -23,9 +26,7 @@ export function BuyOrAuctionDecision({
 }: BuyOrAuctionDecisionProps) {
   return (
     <div className="buy-decision" data-testid={TEST_IDS.buyDecision}>
-      <div className="buy-decision-card">
-        <SpaceCard currencySymbol={currencySymbol} headingId={HEADING_ID} space={space} />
-      </div>
+      <SpaceCard currencySymbol={currencySymbol} headingId={HEADING_ID} space={space} />
 
       <div className="buy-decision-choice">
         {/* The card names the space, so the copy here states the choice only. */}

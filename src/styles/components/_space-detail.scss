@@ -12,14 +12,14 @@
   backdrop-filter: blur(3px);
 }
 
+// Positioning only. The card inside supplies its own surface and dimensions,
+// so this wrapper just anchors the close button and casts the modal's shadow.
 .space-detail-card {
   position: relative;
-  width: min(100%, 420px);
-  max-height: min(760px, calc(100dvh - 40px));
+  width: max-content;
+  max-width: 100%;
+  max-height: calc(100dvh - 40px);
   overflow-y: auto;
-  padding: 24px;
-  border: 1px solid var(--border-space);
-  background: var(--surface-panel);
   box-shadow: 0 25px 70px rgba(0, 0, 0, 0.34);
 }
 
@@ -42,12 +42,21 @@
   }
 }
 
-// Every space card is the same height, whatever the space kind, so the card
-// never resizes as you move around the board.
+// The site card. One fixed object with its own surface, so it measures and
+// reads identically in the title-deed modal, the buy decision, and the holdings
+// drawer. Callers position it; they never restyle it.
+.deed-card {
+  width: t.$deed-card-width;
+  height: t.$deed-card-height;
+  padding: t.$deed-card-pad;
+  overflow: hidden;
+  border: 1px solid var(--border-space);
+  background: var(--surface-panel);
+}
+
 .space-card-body {
   display: flex;
   flex-direction: column;
-  min-height: t.$space-card-min-height;
 }
 
 // Street footer (house/hotel costs) sits at the bottom of that shared height.
@@ -55,9 +64,11 @@
   margin-top: auto;
 }
 
-@include m.below(t.$breakpoint-tablet) {
-  .space-card-body {
-    min-height: 0;
+// Only where a 420px card cannot fit does it stop being fixed.
+@include m.below(t.$breakpoint-mobile) {
+  .deed-card {
+    width: 100%;
+    height: auto;
   }
 }
 
@@ -75,18 +86,16 @@
   flex: 1 1 auto;
 }
 
-// Buy decision: site card on one side, the choice on the other. The columns are
-// separated by a rule and generous padding so the deed reads as its own card.
+// Buy decision: site card on one side, the choice on the other. The card column
+// is exactly one card wide - the deed does not stretch to fill a share of the
+// modal, it stays the same object it is everywhere else.
 .buy-decision {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: t.$deed-card-width minmax(0, 1fr);
   gap: t.$gap-xl;
+  // The choice column stretches to the card's height so its buttons stay
+  // pinned to the bottom. The card has a height of its own and ignores this.
   align-items: stretch;
-}
-
-.buy-decision-card {
-  padding-right: t.$gap-xl;
-  border-right: 1px solid var(--border-subtle);
 }
 
 // Copy at the top, actions pinned to the bottom of the column.
@@ -112,13 +121,7 @@
 @include m.below(t.$breakpoint-tablet) {
   .buy-decision {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .buy-decision-card {
-    padding-right: 0;
-    padding-bottom: t.$gap-lg;
-    border-right: 0;
-    border-bottom: 1px solid var(--border-subtle);
+    justify-items: center;
   }
 
   .buy-decision-buttons {
@@ -156,7 +159,13 @@
 // band always matches the street's colour group under the active theme.
 .deed-band {
   height: 18px;
-  margin: 18px -24px;
+  // No content of its own, so a flex column under any height pressure collapses
+  // it to nothing rather than clipping the card - and the deed silently loses
+  // its colour. Pin it.
+  flex-shrink: 0;
+  // Bleeds to the card edge by negating the card's padding - keep it derived,
+  // or the band stops lining up the moment that padding changes.
+  margin: 18px (-1 * t.$deed-card-pad);
 }
 
 .deed-primary-stats {

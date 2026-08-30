@@ -1,8 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
-import { isOwnableSpace, isStreetSpace } from '../../../domain/rules/space.utils';
 import type { HoldingsSection } from '../../../domain/rules/holdings.utils';
+import { isOwnableSpace, isStreetSpace } from '../../../domain/rules/space.utils';
 import { indiaEditionTheme } from '../../../domain/themes/indiaEditionTheme';
 import { ColorGroup, SpaceKind } from '../../../domain/types/game.enums';
 import type { OwnableSpace } from '../../../domain/types/game.interfaces';
@@ -19,7 +19,7 @@ const railways = indiaEditionBoard.filter(
   (space) => isOwnableSpace(space) && space.kind === SpaceKind.Railway
 ) as OwnableSpace[];
 
-const section = (overrides: Partial<HoldingsSection>): HoldingsSection => ({
+const section = (overrides: Partial<HoldingsSection> = {}): HoldingsSection => ({
   id: ColorGroup.Brown,
   label: 'Brown',
   colorGroup: ColorGroup.Brown,
@@ -28,6 +28,15 @@ const section = (overrides: Partial<HoldingsSection>): HoldingsSection => ({
   total: 2,
   isComplete: true,
   ...overrides,
+});
+
+const railwaySection = (): HoldingsSection => ({
+  id: 'railway',
+  label: 'Railways',
+  spaces: railways,
+  owned: railways.length,
+  total: railways.length,
+  isComplete: true,
 });
 
 const summary: PlayerSummary = {
@@ -60,6 +69,12 @@ const renderDrawer = (sections: HoldingsSection[]) =>
     />
   );
 
+/** Stack entries are real deeds, so read their headings rather than a row label. */
+const stackTitles = () =>
+  within(screen.getByTestId(TEST_IDS.holdingsStack))
+    .getAllByRole('heading', { level: 2 })
+    .map((heading) => heading.textContent);
+
 describe('PlayerDetailDrawer', () => {
   it('renders nothing without a player', () => {
     const { container } = render(
@@ -81,8 +96,7 @@ describe('PlayerDetailDrawer', () => {
     expect(screen.getByText('M700')).toBeInTheDocument();
   });
 
-  // Position was dropped from the card for being a number nobody acts on; the
-  // drawer must match.
+  // Position was dropped from the card for being a number nobody acts on.
   it('does not show board position', () => {
     renderDrawer([]);
 
@@ -93,52 +107,92 @@ describe('PlayerDetailDrawer', () => {
     renderDrawer([]);
 
     expect(screen.getByText('No owned assets yet.')).toBeInTheDocument();
+    expect(screen.queryByTestId(TEST_IDS.holdingsStack)).not.toBeInTheDocument();
   });
 
-  it('renders a section per group, with a full title deed per site', () => {
-    renderDrawer([section({})]);
+  // One deed in full; the rest collapse to titles. Rendering every deed made a
+  // large portfolio an unnavigable scroll.
+  it('features one deed and collapses the rest into a stack', () => {
+    renderDrawer([section()]);
 
-    const group = screen.getByTestId(`${TEST_IDS.holdingsSection}-brown`);
-    expect(within(group).getByText('Brown')).toBeInTheDocument();
-    // A deed, not a plain row.
-    expect(within(group).getAllByTestId(TEST_IDS.spaceCard)).toHaveLength(2);
-    expect(within(group).getAllByTestId(TEST_IDS.rentSchedule).length).toBeGreaterThan(0);
+    const featured = screen.getByTestId(TEST_IDS.holdingsFeatured);
+    expect(within(featured).getByTestId(TEST_IDS.spaceCard)).toBeInTheDocument();
+
+    // The stack reuses the same SpaceCard component, clipped by CSS - so every
+    // holding is a real deed, not a bespoke row.
+    const stack = screen.getByTestId(TEST_IDS.holdingsStack);
+    expect(within(stack).getAllByTestId(TEST_IDS.spaceCard)).toHaveLength(2);
+    expect(stackTitles()).toHaveLength(2);
   });
 
-  it('shows set progress and a monopoly marker on a complete set', () => {
-    renderDrawer([section({})]);
+  it('shows every holding’s name in the stack', () => {
+    renderDrawer([section()]);
 
-    expect(screen.getByText('2/2')).toBeInTheDocument();
-    expect(screen.getByTestId(`${TEST_IDS.holdingsMonopoly}-brown`)).toBeInTheDocument();
+    expect(stackTitles()).toEqual(streetsIn(ColorGroup.Brown).map((s) => s.name));
   });
 
-  it('shows no monopoly marker on a partial set', () => {
-    renderDrawer([
-      section({ spaces: [streetsIn(ColorGroup.Brown)[0]], owned: 1, isComplete: false }),
+  // Colour grouping is conveyed by order and the colour band, not separate lists.
+  it('keeps the stack in the order the sections are given', () => {
+    renderDrawer([section(), railwaySection()]);
+
+    expect(stackTitles()).toEqual([
+      ...streetsIn(ColorGroup.Brown).map((space) => space.name),
+      ...railways.map((space) => space.name),
     ]);
-
-    expect(screen.getByText('1/2')).toBeInTheDocument();
-    expect(
-      screen.queryByTestId(`${TEST_IDS.holdingsMonopoly}-brown`)
-    ).not.toBeInTheDocument();
   });
 
-  it('keeps sections in the order given', () => {
-    renderDrawer([
-      section({}),
-      section({
-        id: 'railway',
-        label: 'Railways',
-        colorGroup: undefined,
-        spaces: railways,
-        owned: railways.length,
-        total: railways.length,
-      }),
-    ]);
+  // Same fixed-size card in both places: the featured deed and every stacked
+  // one are the shared SpaceCard shell, the stacked ones merely clipped by CSS.
+  it('renders the featured deed and every stacked deed as the same card shell', () => {
+    renderDrawer([section()]);
 
-    const headings = screen
-      .getAllByRole('heading', { level: 3 })
-      .map((h) => h.textContent);
-    expect(headings).toEqual(['Brown', 'Railways']);
+    const featured = within(screen.getByTestId(TEST_IDS.holdingsFeatured)).getByTestId(
+      TEST_IDS.spaceCard
+    );
+    expect(featured).toHaveClass('deed-card');
+
+    const stacked = within(screen.getByTestId(TEST_IDS.holdingsStack)).getAllByTestId(
+      TEST_IDS.spaceCard
+    );
+    stacked.forEach((card) => expect(card).toHaveClass('deed-card'));
+  });
+
+  // The featured card stays in the deck rather than being lifted out of it, so
+  // the stack never changes length and nothing shifts as you pick through it.
+  it('keeps the featured holding in the stack', () => {
+    const brown = streetsIn(ColorGroup.Brown);
+    renderDrawer([section()]);
+
+    fireEvent.click(screen.getByRole('button', { name: `Show ${brown[1].name}` }));
+
+    expect(stackTitles()).toEqual(brown.map((space) => space.name));
+  });
+
+  it('features the first holding and marks it in the stack', () => {
+    const [first] = streetsIn(ColorGroup.Brown);
+    renderDrawer([section()]);
+
+    expect(screen.getByTestId(TEST_IDS.holdingsFeatured)).toHaveTextContent(first.name);
+    expect(screen.getByRole('button', { name: `Show ${first.name}` })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+  });
+
+  it('promotes a stack card to the featured deed when picked', () => {
+    const [first, second] = streetsIn(ColorGroup.Brown);
+    renderDrawer([section()]);
+
+    fireEvent.click(screen.getByRole('button', { name: `Show ${second.name}` }));
+
+    expect(screen.getByTestId(TEST_IDS.holdingsFeatured)).toHaveTextContent(second.name);
+    expect(screen.getByRole('button', { name: `Show ${second.name}` })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    expect(screen.getByRole('button', { name: `Show ${first.name}` })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
   });
 });

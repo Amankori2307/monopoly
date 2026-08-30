@@ -227,7 +227,9 @@ The mandate above is the standard going forward. The repository does **not** mee
 | `uiSlice`                                      | none                 | —           | —            |
 | `HomePage`                                     | —                    | 2 tests     | partial      |
 | `GamePage` (board, decision panels)            | —                    | none        | 1 smoke spec |
-| `DiceDock`, `SpaceDetailCard`                  | none                 | —           | partial      |
+| `DiceDock`                                     | none                 | —           | partial      |
+| `SpaceCard`, `SpaceDetailCard`                 | 2 files              | —           | yes          |
+| Holdings drawer + stack                        | 2 files              | 1 test      | yes          |
 
 **Two harness blockers remain before the integration mandate is fully achievable:**
 

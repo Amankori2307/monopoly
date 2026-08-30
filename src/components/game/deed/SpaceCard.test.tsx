@@ -1,0 +1,61 @@
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
+import { isOwnableSpace } from '../../../domain/rules/space.utils';
+import { SpaceKind } from '../../../domain/types/game.enums';
+import type { BoardSpace } from '../../../domain/types/game.interfaces';
+import { TEST_IDS } from '../../../shared/constants/testIds.constants';
+import { SpaceCard } from './SpaceCard';
+
+const findSpace = (kind: SpaceKind): BoardSpace => {
+  const space = indiaEditionBoard.find((candidate) => candidate.kind === kind);
+  if (!space) {
+    throw new Error(`No ${kind} space on the board`);
+  }
+  return space;
+};
+
+const renderCard = (space: BoardSpace) => {
+  render(<SpaceCard currencySymbol="M" space={space} />);
+  return screen.getByTestId(TEST_IDS.spaceCard);
+};
+
+describe('SpaceCard', () => {
+  // The card carries its own surface so it measures the same wherever it is
+  // used - the modal, the buy decision, and the holdings drawer all get one
+  // object rather than each dressing a bare column their own way.
+  it('supplies its own card shell', () => {
+    expect(renderCard(findSpace(SpaceKind.Street))).toHaveClass('deed-card');
+  });
+
+  // is-deed pins the house/hotel footer to the bottom of the shared height. It
+  // is not what sets that height - every card gets it, deed or not.
+  it.each([SpaceKind.Street, SpaceKind.Railway, SpaceKind.Utility])(
+    'marks a %s as a deed so its footer pins to the bottom',
+    (kind) => {
+      expect(renderCard(findSpace(kind))).toHaveClass('is-deed');
+    }
+  );
+
+  it('does not mark a space nobody can own as a deed', () => {
+    const space = findSpace(SpaceKind.Chance);
+    expect(isOwnableSpace(space)).toBe(false);
+    const card = renderCard(space);
+    expect(card).not.toHaveClass('is-deed');
+    // ...but it is still the same card shell, so it still measures the same.
+    expect(card).toHaveClass('deed-card');
+  });
+
+  it('renders actions only when the caller supplies them', () => {
+    const street = findSpace(SpaceKind.Street);
+    const { rerender, container } = render(
+      <SpaceCard currencySymbol="M" space={street} />
+    );
+    expect(container.querySelector('.space-card-actions')).toBeNull();
+
+    rerender(
+      <SpaceCard actions={<button type="button">Buy</button>} currencySymbol="M" space={street} />
+    );
+    expect(screen.getByRole('button', { name: 'Buy' })).toBeInTheDocument();
+  });
+});

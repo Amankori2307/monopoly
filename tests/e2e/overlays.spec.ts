@@ -371,7 +371,7 @@ test('opens the buy decision only after the token finishes moving', async ({ pag
 
 // Holdings are public information on a physical board, so any player's
 // portfolio can be inspected - not just the one whose turn it is.
-test("opens any player's holdings, grouped by colour set", async ({ page }) => {
+test("opens any player's holdings from any player card", async ({ page }) => {
   await startGame(page);
 
   // Expand the stack so every card's own control is reachable.
@@ -389,4 +389,155 @@ test("opens any player's holdings, grouped by colour set", async ({ page }) => {
   // Board position is deliberately absent.
   await expect(drawer).not.toContainText('Position');
   await expect(drawer).toContainText('Net worth');
+});
+
+// The site card is one fixed object. It must measure identically in the deed
+// modal and in the holdings drawer - if the two ever drift, the drawer has
+// started restyling a card it is only supposed to be positioning.
+// Mirrors $deed-card-width / $deed-card-height / $holdings-peek / $drawer-pad
+// in src/styles/abstracts/_tokens.scss.
+const DEED_CARD_WIDTH = 420;
+const DEED_CARD_HEIGHT = 545;
+const HOLDINGS_PEEK = 108;
+const DRAWER_PAD = 28;
+/** The drawer's border-left is inside its width box, like the padding. */
+const DRAWER_BORDER = 1;
+
+/** Give the first player a few streets so there is a stack worth looking at. */
+const seedHoldings = async (page: Page) => {
+  await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) => k.startsWith('monopoly.game.'));
+    if (!key) return;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const player = game.playerOrder[0];
+    game.board
+      .filter((space: { kind: string }) => space.kind === 'street')
+      .slice(0, 3)
+      .forEach((space: { id: string }) => {
+        game.ownership[space.id].ownerPlayerId = player;
+      });
+    localStorage.setItem(key, JSON.stringify(game));
+  });
+  await page.reload();
+  await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
+};
+
+const openFirstPlayerHoldings = async (page: Page) => {
+  await page.getByTestId(TEST_IDS.playerStackExpand).click();
+  await page
+    .getByRole('button', { name: /View .* holdings/ })
+    .first()
+    .click();
+};
+
+test('renders the site card at one fixed size in the drawer and the modal', async ({
+  page,
+}) => {
+  await startGame(page);
+  await seedHoldings(page);
+
+  // The deed modal, for reference: this is the card everywhere else must match.
+  await page.getByRole('button', { name: 'View details for Delhi', exact: true }).click();
+  const modalCard = page.getByTestId(TEST_IDS.spaceDetailCard).getByTestId(TEST_IDS.spaceCard);
+  await expect(modalCard).toBeVisible();
+  const modalBox = await modalCard.boundingBox();
+  await page.keyboard.press('Escape');
+
+  await openFirstPlayerHoldings(page);
+
+  const drawer = page.getByTestId(TEST_IDS.playerDetailDrawer);
+  const featured = page
+    .getByTestId(TEST_IDS.holdingsFeatured)
+    .getByTestId(TEST_IDS.spaceCard);
+  await expect(featured).toBeVisible();
+
+  const [drawerBox, featuredBox] = await Promise.all([
+    drawer.boundingBox(),
+    featured.boundingBox(),
+  ]);
+  if (!modalBox || !drawerBox || !featuredBox) {
+    throw new Error('Cards have no layout box');
+  }
+
+  for (const box of [modalBox, featuredBox]) {
+    expect(Math.round(box.width)).toBe(DEED_CARD_WIDTH);
+    expect(Math.round(box.height)).toBe(DEED_CARD_HEIGHT);
+  }
+
+  // The drawer is sized by its card, not the other way round...
+  expect(Math.round(drawerBox.width)).toBe(
+    DEED_CARD_WIDTH + 2 * DRAWER_PAD + DRAWER_BORDER
+  );
+  // ...and the card sits evenly between its two edges.
+  const leftGap = featuredBox.x - drawerBox.x - DRAWER_BORDER;
+  const rightGap = drawerBox.x + drawerBox.width - (featuredBox.x + featuredBox.width);
+  expect(Math.round(leftGap)).toBe(DRAWER_PAD);
+  expect(Math.round(rightGap)).toBe(DRAWER_PAD);
+});
+
+// The stacked deeds are the same card, clipped to a peek - not a smaller card.
+test('stacks holdings as full-width deeds clipped to a peek', async ({ page }) => {
+  await startGame(page);
+  await seedHoldings(page);
+  await openFirstPlayerHoldings(page);
+
+  const stack = page.getByTestId(TEST_IDS.holdingsStack);
+  const stackCards = stack.locator(`[data-testid^="${TEST_IDS.holdingsStackCard}-"]`);
+  await expect(stackCards.first()).toBeVisible();
+  await expect(stackCards).toHaveCount(3);
+
+  const stackedBox = await stackCards.first().boundingBox();
+  if (!stackedBox) {
+    throw new Error('Stacked holding has no layout box');
+  }
+
+  expect(Math.round(stackedBox.width)).toBe(DEED_CARD_WIDTH);
+  expect(Math.round(stackedBox.height)).toBe(HOLDINGS_PEEK);
+});
+
+// Picking a stacked deed promotes it, and it stays in the deck - so the stack
+// never changes length and nothing shifts underneath the pointer.
+test('promotes a stacked holding without removing it from the deck', async ({ page }) => {
+  await startGame(page);
+  await seedHoldings(page);
+  await openFirstPlayerHoldings(page);
+
+  const stack = page.getByTestId(TEST_IDS.holdingsStack);
+  const stackCards = stack.locator(`[data-testid^="${TEST_IDS.holdingsStackCard}-"]`);
+  await expect(stackCards).toHaveCount(3);
+
+  const second = stack.getByRole('button', { name: /^Show / }).nth(1);
+  const label = (await second.getAttribute('aria-label')) as string;
+  const name = label.replace('Show ', '');
+  await second.click();
+
+  await expect(page.getByTestId(TEST_IDS.holdingsFeatured)).toContainText(name);
+  await expect(second).toHaveAttribute('aria-pressed', 'true');
+  await expect(stackCards).toHaveCount(3);
+});
+
+// Below the mobile breakpoint a 420px card cannot fit, so it - and the drawer
+// derived from it - go fluid rather than forcing a sideways scroll.
+test('relaxes the card to full width on a narrow screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 780 });
+  await startGame(page);
+  await seedHoldings(page);
+  await openFirstPlayerHoldings(page);
+
+  const featured = page
+    .getByTestId(TEST_IDS.holdingsFeatured)
+    .getByTestId(TEST_IDS.spaceCard);
+  await expect(featured).toBeVisible();
+
+  const box = await featured.boundingBox();
+  if (!box) {
+    throw new Error('Featured holding has no layout box');
+  }
+
+  expect(box.width).toBeLessThanOrEqual(390);
+  // No sideways scroll: the page never grows past the viewport.
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
 });
