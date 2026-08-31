@@ -16,11 +16,14 @@ Last updated: August 29, 2026
 
 ## India Edition board mapping
 
-- GO: collect `M200`
-- Income Tax: pay `M200`
-- Super Tax: pay `M100`
-- Jail release payment: `M50`
-- Auction opening bid: `M10`
+- GO: collect `₹200`
+- Income Tax: pay `₹200`
+- Super Tax: pay `₹100`
+- Jail release payment: `₹50`
+- Auction opening bid: `₹10`
+
+The symbol itself is `ThemeConfig.currencySymbol` (`₹` for this edition), not a literal in the copy — see `DEFAULT_CURRENCY_SYMBOL` and `formatMoney`.
+
 - Free Parking: no jackpot
 - Buy/decline applies to streets, railway stations, and utilities
 - 40 board spaces

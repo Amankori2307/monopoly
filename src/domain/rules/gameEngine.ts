@@ -29,6 +29,7 @@ import type {
   AuctionState,
   BoardSpace,
   CreateGameInput,
+  DeckCard,
   GameCommandResult,
   GameEvent,
   GameState,
@@ -50,6 +51,14 @@ const createEvent = (turnNumber: number, message: string): GameEvent => ({
   createdAt: new Date().toISOString(),
   message,
 });
+
+/**
+ * Money as it appears in an event message. Every amount the engine logs goes
+ * through here, so the symbol follows the active theme rather than being
+ * written into the sentence.
+ */
+const money = (state: GameState, amount: number): string =>
+  `${getThemeOrDefault(state.themeId).currencySymbol}${amount}`;
 
 const getThemeOrDefault = (themeId: string): ThemeConfig =>
   availableThemes.find((theme) => theme.id === themeId) ?? indiaEditionTheme;
@@ -145,6 +154,29 @@ const getSpaceById = (state: GameState, spaceId: string): BoardSpace => {
   return space;
 };
 
+/**
+ * Money in, from the bank. The counterpart to resolveBankPayment: every credit
+ * goes through here so it is logged, rather than each caller remembering to.
+ */
+const creditFromBank = (
+  state: GameState,
+  playerId: PlayerId,
+  amount: number,
+  reason: string
+): GameState => {
+  const player = getPlayerById(state, playerId);
+  const nextState = updatePlayer(state, playerId, (currentPlayer) => ({
+    ...currentPlayer,
+    cash: currentPlayer.cash + amount,
+  }));
+  return appendEvents(nextState, [
+    createEvent(
+      nextState.turnNumber,
+      `${player.name} collected ${money(nextState, amount)} - ${reason}.`
+    ),
+  ]);
+};
+
 const movePlayerTo = (
   state: GameState,
   playerId: PlayerId,
@@ -155,13 +187,7 @@ const movePlayerTo = (
   let nextState = state;
 
   if (collectGo && nextPosition < player.position) {
-    nextState = updatePlayer(nextState, playerId, (currentPlayer) => ({
-      ...currentPlayer,
-      cash: currentPlayer.cash + PASS_GO_AMOUNT,
-    }));
-    nextState = appendEvents(nextState, [
-      createEvent(nextState.turnNumber, `${player.name} collected M200 for passing GO.`),
-    ]);
+    nextState = creditFromBank(nextState, playerId, PASS_GO_AMOUNT, 'passing GO');
   }
 
   return updatePlayer(nextState, playerId, (currentPlayer) => ({
@@ -178,10 +204,16 @@ const resolveBankPayment = (
 ): GameState => {
   const player = getPlayerById(state, playerId);
   if (player.cash >= amount) {
-    return updatePlayer(state, playerId, (currentPlayer) => ({
+    const paidState = updatePlayer(state, playerId, (currentPlayer) => ({
       ...currentPlayer,
       cash: currentPlayer.cash - amount,
     }));
+    return appendEvents(paidState, [
+      createEvent(
+        paidState.turnNumber,
+        `${player.name} paid ${money(paidState, amount)} to the bank - ${reason}.`
+      ),
+    ]);
   }
 
   return {
@@ -210,6 +242,7 @@ const resolvePlayerPayment = (
 ): GameState => {
   const payer = getPlayerById(state, fromPlayerId);
   if (payer.cash >= amount) {
+    const payee = getPlayerById(state, toPlayerId);
     let nextState = updatePlayer(state, fromPlayerId, (currentPlayer) => ({
       ...currentPlayer,
       cash: currentPlayer.cash - amount,
@@ -218,7 +251,12 @@ const resolvePlayerPayment = (
       ...currentPlayer,
       cash: currentPlayer.cash + amount,
     }));
-    return nextState;
+    return appendEvents(nextState, [
+      createEvent(
+        nextState.turnNumber,
+        `${payer.name} paid ${payee.name} ${money(nextState, amount)} - ${reason}.`
+      ),
+    ]);
   }
 
   return {
@@ -444,11 +482,19 @@ const advanceToNextTurn = (state: GameState): GameState => {
   };
 };
 
-const resolveCard = (state: GameState, deckName: DeckName): GameState => {
+/**
+ * Draws the top card and stops. The effect is applied separately, by
+ * AcknowledgeCard, so the player reads the card before it acts on them - the
+ * two used to happen in one indivisible step, which left no room to show it.
+ *
+ * The deck is recycled here rather than at apply time: the card has left the
+ * deck the moment it is drawn, whether or not the player has clicked yet.
+ */
+const drawCard = (state: GameState, deckName: DeckName): GameState => {
   const card = state.decks[deckName][0];
   const remainingCards = state.decks[deckName].slice(1);
   const activePlayer = getActivePlayer(state);
-  let nextState = {
+  const nextState: GameState = {
     ...state,
     decks: {
       ...state.decks,
@@ -457,29 +503,38 @@ const resolveCard = (state: GameState, deckName: DeckName): GameState => {
           ? remainingCards
           : [...remainingCards, card],
     },
+    pendingDecision: {
+      type: PendingDecisionType.CardDraw,
+      playerId: activePlayer.id,
+      deck: deckName,
+      card,
+    },
+    turn: {
+      ...state.turn,
+      phase: TurnPhase.AwaitDecision,
+      reason: `${activePlayer.name} drew ${card.title}.`,
+    },
   };
 
-  nextState = appendEvents(nextState, [
+  return appendEvents(nextState, [
     createEvent(nextState.turnNumber, `${activePlayer.name} drew ${card.title}.`),
   ]);
+};
 
+/**
+ * Applies an already-drawn card's effect. Split out of the draw so the UI can
+ * interject; everything below this line is the original resolveCard body.
+ */
+const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
+  const activePlayer = getActivePlayer(state);
+  let nextState = state;
   const { effect } = card;
 
   switch (effect.kind) {
     case CardEffectKind.Collect:
-      return updatePlayer(nextState, activePlayer.id, (player) => {
-        return {
-          ...player,
-          cash: player.cash + effect.amount,
-        };
-      });
+      return creditFromBank(nextState, activePlayer.id, effect.amount, card.title);
     case CardEffectKind.Pay:
-      return resolveBankPayment(
-        nextState,
-        activePlayer.id,
-        effect.amount,
-        card.description
-      );
+      return resolveBankPayment(nextState, activePlayer.id, effect.amount, card.title);
     case CardEffectKind.MoveTo: {
       nextState = movePlayerTo(
         nextState,
@@ -498,11 +553,15 @@ const resolveCard = (state: GameState, deckName: DeckName): GameState => {
     }
     case CardEffectKind.GoToJail:
       return sendPlayerToJail(nextState, activePlayer.id, 'Card sent player to Jail');
-    case CardEffectKind.JailFree:
-      return updatePlayer(nextState, activePlayer.id, (player) => ({
+    case CardEffectKind.JailFree: {
+      const withCard = updatePlayer(nextState, activePlayer.id, (player) => ({
         ...player,
         jailFreeCards: player.jailFreeCards + 1,
       }));
+      return appendEvents(withCard, [
+        createEvent(withCard.turnNumber, `${activePlayer.name} kept ${card.title}.`),
+      ]);
+    }
     case CardEffectKind.CollectFromEach: {
       state.playerOrder
         .filter(
@@ -515,7 +574,7 @@ const resolveCard = (state: GameState, deckName: DeckName): GameState => {
             playerId,
             activePlayer.id,
             effect.amount,
-            card.description
+            card.title
           );
         });
       return nextState;
@@ -532,7 +591,7 @@ const resolveCard = (state: GameState, deckName: DeckName): GameState => {
             activePlayer.id,
             playerId,
             effect.amount,
-            card.description
+            card.title
           );
         });
       return nextState;
@@ -580,18 +639,13 @@ const resolveCurrentSpace = (
   let nextState = state;
 
   if (space.kind === SpaceKind.Tax) {
-    nextState = resolveBankPayment(
-      nextState,
-      player.id,
-      space.amount,
-      `${space.name} due`
-    );
+    nextState = resolveBankPayment(nextState, player.id, space.amount, `${space.name}`);
   } else if (space.kind === SpaceKind.GoToJail) {
     return sendPlayerToJail(nextState, player.id, 'Landed on Go To Jail');
   } else if (space.kind === SpaceKind.Chance) {
-    nextState = resolveCard(nextState, DeckName.Chance);
+    nextState = drawCard(nextState, DeckName.Chance);
   } else if (space.kind === SpaceKind.CommunityChest) {
-    nextState = resolveCard(nextState, DeckName.CommunityChest);
+    nextState = drawCard(nextState, DeckName.CommunityChest);
   } else if (isOwnableSpace(space)) {
     const ownership = nextState.ownership[space.id];
     if (!ownership.ownerPlayerId) {
@@ -612,19 +666,16 @@ const resolveCurrentSpace = (
       const owner = getPlayerById(nextState, ownership.ownerPlayerId);
       const rent = getRentForSpace(nextState, space, owner.id, lastRollTotal);
 
+      // resolvePlayerPayment logs the settled payment. It used to be logged
+      // here as well, unconditionally - so a player who could not afford the
+      // rent still got a "paid" line while being routed to liquidation.
       nextState = resolvePlayerPayment(
         nextState,
         player.id,
         owner.id,
         rent,
-        `${player.name} owes ${owner.name} rent on ${space.name}.`
+        `rent on ${space.name}`
       );
-      nextState = appendEvents(nextState, [
-        createEvent(
-          nextState.turnNumber,
-          `${player.name} paid ${getThemeOrDefault(nextState.themeId).currencySymbol}${rent} rent to ${owner.name}.`
-        ),
-      ]);
     }
   }
 
@@ -1031,6 +1082,40 @@ export const executeGameCommand = (
         nextState = advanceToNextTurn(nextState);
       }
       break;
+    case GameCommandType.AcknowledgeCard: {
+      const decision = nextState.pendingDecision;
+      if (decision.type !== PendingDecisionType.CardDraw) {
+        throw new Error('There is no drawn card to acknowledge');
+      }
+
+      // Clear the decision *before* applying. A MoveTo card routes back through
+      // resolveCurrentSpace, which treats any pending decision as blocking - it
+      // would read the stale CardDraw and strand the turn.
+      nextState = {
+        ...nextState,
+        pendingDecision: { type: PendingDecisionType.None },
+      };
+      nextState = applyCardEffect(nextState, decision.card);
+
+      // The effect may have raised its own decision - a MoveTo landing on an
+      // unowned site, or a payment the player cannot afford. Only settle the
+      // phase when it did not. The inJail guard matters because a card can send
+      // the player to jail, and a jailed player must not keep an extra roll.
+      if (nextState.pendingDecision.type === PendingDecisionType.None) {
+        const canRollAgain =
+          nextState.turn.doublesCount > 0 && !getActivePlayer(nextState).inJail;
+        nextState = {
+          ...nextState,
+          turn: {
+            ...nextState.turn,
+            phase: canRollAgain ? TurnPhase.AwaitExtraRollOrEnd : TurnPhase.TurnComplete,
+            canRollAgain,
+            reason: null,
+          },
+        };
+      }
+      break;
+    }
     case GameCommandType.MortgageAsset:
     case GameCommandType.UnmortgageAsset:
     case GameCommandType.BuildHouse:

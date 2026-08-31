@@ -15,6 +15,8 @@ import {
   loadGameIndex,
   saveGame,
 } from '../persistence/persistence';
+import { selectNewEvents, toToasts } from './toastFeed.utils';
+import { pushToasts } from './uiSlice';
 
 interface GameSliceState {
   recentGames: StoredGameIndexEntry[];
@@ -130,6 +132,13 @@ export const runGameCommand =
       const result = executeGameCommand(currentGame, command, new DefaultRandomSource());
       saveGame(result.nextState);
       dispatch(setActiveGame(result.nextState));
+      // Feedback comes from the history delta, not result.events - the engine
+      // returns the whole capped history there, so it cannot say what changed.
+      dispatch(
+        pushToasts(
+          toToasts(selectNewEvents(currentGame.history, result.nextState.history))
+        )
+      );
       dispatch(setUiHints(result.uiHints));
       dispatch(setCommandError(null));
       dispatch(bootstrapRecentGames());

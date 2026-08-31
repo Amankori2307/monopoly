@@ -16,6 +16,9 @@
 // so this wrapper just anchors the close button and casts the modal's shadow.
 .space-detail-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: max-content;
   max-width: 100%;
   max-height: calc(100dvh - 40px);
@@ -254,4 +257,73 @@
   color: var(--text-body);
   font-size: 0.86rem;
   line-height: 1.5;
+}
+
+// Struck through, like a stamp on the deed: a mortgaged site collects no rent,
+// so the card has to say so wherever it appears.
+.deed-mortgaged {
+  align-self: flex-start;
+  margin: 0 0 2px;
+  padding: 1px 6px;
+  border: 1px dashed var(--border-dashed);
+  color: var(--error-text);
+  font: 500 0.6rem t.$font-mono;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+// ---------------------------------------------------------------------------
+// Site panel actions
+//
+// What you can do with a space depends on who owns it, so this block is absent
+// for an unowned site and the deed stands alone.
+// ---------------------------------------------------------------------------
+.site-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: t.$deed-card-width;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-space);
+  background: var(--surface-panel);
+}
+
+.site-owner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--text-body);
+  font: 500 0.68rem t.$font-mono;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+// Matches the board's owner dot, so the same colour means the same player.
+.site-owner-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: t.$token-radius;
+  box-shadow: 0 0 0 1px var(--border-space);
+}
+
+.site-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  button {
+    flex: 1 1 auto;
+    min-width: 72px;
+    padding: 7px 9px;
+    font-size: 0.76rem;
+  }
+
+  // Kept visible rather than hidden: the panel should say what will be possible
+  // once the engine command lands, the way the action rail already does.
+  button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }

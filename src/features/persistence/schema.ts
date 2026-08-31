@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PendingDecisionType } from '../../domain/types/game.enums';
 
 export const storedGameIndexEntrySchema = z.object({
   id: z.string(),
@@ -55,11 +56,22 @@ export const gameStateSchema = z.object({
     canRollAgain: z.boolean(),
     reason: z.string().nullable(),
   }),
+  // Deliberately loose plus one targeted check. `.passthrough()` is what lets a
+  // decision carry its own payload - notably the drawn Chance / Community Chest
+  // card - through a save/load round trip; the surrounding z.object would
+  // silently strip a new top-level GameState field instead. The refinement
+  // guards the one payload the game stalls without.
   pendingDecision: z
     .object({
       type: z.string(),
     })
-    .passthrough(),
+    .passthrough()
+    .refine(
+      (decision) =>
+        decision.type !== PendingDecisionType.CardDraw ||
+        typeof (decision as { card?: unknown }).card === 'object',
+      { message: 'A card-draw decision must carry the drawn card' }
+    ),
   tradeState: z.any().nullable(),
   auctionState: z.any().nullable(),
   history: z.array(

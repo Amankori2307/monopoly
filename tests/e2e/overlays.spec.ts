@@ -70,12 +70,23 @@ test('shows a pending decision as a blocking centre modal', async ({ page }) => 
     } else if (await endTurnButton.isVisible()) {
       await endTurnButton.click();
     } else {
-      break;
+      // Nothing actionable yet: a decision is withheld while the token walks.
+      // Wait for the walk to settle rather than reporting a dead end.
+      await page.waitForTimeout(300);
+      if (attempt > 8 && !(await buyButton.isVisible())) {
+        // Still nothing after a couple of seconds: the game really has no
+        // action, so let the caller's assertion report it.
+        break;
+      }
     }
   }
 
   await expect(modal).toBeVisible();
-  await expect(modal).toContainText(/Buy or auction|Auction|Jail choice|liquidation/i);
+  // A drawn Chance or Community Chest card is a blocking decision too, so it
+  // belongs in this list - it is one of the modals a roll can raise.
+  await expect(modal).toContainText(
+    /Buy or auction|Auction|Jail choice|liquidation|Chance|Community Chest/i
+  );
 
   // Not dismissible: Escape leaves it in place.
   await page.keyboard.press('Escape');
@@ -104,25 +115,23 @@ test('rolls the dice and records the roll', async ({ page }) => {
 // The buy decision reuses the same SpaceCard the board shows, so a player
 // decides against the full deed rather than a bare name and price.
 /** Dice are real random, so play on until a buy decision comes up. */
+/**
+ * Plays on until a buy decision appears.
+ *
+ * Delegates to advanceGame, which already clears a drawn card and waits out the
+ * token walk before deciding the game has nothing to offer - re-implementing
+ * that chain here is what previously made these specs flaky.
+ */
 const reachBuyDecision = async (page: Page) => {
   const buyButton = page.getByTestId(TEST_IDS.buyButton);
-  const rollButton = page.getByTestId(TEST_IDS.rollButton);
-  const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
-  const payFine = page.getByRole('button', { name: /^Pay M/ });
 
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
     if (await buyButton.isVisible()) {
       return;
     }
-    if (await payFine.isVisible()) {
-      await payFine.click();
-    } else if (await rollButton.isEnabled()) {
-      await rollButton.click();
-      await page.waitForTimeout(700);
-    } else if (await endTurnButton.isVisible()) {
-      await endTurnButton.click();
-    } else {
-      break;
+    const action = await advanceGame(page, { declineBuys: false });
+    if (action === 'buy-available' || action === 'none') {
+      return;
     }
   }
 };
@@ -139,7 +148,7 @@ test('shows the full title deed inside the buy decision', async ({ page }) => {
   const card = page.getByTestId(TEST_IDS.spaceCard);
   await expect(card).toBeVisible();
   await expect(card).toContainText('Mortgage value');
-  await expect(buyButton).toContainText(/Buy for M\d+/);
+  await expect(buyButton).toContainText(/Buy for \u20b9\d+/);
 
   // Two columns: site card on one side, the choice on the other.
   const [cardBox, choiceBox] = await Promise.all([
@@ -225,7 +234,7 @@ test('never strands the dice on Rolling through a long game', async ({ page }) =
   const rollButton = page.getByTestId(TEST_IDS.rollButton);
   const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
   const declineButton = page.getByTestId(TEST_IDS.declineButton);
-  const payFineButton = page.getByRole('button', { name: /^Pay M/ });
+  const payFineButton = page.getByRole('button', { name: /^Pay \u20b9/ });
 
   for (let turn = 0; turn < 60; turn += 1) {
     // The dock must always settle back out of its rolling state.
@@ -256,6 +265,9 @@ test('never strands the dice on Rolling through a long game', async ({ page }) =
 // action at all - no roll, no jail choice, no end turn. The game was unplayable
 // with nothing on screen explaining why.
 test('always leaves the player at least one action', async ({ page }) => {
+  // Forty turns of real play, and a drawn card now adds an acknowledge step to
+  // any turn that lands on Chance or Community Chest - past the default budget.
+  test.setTimeout(90_000);
   await startGame(page);
 
   const anyActionAvailable = async () => {
@@ -263,7 +275,7 @@ test('always leaves the player at least one action', async ({ page }) => {
       .locator('button:not([disabled])')
       .filter({
         hasText:
-          /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay M|Use jail card|Submit bid|Pass/,
+          /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^OK$/,
       })
       .count();
     return enabled > 0;
@@ -283,10 +295,15 @@ test('always leaves the player at least one action', async ({ page }) => {
     const rollButton = page.getByTestId(TEST_IDS.rollButton);
     const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
     const declineButton = page.getByTestId(TEST_IDS.declineButton);
-    const payFine = page.getByRole('button', { name: /^Pay M/ });
+    const payFine = page.getByRole('button', { name: /^Pay \u20b9/ });
     const passAuction = page.getByRole('button', { name: 'Pass' });
 
-    if (await declineButton.isVisible()) {
+    const acknowledgeCard = page.getByTestId(TEST_IDS.acknowledgeCardButton);
+
+    if (await acknowledgeCard.isVisible()) {
+      // A drawn card blocks every other action until it is acknowledged.
+      await acknowledgeCard.click();
+    } else if (await declineButton.isVisible()) {
       await declineButton.click();
     } else if (await passAuction.isVisible()) {
       await passAuction.click();
@@ -440,7 +457,9 @@ test('renders the site card at one fixed size in the drawer and the modal', asyn
 
   // The deed modal, for reference: this is the card everywhere else must match.
   await page.getByRole('button', { name: 'View details for Delhi', exact: true }).click();
-  const modalCard = page.getByTestId(TEST_IDS.spaceDetailCard).getByTestId(TEST_IDS.spaceCard);
+  const modalCard = page
+    .getByTestId(TEST_IDS.spaceDetailCard)
+    .getByTestId(TEST_IDS.spaceCard);
   await expect(modalCard).toBeVisible();
   const modalBox = await modalCard.boundingBox();
   await page.keyboard.press('Escape');

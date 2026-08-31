@@ -2,18 +2,16 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BoardGrid } from '../../components/game/board/BoardGrid';
 import { useAnimatedTokenPositions } from '../../components/game/hooks/useAnimatedTokenPositions';
-import { ActivityButton } from '../../components/game/overlays/ActivityButton';
-import { ActivityDrawer } from '../../components/game/overlays/ActivityDrawer';
-import { DecisionModal } from '../../components/game/overlays/DecisionModal';
-import { PlayerDetailDrawer } from '../../components/game/overlays/PlayerDetailDrawer';
 import { ActionRail } from '../../components/game/panels/ActionRail';
 import { CommandErrorBanner } from '../../components/game/panels/CommandErrorBanner';
 import { HintsPanel } from '../../components/game/panels/HintsPanel';
 import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
-import { SpaceDetailCard } from '../../components/game/SpaceDetailCard';
-import { getPropertyActions } from '../../domain/rules/playerActions.utils';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
+import { getPropertyActions } from '../../domain/rules/playerActions.utils';
+import { selectSpaceOwnerMarks } from './boardOwnership.utils';
+import { GameOverlayLayer } from './GameOverlayLayer';
+import { selectSitePanel } from './sitePanel.utils';
 import { BOARD_CENTER_SUBTITLE, BOARD_CENTER_TITLE } from './game.constants';
 import { GameUnavailable } from './GameUnavailable';
 import {
@@ -21,8 +19,6 @@ import {
   selectActivePlayer,
   selectCanEndTurn,
   selectCanRollDice,
-  selectDecisionViewModel,
-  selectGroupedHoldings,
   selectIsJailRoll,
   selectPlayerSummaries,
 } from './gameView.selectors';
@@ -63,6 +59,7 @@ export function GamePage() {
     summaries.find((summary) => summary.player.id === overlays.selectedPlayerId) ?? null;
   const selectedSpace =
     activeGame.board.find((space) => space.id === overlays.selectedSpaceId) ?? null;
+  const ownerMarks = selectSpaceOwnerMarks(activeGame, findToken);
 
   return (
     <div className="app-shell" data-theme={activeGame.themeId}>
@@ -84,6 +81,7 @@ export function GamePage() {
             centerTitle={BOARD_CENTER_TITLE}
             findToken={findToken}
             onSelectSpace={overlays.selectSpace}
+            ownerMarks={ownerMarks}
             players={players}
             tokenPositions={tokenPositions}
           />
@@ -124,46 +122,29 @@ export function GamePage() {
           </aside>
         </div>
 
-        <ActivityButton
-          eventCount={activeGame.history.length}
-          onOpen={overlays.openActivity}
-        />
-
-        <ActivityDrawer
-          events={activeGame.history}
-          isOpen={overlays.isActivityOpen}
-          onClose={overlays.closeActivity}
-        />
-
-        <PlayerDetailDrawer
+        <GameOverlayLayer
+          activeGame={activeGame}
+          commands={commands}
           currencySymbol={currencySymbol}
-          sections={
-            selectedSummary
-              ? selectGroupedHoldings(activeGame, selectedSummary.player.id)
-              : []
-          }
-          onClose={overlays.closePlayer}
-          summary={selectedSummary}
-        />
-
-        <SpaceDetailCard
-          currencySymbol={currencySymbol}
-          onClose={overlays.clearSpace}
-          space={selectedSpace}
-        />
-
-        <DecisionModal
-          bidAmount={commands.auctionBidInput}
-          currencySymbol={currencySymbol}
-          decision={isMoving ? null : selectDecisionViewModel(activeGame)}
-          handlers={commands.decisionHandlers}
+          overlays={overlays}
+          selectedSummary={selectedSummary}
+          isMoving={isMoving}
+          sitePanel={selectSitePanel(
+            activeGame,
+            activePlayer.id,
+            selectedSpace,
+            ownerMarks
+          )}
         />
       </div>
     </div>
   );
 }
 
-/** Placeholder until property actions can supply a target space. */
+/**
+ * The rail still has no space to act on - the site panel is the picker, so
+ * property actions are dispatched from there instead.
+ */
 function noopUntilPropertyPickerExists() {
   return undefined;
 }

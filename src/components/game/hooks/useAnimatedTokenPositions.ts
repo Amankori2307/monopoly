@@ -5,11 +5,11 @@ import {
   isWalkableMove,
 } from '../../../domain/board/tokenMovement.utils';
 import type { PlayerId, PlayerState } from '../../../domain/types/game.interfaces';
+import type { TokenPositions } from '../board/board.interfaces';
 import { TOKEN_STEP_INTERVAL_MS, TOKEN_STEP_VOLUME } from '../diceDock.constants';
 
-export type TokenPositions = Record<PlayerId, number>;
-
-export interface AnimatedTokens {
+/** The hook's result, named and placed per docs/conventions.md section 5. */
+interface UseAnimatedTokenPositionsResult {
   /** Where each token is being drawn right now, which lags the engine mid-walk. */
   positions: TokenPositions;
   /** True while any token is still walking to its space. */
@@ -39,7 +39,9 @@ const positionsKeyOf = (players: PlayerState[]) =>
  * teleport (Go To Jail, advance to GO) snaps, because walking it would
  * misrepresent what happened - see tokenMovement.utils.
  */
-export const useAnimatedTokenPositions = (players: PlayerState[]): AnimatedTokens => {
+export const useAnimatedTokenPositions = (
+  players: PlayerState[]
+): UseAnimatedTokenPositionsResult => {
   const displayRef = useRef<TokenPositions>(positionsOf(players));
   const [displayPositions, setDisplayPositions] = useState<TokenPositions>(
     displayRef.current

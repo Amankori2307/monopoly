@@ -30,6 +30,16 @@ export const TEST_IDS = {
 
   // Panels
   turnPanel: 'turn-panel',
+  deedMortgaged: 'deed-mortgaged',
+  siteActions: 'site-actions',
+  siteAction: 'site-action',
+  siteOwner: 'site-owner',
+  proposeTradeButton: 'propose-trade-button',
+  spaceOwnerDot: 'space-owner-dot',
+  toast: 'toast',
+  toastStack: 'toast-stack',
+  cardDrawDecision: 'card-draw-decision',
+  acknowledgeCardButton: 'acknowledge-card-button',
   decisionPanel: 'decision-panel',
   playersPanel: 'players-panel',
   playerStack: 'player-stack',

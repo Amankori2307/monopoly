@@ -21,44 +21,60 @@ const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
 
 const badge = (id: string) => screen.queryByTestId(`${TEST_IDS.playerBadge}-${id}`);
 
+const renderBadges = (player: PlayerState, mortgagedCount = 0) =>
+  render(<PlayerBadges mortgagedCount={mortgagedCount} player={player} />);
+
 describe('PlayerBadges', () => {
   // Badges are for states worth acting on, so an ordinary player shows none.
   it('renders nothing for a player with no notable state', () => {
-    const { container } = render(<PlayerBadges player={makePlayer()} />);
+    const { container } = renderBadges(makePlayer());
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('shows a held Get Out of Jail Free card', () => {
-    render(<PlayerBadges player={makePlayer({ jailFreeCards: 1 })} />);
+    renderBadges(makePlayer({ jailFreeCards: 1 }));
 
     expect(badge('jail-free')).toHaveTextContent('Jail card');
   });
 
   it('counts multiple jail cards', () => {
-    render(<PlayerBadges player={makePlayer({ jailFreeCards: 2 })} />);
+    renderBadges(makePlayer({ jailFreeCards: 2 }));
 
     expect(badge('jail-free')).toHaveTextContent('Jail card x2');
   });
 
   it('shows jail progress out of the maximum', () => {
-    render(<PlayerBadges player={makePlayer({ inJail: true, jailTurnsServed: 2 })} />);
+    renderBadges(makePlayer({ inJail: true, jailTurnsServed: 2 }));
 
     expect(badge('jail')).toHaveTextContent(`In jail 2/${MAX_JAIL_TURNS}`);
   });
 
   it('shows bankruptcy', () => {
-    render(<PlayerBadges player={makePlayer({ isBankrupt: true })} />);
+    renderBadges(makePlayer({ isBankrupt: true }));
 
     expect(badge('bankrupt')).toBeInTheDocument();
   });
 
+  // Mortgage state is derived from ownership, not carried on the player, so the
+  // badge only appears when the caller supplies a count.
+  it('shows a mortgaged badge only when sites are mortgaged', () => {
+    renderBadges(makePlayer(), 0);
+    expect(badge('mortgaged')).not.toBeInTheDocument();
+  });
+
+  it('counts mortgaged sites in the badge', () => {
+    renderBadges(makePlayer(), 1);
+    expect(badge('mortgaged')).toHaveTextContent('1 mortgaged');
+  });
+
+  it('pluralises more than one mortgaged site', () => {
+    renderBadges(makePlayer(), 3);
+    expect(badge('mortgaged')).toHaveTextContent('3 mortgaged');
+  });
+
   it('shows every applicable badge at once', () => {
-    render(
-      <PlayerBadges
-        player={makePlayer({ inJail: true, jailTurnsServed: 1, jailFreeCards: 1 })}
-      />
-    );
+    renderBadges(makePlayer({ inJail: true, jailTurnsServed: 1, jailFreeCards: 1 }));
 
     expect(badge('jail')).toBeInTheDocument();
     expect(badge('jail-free')).toBeInTheDocument();

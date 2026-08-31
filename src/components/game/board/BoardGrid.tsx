@@ -4,7 +4,7 @@ import type {
   ThemeToken,
 } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
-import type { TokenPositions } from '../hooks/useAnimatedTokenPositions';
+import type { SpaceOwnerMark, TokenPositions } from './board.interfaces';
 import { BoardCenter } from './BoardCenter';
 import { BoardSpaceCell } from './BoardSpaceCell';
 import { BoardTokenLayer } from './BoardTokenLayer';
@@ -15,6 +15,8 @@ interface BoardGridProps {
   centerSubtitle: string;
   findToken: (tokenId: string) => ThemeToken | undefined;
   onSelectSpace: (spaceId: string) => void;
+  /** Owner marks by space id, for the spaces someone owns. */
+  ownerMarks: Record<string, SpaceOwnerMark>;
   players: PlayerState[];
   /** Display positions, which lag the engine while a token walks. */
   tokenPositions: TokenPositions;
@@ -26,6 +28,7 @@ export function BoardGrid({
   centerSubtitle,
   findToken,
   onSelectSpace,
+  ownerMarks,
   players,
   tokenPositions,
 }: BoardGridProps) {
@@ -40,6 +43,7 @@ export function BoardGrid({
             isOccupied={occupied.has(space.index)}
             key={space.id}
             onSelect={onSelectSpace}
+            ownerMark={ownerMarks[space.id]}
             space={space}
           />
         ))}

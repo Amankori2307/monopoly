@@ -39,4 +39,7 @@ export const DICE_PER_ROLL = 2;
 /** History is capped so a long game cannot grow the saved state without bound. */
 export const MAX_HISTORY_EVENTS = 120;
 
-export const DEFAULT_CURRENCY_SYMBOL = 'M';
+export const DEFAULT_CURRENCY_SYMBOL = '₹';
+
+/** Speed Die variant, documented in the rules booklet but not implemented. */
+export const SPEED_DIE_BONUS_CASH = 1000;

@@ -196,3 +196,120 @@
     animation: none;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Toast stack
+//
+// Action feedback, above every other overlay: a toast reports what a decision
+// modal just caused, so it has to be readable while that modal is still up.
+// The z-index band in this file is 20 activity button, 35 drawers, 40 modals.
+// ---------------------------------------------------------------------------
+.toast-stack {
+  position: fixed;
+  right: t.$gap-lg;
+  bottom: t.$gap-lg;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-sm;
+  width: min(calc(100vw - 2 * #{t.$gap-lg}), 320px);
+  // The stack must not swallow clicks on the board between toasts.
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  padding: 11px 13px;
+  border: 1px solid var(--border-input);
+  border-left-width: 4px;
+  border-radius: t.$radius-sharp;
+  background: var(--surface-panel);
+  box-shadow: 0 12px 28px rgba(24, 30, 23, 0.22);
+  color: var(--text-body);
+  font-size: 0.83rem;
+  line-height: 1.4;
+  text-align: left;
+  animation: toast-in 0.2s cubic-bezier(0.22, 0.7, 0.3, 1);
+
+  &:hover {
+    background: var(--surface-muted);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+// The left edge carries the direction money moved, so a glance is enough.
+.toast-credit {
+  border-left-color: var(--action-build);
+}
+
+.toast-debit {
+  border-left-color: var(--action-mortgage);
+}
+
+.toast-neutral {
+  border-left-color: var(--border-space);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Drawn card
+//
+// Shown before the effect is applied, so it reads as the card itself rather
+// than as a report of something that already happened.
+// ---------------------------------------------------------------------------
+.card-draw {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  text-align: center;
+
+  h2 {
+    margin: 0;
+    font-size: 1.7rem;
+    letter-spacing: -0.03em;
+  }
+
+  .eyebrow {
+    margin: 0;
+  }
+}
+
+.card-draw-description {
+  margin: 0;
+  color: var(--text-body);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.card-draw-player {
+  margin: 0;
+  color: var(--text-muted);
+  font: 500 0.68rem t.$font-mono;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card-draw .primary-button {
+  margin-top: t.$gap-sm;
+  min-height: 48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

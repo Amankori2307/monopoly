@@ -57,6 +57,14 @@ export interface JailDecisionViewModel {
   canUseJailCard: boolean;
 }
 
+export interface CardDrawDecisionViewModel {
+  type: PendingDecisionType.CardDraw;
+  playerName: string;
+  deckLabel: string;
+  cardTitle: string;
+  cardDescription: string;
+}
+
 export interface LiquidationDecisionViewModel {
   type: PendingDecisionType.AssetLiquidation;
   playerName: string;
@@ -68,6 +76,7 @@ export type DecisionViewModel =
   | BuyDecisionViewModel
   | AuctionDecisionViewModel
   | JailDecisionViewModel
+  | CardDrawDecisionViewModel
   | LiquidationDecisionViewModel;
 
 export interface DecisionHandlers {
@@ -78,4 +87,5 @@ export interface DecisionHandlers {
   onPass: () => void;
   onPayJailFine: () => void;
   onUseJailCard: () => void;
+  onAcknowledgeCard: () => void;
 }

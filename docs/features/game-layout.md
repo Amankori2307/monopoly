@@ -131,7 +131,7 @@ so the grouping reads without splitting the stack into separate lists.
 **The `SpaceCard` is one fixed object.** It carries its own surface — border, background, padding —
 and renders at exactly `$deed-card-width` × `$deed-card-height` (340×380) in the title-deed modal,
 the buy decision, the featured holding, and a stacked holding alike. Stacked cards are that same
-card *clipped* to `$holdings-peek`, never a smaller card. Callers position it; they never restyle
+card _clipped_ to `$holdings-peek`, never a smaller card. Callers position it; they never restyle
 it, which is what stops the three call sites drifting into three different cards.
 
 **The card opens with its colour strip**, flush to the top edge, above the eyebrow and the name.
@@ -140,8 +140,8 @@ sites belong to which colour set, so grouping needs no headers. The strip belong
 rather than to `StreetDeed`, because a railway needs one too — railways and utilities have no
 colour group and take **ink** (`--text-primary`), the colour railways wear on a real board. Not
 `--accent`: it sits within a few points of `--group-red`, so an accent-tinted railway read as a
-red street. Every ownable space is labelled *Title deed*; only spaces nobody can own are a *Board
-space*.
+red street. Every ownable space is labelled _Title deed_; only spaces nobody can own are a _Board
+space_.
 
 Stacked cards clamp their name to one line with an ellipsis. The peek is a single title line tall,
 so a long name — the railways run to three words — would otherwise be sliced through its second.

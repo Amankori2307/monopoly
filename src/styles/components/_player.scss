@@ -79,11 +79,6 @@
       }
     }
 
-    .player-card-mortgaged {
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
     .player-metrics {
       opacity: 0;
     }
@@ -183,11 +178,6 @@
   }
 }
 
-.player-card-mortgaged {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
 .player-metrics {
   gap: 5px 12px;
   color: var(--text-muted);
@@ -231,6 +221,14 @@
 .badge-bankrupt {
   background: var(--danger-bg);
   color: var(--text-inverse);
+}
+
+// Outlined rather than filled: a mortgage is a state to notice, not an alarm.
+.badge-mortgaged {
+  border: 1px dashed var(--border-dashed);
+  padding: 2px 7px;
+  background: transparent;
+  color: var(--text-muted);
 }
 
 .space-card {

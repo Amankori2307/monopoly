@@ -4,9 +4,16 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { PlayerConfigRow } from '../../components/setup/PlayerConfigRow';
 import { RecentGamesList } from '../../components/setup/RecentGamesList';
 import { SetupHero } from '../../components/setup/SetupHero';
-import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
+import {
+  JAIL_FINE,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  PASS_GO_AMOUNT,
+  STARTING_CASH,
+} from '../../domain/constants/game.constants';
 import { availableThemes } from '../../domain/themes/indiaEditionTheme';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
+import { formatMoney } from '../../shared/utils/money.utils';
 import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
 import { useGameSetupForm } from './hooks/useGameSetupForm';
 
@@ -39,6 +46,10 @@ export function HomePage() {
     );
     navigate(`/game/${nextGame.id}`);
   };
+
+  // The summary quotes the ruleset, so it follows the selected theme's symbol
+  // rather than repeating amounts in the copy.
+  const currencySymbol = form.selectedTheme.currencySymbol;
 
   return (
     <div className="app-shell" data-theme={form.themeId}>
@@ -94,7 +105,9 @@ export function HomePage() {
                 <div className="summary-card">
                   <h3>{form.selectedTheme.name}</h3>
                   <p className="helper-text">
-                    Starting cash M1500, GO salary M200, Jail fine M50.
+                    Starting cash {formatMoney(STARTING_CASH, currencySymbol)}, GO salary{' '}
+                    {formatMoney(PASS_GO_AMOUNT, currencySymbol)}, Jail fine{' '}
+                    {formatMoney(JAIL_FINE, currencySymbol)}.
                   </p>
                 </div>
               </div>

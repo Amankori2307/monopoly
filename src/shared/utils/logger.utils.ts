@@ -1,3 +1,9 @@
+import { LogLevel } from './logger.enums';
+import type { LogEntry } from './logger.interfaces';
+
+export { LogLevel } from './logger.enums';
+export type { LogEntry } from './logger.interfaces';
+
 /**
  * Lightweight app logger.
  *
@@ -11,21 +17,6 @@
  *   monopolyLog.errors()           // failures only
  *   monopolyLog.download()         // copy/paste-able JSON
  */
-
-export enum LogLevel {
-  Debug = 'debug',
-  Info = 'info',
-  Warn = 'warn',
-  Error = 'error',
-}
-
-export interface LogEntry {
-  at: string;
-  level: LogLevel;
-  scope: string;
-  message: string;
-  context?: Record<string, unknown>;
-}
 
 export const LOG_STORAGE_KEY = 'monopoly.log.v1';
 export const MAX_LOG_ENTRIES = 200;

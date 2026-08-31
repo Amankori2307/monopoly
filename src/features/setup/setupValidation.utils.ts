@@ -1,9 +1,8 @@
-import { SETUP_ERRORS, type SetupErrorMessage } from './setup.constants';
+import type { SetupDraft } from './setup.interfaces';
 
-export interface SetupDraft {
-  playerNames: string[];
-  playerTokens: string[];
-}
+export type { SetupDraft } from './setup.interfaces';
+
+import { SETUP_ERRORS, type SetupErrorMessage } from './setup.constants';
 
 /**
  * Pure validation for the setup form. Returns the first problem, or null.

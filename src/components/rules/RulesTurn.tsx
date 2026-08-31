@@ -1,3 +1,6 @@
+import { PASS_GO_AMOUNT } from '../../domain/constants/game.constants';
+import { formatMoney } from '../../shared/utils/money.utils';
+
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesTurn() {
   return (
@@ -14,8 +17,8 @@ export function RulesTurn() {
         <li>When your turn ends, the player on your left goes next.</li>
       </ol>
       <p className="callout">
-        Passing or landing on GO pays M200. Going directly to Jail does not pay the GO
-        salary.
+        Passing or landing on GO pays {formatMoney(PASS_GO_AMOUNT)}. Going directly to
+        Jail does not pay the GO salary.
       </p>
     </section>
   );

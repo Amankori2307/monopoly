@@ -198,6 +198,35 @@
   },
   "overrides": [
     {
+      "files": ["src/**/*.ts", "src/**/*.tsx"],
+      "excludedFiles": [
+        "**/*.interfaces.ts",
+        "**/*.enums.ts",
+        "**/*.constants.ts",
+        "src/app/appStore.ts",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts"
+      ],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "TSEnumDeclaration",
+            "message": "Declare enums in a *.enums.ts file. See docs/conventions.md section 1."
+          },
+          {
+            "selector": "ExportNamedDeclaration > TSInterfaceDeclaration:not([id.name=/Props$/]):not([id.name=/^Use[A-Z].*(Result|Options)$/])",
+            "message": "Exported interfaces belong in a *.interfaces.ts file. Component Props and hook Use*Result/Use*Options types stay beside their component or hook. See docs/conventions.md section 5."
+          },
+          {
+            "selector": "ExportNamedDeclaration > TSTypeAliasDeclaration:not([id.name=/Props$/]):not([id.name=/^Use[A-Z].*(Result|Options)$/])",
+            "message": "Exported type aliases belong in a *.interfaces.ts file. See docs/conventions.md section 5."
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/shared/utils/logger.utils.ts"],
       "rules": {
         "no-console": "off"

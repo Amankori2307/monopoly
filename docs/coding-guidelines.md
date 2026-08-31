@@ -168,7 +168,7 @@ Reserve `data-testid` for things with no accessible handle (the board grid). Nev
 
 ### TypeScript
 
-- All game types live in `src/domain/types/game.ts`. Extend there; do not declare parallel local shapes.
+- All game types live in `src/domain/types/game.interfaces.ts` and `game.enums.ts`. Extend there; do not declare parallel local shapes. Both are machine-enforced — see [conventions.md](conventions.md) section 1.
 - Narrow discriminated unions on `kind` / `type`. **Never cast** — a needed cast means the type is wrong.
 - Exhaust unions with a `switch`; when adding a union member, follow the compiler to every site, then hand-check the `Partial<Record<...>>` maps it will _not_ flag.
 - No `any`. `strict` is off project-wide, so this is on you, not the compiler.
@@ -196,7 +196,7 @@ The active app uses one plain stylesheet, `src/app/app.css`, imported once in `A
 
 ### Naming
 
-`camelCase` values, `PascalCase` components and types, `SCREAMING_SNAKE` module constants. Files: `PascalCase.tsx` for components, `camelCase.ts` for everything else. Descriptive names over short ones — `activeBidderIndex`, not `idx`.
+See [conventions.md](conventions.md) sections 1 and 2 — that is the canonical version, and most of it is machine-enforced. Descriptive names over short ones — `activeBidderIndex`, not `idx`.
 
 ---
 
@@ -218,18 +218,20 @@ The known-duplication table in CLAUDE.md §7 is a working debt list. Touching on
 
 The mandate above is the standard going forward. The repository does **not** meet it today. Honest baseline:
 
-| Area                                           | Unit                 | Integration | E2E          |
-| ---------------------------------------------- | -------------------- | ----------- | ------------ |
-| `gameEngine` (9 implemented commands)          | 3 tests, ~2 commands | —           | —            |
-| `rng` (`SeededRandomSource`, `shuffle`)        | none                 | —           | —            |
-| `persistence` (save/load/index/delete/corrupt) | none                 | none        | —            |
-| `gameSlice` thunks                             | —                    | none        | —            |
-| `uiSlice`                                      | none                 | —           | —            |
-| `HomePage`                                     | —                    | 2 tests     | partial      |
-| `GamePage` (board, decision panels)            | —                    | none        | 1 smoke spec |
-| `DiceDock`                                     | none                 | —           | partial      |
-| `SpaceCard`, `SpaceDetailCard`                 | 2 files              | —           | yes          |
-| Holdings drawer + stack                        | 2 files              | 1 test      | yes          |
+| Area                                           | Unit     | Integration | E2E          |
+| ---------------------------------------------- | -------- | ----------- | ------------ |
+| `gameEngine` (10 implemented commands)         | 15 tests | —           | partial      |
+| Card draw / acknowledge                        | 7 tests  | 4 tests     | yes          |
+| Action feedback (toasts)                       | 13 tests | —           | yes          |
+| `rng` (`SeededRandomSource`, `shuffle`)        | none     | —           | —            |
+| `persistence` (save/load/index/delete/corrupt) | none     | 4 tests     | —            |
+| `gameSlice` thunks                             | —        | none        | —            |
+| `uiSlice`                                      | none     | —           | —            |
+| `HomePage`                                     | —        | 2 tests     | partial      |
+| `GamePage` (board, decision panels)            | —        | none        | 1 smoke spec |
+| `DiceDock`                                     | none     | —           | partial      |
+| `SpaceCard`, `SpaceDetailCard`                 | 2 files  | —           | yes          |
+| Holdings drawer + stack                        | 2 files  | 1 test      | yes          |
 
 **Two harness blockers remain before the integration mandate is fully achievable:**
 

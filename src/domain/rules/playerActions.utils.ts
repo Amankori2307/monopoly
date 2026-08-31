@@ -1,15 +1,11 @@
-import { GameCommandType, PropertyAction } from '../types/game.enums';
-import type { GameState, PlayerId } from '../types/game.interfaces';
-import { getPlayerOwnedSpaces } from './holdings.utils';
+import type { PropertyActionDescriptor } from './playerActions.interfaces';
 
-export interface PropertyActionDescriptor {
-  action: PropertyAction;
-  label: string;
-  command: GameCommandType;
-  isEnabled: boolean;
-  /** Why the action is unavailable. Empty when enabled. */
-  disabledReason: string;
-}
+export type { PropertyActionDescriptor } from './playerActions.interfaces';
+
+import { GameCommandType, PropertyAction } from '../types/game.enums';
+import type { GameState, PlayerId, SpaceId } from '../types/game.interfaces';
+import { getPlayerOwnedSpaces, isOwnedBy } from './holdings.utils';
+import { isOwnableSpace } from './space.utils';
 
 const ACTION_DEFINITIONS: ReadonlyArray<{
   action: PropertyAction;
@@ -71,6 +67,58 @@ export const getPropertyActions = (
         command,
         isEnabled: false,
         disabledReason: 'You do not own any property yet',
+      };
+    }
+    return { action, label, command, isEnabled: true, disabledReason: '' };
+  });
+};
+
+/**
+ * What a player may do with one specific site.
+ *
+ * The rail's getPropertyActions answers "what could this player do at all"; this
+ * answers it for a space the player has actually picked, which is what the
+ * engine commands need - they all take a spaceId.
+ */
+export const getSiteActions = (
+  state: GameState,
+  spaceId: SpaceId,
+  playerId: PlayerId
+): PropertyActionDescriptor[] => {
+  const space = state.board.find((candidate) => candidate.id === spaceId);
+  if (!space || !isOwnableSpace(space) || !isOwnedBy(state, spaceId, playerId)) {
+    return [];
+  }
+
+  const ownership = state.ownership[spaceId];
+
+  return ACTION_DEFINITIONS.map(({ action, label, command }) => {
+    if (SCAFFOLDED_COMMANDS.has(command)) {
+      return {
+        action,
+        label,
+        command,
+        isEnabled: false,
+        disabledReason: 'Not implemented yet',
+      };
+    }
+    // Mortgage and redeem are mutually exclusive on one site.
+    if (action === PropertyAction.Mortgage && ownership.mortgaged) {
+      return {
+        action,
+        label,
+        command,
+        isEnabled: false,
+        disabledReason: 'Already mortgaged',
+      };
+    }
+    if (action === PropertyAction.Redeem && !ownership.mortgaged) {
+      return {
+        action,
+        label,
+        command,
+        isEnabled: false,
+        disabledReason: 'Not mortgaged',
       };
     }
     return { action, label, command, isEnabled: true, disabledReason: '' };

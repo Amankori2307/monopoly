@@ -5,12 +5,15 @@ import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.util
 import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { getCornerIcon, getSpaceIcon } from '../spaceIcons.constants';
+import type { SpaceOwnerMark } from './board.interfaces';
 
 interface BoardSpaceCellProps {
   /** Whether any token currently sits here - tokens themselves are drawn by
    * BoardTokenLayer, over the board rather than inside the cell. */
   isOccupied: boolean;
   onSelect: (spaceId: string) => void;
+  /** Who owns this space, when anyone does. */
+  ownerMark?: SpaceOwnerMark;
   space: BoardSpace;
 }
 
@@ -21,7 +24,12 @@ interface BoardSpaceCellProps {
  * short side, on the edge facing the board centre, as on a printed board. Layout
  * per side lives in components/_board.scss.
  */
-export function BoardSpaceCell({ isOccupied, onSelect, space }: BoardSpaceCellProps) {
+export function BoardSpaceCell({
+  isOccupied,
+  onSelect,
+  ownerMark,
+  space,
+}: BoardSpaceCellProps) {
   const position = boardIndexToGridPosition(space.index);
   const cornerIcon = getCornerIcon(space);
   const spaceIcon = getSpaceIcon(space);
@@ -39,7 +47,11 @@ export function BoardSpaceCell({ isOccupied, onSelect, space }: BoardSpaceCellPr
 
   return (
     <button
-      aria-label={`View details for ${space.name}`}
+      aria-label={
+        ownerMark
+          ? `View details for ${space.name}, owned by ${ownerMark.ownerName}`
+          : `View details for ${space.name}`
+      }
       className={className}
       data-testid={scopedTestId(TEST_IDS.boardSpace, space.index)}
       onClick={() => onSelect(space.id)}
@@ -50,6 +62,22 @@ export function BoardSpaceCell({ isOccupied, onSelect, space }: BoardSpaceCellPr
         <div
           className={`space-color group-${space.colorGroup}`}
           data-testid={TEST_IDS.spaceColorBar}
+        />
+      ) : null}
+
+      {/* The owner's token colour, so control of a colour set reads off the
+          board. Inline colour is the sanctioned exception to the no-hardcoded-
+          colour rule: token colours are theme data, not CSS tokens. A mortgaged
+          site is hollow - it collects no rent. */}
+      {ownerMark ? (
+        <span
+          className={`space-owner-dot ${ownerMark.mortgaged ? 'is-mortgaged' : ''}`}
+          data-testid={scopedTestId(TEST_IDS.spaceOwnerDot, space.index)}
+          style={
+            ownerMark.mortgaged
+              ? { borderColor: ownerMark.color }
+              : { backgroundColor: ownerMark.color }
+          }
         />
       ) : null}
 

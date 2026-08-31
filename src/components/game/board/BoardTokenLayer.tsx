@@ -1,7 +1,7 @@
 import { getBoardCellCenter } from '../../../domain/board/boardLayout.utils';
 import type { PlayerState, ThemeToken } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
-import type { TokenPositions } from '../hooks/useAnimatedTokenPositions';
+import type { TokenPositions } from './board.interfaces';
 
 interface BoardTokenLayerProps {
   findToken: (tokenId: string) => ThemeToken | undefined;

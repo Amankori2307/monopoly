@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GameCommandType, PendingDecisionType, TurnPhase } from '../types/game.enums';
-import { CardDeck, CardEffectKind, DeckName } from '../types/game.enums';
+import { CardDeck, CardEffectKind, DeckName, SpaceKind } from '../types/game.enums';
+import type { DeckCard } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { SeededRandomSource } from './rng';
 
@@ -135,5 +136,223 @@ describe('going to jail ends the turn', () => {
     expect(() =>
       executeGameCommand(game, { type: GameCommandType.RollTurnDice })
     ).toThrow('Player must choose a Jail action first.');
+  });
+});
+
+describe('card draw and acknowledge', () => {
+  /** Puts the active player on a deck space with a known card on top. */
+  const gameWithCardOnTop = (
+    deck: DeckName,
+    effect: DeckCard['effect'],
+    title = 'Test Card'
+  ) => {
+    const game = createBaseGame();
+    const kind = deck === DeckName.Chance ? SpaceKind.Chance : SpaceKind.CommunityChest;
+    const deckSpace = game.board.find((space) => space.kind === kind);
+    if (!deckSpace) {
+      throw new Error(`No ${kind} space on the board`);
+    }
+    const card: DeckCard = {
+      id: 'test-card',
+      deck: deck === DeckName.Chance ? CardDeck.Chance : CardDeck.CommunityChest,
+      title,
+      description: 'Test description.',
+      effect,
+    };
+    return {
+      ...game,
+      decks: { ...game.decks, [deck]: [card, ...game.decks[deck]] },
+      players: {
+        ...game.players,
+        [game.playerOrder[game.activePlayerIndex]]: {
+          ...game.players[game.playerOrder[game.activePlayerIndex]],
+          position: deckSpace.index,
+        },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw as const,
+        playerId: game.playerOrder[game.activePlayerIndex],
+        deck,
+        card,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+  };
+
+  // The draw and the effect used to be one indivisible step, which left the UI
+  // no room to show the card before it acted.
+  it('holds the drawn card as a decision without applying it', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const chanceSpace = game.board.find((space) => space.kind === SpaceKind.Chance);
+    if (!chanceSpace) {
+      throw new Error('No Chance space on the board');
+    }
+    const collectCard: DeckCard = {
+      id: 'test-collect',
+      deck: CardDeck.Chance,
+      title: 'Windfall',
+      description: 'Collect something.',
+      effect: { kind: CardEffectKind.Collect, amount: 250 },
+    };
+    // Seed 3 rolls 2+4, so start six spaces short of the Chance square.
+    game.players[activePlayerId].position = chanceSpace.index - 6;
+    const staged = {
+      ...game,
+      decks: { ...game.decks, [DeckName.Chance]: [collectCard, ...game.decks.chance] },
+    };
+    const cashBefore = staged.players[activePlayerId].cash;
+
+    const result = executeGameCommand(
+      staged,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.pendingDecision.type).toBe(PendingDecisionType.CardDraw);
+    // The card is held, not applied - that is the whole point of the split.
+    expect(result.nextState.players[activePlayerId].cash).toBe(cashBefore);
+    expect(result.nextState.turn.phase).toBe(TurnPhase.AwaitDecision);
+  });
+
+  // The card must survive a save/load round trip, so it rides inside the
+  // decision rather than in a top-level field the zod schema would strip.
+  it('carries the drawn card on the decision itself', () => {
+    const game = gameWithCardOnTop(
+      DeckName.CommunityChest,
+      { kind: CardEffectKind.Collect, amount: 25 },
+      'Rebate'
+    );
+
+    expect(game.pendingDecision.type).toBe(PendingDecisionType.CardDraw);
+    expect(game.pendingDecision.card.title).toBe('Rebate');
+  });
+
+  it('applies a Collect effect only once acknowledged', () => {
+    const game = gameWithCardOnTop(DeckName.Chance, {
+      kind: CardEffectKind.Collect,
+      amount: 250,
+    });
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const cashBefore = game.players[activePlayerId].cash;
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.players[activePlayerId].cash).toBe(cashBefore + 250);
+    expect(result.nextState.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+
+  it('logs the amount so the credit is visible, not silent', () => {
+    const game = gameWithCardOnTop(
+      DeckName.Chance,
+      { kind: CardEffectKind.Collect, amount: 250 },
+      'Windfall'
+    );
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.history[0].message).toContain('250');
+    expect(result.nextState.history[0].message).toContain('Windfall');
+  });
+
+  // A card that sends the player to jail must not leave them an extra roll,
+  // which is the bug the phase guard in resolveCurrentSpace already covers.
+  it('does not grant an extra roll when a card sends the player to jail', () => {
+    const game = {
+      ...gameWithCardOnTop(DeckName.Chance, { kind: CardEffectKind.GoToJail }),
+    };
+    game.turn = { ...game.turn, doublesCount: 1 };
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.players[activePlayerId].inJail).toBe(true);
+    expect(result.nextState.turn.canRollAgain).toBe(false);
+    expect(result.nextState.turn.phase).toBe(TurnPhase.TurnComplete);
+  });
+
+  it('keeps the extra roll after a card when the player rolled doubles', () => {
+    const game = gameWithCardOnTop(DeckName.Chance, {
+      kind: CardEffectKind.Collect,
+      amount: 50,
+    });
+    game.turn = { ...game.turn, doublesCount: 1 };
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.turn.canRollAgain).toBe(true);
+    expect(result.nextState.turn.phase).toBe(TurnPhase.AwaitExtraRollOrEnd);
+  });
+
+  it('throws when there is no drawn card to acknowledge', () => {
+    const game = createBaseGame();
+
+    expect(() =>
+      executeGameCommand(
+        game,
+        { type: GameCommandType.AcknowledgeCard },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/no drawn card/i);
+  });
+});
+
+describe('money events', () => {
+  // Seven money paths - tax, both jail fines, and every card cash effect - used
+  // to move cash without logging anything at all.
+  it('logs a tax payment to the bank', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const taxSpace = game.board.find((space) => space.kind === SpaceKind.Tax);
+    if (!taxSpace) {
+      throw new Error('No tax space on the board');
+    }
+    // Seed 5 rolls 2+5, so start seven spaces short of the tax square.
+    game.players[activePlayerId].position = taxSpace.index - 7;
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(5)
+    );
+
+    const paidEvent = result.nextState.history.find((event) =>
+      event.message.includes('to the bank')
+    );
+    expect(paidEvent?.message).toContain(taxSpace.name);
+  });
+
+  it('logs the pass-GO salary with the theme currency, not a hardcoded symbol', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    // From 38 a roll of 7 wraps past GO to index 5.
+    game.players[activePlayerId].position = 38;
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(5)
+    );
+
+    const goEvent = result.nextState.history.find((event) =>
+      event.message.includes('passing GO')
+    );
+    expect(goEvent?.message).toContain('₹200');
   });
 });

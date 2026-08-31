@@ -62,17 +62,15 @@ export function PlayerCard({
         <span>Cash</span>
         <strong>{formatMoney(player.cash, currencySymbol)}</strong>
         <span>Sites</span>
+        {/* The mortgaged count used to be appended here as text. It is a badge
+            now, so saying it twice on one card would be noise. */}
         <strong data-testid={scopedTestId(TEST_IDS.playerSiteCount, player.id)}>
           {propertyCount}
-          {/* Only worth saying when it is true. */}
-          {mortgagedCount > 0 ? (
-            <span className="player-card-mortgaged"> · {mortgagedCount} mortgaged</span>
-          ) : null}
         </strong>
       </div>
 
       <ColorGroupPips progress={setProgress} />
-      <PlayerBadges player={player} />
+      <PlayerBadges mortgagedCount={mortgagedCount} player={player} />
     </article>
   );
 }

@@ -128,7 +128,7 @@ Drawn cards are returned to the **bottom** of their deck; `jail-free` cards are 
 
 [`src/domain/rules/gameEngine.ts`](../src/domain/rules/gameEngine.ts) — one file, two exports.
 
-**`createGameState(input, randomSource)`** — builds players (`player-1..n`, `M1500` each), decides turn order by a simulated opening roll (`chooseFirstPlayerOrder`), shuffles both decks, seeds `ownership` for buyable spaces, writes two opening history events.
+**`createGameState(input, randomSource)`** — builds players (`player-1..n`, `₹1500` each), decides turn order by a simulated opening roll (`chooseFirstPlayerOrder`), shuffles both decks, seeds `ownership` for buyable spaces, writes two opening history events.
 
 **`executeGameCommand(state, command, randomSource)`** — a `switch` over command type. Throws on illegal transitions; scaffolded commands push a string into `uiHints` and change nothing.
 

@@ -6,15 +6,18 @@ import {
   getPlayerOwnedSpaces,
 } from '../../domain/rules/holdings.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
-import { PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
+import { DeckName, PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
 import type {
   GameState,
+  PendingDecisionCardDraw,
   PlayerId,
   PlayerState,
   ThemeConfig,
   ThemeToken,
 } from '../../domain/types/game.interfaces';
 import type {
+  AuctionDecisionViewModel,
+  CardDrawDecisionViewModel,
   DecisionViewModel,
   PlayerSummary,
 } from '../../components/game/panels/panels.interfaces';
@@ -75,6 +78,7 @@ export const selectCanEndTurn = (game: GameState) =>
 const BLOCKING_DECISIONS: ReadonlySet<PendingDecisionType> = new Set([
   PendingDecisionType.LandedUnownedProperty,
   PendingDecisionType.AuctionBid,
+  PendingDecisionType.CardDraw,
   PendingDecisionType.AssetLiquidation,
   PendingDecisionType.TradeResponse,
   PendingDecisionType.BankruptcyResolution,
@@ -127,6 +131,35 @@ const jailDecision = (activePlayer: PlayerState): DecisionViewModel => ({
   canUseJailCard: activePlayer.jailFreeCards > 0,
 });
 
+const auctionDecision = (game: GameState): AuctionDecisionViewModel | null => {
+  const auction = game.auctionState;
+  if (!auction) {
+    return null;
+  }
+  const bidderId = auction.activeBidderOrder[auction.activeBidderIndex];
+  const space = game.board.find((candidate) => candidate.id === auction.spaceId);
+  return {
+    type: PendingDecisionType.AuctionBid,
+    spaceName: space?.name ?? '',
+    activeBidderName: game.players[bidderId]?.name ?? '',
+    highestBid: auction.highestBid,
+    minimumBid: Math.max(auction.startPrice, auction.highestBid + auction.minIncrement),
+    auction,
+  };
+};
+
+const cardDrawDecision = (
+  game: GameState,
+  decision: PendingDecisionCardDraw,
+  activePlayer: PlayerState
+): CardDrawDecisionViewModel => ({
+  type: PendingDecisionType.CardDraw,
+  playerName: game.players[decision.playerId]?.name ?? activePlayer.name,
+  deckLabel: decision.deck === DeckName.Chance ? 'Chance' : 'Community Chest',
+  cardTitle: decision.card.title,
+  cardDescription: decision.card.description,
+});
+
 export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
   const decision = game.pendingDecision;
   const activePlayer = selectActivePlayer(game);
@@ -143,27 +176,12 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
         space,
       };
     }
-    case PendingDecisionType.AuctionBid: {
-      const auction = game.auctionState;
-      if (!auction) {
-        return null;
-      }
-      const bidderId = auction.activeBidderOrder[auction.activeBidderIndex];
-      const space = game.board.find((candidate) => candidate.id === auction.spaceId);
-      return {
-        type: PendingDecisionType.AuctionBid,
-        spaceName: space?.name ?? '',
-        activeBidderName: game.players[bidderId]?.name ?? '',
-        highestBid: auction.highestBid,
-        minimumBid: Math.max(
-          auction.startPrice,
-          auction.highestBid + auction.minIncrement
-        ),
-        auction,
-      };
-    }
+    case PendingDecisionType.AuctionBid:
+      return auctionDecision(game);
     case PendingDecisionType.JailChoice:
       return jailDecision(activePlayer);
+    case PendingDecisionType.CardDraw:
+      return cardDrawDecision(game, decision, activePlayer);
     case PendingDecisionType.AssetLiquidation:
       return {
         type: PendingDecisionType.AssetLiquidation,

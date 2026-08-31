@@ -7,7 +7,7 @@ import type { ThemeConfig } from '../types/game.interfaces';
 export const indiaEditionTheme: ThemeConfig = {
   id: 'india-edition',
   name: 'Monopoly India Edition',
-  currencySymbol: 'M',
+  currencySymbol: '₹',
   tokenCatalog: [
     { id: 'elephant', label: 'Elephant', emoji: '🐘', color: '#e01b1b' },
     { id: 'train', label: 'Train', emoji: '🚂', color: '#1466ff' },

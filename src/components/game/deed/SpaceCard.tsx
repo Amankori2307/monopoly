@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { isOwnableSpace, isStreetSpace } from '../../../domain/rules/space.utils';
 import { SpaceKind } from '../../../domain/types/game.enums';
-import type { BoardSpace } from '../../../domain/types/game.interfaces';
+import type { BoardSpace, OwnershipState } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { getSpaceIcon } from '../spaceIcons.constants';
 import { RailwayDeed } from './RailwayDeed';
@@ -10,11 +10,21 @@ import { StreetDeed } from './StreetDeed';
 import { UtilityDeed } from './UtilityDeed';
 
 interface SpaceCardProps {
-  /** Optional actions rendered under the deed, e.g. Buy / Decline. */
+  /**
+   * Optional actions rendered under the card body. Only usable on a space that
+   * is not a deed: a deed is a fixed height with overflow hidden, so anything
+   * appended inside it is clipped. Deed callers put their buttons beside the
+   * card instead - see SpaceDetailCard and BuyOrAuctionDecision.
+   */
   actions?: ReactNode;
   currencySymbol: string;
   /** Id for the card's heading, so a dialog can point aria-labelledby at it. */
   headingId?: string;
+  /**
+   * Ownership of this space, when the caller knows it. Optional because the
+   * board's own deed modal shows spaces nobody owns.
+   */
+  ownership?: OwnershipState;
   space: BoardSpace;
 }
 
@@ -41,6 +51,7 @@ export function SpaceCard({
   actions,
   currencySymbol,
   headingId = 'space-card-title',
+  ownership,
   space,
 }: SpaceCardProps) {
   const icon = getSpaceIcon(space);
@@ -65,6 +76,11 @@ export function SpaceCard({
         />
       ) : null}
       <p className="eyebrow">{title}</p>
+      {ownership?.mortgaged ? (
+        <p className="deed-mortgaged" data-testid={TEST_IDS.deedMortgaged}>
+          Mortgaged
+        </p>
+      ) : null}
       <div className="space-detail-title-row">
         {icon ? (
           <img alt="" aria-hidden="true" className="space-detail-icon" src={icon} />

@@ -9,13 +9,15 @@ which the code itself cannot tell them.
 
 ## Index
 
-| Feature                    | Doc                              | Status                             |
-| -------------------------- | -------------------------------- | ---------------------------------- |
-| Game setup and saved games | [setup.md](setup.md)             | Shipped                            |
-| Playing a turn             | [game-turn.md](game-turn.md)     | Shipped (building/trading pending) |
-| Persistence and resume     | [persistence.md](persistence.md) | Shipped                            |
-| Theming                    | [../theming.md](../theming.md)   | Shipped                            |
-| Rules booklet              | [rules-page.md](rules-page.md)   | Shipped                            |
+| Feature                    | Doc                                      | Status                             |
+| -------------------------- | ---------------------------------------- | ---------------------------------- |
+| Game setup and saved games | [setup.md](setup.md)                     | Shipped                            |
+| Playing a turn             | [game-turn.md](game-turn.md)             | Shipped (building/trading pending) |
+| Action feedback            | [action-feedback.md](action-feedback.md) | Shipped                            |
+| Site ownership             | [site-ownership.md](site-ownership.md)   | Shipped (owner actions pending)    |
+| Persistence and resume     | [persistence.md](persistence.md)         | Shipped                            |
+| Theming                    | [../theming.md](../theming.md)           | Shipped                            |
+| Rules booklet              | [rules-page.md](rules-page.md)           | Shipped                            |
 
 ## Template
 

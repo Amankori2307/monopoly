@@ -1,16 +1,21 @@
 import { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import type { Toast } from '../../../components/game/overlays/overlays.interfaces';
 import type { DecisionHandlers } from '../../../components/game/panels/panels.interfaces';
 import { GameCommandType } from '../../../domain/types/game.enums';
 import { runGameCommand, setCommandError } from '../gameSlice';
-import { setAuctionBidInput } from '../uiSlice';
+import { dismissToast, setAuctionBidInput } from '../uiSlice';
 
 export interface UseGameCommandsResult {
   auctionBidInput: number;
   decisionHandlers: DecisionHandlers;
   dismissError: () => void;
+  dismissToast: (toastId: string) => void;
   endTurn: () => void;
   rollDice: (isJailRoll: boolean) => void;
+  /** A property command for one picked space, from the site panel. */
+  runPropertyCommand: (command: GameCommandType, spaceId: string) => void;
+  toasts: Toast[];
 }
 
 /**
@@ -20,11 +25,22 @@ export interface UseGameCommandsResult {
 export const useGameCommands = (): UseGameCommandsResult => {
   const dispatch = useAppDispatch();
   const auctionBidInput = useAppSelector((state) => state.ui.auctionBidInput);
+  const toasts = useAppSelector((state) => state.ui.toasts);
 
   return useMemo(
     () => ({
       auctionBidInput,
+      toasts,
       dismissError: () => dispatch(setCommandError(null)),
+      runPropertyCommand: (command: GameCommandType, spaceId: string) =>
+        // The command union types spaceId per member, so the cast is where the
+        // picked space meets the typed command rather than spread through the UI.
+        dispatch(
+          runGameCommand({ type: command, spaceId } as Parameters<
+            typeof runGameCommand
+          >[0])
+        ),
+      dismissToast: (toastId: string) => dispatch(dismissToast(toastId)),
       endTurn: () => dispatch(runGameCommand({ type: GameCommandType.EndTurn })),
       rollDice: (isJailRoll: boolean) =>
         dispatch(
@@ -51,8 +67,10 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.PayJailFine })),
         onUseJailCard: () =>
           dispatch(runGameCommand({ type: GameCommandType.UseJailFreeCard })),
+        onAcknowledgeCard: () =>
+          dispatch(runGameCommand({ type: GameCommandType.AcknowledgeCard })),
       },
     }),
-    [auctionBidInput, dispatch]
+    [auctionBidInput, dispatch, toasts]
   );
 };

@@ -78,10 +78,17 @@ describe('PlayerCard', () => {
     expect(screen.queryByText(/mortgaged/)).not.toBeInTheDocument();
   });
 
-  it('shows how many sites are mortgaged when some are', () => {
-    renderCard({ propertyCount: 6, mortgagedCount: 2 });
+  // The count is a badge rather than text appended to the site figure - one
+  // card should not say the same thing twice.
+  it('shows mortgaged sites as a badge, not appended to the site count', () => {
+    renderCard({ mortgagedCount: 2, propertyCount: 5 });
 
-    expect(screen.getByText(/2 mortgaged/)).toBeInTheDocument();
+    expect(screen.getByTestId(`${TEST_IDS.playerBadge}-mortgaged`)).toHaveTextContent(
+      '2 mortgaged'
+    );
+    expect(screen.getByTestId(`${TEST_IDS.playerSiteCount}-player-1`)).toHaveTextContent(
+      '5'
+    );
   });
 
   it('renders no pips when the player holds nothing', () => {

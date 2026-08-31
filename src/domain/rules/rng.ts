@@ -1,6 +1,6 @@
-export interface RandomSource {
-  nextInt(minInclusive: number, maxInclusive: number): number;
-}
+import type { RandomSource } from './rng.interfaces';
+
+export type { RandomSource } from './rng.interfaces';
 
 export class DefaultRandomSource implements RandomSource {
   nextInt(minInclusive: number, maxInclusive: number): number {

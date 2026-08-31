@@ -1,9 +1,8 @@
-import { BOARD_SIZE } from '../constants/game.constants';
+import type { CellCenter, GridPosition } from './boardLayout.interfaces';
 
-export interface GridPosition {
-  row: number;
-  column: number;
-}
+export type { CellCenter, GridPosition } from './boardLayout.interfaces';
+
+import { BOARD_SIZE } from '../constants/game.constants';
 
 /** The board renders as an 11x11 CSS grid: 4 corners plus 9 spaces per side. */
 export const BOARD_GRID_SIZE = 11;
@@ -49,11 +48,6 @@ const trackOffset = (line: number) => {
   }
   return offset;
 };
-
-export interface CellCenter {
-  leftPercent: number;
-  topPercent: number;
-}
 
 /**
  * Centre of a board space as a percentage of the board, so a token can be

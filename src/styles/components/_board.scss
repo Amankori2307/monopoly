@@ -462,3 +462,36 @@
     transition: none;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Owner marker
+//
+// A dot in the owner's token colour, so who controls which colour set reads
+// straight off the board. Deliberately small and cornered: the colour-group
+// ribbon on the inner edge is a different fact and must stay readable.
+// The colour itself is an inline style - token colours are theme data.
+// ---------------------------------------------------------------------------
+.space-owner-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  // Above the cell's ::after divider, which sits at z-index 5.
+  z-index: 6;
+  width: 7px;
+  height: 7px;
+  border: 1px solid transparent;
+  border-radius: t.$token-radius;
+  box-shadow: 0 0 0 1px var(--surface-panel);
+
+  // Hollow: a mortgaged site is owned but collects no rent.
+  &.is-mortgaged {
+    background: var(--surface-panel);
+    border-width: 2px;
+  }
+}
+
+// The corner squares carry no owner, so nothing to reposition there.
+.board-space.side-left .space-owner-dot,
+.board-space.side-right .space-owner-dot {
+  top: 3px;
+}

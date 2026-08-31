@@ -110,7 +110,11 @@ describe('SpaceCard', () => {
     expect(container.querySelector('.space-card-actions')).toBeNull();
 
     rerender(
-      <SpaceCard actions={<button type="button">Buy</button>} currencySymbol="M" space={street} />
+      <SpaceCard
+        actions={<button type="button">Buy</button>}
+        currencySymbol="M"
+        space={street}
+      />
     );
     expect(screen.getByRole('button', { name: 'Buy' })).toBeInTheDocument();
   });

@@ -23,7 +23,10 @@ export type GameAction =
   | 'declined'
   | 'passed'
   | 'paid-fine'
+  | 'acknowledged-card'
   | 'ended-turn'
+  /** A buy decision is up and the caller asked not to answer it. */
+  | 'buy-available'
   | 'none';
 
 /**
@@ -33,9 +36,30 @@ export type GameAction =
  * on until it appears. Centralising the "do the next thing" step keeps those
  * loops simple and stops each spec re-implementing it.
  */
-export const advanceGame = async (page: Page): Promise<GameAction> => {
+interface AdvanceOptions {
+  /** Pass false when the spec is testing the card modal itself. */
+  acknowledgeCards?: boolean;
+  /** Pass false to stop at a buy decision instead of declining it. */
+  declineBuys?: boolean;
+}
+
+const tryAdvance = async (page: Page, options: AdvanceOptions): Promise<GameAction> => {
+  // First: a drawn card blocks everything until it is acknowledged, so a spec
+  // that plays several turns must clear it or it deadlocks here.
+  const acknowledgeCard = page.getByTestId(TEST_IDS.acknowledgeCardButton);
+  if (await acknowledgeCard.isVisible()) {
+    if (options.acknowledgeCards === false) {
+      return 'none';
+    }
+    await acknowledgeCard.click();
+    return 'acknowledged-card';
+  }
+
   const decline = page.getByTestId(TEST_IDS.declineButton);
   if (await decline.isVisible()) {
+    if (options.declineBuys === false) {
+      return 'buy-available';
+    }
     await decline.click();
     return 'declined';
   }
@@ -46,7 +70,7 @@ export const advanceGame = async (page: Page): Promise<GameAction> => {
     return 'passed';
   }
 
-  const payFine = page.getByRole('button', { name: /^Pay M/ });
+  const payFine = page.getByRole('button', { name: /^Pay \u20b9/ });
   if (await payFine.isVisible()) {
     await payFine.click();
     return 'paid-fine';
@@ -66,4 +90,38 @@ export const advanceGame = async (page: Page): Promise<GameAction> => {
   }
 
   return 'none';
+};
+
+export const advanceGame = async (
+  page: Page,
+  options: AdvanceOptions = {}
+): Promise<GameAction> => {
+  const action = await tryAdvance(page, options);
+  if (action !== 'none') {
+    return action;
+  }
+
+  // Decisions are deliberately withheld while a token walks to its space, so
+  // "nothing to do" can mean "not yet". Wait for the DOM to offer something
+  // rather than sleeping in fixed steps - a roll of twelve walks for over two
+  // seconds, and blind polling made the suite an order of magnitude slower.
+  try {
+    await page.waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll('button')).some((button) => {
+          if ((button as HTMLButtonElement).disabled) {
+            return false;
+          }
+          return /Roll dice|Roll for doubles|Done|Take extra roll|Buy for|Decline|^OK$|Pay |Use jail card|Submit bid|^Pass$/.test(
+            button.textContent?.trim() ?? ''
+          );
+        }),
+      undefined,
+      { timeout: 6000 }
+    );
+  } catch {
+    return 'none';
+  }
+
+  return tryAdvance(page, options);
 };

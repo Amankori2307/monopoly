@@ -91,15 +91,22 @@ Every command runs through `runGameCommand`. Do not mutate game state in a compo
 
 `await_roll → resolving_movement → resolving_space → await_decision → await_extra_roll_or_end → turn_complete`
 
+Landing on Chance or Community Chest draws the card and stops in `await_decision`; the effect is
+applied by `acknowledgeCard`. A new decision type must also be added to `BLOCKING_DECISIONS`
+(`gameView.selectors.ts`) or the player can roll straight past its modal.
+
 ### Commands
 
-| Implemented                                                                                                                                               | Scaffolded (returns a `uiHints` placeholder, changes nothing)                                                                                               |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `mortgageAsset`, `unmortgageAsset`, `proposeTrade`, `acceptTrade`, `rejectTrade`, `confirmBankruptcy` |
+| Implemented                                                                                                                                                                  | Scaffolded (returns a `uiHints` placeholder, changes nothing)                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `acknowledgeCard`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `mortgageAsset`, `unmortgageAsset`, `proposeTrade`, `acceptTrade`, `rejectTrade`, `confirmBankruptcy` |
 
 ### Locked economics (`gameEngine.ts` constants)
 
-Starting cash `M1500` · pass GO `M200` · jail fine `M50` · auction opens at `M10`, min increment `1` · 40 spaces · 32 houses / 12 hotels · history capped at 120 events, newest first.
+Starting cash `₹1500` · pass GO `₹200` · jail fine `₹50` · auction opens at `₹10`, min increment `1` · 40 spaces · 32 houses / 12 hotels · history capped at 120 events, newest first.
+
+Money moves through exactly two choke points, and both log an event: `resolveBankPayment` (out) and
+`creditFromBank` (in). Add a third and feedback silently stops working for it.
 
 Money values live in `domain/board/` and `gameEngine.ts` constants — never hardcode an amount in a component.
 
@@ -110,6 +117,7 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 - Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
 - `GAME_STATE_VERSION = 1`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load.
 - Loads are validated with zod (`features/persistence/schema.ts`). The schema is deliberately loose in places (`z.any()` for players/board/ownership) — tighten it alongside any shape change.
+- **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. `pendingDecision` is `.passthrough()`, so a decision's own payload survives — which is why the drawn Chance / Community Chest card rides inside the decision rather than in a field of its own. Add the field to the schema, or put it where it will survive.
 - Every command save is a full-state write, then the index is rewritten sorted by `updatedAt`.
 
 ---
@@ -137,13 +145,14 @@ Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc`
 - `domain/` stays pure. UI-only concerns (colors, icons, copy) never leak into it.
 - `components/game/` are presentational: props in, callbacks out, no `useAppSelector`.
 - Slices hold state; _thunks_ hold orchestration. Business rules belong in the engine.
+- **Enums live in `*.enums.ts`; exported interfaces and type aliases in `\*.interfaces.ts.** Machine-enforced by `no-restricted-syntax`. Component `Props`, hook `Use*Result`/`Use*Options`, and type aliases derived from a value in the same file are exempt — see [docs/conventions.md](docs/conventions.md) §1, which also explains why the rule must stay in a single `overrides` entry.
 - Path aliases exist in `tsconfig.json` (`@app/*`, `@domain/*`, `@features/*`, `@components/*`, `@test/*`) but **nothing uses them yet** — the codebase is uniformly relative-import. Pick one style deliberately rather than mixing.
 
 **DRY — known duplication, fix on contact**
 | Duplicated | Locations |
 |---|---|
 | `availableThemes.find(...)` theme lookup | [gameEngine.ts:37](src/domain/rules/gameEngine.ts:37), [GamePage.tsx:63](src/features/game/GamePage.tsx:63), [HomePage.tsx:48](src/features/setup/HomePage.tsx:48) |
-| `theme?.currencySymbol ?? 'M'` — 5× in one file; a `formatMoney` helper exists but only in `SpaceDetailCard` | GamePage.tsx |
+| Two fallbacks for one value: `DEFAULT_CURRENCY_SYMBOL` (`game.constants.ts`) and `getThemeOrDefault(...).currencySymbol` (`gameEngine.ts`) | both resolve the currency symbol independently |
 
 _Resolved:_ the duplicated street colour-group hex maps are gone — colours are now theme tokens with generated `.group-*` classes (see [docs/theming.md](docs/theming.md)).
 
@@ -151,7 +160,7 @@ When you touch one of these, extract it (colors/icons → a shared board-present
 
 **Styling** — SCSS under `src/styles/`, entry `main.scss`, imported once in `App.tsx`. Layered: `abstracts` (tokens, mixins) → `themes` → `base` → `layout` → `components` → `pages`.
 
-- **Never hardcode a colour.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming.
+- **Never hardcode a colour.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. The one sanctioned exception is a **player token colour**, applied inline from `ThemeToken.color` — it is theme _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
 - Themes are token maps in `themes/_themes.scss`, emitted as `[data-theme="<id>"]` blocks. A compile-time guard fails the build if a theme misses a contract token. See [docs/theming.md](docs/theming.md).
 - The `.scss` modules under `src/assets/css/` belong to the legacy island — do not add to them.
 
@@ -163,10 +172,12 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 
 ## 8. Known gaps and traps
 
-- **Jail-fine bug**: [gameEngine.ts:858](src/domain/rules/gameEngine.ts:858) — `payJailFine` calls `resolveBankPayment`, which sets an `asset-liquidation` pending decision when the player can't afford `M50`; the lines immediately after then overwrite `pendingDecision` back to `none`, so a broke player leaves jail without paying.
-- **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:1013](src/domain/rules/gameEngine.ts:1013)). `saveRequired` is hardcoded `true`.
+- **Jail-fine bug**: [gameEngine.ts:958](src/domain/rules/gameEngine.ts:958) — `payJailFine` calls `resolveBankPayment`, which sets an `asset-liquidation` pending decision when the player can't afford `₹50`; the lines immediately after then overwrite `pendingDecision` back to `none`, so a broke player leaves jail without paying. Its proper fix is bound up with resolving liquidation at all — see the deadlock entry below.
+- **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:1149](src/domain/rules/gameEngine.ts:1149)). `saveRequired` is hardcoded `true`. Anything wanting "what just happened" must diff `history` instead — see `selectNewEvents` in [toastFeed.utils.ts](src/features/game/toastFeed.utils.ts).
 - **No end condition**: `winnerPlayerId`, `status: 'completed'`, and the `game-over` decision are never set — games run forever.
 - **Bank inventory is cosmetic**: `housesAvailable`/`hotelsAvailable` are never decremented (building isn't implemented).
+- **`asset-liquidation` is a deadlock.** When a player cannot pay, `resolveBankPayment` / `resolvePlayerPayment` set that pending decision and **nothing in the codebase can clear it** — mortgage is its only exit and is still scaffolded. The insolvent branch also never debits the debtor or pays the creditor; the debt lives only in `amountDue`.
+- **`applyCardEffect`'s `CollectFromEach` / `PayEach` loops read the pre-mutation `state`**, not `nextState`, and each iteration can overwrite the previous player's `asset-liquidation` decision. Multi-player insolvency on one card is unhandled.
 - **Mortgaged properties** are skipped for rent but there is no way to mortgage yet.
 - `tsconfig.json` has `strict: false` and `target: es5` — a deliberate gradual-migration holdover, not an endorsement.
 
@@ -187,6 +198,7 @@ Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a
 | Deleting part of the legacy island              | §2                                                                                                 |
 | Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5     |
 | Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                             |
+| An ESLint rule                                  | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                         |
 | **Adding or removing any file**                 | [docs/file-index.md](docs/file-index.md) — one line saying what it does                            |
 | **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index |
 | Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                             |

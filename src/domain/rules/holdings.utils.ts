@@ -1,3 +1,7 @@
+import type { ColorGroupProgress, HoldingsSection } from './holdings.interfaces';
+
+export type { ColorGroupProgress, HoldingsSection } from './holdings.interfaces';
+
 import { ColorGroup, SpaceKind } from '../types/game.enums';
 import type {
   GameState,
@@ -6,26 +10,6 @@ import type {
   StreetSpace,
 } from '../types/game.interfaces';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
-
-/** Progress towards owning a whole colour set - the key strategic signal. */
-export interface ColorGroupProgress {
-  group: ColorGroup;
-  owned: number;
-  total: number;
-  isComplete: boolean;
-}
-
-/** One group of a player's holdings, as shown in the holdings drawer. */
-export interface HoldingsSection {
-  id: string;
-  label: string;
-  /** Set only for street groups, so the UI can show a colour swatch. */
-  colorGroup?: ColorGroup;
-  spaces: OwnableSpace[];
-  owned: number;
-  total: number;
-  isComplete: boolean;
-}
 
 const RAILWAY_SECTION_ID = 'railway';
 const UTILITY_SECTION_ID = 'utility';
@@ -47,7 +31,7 @@ const spacesOfKind = (state: GameState, kind: SpaceKind): OwnableSpace[] =>
     (space): space is OwnableSpace => isOwnableSpace(space) && space.kind === kind
   );
 
-const isOwnedBy = (state: GameState, spaceId: string, playerId: PlayerId) =>
+export const isOwnedBy = (state: GameState, spaceId: string, playerId: PlayerId) =>
   state.ownership[spaceId]?.ownerPlayerId === playerId;
 
 /**

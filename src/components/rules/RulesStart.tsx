@@ -1,3 +1,10 @@
+import {
+  JAIL_FINE,
+  PASS_GO_AMOUNT,
+  STARTING_CASH,
+} from '../../domain/constants/game.constants';
+import { formatMoney } from '../../shared/utils/money.utils';
+
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesStart() {
   return (
@@ -9,7 +16,10 @@ export function RulesStart() {
           Choose a Banker. The Banker controls the bank&apos;s money, title deeds, houses,
           hotels, and auctions.
         </li>
-        <li>Give each player M1500. Keep the remaining money in the Bank.</li>
+        <li>
+          Give each player {formatMoney(STARTING_CASH)}. Keep the remaining money in the
+          Bank.
+        </li>
         <li>
           Shuffle Chance and Community Chest separately and place both decks face down.
         </li>
@@ -24,13 +34,13 @@ export function RulesStart() {
           Players<strong>2–8</strong>
         </span>
         <span>
-          Starting cash<strong>M1500</strong>
+          Starting cash<strong>{formatMoney(STARTING_CASH)}</strong>
         </span>
         <span>
-          GO salary<strong>M200</strong>
+          GO salary<strong>{formatMoney(PASS_GO_AMOUNT)}</strong>
         </span>
         <span>
-          Jail fine<strong>M50</strong>
+          Jail fine<strong>{formatMoney(JAIL_FINE)}</strong>
         </span>
       </div>
     </section>

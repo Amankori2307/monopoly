@@ -174,6 +174,20 @@ export interface PendingDecisionJail {
   playerId: PlayerId;
 }
 
+/**
+ * A drawn Chance or Community Chest card, waiting to be acknowledged. The card
+ * rides inside the decision rather than in a field of its own on GameState:
+ * schema.ts validates pendingDecision with `.passthrough()`, so it survives a
+ * save/load round trip, whereas a new top-level field would be silently
+ * stripped by the surrounding `z.object`.
+ */
+export interface PendingDecisionCardDraw {
+  type: PendingDecisionType.CardDraw;
+  playerId: PlayerId;
+  deck: DeckName;
+  card: DeckCard;
+}
+
 export interface PendingDecisionAssetLiquidation {
   type: PendingDecisionType.AssetLiquidation;
   playerId: PlayerId;
@@ -202,6 +216,7 @@ export type PendingDecision =
   | PendingDecisionProperty
   | PendingDecisionAuction
   | PendingDecisionJail
+  | PendingDecisionCardDraw
   | PendingDecisionAssetLiquidation
   | PendingDecisionTrade
   | PendingDecisionBankruptcy
@@ -319,6 +334,7 @@ export type GameCommand =
   | { type: GameCommandType.PayJailFine }
   | { type: GameCommandType.UseJailFreeCard }
   | { type: GameCommandType.AttemptJailRoll }
+  | { type: GameCommandType.AcknowledgeCard }
   | { type: GameCommandType.EndTurn }
   | { type: GameCommandType.BuildHouse; spaceId: SpaceId }
   | { type: GameCommandType.BuildHotel; spaceId: SpaceId }

@@ -1,3 +1,7 @@
+import { RAILWAY_RENT_BY_COUNT } from '../../domain/constants/board.constants';
+import { PASS_GO_AMOUNT } from '../../domain/constants/game.constants';
+import { formatMoney } from '../../shared/utils/money.utils';
+
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesBoard() {
   return (
@@ -30,7 +34,8 @@ export function RulesBoard() {
             <tr>
               <td>Railway</td>
               <td>
-                Rent rises as its owner gains more railways: M25, M50, M100, then M200.
+                Rent rises as its owner gains more railways:{' '}
+                {RAILWAY_RENT_BY_COUNT.map((rent) => formatMoney(rent)).join(', ')}.
               </td>
             </tr>
             <tr>
@@ -49,7 +54,9 @@ export function RulesBoard() {
             </tr>
             <tr>
               <td>Income Tax / Super Tax</td>
-              <td>Pay the Bank M200 / M100 respectively.</td>
+              <td>
+                Pay the Bank {formatMoney(200)} / {formatMoney(100)} respectively.
+              </td>
             </tr>
             <tr>
               <td>Free Parking</td>
@@ -61,7 +68,9 @@ export function RulesBoard() {
             </tr>
             <tr>
               <td>Go To Jail</td>
-              <td>Move directly to Jail. Do not collect M200.</td>
+              <td>
+                Move directly to Jail. Do not collect {formatMoney(PASS_GO_AMOUNT)}.
+              </td>
             </tr>
           </tbody>
         </table>

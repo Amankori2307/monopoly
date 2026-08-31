@@ -25,9 +25,16 @@ Inside the engine, `rollTurnDice` moves the player then calls `resolveCurrentSpa
 branches on `space.kind` and may set a `pendingDecision`. While `pendingDecision.type !== 'none'`
 the turn is gated in `await_decision` and extra rolls are blocked.
 
+**A deck square adds a step.** Landing on Chance or Community Chest draws the card and stops there;
+its effect is applied by a separate `acknowledgeCard` command once the player has read it. See
+[action-feedback.md](action-feedback.md).
+
 `gameView.selectors.selectDecisionViewModel` turns the pending decision into a view model, and
-`DecisionPanel` renders the matching variant. **A new decision type needs both a case in the
-selector and a branch in `DecisionPanel`, or the game silently stalls with no way to advance.**
+`DecisionPanel` renders the matching variant. **A new decision type needs a case in the selector, a
+view model in `panels.interfaces.ts`, a branch in `DecisionPanel`, a handler on `DecisionHandlers`,
+and — if it must gate rolling — an entry in `BLOCKING_DECISIONS`.** Miss the selector or the panel
+and the game stalls with no way to advance; miss `BLOCKING_DECISIONS` and the player rolls straight
+past the modal.
 
 Phase machine and helper inventory: [../architecture.md](../architecture.md) sections 3-4.
 
@@ -51,6 +58,9 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   command surface is still growing.
 - **`resolveCurrentSpace` is shared** by dice movement and card-driven movement, so "advance to
   Mumbai" resolves rent exactly like landing there normally.
+- **A drawn card is a decision, not a side effect** — the draw and the effect are two commands, so
+  the player sees the card before it acts on them. Rationale and traps in
+  [action-feedback.md](action-feedback.md).
 
 ## State and data
 

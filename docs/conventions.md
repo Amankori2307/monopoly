@@ -28,6 +28,30 @@ Suffix says what a file contains. One purpose per file.
 Folders are `kebab-case`. Enforced by `check-file/filename-naming-convention` and
 `check-file/folder-naming-convention`.
 
+**The taxonomy is enforced on contents, not just names.** `no-restricted-syntax` in
+`.eslintrc.json` fails the build when:
+
+- an **enum** is declared outside a `*.enums.ts` file;
+- an **exported** interface or type alias is declared outside a `*.interfaces.ts` file.
+
+Three exemptions, each because the shape belongs where it is:
+
+| Exempt                                  | Why                                                                                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `<Component>Props`                      | Documented in section 5: props live beside their component                                                                                 |
+| `Use*Result` / `Use*Options`            | Documented in section 5: a hook's own types live beside the hook                                                                           |
+| `*.constants.ts`, `src/app/appStore.ts` | Type aliases derived from a value in the same file — `(typeof X)[keyof typeof X]`, RTK's `RootState` — cannot move without an import cycle |
+
+A shape that is only used inside its own module does not need to move: the rule targets
+`export`ed declarations. Move one out and re-export it from the original module if callers
+already import it from there — see `holdings.utils.ts` and `holdings.interfaces.ts`.
+
+> **Editing this rule:** it is defined in **exactly one** `overrides` entry on purpose. ESLint
+> _replaces_ rule options per override instead of merging them, so a second entry naming
+> `no-restricted-syntax` would silently disable these selectors for every file it matched. That is
+> already what the three `no-restricted-imports` overrides do to the legacy-island patterns. Widen
+> the existing entry's `excludedFiles`; do not add a second one.
+
 **Exceptions**, deliberate and narrow: `src/index.tsx` and `src/App.tsx` are entry points;
 `src/test/renderWithProviders.tsx` is a helper, not a component.
 
@@ -243,17 +267,18 @@ split the file rather than raising the limit.
 
 ## 8. Enforcement
 
-| Convention             | Enforced by                                                    |
-| ---------------------- | -------------------------------------------------------------- |
-| Layer boundaries       | `no-restricted-imports` overrides in `.eslintrc.json`          |
-| File naming            | `check-file/filename-naming-convention`                        |
-| Folder naming          | `check-file/folder-naming-convention`                          |
-| Identifier naming      | `@typescript-eslint/naming-convention`                         |
-| No `any`               | `@typescript-eslint/no-explicit-any`                           |
-| No nested ternaries    | `no-nested-ternary`                                            |
-| File/function size     | `max-lines`, `max-lines-per-function`, `complexity` (warnings) |
-| Formatting             | Prettier (`pnpm format`)                                       |
-| Theme token discipline | `@error` guard in `themes/_themes.scss` at compile time        |
+| Convention                                 | Enforced by                                                    |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| Layer boundaries                           | `no-restricted-imports` overrides in `.eslintrc.json`          |
+| File naming                                | `check-file/filename-naming-convention`                        |
+| Enums / exported types in their typed file | `no-restricted-syntax` in `.eslintrc.json` (section 1)         |
+| Folder naming                              | `check-file/folder-naming-convention`                          |
+| Identifier naming                          | `@typescript-eslint/naming-convention`                         |
+| No `any`                                   | `@typescript-eslint/no-explicit-any`                           |
+| No nested ternaries                        | `no-nested-ternary`                                            |
+| File/function size                         | `max-lines`, `max-lines-per-function`, `complexity` (warnings) |
+| Formatting                                 | Prettier (`pnpm format`)                                       |
+| Theme token discipline                     | `@error` guard in `themes/_themes.scss` at compile time        |
 
 Run everything before reporting work done:
 

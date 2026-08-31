@@ -39,13 +39,17 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Rules
 
-| File                                                                       | What it does                                                                                                          |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| [rules/gameEngine.ts](../src/domain/rules/gameEngine.ts)                   | **The rules engine.** `createGameState` + `executeGameCommand`: turn, rent, auction, jail, and card logic.            |
-| [rules/rng.ts](../src/domain/rules/rng.ts)                                 | Dice randomness: `RandomSource`, `DefaultRandomSource`, `SeededRandomSource`, `rollDie`, `shuffle`.                   |
-| [rules/space.utils.ts](../src/domain/rules/space.utils.ts)                 | Board-space type guards: `isOwnableSpace`, `isStreetSpace`.                                                           |
-| [rules/playerActions.utils.ts](../src/domain/rules/playerActions.utils.ts) | Which property actions a player may take and why one is unavailable. Drives the action rail.                          |
-| [rules/holdings.utils.ts](../src/domain/rules/holdings.utils.ts)           | Net worth, mortgaged count, colour-set progress, grouped holdings, and `ownsEntireColorSet` (shared with the engine). |
+| File                                                                                 | What it does                                                                                                          |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| [rules/gameEngine.ts](../src/domain/rules/gameEngine.ts)                             | **The rules engine.** `createGameState` + `executeGameCommand`: turn, rent, auction, jail, and card logic.            |
+| [rules/rng.ts](../src/domain/rules/rng.ts)                                           | Dice randomness: `RandomSource`, `DefaultRandomSource`, `SeededRandomSource`, `rollDie`, `shuffle`.                   |
+| [rules/space.utils.ts](../src/domain/rules/space.utils.ts)                           | Board-space type guards: `isOwnableSpace`, `isStreetSpace`.                                                           |
+| [rules/playerActions.utils.ts](../src/domain/rules/playerActions.utils.ts)           | Which property actions a player may take and why one is unavailable. Drives the action rail.                          |
+| [rules/holdings.interfaces.ts](../src/domain/rules/holdings.interfaces.ts)           | Shapes returned by holdings.utils.                                                                                    |
+| [rules/playerActions.interfaces.ts](../src/domain/rules/playerActions.interfaces.ts) | The property-action descriptor.                                                                                       |
+| [rules/rng.interfaces.ts](../src/domain/rules/rng.interfaces.ts)                     | The randomness seam.                                                                                                  |
+| [board/boardLayout.interfaces.ts](../src/domain/board/boardLayout.interfaces.ts)     | Board grid geometry shapes.                                                                                           |
+| [rules/holdings.utils.ts](../src/domain/rules/holdings.utils.ts)                     | Net worth, mortgaged count, colour-set progress, grouped holdings, and `ownsEntireColorSet` (shared with the engine). |
 
 ### Data
 
@@ -72,45 +76,52 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
-| File                                                                                       | What it does                                                                                            |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                                   | New-game setup form plus the saved-game list with resume/delete.                                        |
-| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                         | Integration tests for setup rendering and name validation.                                              |
-| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                                     | Game screen **wiring only**: selects state, derives view models, dispatches commands.                   |
-| [game/gameView.selectors.ts](../src/features/game/gameView.selectors.ts)                   | **Pure derivations**: game state → the view models the panels render. Where the screen's logic lives.   |
-| [game/gameView.selectors.test.ts](../src/features/game/gameView.selectors.test.ts)         | Unit tests for every selector, including each decision view model.                                      |
-| [game/game.constants.ts](../src/features/game/game.constants.ts)                           | Game-screen copy constants (board centre title and subtitle).                                           |
-| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                                     | Game slice + thunks bridging UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`). |
-| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                         | Ephemeral UI state not part of the saved game (auction bid input).                                      |
-| [persistence/persistence.ts](../src/features/persistence/persistence.ts)                   | localStorage read/write: save, load, delete, and the saved-game index.                                  |
-| [persistence/schema.ts](../src/features/persistence/schema.ts)                             | Zod schemas validating anything read back out of storage.                                               |
-| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                 | Rules booklet shell: header, section nav, and the section components.                                   |
-| [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                       | Integration tests: every nav link resolves to a rendered section.                                       |
-| [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                       | Shown when the routed game is missing or fails schema validation.                                       |
-| [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                 | Loads the routed game and resolves its theme and currency symbol.                                       |
-| [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)             | Binds every command the game screen dispatches.                                                         |
-| [setup/hooks/useGameSetupForm.ts](../src/features/setup/hooks/useGameSetupForm.ts)         | Setup form state; delegates the rules to setupValidation.utils.                                         |
-| [setup/setupValidation.utils.ts](../src/features/setup/setupValidation.utils.ts)           | Pure setup validation: non-empty, unique names, unique tokens.                                          |
-| [setup/setupValidation.utils.test.ts](../src/features/setup/setupValidation.utils.test.ts) | Unit tests for every validation rule and its precedence.                                                |
-| [setup/setup.constants.ts](../src/features/setup/setup.constants.ts)                       | Setup form defaults and error messages.                                                                 |
-| [game/hooks/useGameOverlays.ts](../src/features/game/hooks/useGameOverlays.ts)             | Which overlay is open: activity drawer, player details, or a space deed.                                |
+| File                                                                                                       | What it does                                                                                            |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                                                   | New-game setup form plus the saved-game list with resume/delete.                                        |
+| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                                         | Integration tests for setup rendering and name validation.                                              |
+| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                                                     | Game screen **wiring only**: selects state, derives view models, dispatches commands.                   |
+| [game/GameOverlayLayer.tsx](../src/features/game/GameOverlayLayer.tsx)                                     | Everything that floats over the board: drawers, deed panel, toasts, decision modal.                     |
+| [game/toastFeed.utils.ts](../src/features/game/toastFeed.utils.ts)                                         | Turns the history delta into toasts, and derives each one's tone from its wording.                      |
+| [game/boardOwnership.utils.ts](../src/features/game/boardOwnership.utils.ts)                               | Builds the board's owner-marker map from ownership plus the theme token catalogue.                      |
+| [game/sitePanel.utils.ts](../src/features/game/sitePanel.utils.ts)                                         | Resolves a picked space into the site panel's three ownership states.                                   |
+| [game/toastFeed.utils.test.ts](../src/features/game/toastFeed.utils.test.ts)                               | Tone classification, the history delta, and the behaviour once the history cap is reached.              |
+| [game/gameView.selectors.ts](../src/features/game/gameView.selectors.ts)                                   | **Pure derivations**: game state → the view models the panels render. Where the screen's logic lives.   |
+| [game/gameView.selectors.test.ts](../src/features/game/gameView.selectors.test.ts)                         | Unit tests for every selector, including each decision view model.                                      |
+| [game/game.constants.ts](../src/features/game/game.constants.ts)                                           | Game-screen copy constants (board centre title and subtitle).                                           |
+| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                                                     | Game slice + thunks bridging UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`). |
+| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                                         | Ephemeral UI state not part of the saved game (auction bid input).                                      |
+| [persistence/persistence.ts](../src/features/persistence/persistence.ts)                                   | localStorage read/write: save, load, delete, and the saved-game index.                                  |
+| [persistence/persistence.integration.test.ts](../src/features/persistence/persistence.integration.test.ts) | Save/load round trip, and that a drawn card survives it.                                                |
+| [persistence/schema.ts](../src/features/persistence/schema.ts)                                             | Zod schemas validating anything read back out of storage.                                               |
+| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                   |
+| [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                                       | Integration tests: every nav link resolves to a rendered section.                                       |
+| [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                                       | Shown when the routed game is missing or fails schema validation.                                       |
+| [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                                 | Loads the routed game and resolves its theme and currency symbol.                                       |
+| [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)                             | Binds every command the game screen dispatches.                                                         |
+| [setup/hooks/useGameSetupForm.ts](../src/features/setup/hooks/useGameSetupForm.ts)                         | Setup form state; delegates the rules to setupValidation.utils.                                         |
+| [setup/setup.interfaces.ts](../src/features/setup/setup.interfaces.ts)                                     | The game-setup form draft shape.                                                                        |
+| [setup/setupValidation.utils.ts](../src/features/setup/setupValidation.utils.ts)                           | Pure setup validation: non-empty, unique names, unique tokens.                                          |
+| [setup/setupValidation.utils.test.ts](../src/features/setup/setupValidation.utils.test.ts)                 | Unit tests for every validation rule and its precedence.                                                |
+| [setup/setup.constants.ts](../src/features/setup/setup.constants.ts)                                       | Setup form defaults and error messages.                                                                 |
+| [game/hooks/useGameOverlays.ts](../src/features/game/hooks/useGameOverlays.ts)                             | Which overlay is open: activity drawer, player details, or a space deed.                                |
 
 ## `src/components/game/` — presentational (props in, callbacks out, no store)
 
-| File                                                                          | What it does                                                                                                         |
-| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| [DiceDock.tsx](../src/components/game/DiceDock.tsx)                           | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.                             |
-| [diceDock.constants.ts](../src/components/game/diceDock.constants.ts)         | Dice animation timing and volume.                                                                                    |
-| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx)             | Title-deed modal: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape.                          |
-| [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx)   | Per-kind rendering, themed colour-group class, close on button/Escape/backdrop.                                      |
-| [spaceIcons.constants.ts](../src/components/game/spaceIcons.constants.ts)     | Icon lookup for board spaces, shared by the board cell and the title deed.                                           |
+| File                                                                          | What it does                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [DiceDock.tsx](../src/components/game/DiceDock.tsx)                           | Fixed dice roller: tumble animation, roll sound, fires `onRoll` when the animation ends.                                                                                                      |
+| [diceDock.constants.ts](../src/components/game/diceDock.constants.ts)         | Dice animation timing and volume.                                                                                                                                                             |
+| [SpaceDetailCard.tsx](../src/components/game/SpaceDetailCard.tsx)             | Title-deed modal: rent schedule, prices, per-kind copy. Closes on backdrop click or Escape.                                                                                                   |
+| [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx)   | Per-kind rendering, themed colour-group class, close on button/Escape/backdrop.                                                                                                               |
+| [spaceIcons.constants.ts](../src/components/game/spaceIcons.constants.ts)     | Icon lookup for board spaces, shared by the board cell and the title deed.                                                                                                                    |
 | [deed/SpaceCard.tsx](../src/components/game/deed/SpaceCard.tsx)               | The site card: colour strip, title, icon, per-kind deed body, and optional actions. Supplies its own fixed-size surface; shared by the deed modal, the buy decision, and the holdings drawer. |
-| [deed/SpaceCard.test.tsx](../src/components/game/deed/SpaceCard.test.tsx)     | The card shell class, the colour strip and its per-kind colour, the deed label, and optional actions.                |
-| [deed/StreetDeed.tsx](../src/components/game/deed/StreetDeed.tsx)             | Title-deed body for a street: site values and full rent schedule (the colour strip belongs to SpaceCard).            |
-| [deed/RailwayDeed.tsx](../src/components/game/deed/RailwayDeed.tsx)           | Title-deed body for a railway: rent by stations owned.                                                               |
-| [deed/UtilityDeed.tsx](../src/components/game/deed/UtilityDeed.tsx)           | Title-deed body for a utility: dice-multiplier rents.                                                                |
-| [deed/DeedPrimaryStats.tsx](../src/components/game/deed/DeedPrimaryStats.tsx) | Site value and mortgage value, shared by all three deed bodies.                                                      |
-| [deed/SpaceDescription.tsx](../src/components/game/deed/SpaceDescription.tsx) | Explanatory copy for spaces with no rent table (GO, tax, jail, decks).                                               |
+| [deed/SpaceCard.test.tsx](../src/components/game/deed/SpaceCard.test.tsx)     | The card shell class, the colour strip and its per-kind colour, the deed label, and optional actions.                                                                                         |
+| [deed/StreetDeed.tsx](../src/components/game/deed/StreetDeed.tsx)             | Title-deed body for a street: site values and full rent schedule (the colour strip belongs to SpaceCard).                                                                                     |
+| [deed/RailwayDeed.tsx](../src/components/game/deed/RailwayDeed.tsx)           | Title-deed body for a railway: rent by stations owned.                                                                                                                                        |
+| [deed/UtilityDeed.tsx](../src/components/game/deed/UtilityDeed.tsx)           | Title-deed body for a utility: dice-multiplier rents.                                                                                                                                         |
+| [deed/DeedPrimaryStats.tsx](../src/components/game/deed/DeedPrimaryStats.tsx) | Site value and mortgage value, shared by all three deed bodies.                                                                                                                               |
+| [deed/SpaceDescription.tsx](../src/components/game/deed/SpaceDescription.tsx) | Explanatory copy for spaces with no rent table (GO, tax, jail, decks).                                                                                                                        |
 
 ### Board
 
@@ -123,37 +134,42 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Panels
 
-| File                                                                                                                    | What it does                                                                               |
-| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                                   | Left rail of property actions (Build/Sell/Mortgage/Redeem).                                |
-| [panels/CommandErrorBanner.tsx](../src/components/game/panels/CommandErrorBanner.tsx)                                   | Shows a command the engine rejected, instead of failing silently.                          |
-| [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                               | Player cards: cash, property count, position, jail status.                                 |
-| [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                                   | Surfaces engine `uiHints` (the "not implemented yet" notices).                             |
-| [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                                       | Shared panel view models and decision handler types.                                       |
-| [panels/decisions/DecisionPanel.tsx](../src/components/game/panels/decisions/DecisionPanel.tsx)                         | Picks the right decision UI for the pending decision.                                      |
-| [panels/decisions/BuyOrAuctionDecision.tsx](../src/components/game/panels/decisions/BuyOrAuctionDecision.tsx)           | Buy-or-auction prompt on landing unowned.                                                  |
-| [panels/decisions/BuyOrAuctionDecision.test.tsx](../src/components/game/panels/decisions/BuyOrAuctionDecision.test.tsx) | Deed rendering per space kind, price on the button, and the callbacks.                     |
-| [panels/decisions/AuctionDecision.tsx](../src/components/game/panels/decisions/AuctionDecision.tsx)                     | Auction bidding controls.                                                                  |
-| [panels/decisions/JailDecision.tsx](../src/components/game/panels/decisions/JailDecision.tsx)                           | Jail exit choices.                                                                         |
-| [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)             | Asset-liquidation notice.                                                                  |
-| [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                                 | Dice animation state: tumbling faces, roll sound, timers, committing the roll.             |
-| [hooks/useDiceRoller.test.ts](../src/components/game/hooks/useDiceRoller.test.ts)                                       | Roll lifecycle, and that a throwing handler never strands the dock.                        |
-| [hooks/useAnimatedTokenPositions.ts](../src/components/game/hooks/useAnimatedTokenPositions.ts)                         | Walks tokens one space at a time with a tick per step; snaps teleports.                    |
-| [hooks/useAnimatedTokenPositions.test.ts](../src/components/game/hooks/useAnimatedTokenPositions.test.ts)               | Step-by-step walk, wrapping past GO, per-step tick, teleport snap.                         |
-| [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                               | Bottom-right cluster: end-turn button plus the dice, level with the board.                 |
-| [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                                     | Stack collapse/expand, click target, token colours, full-table support.                    |
-| [overlays/DecisionModal.tsx](../src/components/game/overlays/DecisionModal.tsx)                                         | Blocking centre modal for a pending decision. Deliberately not dismissible.                |
-| [overlays/SideDrawer.tsx](../src/components/game/overlays/SideDrawer.tsx)                                               | Right-hand drawer shell: backdrop, header, Escape to close.                                |
-| [overlays/ActivityDrawer.tsx](../src/components/game/overlays/ActivityDrawer.tsx)                                       | Game event log, opened from the floating activity button.                                  |
-| [overlays/ActivityButton.tsx](../src/components/game/overlays/ActivityButton.tsx)                                       | Floating control that opens the activity drawer.                                           |
-| [overlays/PlayerDetailDrawer.tsx](../src/components/game/overlays/PlayerDetailDrawer.tsx)                               | A player's stats and holdings, opened by clicking their card.                              |
+| File                                                                                                                    | What it does                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                                   | Left rail of property actions (Build/Sell/Mortgage/Redeem).                                                                             |
+| [panels/CommandErrorBanner.tsx](../src/components/game/panels/CommandErrorBanner.tsx)                                   | Shows a command the engine rejected, instead of failing silently.                                                                       |
+| [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                               | Player cards: cash, property count, position, jail status.                                                                              |
+| [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                                   | Surfaces engine `uiHints` (the "not implemented yet" notices).                                                                          |
+| [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                                       | Shared panel view models and decision handler types.                                                                                    |
+| [panels/decisions/DecisionPanel.tsx](../src/components/game/panels/decisions/DecisionPanel.tsx)                         | Picks the right decision UI for the pending decision.                                                                                   |
+| [panels/decisions/BuyOrAuctionDecision.tsx](../src/components/game/panels/decisions/BuyOrAuctionDecision.tsx)           | Buy-or-auction prompt on landing unowned.                                                                                               |
+| [panels/decisions/BuyOrAuctionDecision.test.tsx](../src/components/game/panels/decisions/BuyOrAuctionDecision.test.tsx) | Deed rendering per space kind, price on the button, and the callbacks.                                                                  |
+| [panels/decisions/AuctionDecision.tsx](../src/components/game/panels/decisions/AuctionDecision.tsx)                     | Auction bidding controls.                                                                                                               |
+| [panels/decisions/JailDecision.tsx](../src/components/game/panels/decisions/JailDecision.tsx)                           | Jail exit choices.                                                                                                                      |
+| [panels/decisions/LiquidationDecision.tsx](../src/components/game/panels/decisions/LiquidationDecision.tsx)             | Asset-liquidation notice.                                                                                                               |
+| [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                                 | Dice animation state: tumbling faces, roll sound, timers, committing the roll.                                                          |
+| [hooks/useDiceRoller.test.ts](../src/components/game/hooks/useDiceRoller.test.ts)                                       | Roll lifecycle, and that a throwing handler never strands the dock.                                                                     |
+| [hooks/useAnimatedTokenPositions.ts](../src/components/game/hooks/useAnimatedTokenPositions.ts)                         | Walks tokens one space at a time with a tick per step; snaps teleports.                                                                 |
+| [hooks/useAnimatedTokenPositions.test.ts](../src/components/game/hooks/useAnimatedTokenPositions.test.ts)               | Step-by-step walk, wrapping past GO, per-step tick, teleport snap.                                                                      |
+| [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                               | Bottom-right cluster: end-turn button plus the dice, level with the board.                                                              |
+| [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                                     | Stack collapse/expand, click target, token colours, full-table support.                                                                 |
+| [overlays/DecisionModal.tsx](../src/components/game/overlays/DecisionModal.tsx)                                         | Blocking centre modal for a pending decision. Deliberately not dismissible.                                                             |
+| [overlays/SideDrawer.tsx](../src/components/game/overlays/SideDrawer.tsx)                                               | Right-hand drawer shell: backdrop, header, Escape to close.                                                                             |
+| [overlays/ActivityDrawer.tsx](../src/components/game/overlays/ActivityDrawer.tsx)                                       | Game event log, opened from the floating activity button.                                                                               |
+| [overlays/ActivityButton.tsx](../src/components/game/overlays/ActivityButton.tsx)                                       | Floating control that opens the activity drawer.                                                                                        |
+| [overlays/PlayerDetailDrawer.tsx](../src/components/game/overlays/PlayerDetailDrawer.tsx)                               | A player's stats and holdings, opened by clicking their card.                                                                           |
 | [overlays/PlayerDetailDrawer.test.tsx](../src/components/game/overlays/PlayerDetailDrawer.test.tsx)                     | Stack order and contents, the shared card shell, promoting a holding without removing it from the deck, empty state, no board position. |
-| [overlays/HoldingsStack.tsx](../src/components/game/overlays/HoldingsStack.tsx)                                         | Collapsed holdings as one overlapping stack, colour-grouped: the same fixed-size `SpaceCard`, clipped to a title-only peek. |
-| [panels/PlayerBadges.tsx](../src/components/game/panels/PlayerBadges.tsx)                                               | Status badges on a player card: jail card held, jail progress, bankruptcy.                 |
-| [panels/PlayerBadges.test.tsx](../src/components/game/panels/PlayerBadges.test.tsx)                                     | Unit tests for every badge and the empty case.                                             |
-| [panels/PlayerCard.tsx](../src/components/game/panels/PlayerCard.tsx)                                                   | One player at a glance: net worth, cash, sites, colour-set pips, status badges.            |
-| [panels/PlayerCard.test.tsx](../src/components/game/panels/PlayerCard.test.tsx)                                         | Net worth headline, conditional mortgaged count, pips per group, complete-set state.       |
-| [panels/ColorGroupPips.tsx](../src/components/game/panels/ColorGroupPips.tsx)                                           | Colour-set progress swatches shown on a player card.                                       |
+| [overlays/ToastStack.tsx](../src/components/game/overlays/ToastStack.tsx)                                               | Action feedback, stacked above every overlay, each row dismissing itself on a timer.                                                    |
+| [overlays/overlays.interfaces.ts](../src/components/game/overlays/overlays.interfaces.ts)                               | Shared overlay shapes: the toast, and the site panel's view model.                                                                      |
+| [board/board.interfaces.ts](../src/components/game/board/board.interfaces.ts)                                           | Shared board shapes: the owner marker and animated token positions.                                                                     |
+| [panels/decisions/CardDrawDecision.tsx](../src/components/game/panels/decisions/CardDrawDecision.tsx)                   | The drawn Chance / Community Chest card, shown before its effect is applied.                                                            |
+| [panels/decisions/CardDrawDecision.test.tsx](../src/components/game/panels/decisions/CardDrawDecision.test.tsx)         | Card copy, who drew it, and that OK is the only control.                                                                                |
+| [overlays/HoldingsStack.tsx](../src/components/game/overlays/HoldingsStack.tsx)                                         | Collapsed holdings as one overlapping stack, colour-grouped: the same fixed-size `SpaceCard`, clipped to a title-only peek.             |
+| [panels/PlayerBadges.tsx](../src/components/game/panels/PlayerBadges.tsx)                                               | Status badges on a player card: jail card held, jail progress, bankruptcy.                                                              |
+| [panels/PlayerBadges.test.tsx](../src/components/game/panels/PlayerBadges.test.tsx)                                     | Unit tests for every badge and the empty case.                                                                                          |
+| [panels/PlayerCard.tsx](../src/components/game/panels/PlayerCard.tsx)                                                   | One player at a glance: net worth, cash, sites, colour-set pips, status badges.                                                         |
+| [panels/PlayerCard.test.tsx](../src/components/game/panels/PlayerCard.test.tsx)                                         | Net worth headline, conditional mortgaged count, pips per group, complete-set state.                                                    |
+| [panels/ColorGroupPips.tsx](../src/components/game/panels/ColorGroupPips.tsx)                                           | Colour-set progress swatches shown on a player card.                                                                                    |
 
 ## `src/components/setup/` — presentational setup components
 
@@ -185,6 +201,8 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | File                                                                           | What it does                                                                            |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts) | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
+| [utils/logger.enums.ts](../src/shared/utils/logger.enums.ts)                   | Log severity levels.                                                                    |
+| [utils/logger.interfaces.ts](../src/shared/utils/logger.interfaces.ts)         | One captured log entry.                                                                 |
 | [utils/logger.utils.ts](../src/shared/utils/logger.utils.ts)                   | App log: console + capped ring + localStorage, exposed as `window.monopolyLog`.         |
 | [utils/logger.utils.test.ts](../src/shared/utils/logger.utils.test.ts)         | Ring cap, persistence, error filtering, storage-failure safety.                         |
 | [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                     | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
@@ -222,11 +240,12 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx) | RTL helper wrapping a component in the Redux `Provider` + `MemoryRouter`.   |
 | [src/setupTests.ts](../src/setupTests.ts)                               | Vitest setup; loads jest-dom matchers.                                      |
-| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                         | Shared `startGame` helper and corner reference data.                        |
+| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                         | Shared `startGame` / `advanceGame` helpers and corner reference data.       |
 | [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                   | Creating a game and landing on a resumable route.                           |
 | [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                   | Corner geometry, title deed, ribbon placement, dividers, outlines, theming. |
 | [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                 | Three-column layout, action rail, dice placement, player stack.             |
 | [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)             | Decision modal, activity drawer, player detail drawer, dice roll.           |
+| [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)             | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.  |
 
 ## Config
 

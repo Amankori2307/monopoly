@@ -3,6 +3,7 @@ import type { DecisionHandlers, DecisionViewModel } from '../panels.interfaces';
 import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { AuctionDecision } from './AuctionDecision';
 import { BuyOrAuctionDecision } from './BuyOrAuctionDecision';
+import { CardDrawDecision } from './CardDrawDecision';
 import { JailDecision } from './JailDecision';
 import { LiquidationDecision } from './LiquidationDecision';
 
@@ -61,6 +62,16 @@ export function DecisionPanel({
           currencySymbol={currencySymbol}
           onPayFine={handlers.onPayJailFine}
           onUseJailCard={handlers.onUseJailCard}
+          playerName={decision.playerName}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.CardDraw ? (
+        <CardDrawDecision
+          cardDescription={decision.cardDescription}
+          cardTitle={decision.cardTitle}
+          deckLabel={decision.deckLabel}
+          onAcknowledge={handlers.onAcknowledgeCard}
           playerName={decision.playerName}
         />
       ) : null}
