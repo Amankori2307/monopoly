@@ -182,7 +182,10 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 - **Bank inventory is cosmetic**: `housesAvailable`/`hotelsAvailable` are never decremented (building isn't implemented).
 - **`asset-liquidation` is a deadlock.** When a player cannot pay, `resolveBankPayment` / `resolvePlayerPayment` set that pending decision and **nothing in the codebase can clear it** — mortgage is its only exit and is still scaffolded. The insolvent branch also never debits the debtor or pays the creditor; the debt lives only in `amountDue`.
 - **`applyCardEffect`'s `CollectFromEach` / `PayEach` loops read the pre-mutation `state`**, not `nextState`, and each iteration can overwrite the previous player's `asset-liquidation` decision. Multi-player insolvency on one card is unhandled.
-- **Mortgaged properties** are skipped for rent but there is no way to mortgage yet.
+- **Mortgaged properties** are skipped for rent but there is no way to mortgage yet. A mortgaged property still counts toward colour-set completeness and the railway/utility counts — deliberate, and matches the printed rule.
+- **A used Get Out of Jail Free card never returns to its deck.** `jailFreeCards` is a count with no record of which deck the card came from, so both can leave circulation permanently. Fixing it is a `GameState` shape change.
+- **`advanceToNextTurn` does not skip bankrupt players** — latent only because bankruptcy is never set.
+- **`movePlayerTo`'s pass-GO test is `nextPosition < player.position`**, true for any backward move. Safe only because `MoveSteps` always passes `collectGo: false`.
 - `tsconfig.json` has `strict: false` and `target: es5` — a deliberate gradual-migration holdover, not an endorsement.
 
 ---

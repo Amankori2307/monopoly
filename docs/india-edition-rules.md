@@ -143,19 +143,42 @@ mortgage and trade. ⚠️ — collecting rent works; the rest is unimplemented 
 
 ## 7. Landing on a space
 
-| Space                              | Rule                                                                                            | Status |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------- | ------ |
-| Unowned street / railway / utility | Buy at the printed price, or decline                                                            | ✅     |
-| Declined property                  | The bank **must** auction it immediately. Anyone may bid, **including the player who declined** | ✅     |
-| Owned by another player            | Pay rent, unless the property is mortgaged                                                      | ✅     |
-| Owned by you                       | Nothing happens                                                                                 | ✅     |
-| Income Tax                         | Pay ₹200                                                                                        | ✅     |
-| Super Tax                          | Pay ₹100                                                                                        | ✅     |
-| Chance / Community Chest           | Draw the top card, read it, then it applies                                                     | ✅     |
-| GO                                 | Collect ₹200                                                                                    | ✅     |
-| Free Parking                       | Nothing                                                                                         | ✅     |
-| Jail / Just Visiting               | Nothing                                                                                         | ✅     |
-| Go To Jail                         | Go to Jail; do not collect GO                                                                   | ✅     |
+| Space                              | Rule                                                      | Status |
+| ---------------------------------- | --------------------------------------------------------- | ------ |
+| Unowned street / railway / utility | Buy at the printed price, or decline                      | ✅     |
+| Declined property                  | The bank **must** auction it immediately — see section 7a | ✅     |
+| Owned by another player            | Pay rent, unless the property is mortgaged                | ✅     |
+| Owned by you                       | Nothing happens                                           | ✅     |
+| Income Tax                         | Pay ₹200                                                  | ✅     |
+| Super Tax                          | Pay ₹100                                                  | ✅     |
+| Chance / Community Chest           | Draw the top card, read it, then it applies               | ✅     |
+| GO                                 | Collect ₹200                                              | ✅     |
+| Free Parking                       | Nothing                                                   | ✅     |
+| Jail / Just Visiting               | Nothing                                                   | ✅     |
+| Go To Jail                         | Go to Jail; do not collect GO                             | ✅     |
+
+### 7a. Auctions
+
+The rule most often skipped in casual play: **declining is not the same as leaving a property
+unowned.** Every detail below is verified by a test.
+
+| Rule                                                                    | Status             |
+| ----------------------------------------------------------------------- | ------------------ |
+| Declining triggers an auction immediately; it is not optional           | ✅                 |
+| **The player who declined may bid**, and often should                   | ✅                 |
+| Every non-bankrupt player is a bidder, in board order                   | ✅                 |
+| Bidding opens at ₹10 (`AUCTION_START_PRICE`)                            | ✅                 |
+| Each bid must beat the highest by at least ₹1 (`AUCTION_MIN_INCREMENT`) | ✅                 |
+| **A player may not bid more cash than they hold**                       | ✅                 |
+| **Passing is final** — a player who passes cannot re-enter              | ✅                 |
+| If every player passes, the property **stays with the bank**, unowned   | ✅                 |
+| The winner pays the bank and takes the deed                             | ✅                 |
+| An auction does not consume the extra roll a double earned              | ✅ — see section 5 |
+
+> **Fixed during this audit.** The bidder rotation advanced by one and wrapped, without skipping
+> players who had already passed. Because bidding advances the index too, a bid/pass interleave
+> could land the turn back on someone who had left the auction — who was then asked to act, and
+> could bid their way back in. `nextActiveBidderIndex` now skips passed players.
 
 ### Rent
 
@@ -168,6 +191,13 @@ mortgage and trade. ⚠️ — collecting rent works; the rest is unimplemented 
 | Utility rent: 4× the dice roll with one owned, 10× with both                   | ✅                                                           |
 | **Mortgaged** property collects no rent                                        | ✅                                                           |
 | Rent must be asked for — in this app it is automatic                           | ✅ (adaptation)                                              |
+
+**Mortgaged properties still count as owned.** Mortgaging is a loan, not a sale, so a mortgaged
+street still counts toward its colour set, and a mortgaged railway or utility still counts toward
+the owner's total. Concretely: own all three Red streets, mortgage one, and rent on the other two
+is still doubled; own all four railways, mortgage one, and the other three still charge the
+four-railway rate. `ownsEntireColorSet` and the railway/utility counts read `ownerPlayerId` only,
+never `mortgaged` — deliberately. ✅
 
 ---
 
@@ -392,6 +422,32 @@ increment ₹1 · starting cash ₹1500.
 | `CollectFromEach` | Every other solvent player pays the drawer                                | ⚠️ see below                        |
 | `PayEach`         | The drawer pays every other solvent player                                | ⚠️ implemented, **no card uses it** |
 
+### Card edge cases
+
+| Case                                                                                                           | Rule                                                                                           | Status                       |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------- |
+| **A card that leads to another card.** Chance at 36 with "go back three spaces" lands on Community Chest at 33 | The second card is drawn and must be acknowledged in turn; the turn does not settle in between | ✅ verified by test          |
+| A card moves the player **backwards** past GO                                                                  | No salary — you only collect going forwards                                                    | ✅ `MoveSteps` never pays GO |
+| A card moves the player forwards past GO                                                                       | Salary is paid when `collectGo` is set on the card                                             | ✅                           |
+| A card sends the player to Jail                                                                                | Turn ends; any extra roll from a double is forfeited                                           | ✅                           |
+| A card lands the player on an unowned property                                                                 | Buy or auction, exactly as if they had rolled there                                            | ✅                           |
+| A card lands the player on another player's property                                                           | Rent is owed, exactly as if they had rolled there                                              | ✅                           |
+| A Get Out of Jail Free card is drawn                                                                           | It leaves the deck and is held by the player, not recycled                                     | ✅                           |
+| A player may hold **more than one** Get Out of Jail Free card                                                  | `jailFreeCards` is a count, so both can be held                                                | ✅                           |
+
+> **⚠️ Divergence — a used jail card never returns to its deck.** The printed rule is that the card
+> goes to the bottom of its deck once used. `jailFreeCards` is only a _count_, so the engine has no
+> record of which deck a held card came from and cannot put it back. Both cards can therefore leave
+> circulation permanently over a long game. Fixing it means tracking provenance — `jailFreeCards`
+> becoming a list of deck names — which is a `GameState` shape change, so a `GAME_STATE_VERSION`
+> bump and a migration.
+
+> **Latent, not reachable today — utility rent after a card-driven arrival.** `getUtilityRent`
+> multiplies by `turn.lastRoll`, the roll that started the turn. The printed rule is that a player
+> sent to a utility _by a card_ throws again for rent. No card in either deck can land on a utility
+> — the three "go back three" destinations are Income Tax (4), Kochi (19) and Community Chest (33) —
+> so this cannot happen now. Add an "advance to the nearest utility" card and it becomes a live bug.
+
 A drawn card is **shown before it acts**: the draw sets a `card-draw` decision and the effect is
 applied by `acknowledgeCard`. See [features/action-feedback.md](features/action-feedback.md).
 
@@ -402,16 +458,54 @@ applied by `acknowledgeCard`. See [features/action-feedback.md](features/action-
 
 ---
 
-## 15. Implementation summary
+## 15. The bank
+
+| Rule                                                                                   | Status                                  |
+| -------------------------------------------------------------------------------------- | --------------------------------------- |
+| The bank never runs out of money and can never go bankrupt (`bank.cash: 'unlimited'`)  | ✅                                      |
+| The bank holds the 32 houses and 12 hotels, and property nobody has bought             | ⚠️ inventory never decremented          |
+| The bank collects taxes and fines, and pays salaries and card collections              | ✅                                      |
+| The bank **never buys a property back**. Mortgage it, trade it, or sell it to a player | ✅ by omission — no such command exists |
+| The bank buys buildings back at half price                                             | ❌ selling buildings is unimplemented   |
+
+## 16. Turn order
+
+| Rule                                                                                   | Status                                                                                                               |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Play passes to the left; order is fixed at setup                                       | ✅                                                                                                                   |
+| A player in Jail still takes their turn — they choose a Jail action instead of rolling | ✅                                                                                                                   |
+| A player with an extra roll from a double keeps the turn rather than passing it on     | ✅                                                                                                                   |
+| **Bankrupt players are skipped**                                                       | ❌ `advanceToNextTurn` rotates by index and does not check `isBankrupt`. Latent only because bankruptcy is never set |
+| The game ends when one player remains                                                  | ❌ no win detection at all                                                                                           |
+
+## 17. Implementation summary
 
 **Fully implemented:** setup for 2–8 players, stable game ids, save/resume/delete, the board and its
-economics, the two-dice turn, doubles including all three jail interactions, passing GO, taxes, Go
-To Jail, the full card draw-then-apply flow and every card effect, buy or decline, the mandatory
-auction loop, street/railway/utility rent with colour-set doubling, all three jail exits and the
-three-turn limit, turn rotation, ₹ throughout, and per-action feedback.
+economics, the two-dice turn, doubles including all three Jail interactions, passing GO, taxes, Go To
+Jail, the full card draw-then-apply flow with chained draws, every card effect, buy or decline, the
+complete auction loop, street/railway/utility rent with colour-set doubling, all three Jail exits and
+the three-turn limit, turn rotation, ₹ throughout, and per-action feedback.
 
 **Type-level only, no runtime behaviour:** mortgages, buildings and both even rules, bank building
 inventory, all trading, bankruptcy, win detection, Speed Die.
 
-**Known bugs, each recorded in CLAUDE.md section 8:** the `asset-liquidation` dead end, the jail-fine
-escape for a broke player, and the `CollectFromEach` / `PayEach` pre-mutation read.
+### Fixed during this audit
+
+| Bug                        | Effect                                                                                                                                                                                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Extra roll lost on decline | Rolling doubles, landing on an unowned site and **declining** forfeited the extra roll that **buying** it kept. Buying read `doublesCount`; the auction paths read `canRollAgain`, which is false while a decision blocks. One `resumeTurnAfterDecision` now serves both |
+| Passed bidders re-prompted | The auction index advanced by one and wrapped without skipping players who had passed, so a bid/pass interleave could hand the turn back to someone who had left — who could then bid their way back in                                                                  |
+
+### Known divergences and bugs, still open
+
+| Issue                                                      | Notes                                                                                                                                                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `asset-liquidation` is a dead end                          | A player who cannot pay is stuck for the rest of the game; nothing clears the decision. The insolvent branch also never debits the debtor or pays the creditor. Mortgaging is the only exit |
+| A broke player escapes the Jail fine                       | `payJailFine` overwrites the liquidation decision back to `none`, so a player with under ₹50 leaves Jail without paying                                                                     |
+| A used Jail card never returns to its deck                 | `jailFreeCards` is a count with no record of provenance. Needs a `GameState` shape change                                                                                                   |
+| Multi-player insolvency on one card                        | `CollectFromEach` / `PayEach` read the pre-mutation `state` and each iteration can overwrite the previous player's liquidation decision                                                     |
+| Bank building inventory never decremented                  | 32 houses / 12 hotels are cosmetic until building lands                                                                                                                                     |
+| Bankrupt players are not skipped in turn order             | Latent: bankruptcy is never set                                                                                                                                                             |
+| No win detection                                           | `winnerPlayerId`, `GameStatus.Completed`, `isBankrupt` and `bankruptcyRank` are never written. Games run forever                                                                            |
+| Utility rent after a card-driven arrival                   | Uses the turn's original roll rather than a fresh throw. Not reachable with the current deck                                                                                                |
+| `movePlayerTo`'s pass-GO test is `nextPosition < position` | True for _any_ backward move. Safe only because `MoveSteps` always passes `collectGo: false`. A future card that moved backwards with `collectGo` set would wrongly pay the salary          |

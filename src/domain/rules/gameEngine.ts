@@ -356,6 +356,27 @@ const sendPlayerToJail = (
   ]);
 };
 
+/**
+ * The next bidder who has not already passed.
+ *
+ * Advancing by one and wrapping is not enough: bidding advances the index too,
+ * so a bid/pass interleave can land the turn back on someone who has left the
+ * auction. They were then asked to act again, and could bid their way back in.
+ */
+const nextActiveBidderIndex = (auction: AuctionState): number => {
+  const { activeBidderOrder, activeBidderIndex, passedPlayerIds } = auction;
+
+  for (let step = 1; step <= activeBidderOrder.length; step += 1) {
+    const candidate = (activeBidderIndex + step) % activeBidderOrder.length;
+    if (!passedPlayerIds.includes(activeBidderOrder[candidate])) {
+      return candidate;
+    }
+  }
+
+  // Everyone has passed; completeAuctionIfPossible ends the auction next.
+  return activeBidderIndex;
+};
+
 const completeAuctionIfPossible = (state: GameState): GameState => {
   const auction = state.auctionState;
   if (!auction) {
@@ -916,8 +937,7 @@ export const executeGameCommand = (
           ...auction,
           highestBid: command.amount,
           highestBidderId: activeBidderId,
-          activeBidderIndex:
-            (auction.activeBidderIndex + 1) % auction.activeBidderOrder.length,
+          activeBidderIndex: nextActiveBidderIndex(auction),
         },
       };
       nextState = appendEvents(nextState, [
@@ -937,12 +957,16 @@ export const executeGameCommand = (
       const activeBidderId = auction.activeBidderOrder[auction.activeBidderIndex];
       nextState = {
         ...nextState,
-        auctionState: {
-          ...auction,
-          activeBidderIndex:
-            (auction.activeBidderIndex + 1) % auction.activeBidderOrder.length,
-          passedPlayerIds: [...auction.passedPlayerIds, activeBidderId],
-        },
+        auctionState: (() => {
+          const withPass: AuctionState = {
+            ...auction,
+            passedPlayerIds: [...auction.passedPlayerIds, activeBidderId],
+          };
+          return {
+            ...withPass,
+            activeBidderIndex: nextActiveBidderIndex(withPass),
+          };
+        })(),
       };
       nextState = appendEvents(nextState, [
         createEvent(

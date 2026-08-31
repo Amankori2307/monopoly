@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { GameCommandType, PendingDecisionType, TurnPhase } from '../types/game.enums';
 import { CardDeck, CardEffectKind, DeckName, SpaceKind } from '../types/game.enums';
 import type { DeckCard } from '../types/game.interfaces';
+import { AUCTION_START_PRICE } from '../constants/game.constants';
+import type { GameState } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { SeededRandomSource } from './rng';
 
@@ -446,5 +448,253 @@ describe('the extra roll survives a decision', () => {
 
     expect(result.nextState.turn.canRollAgain).toBe(false);
     expect(result.nextState.turn.phase).toBe(TurnPhase.TurnComplete);
+  });
+});
+
+/**
+ * Passing leaves the auction for good. Advancing the bidder index by one and
+ * wrapping was not enough: bidding advances it too, so a bid/pass interleave
+ * landed the turn back on someone who had already passed, who was then asked to
+ * act again and could bid their way back in.
+ */
+describe('auction bidder rotation', () => {
+  const gameWithFourPlayers = () =>
+    createGameState(
+      {
+        name: 'Auction Test',
+        playerConfigs: [
+          { name: 'Asha', tokenId: 'elephant' },
+          { name: 'Vikram', tokenId: 'train' },
+          { name: 'Meera', tokenId: 'auto' },
+          { name: 'Rahul', tokenId: 'peacock' },
+        ],
+        themeId: 'india-edition',
+        createdAt: '2026-09-01T00:00:00.000Z',
+      },
+      new SeededRandomSource(11)
+    );
+
+  /** Declines the first street, opening an auction over all four players. */
+  const openAuction = () => {
+    const base = gameWithFourPlayers();
+    const street = base.board.find((space) => space.kind === SpaceKind.Street);
+    if (!street) {
+      throw new Error('No street on the board');
+    }
+    const activePlayerId = base.playerOrder[base.activePlayerIndex];
+    const landed: GameState = {
+      ...base,
+      players: {
+        ...base.players,
+        [activePlayerId]: { ...base.players[activePlayerId], position: street.index },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.LandedUnownedProperty,
+        spaceId: street.id,
+        playerId: activePlayerId,
+      },
+      turn: { ...base.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    return executeGameCommand(
+      landed,
+      { type: GameCommandType.DeclineLandedAsset },
+      new SeededRandomSource(3)
+    ).nextState;
+  };
+
+  const currentBidder = (state: GameState) => {
+    const auction = state.auctionState;
+    if (!auction) {
+      throw new Error('No auction in progress');
+    }
+    return auction.activeBidderOrder[auction.activeBidderIndex];
+  };
+
+  it('never returns the turn to a player who has passed', () => {
+    let state = openAuction();
+    const passed: string[] = [];
+    // Alternating bid and pass is what wraps the index round.
+    const actions = ['bid', 'pass', 'bid', 'pass', 'bid', 'pass'] as const;
+
+    for (const action of actions) {
+      if (state.pendingDecision.type !== PendingDecisionType.AuctionBid) {
+        break;
+      }
+      const bidder = currentBidder(state);
+      expect(passed, `${bidder} was asked to act again after passing`).not.toContain(
+        bidder
+      );
+
+      if (action === 'pass') {
+        passed.push(bidder);
+        state = executeGameCommand(
+          state,
+          { type: GameCommandType.PassAuction },
+          new SeededRandomSource(3)
+        ).nextState;
+      } else {
+        const auction = state.auctionState;
+        state = executeGameCommand(
+          state,
+          {
+            type: GameCommandType.SubmitAuctionBid,
+            amount: Math.max(AUCTION_START_PRICE, (auction?.highestBid ?? 0) + 1),
+          },
+          new SeededRandomSource(3)
+        ).nextState;
+      }
+    }
+  });
+
+  it('rejects a bid above the bidder’s cash', () => {
+    const state = openAuction();
+    const bidder = currentBidder(state);
+
+    expect(() =>
+      executeGameCommand(
+        state,
+        {
+          type: GameCommandType.SubmitAuctionBid,
+          amount: state.players[bidder].cash + 1,
+        },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/exceeds available cash/i);
+  });
+
+  it('rejects a bid below the minimum', () => {
+    const state = openAuction();
+
+    expect(() =>
+      executeGameCommand(
+        state,
+        { type: GameCommandType.SubmitAuctionBid, amount: AUCTION_START_PRICE - 1 },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/at least/i);
+  });
+
+  // Nobody has to buy. The property simply stays with the bank.
+  it('leaves the property unowned when every player passes', () => {
+    let state = openAuction();
+    const spaceId = state.auctionState?.spaceId as string;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      if (state.pendingDecision.type !== PendingDecisionType.AuctionBid) {
+        break;
+      }
+      state = executeGameCommand(
+        state,
+        { type: GameCommandType.PassAuction },
+        new SeededRandomSource(3)
+      ).nextState;
+    }
+
+    expect(state.auctionState).toBeNull();
+    expect(state.ownership[spaceId].ownerPlayerId).toBeNull();
+  });
+
+  // The player who declined is entitled to bid - the rule people forget.
+  it('includes the player who declined among the bidders', () => {
+    const state = openAuction();
+    const declinerId = state.playerOrder[state.activePlayerIndex];
+
+    expect(state.auctionState?.activeBidderOrder).toContain(declinerId);
+  });
+});
+
+/**
+ * Chance at index 36 with "go back three spaces" lands on Community Chest at
+ * 33, so acknowledging one card draws another. The apply step routes back
+ * through resolveCurrentSpace, which can raise a fresh card-draw decision.
+ */
+describe('a card that leads to another card', () => {
+  it('draws the second card instead of settling the turn', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const backThree: DeckCard = {
+      id: 'test-back-three',
+      deck: CardDeck.Chance,
+      title: 'Go back three spaces',
+      description: 'Move back three spaces.',
+      effect: { kind: CardEffectKind.MoveSteps, steps: -3 },
+    };
+    const chanceIndex = 36;
+    expect(game.board[chanceIndex].kind).toBe(SpaceKind.Chance);
+    expect(game.board[chanceIndex - 3].kind).toBe(SpaceKind.CommunityChest);
+
+    const drawn: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position: chanceIndex },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw,
+        playerId: activePlayerId,
+        deck: DeckName.Chance,
+        card: backThree,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const result = executeGameCommand(
+      drawn,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.players[activePlayerId].position).toBe(chanceIndex - 3);
+    // A second card is pending, and the turn has not been settled.
+    expect(result.nextState.pendingDecision.type).toBe(PendingDecisionType.CardDraw);
+    expect(result.nextState.turn.phase).toBe(TurnPhase.AwaitDecision);
+  });
+
+  // Moving backwards must never pay the GO salary, and MoveSteps never does.
+  it('pays no GO salary when a card moves the player backwards', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const cashBefore = game.players[activePlayerId].cash;
+    const backThree: DeckCard = {
+      id: 'test-back-three',
+      deck: CardDeck.Chance,
+      title: 'Go back three spaces',
+      description: 'Move back three spaces.',
+      effect: { kind: CardEffectKind.MoveSteps, steps: -3 },
+    };
+    // From index 1, back three wraps to 38 - past GO, going the wrong way.
+    const drawn: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position: 1 },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw,
+        playerId: activePlayerId,
+        deck: DeckName.Chance,
+        card: backThree,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const result = executeGameCommand(
+      drawn,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.players[activePlayerId].position).toBe(38);
+
+    // Index 38 is Super Tax, so the player pays it on landing. What matters is
+    // that they gained nothing: no GO salary for crossing GO backwards.
+    const landedOn = result.nextState.board[38];
+    if (landedOn.kind !== SpaceKind.Tax) {
+      throw new Error('Expected Super Tax at index 38');
+    }
+    expect(result.nextState.players[activePlayerId].cash).toBe(
+      cashBefore - landedOn.amount
+    );
   });
 });
