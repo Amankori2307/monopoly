@@ -233,10 +233,22 @@ The mandate above is the standard going forward. The repository does **not** mee
 | `SpaceCard`, `SpaceDetailCard`                 | 2 files  | —           | yes          |
 | Holdings drawer + stack                        | 2 files  | 1 test      | yes          |
 
-**Two harness blockers remain before the integration mandate is fully achievable:**
+**The harness blockers are cleared.** All three are done, so the integration mandate in §1 is now achievable:
 
-1. ~~`pnpm lint` is broken~~ — **fixed.** `.eslintrc.json` now exists and `pnpm lint` passes clean. It also machine-enforces the layer boundaries (see below).
-2. **`renderWithProviders` shares one singleton store** (`src/test/renderWithProviders.tsx` imports `appStore` directly). Any integration test that dispatches leaks state into the next test. Fix: export a `makeStore()` factory from `src/app/appStore.ts`, have `renderWithProviders` build a fresh store per render, and accept a `preloadedState` option.
-3. **`localStorage` is never reset between tests.** Add a global `beforeEach(() => localStorage.clear())` to `src/setupTests.ts` so persistence-touching tests cannot contaminate one another.
+1. ~~`pnpm lint` is broken~~ — **fixed.** `.eslintrc.json` exists and `pnpm lint` passes clean. It also machine-enforces the layer boundaries (see below).
+2. ~~`renderWithProviders` shares one singleton store~~ — **fixed.** `makeStore(preloadedState?)` in [appStore.ts](../src/app/appStore.ts) builds a store; `appStore` is just `makeStore()` for the app, and [renderWithProviders](../src/test/renderWithProviders.tsx) builds a fresh one per render. It also **returns the store**, so a test can assert on what a dispatch did, and accepts `preloadedState` to start from a given slice of state instead of dispatching its way there.
+3. ~~`localStorage` is never reset between tests~~ — **fixed.** A global `beforeEach(() => localStorage.clear())` in [setupTests.ts](../src/setupTests.ts).
 
-Fixing these two is the prerequisite work for the policy in §1.
+Both fixes are themselves tested ([renderWithProviders.test.tsx](../src/test/renderWithProviders.test.tsx), [setupTests.test.ts](../src/setupTests.test.ts)) — the isolation was latent, since jsdom is per file and contamination could only ever happen _within_ a file, which is precisely where it would have gone unnoticed.
+
+**Deliberately not done:** `setupTests.ts` does not call `vi.restoreAllMocks()`. Several suites install spies they never restore (`logger.utils.test.ts` mocks `Storage.prototype.setItem`; others mock `console`), and restoring them globally would change those tests' behaviour rather than fix it. Left as a separate, known hazard.
+
+### Writing an integration test
+
+```ts
+const { store } = renderWithProviders(<GamePage />, {
+  preloadedState: { game: { activeGame: seededGame, /* ... */ } },
+});
+// act on the UI, then assert on the store and on localStorage
+expect(store.getState().game.activeGame?.turn.phase).toBe(TurnPhase.AwaitRoll);
+```

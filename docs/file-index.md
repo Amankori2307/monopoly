@@ -20,10 +20,10 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/app/` — store wiring
 
-| File                                  | What it does                                                                           |
-| ------------------------------------- | -------------------------------------------------------------------------------------- |
-| [appStore.ts](../src/app/appStore.ts) | Builds the Redux store (`game` + `ui` reducers); exports `RootState`/`AppDispatch`.    |
-| [hooks.ts](../src/app/hooks.ts)       | Typed `useAppDispatch` / `useAppSelector`. Always use these, never bare `useSelector`. |
+| File                                  | What it does                                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [appStore.ts](../src/app/appStore.ts) | `makeStore(preloadedState?)` plus the app's single `appStore`; exports `RootState`/`AppDispatch`, derived from the factory. |
+| [hooks.ts](../src/app/hooks.ts)       | Typed `useAppDispatch` / `useAppSelector`. Always use these, never bare `useSelector`.                                      |
 
 ## `src/domain/` — pure game logic (no React, no Redux, no DOM)
 
@@ -239,18 +239,20 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Test infrastructure
 
-| File                                                                    | What it does                                                                |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx) | RTL helper wrapping a component in the Redux `Provider` + `MemoryRouter`.   |
-| [src/setupTests.ts](../src/setupTests.ts)                               | Vitest setup; loads jest-dom matchers.                                      |
-| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                         | Shared `startGame` / `advanceGame` helpers and corner reference data.       |
-| [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                   | Creating a game and landing on a resumable route.                           |
-| [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                   | Corner geometry, title deed, ribbon placement, dividers, outlines, theming. |
-| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                 | Three-column layout, action rail, dice placement, player stack.             |
-| [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)             | Decision modal, activity drawer, player detail drawer, dice roll.           |
-| [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)         | Eight-player layout: token cluster stays on the board, dice stay reachable. |
-| [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                   | Booklet nav resolves, the FAQ answers, and amounts render in ₹.             |
-| [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)             | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.  |
+| File                                                                              | What it does                                                                                                      |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx)           | RTL helper: a component in a **fresh** Redux store + `MemoryRouter`; returns the store, accepts `preloadedState`. |
+| [src/test/renderWithProviders.test.tsx](../src/test/renderWithProviders.test.tsx) | Proves each render gets its own store and that `preloadedState` reaches a selector.                               |
+| [src/setupTests.ts](../src/setupTests.ts)                                         | Vitest setup; jest-dom matchers and a `localStorage` reset before each test.                                      |
+| [src/setupTests.test.ts](../src/setupTests.test.ts)                               | Proves the storage reset actually runs between tests.                                                             |
+| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                                   | Shared `startGame` / `advanceGame` helpers and corner reference data.                                             |
+| [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                             | Creating a game and landing on a resumable route.                                                                 |
+| [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                             | Corner geometry, title deed, ribbon placement, dividers, outlines, theming.                                       |
+| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                           | Three-column layout, action rail, dice placement, player stack.                                                   |
+| [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)                       | Decision modal, activity drawer, player detail drawer, dice roll.                                                 |
+| [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)                   | Eight-player layout: token cluster stays on the board, dice stay reachable.                                       |
+| [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                             | Booklet nav resolves, the FAQ answers, and amounts render in ₹.                                                   |
+| [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)                       | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.                                        |
 
 ## Config
 
