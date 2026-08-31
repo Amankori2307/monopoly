@@ -97,9 +97,9 @@ applied by `acknowledgeCard`. A new decision type must also be added to `BLOCKIN
 
 ### Commands
 
-| Implemented                                                                                                                                                                  | Scaffolded (returns a `uiHints` placeholder, changes nothing)                                                                                               |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `acknowledgeCard`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `mortgageAsset`, `unmortgageAsset`, `proposeTrade`, `acceptTrade`, `rejectTrade`, `confirmBankruptcy` |
+| Implemented                                                                                                                                                                                                                    | Scaffolded (returns a `uiHints` placeholder, changes nothing)                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `proposeTrade`, `acceptTrade`, `rejectTrade`, `confirmBankruptcy` |
 
 ### Locked economics (`gameEngine.ts` constants)
 
@@ -176,13 +176,12 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 
 ## 8. Known gaps and traps
 
-- **Jail-fine bug**: [gameEngine.ts:958](src/domain/rules/gameEngine.ts:958) — `payJailFine` calls `resolveBankPayment`, which sets an `asset-liquidation` pending decision when the player can't afford `₹50`; the lines immediately after then overwrite `pendingDecision` back to `none`, so a broke player leaves jail without paying. Its proper fix is bound up with resolving liquidation at all — see the deadlock entry below.
 - **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:1149](src/domain/rules/gameEngine.ts:1149)). `saveRequired` is hardcoded `true`. Anything wanting "what just happened" must diff `history` instead — see `selectNewEvents` in [toastFeed.utils.ts](src/features/game/toastFeed.utils.ts).
 - **No end condition**: `winnerPlayerId`, `status: 'completed'`, and the `game-over` decision are never set — games run forever.
 - **Bank inventory is cosmetic**: `housesAvailable`/`hotelsAvailable` are never decremented (building isn't implemented).
-- **`asset-liquidation` is a deadlock.** When a player cannot pay, `resolveBankPayment` / `resolvePlayerPayment` set that pending decision and **nothing in the codebase can clear it** — mortgage is its only exit and is still scaffolded. The insolvent branch also never debits the debtor or pays the creditor; the debt lives only in `amountDue`.
-- **`applyCardEffect`'s `CollectFromEach` / `PayEach` loops read the pre-mutation `state`**, not `nextState`, and each iteration can overwrite the previous player's `asset-liquidation` decision. Multi-player insolvency on one card is unhandled.
-- **Mortgaged properties** are skipped for rent but there is no way to mortgage yet. A mortgaged property still counts toward colour-set completeness and the railway/utility counts — deliberate, and matches the printed rule.
+- **`asset-liquidation` is resolvable.** `settleDebt` clears it; mortgaging is how the cash is raised, and it deliberately leaves `pendingDecision` alone. What remains: only one liquidation can be pending, so several debts from one card still stop at the first — that needs a debt queue, with bankruptcy.
+- **Several debts from one card are not all recorded.** The loops read `nextState` correctly now, but only one `asset-liquidation` can be pending, so they stop at the first player who cannot pay.
+- **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.
 - **A used Get Out of Jail Free card never returns to its deck.** `jailFreeCards` is a count with no record of which deck the card came from, so both can leave circulation permanently. Fixing it is a `GameState` shape change.
 - **`advanceToNextTurn` does not skip bankrupt players** — latent only because bankruptcy is never set.
 - **`movePlayerTo`'s pass-GO test is `nextPosition < player.position`**, true for any backward move. Safe only because `MoveSteps` always passes `collectGo: false`.

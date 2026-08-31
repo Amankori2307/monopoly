@@ -322,3 +322,75 @@
     animation: none;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Liquidation
+//
+// Self-contained on purpose: the decision modal is non-dismissible and covers
+// the board, so a player raising cash has to be able to do it from here.
+// ---------------------------------------------------------------------------
+.liquidation {
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-sm;
+
+  h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: -0.03em;
+  }
+
+  .eyebrow,
+  .deed-rent-title {
+    margin: 0;
+  }
+
+  .primary-button {
+    margin-top: t.$gap-sm;
+    min-height: 48px;
+  }
+}
+
+.liquidation-reason {
+  margin: 0;
+  color: var(--text-body);
+  font-size: 0.9rem;
+}
+
+.liquidation-sites {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  // Long portfolios must not push the Pay button off the modal.
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: t.$gap-md;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-input);
+  }
+
+  button {
+    flex: none;
+    padding: 5px 9px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+}
+
+// The honest dead end until bankruptcy lands.
+.liquidation-dead-end {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-dashed);
+  color: var(--error-text);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}

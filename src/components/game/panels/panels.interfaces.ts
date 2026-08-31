@@ -1,4 +1,7 @@
-import type { ColorGroupProgress } from '../../../domain/rules/holdings.utils';
+import type {
+  ColorGroupProgress,
+  MortgageableSite,
+} from '../../../domain/rules/holdings.utils';
 import type { PendingDecisionType } from '../../../domain/types/game.enums';
 import type {
   AuctionState,
@@ -7,6 +10,7 @@ import type {
   OwnershipState,
   PlayerId,
   PlayerState,
+  SpaceId,
   ThemeToken,
 } from '../../../domain/types/game.interfaces';
 
@@ -70,6 +74,17 @@ export interface LiquidationDecisionViewModel {
   playerName: string;
   amountDue: number;
   playerId: PlayerId;
+  /** Who is owed, or null when the debt is to the bank. */
+  creditorName: string | null;
+  /** What the debt is for, e.g. "rent on Delhi". */
+  reason: string;
+  /**
+   * Sites the debtor can mortgage right now. The panel lists them itself: the
+   * decision modal covers the board, so the site panel is out of reach.
+   */
+  mortgageableSites: MortgageableSite[];
+  /** True once the debtor's cash covers the debt. */
+  canSettle: boolean;
 }
 
 export type DecisionViewModel =
@@ -88,4 +103,6 @@ export interface DecisionHandlers {
   onPayJailFine: () => void;
   onUseJailCard: () => void;
   onAcknowledgeCard: () => void;
+  onMortgageSite: (spaceId: SpaceId) => void;
+  onSettleDebt: () => void;
 }

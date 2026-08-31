@@ -1,5 +1,5 @@
 import type { ColorGroup } from '../types/game.enums';
-import type { OwnableSpace } from '../types/game.interfaces';
+import type { OwnableSpace, SpaceId } from '../types/game.interfaces';
 
 /** Shapes returned by holdings.utils.ts. */
 
@@ -21,4 +21,11 @@ export interface HoldingsSection {
   owned: number;
   total: number;
   isComplete: boolean;
+}
+
+/** A site a player could mortgage, and what the bank would pay for it. */
+export interface MortgageableSite {
+  spaceId: SpaceId;
+  name: string;
+  mortgageValue: number;
 }

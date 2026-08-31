@@ -91,6 +91,7 @@ export enum GameCommandType {
   UseJailFreeCard = 'useJailFreeCard',
   AttemptJailRoll = 'attemptJailRoll',
   AcknowledgeCard = 'acknowledgeCard',
+  SettleDebt = 'settleDebt',
   EndTurn = 'endTurn',
   BuildHouse = 'buildHouse',
   BuildHotel = 'buildHotel',

@@ -10,6 +10,7 @@ import {
   HOTELS_AVAILABLE,
   HOUSES_AVAILABLE,
   JAIL_FINE,
+  MORTGAGE_INTEREST_PERCENT,
   JAIL_POSITION,
   MAX_HISTORY_EVENTS,
   MAX_JAIL_TURNS,
@@ -41,8 +42,8 @@ import type {
   StreetSpace,
   ThemeConfig,
 } from '../types/game.interfaces';
-import { ownsEntireColorSet } from './holdings.utils';
-import { isOwnableSpace } from './space.utils';
+import { groupHasBuildings, isOwnedBy, ownsEntireColorSet } from './holdings.utils';
+import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { DefaultRandomSource, rollDie, shuffle, type RandomSource } from './rng';
 
 const createEvent = (turnNumber: number, message: string): GameEvent => ({
@@ -195,6 +196,16 @@ const movePlayerTo = (
     position: nextPosition,
   }));
 };
+
+/**
+ * What it costs to lift a mortgage: the value borrowed plus interest.
+ *
+ * The printed rule says "plus 10%" without saying how to round, and every other
+ * amount in this game is a whole number. Rounds the interest up, which favours
+ * the bank - documented in docs/india-edition-rules.md section 9.
+ */
+const getRedemptionCost = (mortgageValue: number): number =>
+  mortgageValue + Math.ceil((mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
 
 const resolveBankPayment = (
   state: GameState,
@@ -570,12 +581,22 @@ const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
       ]);
     }
     case CardEffectKind.CollectFromEach: {
-      state.playerOrder
+      // Reads nextState, not the incoming state: each payment mutates cash and
+      // may raise a liquidation, and the loop used to decide who pays from a
+      // snapshot taken before any of it happened.
+      nextState.playerOrder
         .filter(
           (playerId) =>
-            playerId !== activePlayer.id && !state.players[playerId].isBankrupt
+            playerId !== activePlayer.id && !nextState.players[playerId].isBankrupt
         )
         .forEach((playerId) => {
+          // Only one liquidation can be pending at a time, so stop at the first
+          // player who cannot pay rather than overwriting their debt with the
+          // next player's. The rest is deferred until bankruptcy lands - see
+          // docs/india-edition-rules.md section 14.
+          if (nextState.pendingDecision.type === PendingDecisionType.AssetLiquidation) {
+            return;
+          }
           nextState = resolvePlayerPayment(
             nextState,
             playerId,
@@ -587,12 +608,17 @@ const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
       return nextState;
     }
     case CardEffectKind.PayEach: {
-      state.playerOrder
+      nextState.playerOrder
         .filter(
           (playerId) =>
-            playerId !== activePlayer.id && !state.players[playerId].isBankrupt
+            playerId !== activePlayer.id && !nextState.players[playerId].isBankrupt
         )
         .forEach((playerId) => {
+          // As above: the drawer's cash falls with each payment, so stop once
+          // they can no longer pay rather than paying money they do not have.
+          if (nextState.pendingDecision.type === PendingDecisionType.AssetLiquidation) {
+            return;
+          }
           nextState = resolvePlayerPayment(
             nextState,
             activePlayer.id,
@@ -983,6 +1009,12 @@ export const executeGameCommand = (
         throw new Error('Active player is not in Jail.');
       }
       nextState = resolveBankPayment(nextState, activePlayer.id, JAIL_FINE, 'Jail fine');
+      // resolveBankPayment raises a liquidation when the player is short. Leave
+      // it standing and leave them in Jail: overwriting it here let a player
+      // with under the fine walk out without paying.
+      if (nextState.pendingDecision.type === PendingDecisionType.AssetLiquidation) {
+        break;
+      }
       nextState = updatePlayer(nextState, activePlayer.id, (player) => ({
         ...player,
         inJail: false,
@@ -1071,6 +1103,11 @@ export const executeGameCommand = (
             JAIL_FINE,
             'Mandatory Jail fine'
           );
+          // Same guard as PayJailFine: a player who cannot cover the mandatory
+          // fine stays in Jail rather than being un-jailed and moved.
+          if (nextState.pendingDecision.type === PendingDecisionType.AssetLiquidation) {
+            break;
+          }
           nextState = updatePlayer(nextState, activePlayer.id, (player) => ({
             ...player,
             inJail: false,
@@ -1146,8 +1183,105 @@ export const executeGameCommand = (
       }
       break;
     }
-    case GameCommandType.MortgageAsset:
-    case GameCommandType.UnmortgageAsset:
+    case GameCommandType.MortgageAsset: {
+      const activePlayer = getActivePlayer(nextState);
+      const space = getSpaceById(nextState, command.spaceId);
+      if (!isOwnableSpace(space)) {
+        throw new Error(`${space.name} cannot be mortgaged.`);
+      }
+      if (!isOwnedBy(nextState, space.id, activePlayer.id)) {
+        throw new Error(`${activePlayer.name} does not own ${space.name}.`);
+      }
+      if (nextState.ownership[space.id].mortgaged) {
+        throw new Error(`${space.name} is already mortgaged.`);
+      }
+      // Buildings must be sold before a site can be mortgaged, and the rule
+      // covers the whole colour group, not just this site.
+      if (isStreetSpace(space) && groupHasBuildings(nextState, space.colorGroup)) {
+        throw new Error(
+          `Sell the buildings in ${space.name}'s colour set before mortgaging it.`
+        );
+      }
+
+      nextState = creditFromBank(
+        nextState,
+        activePlayer.id,
+        space.mortgageValue,
+        `mortgaged ${space.name}`
+      );
+      nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
+        ...ownership,
+        mortgaged: true,
+      }));
+      // Deliberately leaves pendingDecision and turn alone: mortgaging is how a
+      // player raises cash *during* a liquidation, and clearing the decision
+      // here would recreate the deadlock this command exists to fix.
+      break;
+    }
+    case GameCommandType.UnmortgageAsset: {
+      const activePlayer = getActivePlayer(nextState);
+      const space = getSpaceById(nextState, command.spaceId);
+      if (!isOwnableSpace(space)) {
+        throw new Error(`${space.name} cannot be mortgaged.`);
+      }
+      if (!isOwnedBy(nextState, space.id, activePlayer.id)) {
+        throw new Error(`${activePlayer.name} does not own ${space.name}.`);
+      }
+      if (!nextState.ownership[space.id].mortgaged) {
+        throw new Error(`${space.name} is not mortgaged.`);
+      }
+      const redemptionCost = getRedemptionCost(space.mortgageValue);
+      if (activePlayer.cash < redemptionCost) {
+        throw new Error(`${activePlayer.name} cannot afford to redeem ${space.name}.`);
+      }
+
+      nextState = resolveBankPayment(
+        nextState,
+        activePlayer.id,
+        redemptionCost,
+        `redeemed ${space.name}`
+      );
+      nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
+        ...ownership,
+        mortgaged: false,
+      }));
+      break;
+    }
+    case GameCommandType.SettleDebt: {
+      const decision = nextState.pendingDecision;
+      if (decision.type !== PendingDecisionType.AssetLiquidation) {
+        throw new Error('There is no debt to settle.');
+      }
+      const debtor = getPlayerById(nextState, decision.playerId);
+      if (debtor.cash < decision.amountDue) {
+        throw new Error(
+          `${debtor.name} cannot cover ${money(nextState, decision.amountDue)} yet.`
+        );
+      }
+
+      // The insolvent branches of the payment primitives record the debt without
+      // moving any money, so this is where it finally moves.
+      nextState = decision.creditorPlayerId
+        ? resolvePlayerPayment(
+            nextState,
+            decision.playerId,
+            decision.creditorPlayerId,
+            decision.amountDue,
+            decision.reason
+          )
+        : resolveBankPayment(
+            nextState,
+            decision.playerId,
+            decision.amountDue,
+            decision.reason
+          );
+
+      nextState = {
+        ...resumeTurnAfterDecision(nextState),
+        pendingDecision: { type: PendingDecisionType.None },
+      };
+      break;
+    }
     case GameCommandType.BuildHouse:
     case GameCommandType.BuildHotel:
     case GameCommandType.SellHouse:

@@ -1,6 +1,6 @@
 # Site ownership
 
-**Status:** Shipped for display. The owner's actions land with phase 2.
+**Status:** Shipped. Mortgage and redeem work; build, sell and trade are still pending.
 **Entry points:** [src/features/game/sitePanel.utils.ts](../../src/features/game/sitePanel.utils.ts), [src/components/game/SpaceDetailCard.tsx](../../src/components/game/SpaceDetailCard.tsx), [src/features/game/boardOwnership.utils.ts](../../src/features/game/boardOwnership.utils.ts)
 
 ## What it does
@@ -46,9 +46,11 @@ UI supplied one.
 
 ## Key decisions
 
-- **Phase-2 actions are rendered disabled with a reason, not hidden.** The panel should say what
-  will be possible, which is how the action rail already behaves. When the engine commands land,
-  deleting entries from `SCAFFOLDED_COMMANDS` lights up both with no UI change.
+- **Actions not yet built are rendered disabled with a reason, not hidden.** The panel says what will
+  be possible, which is how the action rail already behaves. Deleting an entry from
+  `SCAFFOLDED_COMMANDS` lights it up with no UI change — that is exactly how mortgage and redeem
+  went live, and `siteActionBlockedReason` then took over saying _why_ each one is unavailable
+  (already mortgaged, not mortgaged, buildings in the colour set, not enough cash to redeem).
 
 - **The action block sits beside the deed, not inside it.** `SpaceCard` has an `actions` slot, but
   a deed is a fixed height with `overflow: hidden`, so anything appended inside is clipped — this
@@ -80,7 +82,7 @@ still scaffolded. `isOwnedBy` was made public in `holdings.utils.ts`.
 
 ## Known gaps
 
-- Every owner action is disabled: mortgage, build, sell, and trade are all phase 2.
+- **Mortgage and redeem work.** Build, sell and trade are still disabled with a reason.
 - Houses and hotels are not drawn on the board — `buildLevel` is never written yet.
 - The action rail remains dead. Once the commands land, the rail and this panel overlap and one of
   them should probably go.

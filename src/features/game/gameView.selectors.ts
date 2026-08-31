@@ -1,6 +1,7 @@
 import {
   getColorGroupProgress,
   getGroupedHoldings,
+  getMortgageableSites,
   getMortgagedCount,
   getNetWorth,
   getPlayerOwnedSpaces,
@@ -9,6 +10,7 @@ import { isOwnableSpace } from '../../domain/rules/space.utils';
 import { DeckName, PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
 import type {
   GameState,
+  PendingDecisionAssetLiquidation,
   PendingDecisionCardDraw,
   PlayerId,
   PlayerState,
@@ -18,6 +20,7 @@ import type {
 import type {
   AuctionDecisionViewModel,
   CardDrawDecisionViewModel,
+  LiquidationDecisionViewModel,
   DecisionViewModel,
   PlayerSummary,
 } from '../../components/game/panels/panels.interfaces';
@@ -148,6 +151,33 @@ const auctionDecision = (game: GameState): AuctionDecisionViewModel | null => {
   };
 };
 
+/**
+ * Everything the liquidation panel needs to be self-contained.
+ *
+ * The decision modal covers the board, so a player raising cash cannot reach the
+ * site panel - the mortgageable sites travel with the decision instead.
+ */
+const liquidationDecision = (
+  game: GameState,
+  decision: PendingDecisionAssetLiquidation,
+  activePlayer: PlayerState
+): LiquidationDecisionViewModel => {
+  const debtor = game.players[decision.playerId] ?? activePlayer;
+
+  return {
+    type: PendingDecisionType.AssetLiquidation,
+    playerName: debtor.name,
+    amountDue: decision.amountDue,
+    playerId: decision.playerId,
+    creditorName: decision.creditorPlayerId
+      ? (game.players[decision.creditorPlayerId]?.name ?? null)
+      : null,
+    reason: decision.reason,
+    mortgageableSites: getMortgageableSites(game, decision.playerId),
+    canSettle: debtor.cash >= decision.amountDue,
+  };
+};
+
 const cardDrawDecision = (
   game: GameState,
   decision: PendingDecisionCardDraw,
@@ -183,12 +213,7 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
     case PendingDecisionType.CardDraw:
       return cardDrawDecision(game, decision, activePlayer);
     case PendingDecisionType.AssetLiquidation:
-      return {
-        type: PendingDecisionType.AssetLiquidation,
-        playerName: game.players[decision.playerId]?.name ?? activePlayer.name,
-        amountDue: decision.amountDue,
-        playerId: decision.playerId,
-      };
+      return liquidationDecision(game, decision, activePlayer);
     default:
       // Falls through to the jail check below, so a jailed player always has
       // actions even if `pendingDecision` drifted away from `jail-choice`.

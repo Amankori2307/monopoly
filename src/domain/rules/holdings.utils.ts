@@ -1,6 +1,14 @@
-import type { ColorGroupProgress, HoldingsSection } from './holdings.interfaces';
+import type {
+  ColorGroupProgress,
+  HoldingsSection,
+  MortgageableSite,
+} from './holdings.interfaces';
 
-export type { ColorGroupProgress, HoldingsSection } from './holdings.interfaces';
+export type {
+  ColorGroupProgress,
+  HoldingsSection,
+  MortgageableSite,
+} from './holdings.interfaces';
 
 import { ColorGroup, SpaceKind } from '../types/game.enums';
 import type {
@@ -21,7 +29,7 @@ const toTitleCase = (value: string) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
-const streetsInGroup = (state: GameState, group: ColorGroup): StreetSpace[] =>
+export const streetsInGroup = (state: GameState, group: ColorGroup): StreetSpace[] =>
   state.board.filter(
     (space): space is StreetSpace => isStreetSpace(space) && space.colorGroup === group
   );
@@ -177,3 +185,38 @@ export const getGroupedHoldings = (
     kindSection(UTILITY_SECTION_ID, 'Utilities', SpaceKind.Utility),
   ].filter((section): section is HoldingsSection => section !== null);
 };
+
+/**
+ * The sites a player could mortgage right now, and what each would pay.
+ *
+ * Drives the liquidation panel: a player who cannot pay needs to see what they
+ * can raise without leaving the modal. Excludes already-mortgaged sites, and any
+ * street whose colour group still holds buildings.
+ */
+export const getMortgageableSites = (
+  state: GameState,
+  playerId: PlayerId
+): MortgageableSite[] =>
+  getPlayerOwnedSpaces(state, playerId)
+    .filter((space) => !state.ownership[space.id]?.mortgaged)
+    .filter(
+      (space) => !isStreetSpace(space) || !groupHasBuildings(state, space.colorGroup)
+    )
+    .map((space) => ({
+      spaceId: space.id,
+      name: space.name,
+      mortgageValue: space.mortgageValue,
+    }));
+
+/** Whether any street in a colour group carries houses or a hotel. */
+export const groupHasBuildings = (state: GameState, group: ColorGroup): boolean =>
+  streetsInGroup(state, group).some(
+    (space) => (state.ownership[space.id]?.buildLevel ?? 0) > 0
+  );
+
+/** Total a player could raise by mortgaging everything available to them. */
+export const getRaisableCash = (state: GameState, playerId: PlayerId): number =>
+  getMortgageableSites(state, playerId).reduce(
+    (total, site) => total + site.mortgageValue,
+    0
+  );

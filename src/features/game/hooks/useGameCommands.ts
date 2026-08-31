@@ -69,6 +69,10 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.UseJailFreeCard })),
         onAcknowledgeCard: () =>
           dispatch(runGameCommand({ type: GameCommandType.AcknowledgeCard })),
+        onMortgageSite: (spaceId: string) =>
+          dispatch(runGameCommand({ type: GameCommandType.MortgageAsset, spaceId })),
+        onSettleDebt: () =>
+          dispatch(runGameCommand({ type: GameCommandType.SettleDebt })),
       },
     }),
     [auctionBidInput, dispatch, toasts]

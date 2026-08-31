@@ -107,17 +107,72 @@ describe('getSiteActions', () => {
     expect(getSiteActions(game, 'space-does-not-exist', game.playerOrder[0])).toEqual([]);
   });
 
-  // Every command is still scaffolded, so the panel shows them disabled with a
-  // reason rather than pretending they work. Delete as each command lands.
-  it('disables every action while its engine command is scaffolded', () => {
+  // Build and Sell are still scaffolded; mortgage and redeem now work. Delete
+  // the Build/Sell half of this as those commands land.
+  it('offers mortgage and redeem, and still disables build and sell', () => {
     const game = createGame();
     const spaceId = giveFirstStreetTo(game, game.playerOrder[0]);
 
     const actions = getSiteActions(game, spaceId, game.playerOrder[0]);
+    const byAction = (action: PropertyAction) =>
+      actions.find((candidate) => candidate.action === action);
 
-    expect(actions.every((action) => !action.isEnabled)).toBe(true);
-    expect(
-      actions.every((action) => action.disabledReason === 'Not implemented yet')
-    ).toBe(true);
+    expect(byAction(PropertyAction.Build)?.disabledReason).toBe('Not implemented yet');
+    expect(byAction(PropertyAction.Sell)?.disabledReason).toBe('Not implemented yet');
+    // Mortgage is available on an unmortgaged site the player owns.
+    expect(byAction(PropertyAction.Mortgage)?.isEnabled).toBe(true);
+    // Redeem is not, because there is nothing to redeem.
+    expect(byAction(PropertyAction.Redeem)?.disabledReason).toBe('Not mortgaged');
+  });
+
+  it('swaps mortgage for redeem once the site is mortgaged', () => {
+    const game = createGame();
+    const spaceId = giveFirstStreetTo(game, game.playerOrder[0]);
+    game.ownership[spaceId].mortgaged = true;
+
+    const actions = getSiteActions(game, spaceId, game.playerOrder[0]);
+    const byAction = (action: PropertyAction) =>
+      actions.find((candidate) => candidate.action === action);
+
+    expect(byAction(PropertyAction.Mortgage)?.disabledReason).toBe('Already mortgaged');
+    expect(byAction(PropertyAction.Redeem)?.isEnabled).toBe(true);
+  });
+
+  it('blocks redeeming when the player cannot afford the interest', () => {
+    const game = createGame();
+    const spaceId = giveFirstStreetTo(game, game.playerOrder[0]);
+    game.ownership[spaceId].mortgaged = true;
+    game.players[game.playerOrder[0]].cash = 0;
+
+    const redeem = getSiteActions(game, spaceId, game.playerOrder[0]).find(
+      (action) => action.action === PropertyAction.Redeem
+    );
+
+    expect(redeem?.isEnabled).toBe(false);
+    expect(redeem?.disabledReason).toMatch(/not enough cash/i);
+  });
+
+  // The rule holds even though nothing can build yet, so the guard is testable.
+  it('blocks mortgaging while the colour set holds buildings', () => {
+    const game = createGame();
+    const spaceId = giveFirstStreetTo(game, game.playerOrder[0]);
+    const street = game.board.find((space) => space.id === spaceId);
+    const sibling = game.board.find(
+      (space) =>
+        space.kind === 'street' &&
+        space.id !== spaceId &&
+        'colorGroup' in space &&
+        'colorGroup' in street! &&
+        space.colorGroup === street.colorGroup
+    );
+    game.ownership[sibling!.id].ownerPlayerId = game.playerOrder[0];
+    game.ownership[sibling!.id].buildLevel = 1;
+
+    const mortgage = getSiteActions(game, spaceId, game.playerOrder[0]).find(
+      (action) => action.action === PropertyAction.Mortgage
+    );
+
+    expect(mortgage?.isEnabled).toBe(false);
+    expect(mortgage?.disabledReason).toMatch(/sell the buildings/i);
   });
 });

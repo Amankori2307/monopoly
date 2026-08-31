@@ -79,8 +79,14 @@ export function DecisionPanel({
       {decision.type === PendingDecisionType.AssetLiquidation ? (
         <LiquidationDecision
           amountDue={decision.amountDue}
+          canSettle={decision.canSettle}
+          creditorName={decision.creditorName}
           currencySymbol={currencySymbol}
+          mortgageableSites={decision.mortgageableSites}
+          onMortgageSite={handlers.onMortgageSite}
+          onSettleDebt={handlers.onSettleDebt}
           playerName={decision.playerName}
+          reason={decision.reason}
         />
       ) : null}
     </section>

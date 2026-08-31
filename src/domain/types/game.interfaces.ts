@@ -335,6 +335,7 @@ export type GameCommand =
   | { type: GameCommandType.UseJailFreeCard }
   | { type: GameCommandType.AttemptJailRoll }
   | { type: GameCommandType.AcknowledgeCard }
+  | { type: GameCommandType.SettleDebt }
   | { type: GameCommandType.EndTurn }
   | { type: GameCommandType.BuildHouse; spaceId: SpaceId }
   | { type: GameCommandType.BuildHotel; spaceId: SpaceId }

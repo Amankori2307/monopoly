@@ -341,21 +341,25 @@ Legal sell-down from 3/3/3: → 2/3/3 → 2/2/3 → 2/2/2. Illegal: 3/3/3 → 0/
 
 ---
 
-## 9. Mortgages — ❌ not implemented
+## 9. Mortgages — ✅ implemented
 
-`OwnershipState.mortgaged` exists, rent already skips a mortgaged property, and net worth already
-values one at `mortgageValue`. Nothing can set it.
+| Rule                                                                                             | Status                                                                            |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| Mortgaging pays the `mortgageValue` printed on the deed                                          | ✅                                                                                |
+| The property stays yours; you simply collect no rent on it                                       | ✅                                                                                |
+| **You cannot mortgage a property with buildings anywhere in its colour group** — sell them first | ✅ the guard exists; a no-op until building lands, since `buildLevel` is always 0 |
+| Unmortgaging costs the mortgage value **plus `MORTGAGE_INTEREST_PERCENT`%**                      | ✅                                                                                |
+| A mortgaged property can still be traded                                                         | ❌ trading is not implemented                                                     |
+| The bank never buys a property back; mortgage, trade or sell to a player instead                 | ✅ by omission — no such command exists                                           |
 
-| Rule                                                                                             | Status                               |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------ |
-| Mortgaging pays the `mortgageValue` printed on the deed                                          | ❌                                   |
-| The property stays yours; you simply collect no rent on it                                       | ✅ (the rent half)                   |
-| **You cannot mortgage a property with buildings anywhere in its colour group** — sell them first | ❌                                   |
-| Unmortgaging costs the mortgage value **plus 10% interest**                                      | ❌ — no interest constant exists yet |
-| A mortgaged property can still be traded                                                         | ❌                                   |
-| The bank never buys a property back; mortgage, trade or sell to a player instead                 | n/a                                  |
+**Rounding.** The printed rule says "plus 10%" without saying how to round, and every other amount in
+this game is a whole number. The interest is rounded **up** — `mortgageValue + ceil(mortgageValue *
+10 / 100)`, so a ₹70 mortgage costs ₹77 to redeem. Favours the bank; `getRedemptionCost` in
+`gameEngine.ts` is the single place it is decided.
 
----
+**Where you mortgage from.** Either the site panel (click the site on the board), or the liquidation
+panel when you owe money you cannot pay — see §11. The liquidation panel lists your mortgageable
+sites itself, because the decision modal is non-dismissible and covers the board.
 
 ## 10. Trading — ❌ not implemented
 
@@ -380,31 +384,45 @@ commands have no UI entry point beyond a disabled "Offer a deal" button.
 
 ---
 
-## 11. Insolvency and bankruptcy — ❌ not implemented
+## 11. Insolvency and bankruptcy — ⚠️ partly implemented
 
 The order of rescue when you cannot pay:
 
-1. Sell buildings back to the bank.
-2. Mortgage properties.
-3. Sell or trade properties to other players.
+| Step                                         | Status                         |
+| -------------------------------------------- | ------------------------------ |
+| 1. Sell buildings back to the bank           | ❌ building is not implemented |
+| 2. Mortgage properties                       | ✅                             |
+| 3. Sell or trade properties to other players | ❌ trading is not implemented  |
 
-If you still cannot pay:
+**Owing money you cannot pay now works.** The debt raises an `asset-liquidation` decision naming the
+amount, the creditor and the reason. The panel lists every site you could mortgage and what each
+pays; a **Pay** button unlocks the moment your cash covers the debt, and settling transfers the money
+to the creditor — or to the bank when there is no creditor — and hands the turn back, extra roll
+intact if a double had earned one.
 
-| Creditor       | Outcome                                                                              |
-| -------------- | ------------------------------------------------------------------------------------ |
-| Another player | They receive your cash, properties, mortgaged properties and jail cards. You are out |
-| The bank       | Everything goes to the bank, which auctions the properties. You are out              |
+> **Fixed.** This was a dead end. The insolvent branches of both payment primitives recorded
+> `amountDue` and moved **no money at all**, and nothing in the codebase could clear the decision, so
+> the player was stuck for the rest of the game. `settleDebt` is the exit, and mortgaging is how the
+> cash gets raised. Mortgaging deliberately leaves `pendingDecision` untouched — clearing it there
+> would have recreated the same bug in a new place.
 
-> **⚠️ Known bug — `asset-liquidation` is a dead end.** When a player cannot pay,
-> `resolveBankPayment` / `resolvePlayerPayment` set that pending decision and **nothing in the
-> codebase can clear it**. The player is stuck for the rest of the game. The insolvent branch also
-> never debits the debtor or pays the creditor — the debt exists only in `amountDue`. Mortgaging is
-> the only exit, which is why it heads the next phase of work.
+> **Fixed.** Both jail-fine paths released an insolvent player anyway. `payJailFine` and
+> `attemptJailRoll`'s mandatory third-turn fine each called `resolveBankPayment`, which raises the
+> liquidation, and then overwrote the decision back to `none`. A player with under ₹50 walked out of
+> Jail without paying. Both now leave the decision standing and leave the player in Jail.
+
+### Still missing
+
+If you cannot pay and have nothing left to mortgage, the panel says so plainly and the game cannot
+continue from there. Bankruptcy is the real answer:
+
+| Creditor       | Outcome                                                                              | Status |
+| -------------- | ------------------------------------------------------------------------------------ | ------ |
+| Another player | They receive your cash, properties, mortgaged properties and jail cards. You are out | ❌     |
+| The bank       | Everything goes to the bank, which auctions the properties. You are out              | ❌     |
 
 There is also **no win detection**: `winnerPlayerId`, `GameStatus.Completed` and the `game-over`
 decision are never set, and `isBankrupt` / `bankruptcyRank` are never written. Games run forever.
-
----
 
 ## 12. Speed Die — ❌ not implemented
 
@@ -531,10 +549,11 @@ increment ₹1 · starting cash ₹1500.
 A drawn card is **shown before it acts**: the draw sets a `card-draw` decision and the effect is
 applied by `acknowledgeCard`. See [features/action-feedback.md](features/action-feedback.md).
 
-> **⚠️ Known bug — multi-player insolvency on one card.** The `CollectFromEach` / `PayEach` loops
-> read the pre-mutation `state` rather than `nextState`, and each iteration can overwrite the
-> previous player's `asset-liquidation` decision. If two players cannot pay the same card, only the
-> last is recorded.
+> **⚠️ Partly fixed — multi-player insolvency on one card.** Both loops now read `nextState`, so who
+> pays and how much cash they have is current rather than a snapshot taken before any of it happened.
+> But only one `asset-liquidation` decision can be pending at a time, so the loop **stops** at the
+> first player who cannot pay rather than overwriting their debt with the next player's. Resolving
+> several debts from one card needs a debt queue, which belongs with bankruptcy.
 
 ---
 
@@ -564,28 +583,32 @@ applied by `acknowledgeCard`. See [features/action-feedback.md](features/action-
 economics, the two-dice turn, doubles including all three Jail interactions, passing GO, taxes, Go To
 Jail, the full card draw-then-apply flow with chained draws, every card effect, buy or decline, the
 complete auction loop, street/railway/utility rent with colour-set doubling, all three Jail exits and
-the three-turn limit, turn rotation, ₹ throughout, and per-action feedback.
+the three-turn limit, turn rotation, ₹ throughout, per-action feedback, and **mortgaging, redeeming
+and settling a debt you could not otherwise pay**.
 
-**Type-level only, no runtime behaviour:** mortgages, buildings and both even rules, bank building
-inventory, all trading, bankruptcy, win detection, Speed Die.
+**Type-level only, no runtime behaviour:** buildings and both even rules, bank building inventory,
+all trading, bankruptcy, win detection, Speed Die.
 
-### Fixed during this audit
+### Fixed so far
 
-| Bug                        | Effect                                                                                                                                                                                                                                                                   |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Extra roll lost on decline | Rolling doubles, landing on an unowned site and **declining** forfeited the extra roll that **buying** it kept. Buying read `doublesCount`; the auction paths read `canRollAgain`, which is false while a decision blocks. One `resumeTurnAfterDecision` now serves both |
-| Passed bidders re-prompted | The auction index advanced by one and wrapped without skipping players who had passed, so a bid/pass interleave could hand the turn back to someone who had left — who could then bid their way back in                                                                  |
+| Bug                                            | Effect                                                                                                                                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extra roll lost on decline                     | Rolling doubles, landing on an unowned site and **declining** forfeited the extra roll that **buying** it kept. One `resumeTurnAfterDecision` now serves both          |
+| Passed bidders re-prompted                     | The auction index wrapped without skipping players who had passed, so a bid/pass interleave could hand the turn back to someone who had left                           |
+| **`asset-liquidation` was a dead end**         | A player who could not pay was stuck for the rest of the game. `settleDebt` is the exit; mortgaging raises the cash. The insolvent branches also moved no money at all |
+| **The Jail fine released an insolvent player** | Both paths — the voluntary fine and the mandatory third-turn one — overwrote the liquidation decision and let a player with under ₹50 walk out                         |
+| `CollectFromEach` / `PayEach` stale reads      | Both loops decided who pays from a snapshot taken before any payment happened                                                                                          |
 
 ### Known divergences and bugs, still open
 
-| Issue                                                      | Notes                                                                                                                                                                                       |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `asset-liquidation` is a dead end                          | A player who cannot pay is stuck for the rest of the game; nothing clears the decision. The insolvent branch also never debits the debtor or pays the creditor. Mortgaging is the only exit |
-| A broke player escapes the Jail fine                       | `payJailFine` overwrites the liquidation decision back to `none`, so a player with under ₹50 leaves Jail without paying                                                                     |
-| A used Jail card never returns to its deck                 | `jailFreeCards` is a count with no record of provenance. Needs a `GameState` shape change                                                                                                   |
-| Multi-player insolvency on one card                        | `CollectFromEach` / `PayEach` read the pre-mutation `state` and each iteration can overwrite the previous player's liquidation decision                                                     |
-| Bank building inventory never decremented                  | 32 houses / 12 hotels are cosmetic until building lands                                                                                                                                     |
-| Bankrupt players are not skipped in turn order             | Latent: bankruptcy is never set                                                                                                                                                             |
-| No win detection                                           | `winnerPlayerId`, `GameStatus.Completed`, `isBankrupt` and `bankruptcyRank` are never written. Games run forever                                                                            |
-| Utility rent after a card-driven arrival                   | Uses the turn's original roll rather than a fresh throw. Not reachable with the current deck                                                                                                |
-| `movePlayerTo`'s pass-GO test is `nextPosition < position` | True for _any_ backward move. Safe only because `MoveSteps` always passes `collectGo: false`. A future card that moved backwards with `collectGo` set would wrongly pay the salary          |
+| Issue                                                        | Notes                                                                                                                                        |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| No bankruptcy                                                | A player who cannot pay and has nothing left to mortgage reaches an honest dead end. Next step                                               |
+| No win detection                                             | `winnerPlayerId`, `GameStatus.Completed`, `isBankrupt` and `bankruptcyRank` are never written                                                |
+| A used Jail card never returns to its deck                   | `jailFreeCards` is a count with no record of provenance. Needs a `GameState` shape change                                                    |
+| Several debts from one card                                  | Only one liquidation can be pending, so the loop stops at the first player who cannot pay. Needs a debt queue, which belongs with bankruptcy |
+| Bank building inventory never decremented                    | 32 houses / 12 hotels are cosmetic until building lands                                                                                      |
+| Bankrupt players are not skipped in turn order               | Latent: bankruptcy is never set                                                                                                              |
+| Utility rent after a card-driven arrival                     | Uses the turn's original roll rather than a fresh throw. Not reachable with the current deck                                                 |
+| `movePlayerTo`'s pass-GO test is `nextPosition < position`   | True for _any_ backward move. Safe only because `MoveSteps` always passes `collectGo: false`                                                 |
+| `BuyLandedAsset` and the auction bypass the money primitives | They mutate cash inline and log their own event, so the "every amount goes through one of two choke points" invariant is not total           |

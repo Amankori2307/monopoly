@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { GameCommandType, PendingDecisionType, TurnPhase } from '../types/game.enums';
 import { CardDeck, CardEffectKind, DeckName, SpaceKind } from '../types/game.enums';
 import type { DeckCard } from '../types/game.interfaces';
-import { AUCTION_START_PRICE, JAIL_POSITION } from '../constants/game.constants';
+import {
+  AUCTION_START_PRICE,
+  JAIL_FINE,
+  JAIL_POSITION,
+  MAX_JAIL_TURNS,
+  MORTGAGE_INTEREST_PERCENT,
+} from '../constants/game.constants';
 import type { GameState } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
-import { isOwnableSpace } from './space.utils';
+import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { SeededRandomSource } from './rng';
 
 const createBaseGame = () =>
@@ -806,5 +812,458 @@ describe('a full three-doubles turn', () => {
     ).nextState;
     expect(state.turn.doublesCount).toBe(1);
     expect(state.playerOrder[state.activePlayerIndex]).toBe(activePlayerId);
+  });
+});
+
+/**
+ * A player who cannot pay must not be released from Jail.
+ *
+ * Both jail-fine paths called resolveBankPayment, which raises an
+ * asset-liquidation decision when the player is short - and then overwrote that
+ * decision back to `none` and un-jailed them anyway. Two separate sites with the
+ * same defect: the voluntary fine, and the mandatory one on the third turn.
+ */
+describe('the jail fine when the player cannot afford it', () => {
+  const jailedBrokePlayer = () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: {
+          ...game.players[activePlayerId],
+          cash: JAIL_FINE - 1,
+          inJail: true,
+          // A genuinely jailed player stands on the Jail square.
+          position: JAIL_POSITION,
+        },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.JailChoice as const,
+        playerId: activePlayerId,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+  };
+
+  it('keeps a broke player in Jail when they try to pay the fine', () => {
+    const game = jailedBrokePlayer();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.PayJailFine },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.players[activePlayerId].inJail).toBe(true);
+    expect(result.nextState.pendingDecision.type).toBe(
+      PendingDecisionType.AssetLiquidation
+    );
+    expect(result.nextState.players[activePlayerId].cash).toBe(JAIL_FINE - 1);
+  });
+
+  it('keeps a broke player in Jail on the mandatory third-turn fine', () => {
+    const game = jailedBrokePlayer();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const onLastAttempt = {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: {
+          ...game.players[activePlayerId],
+          jailTurnsServed: MAX_JAIL_TURNS - 1,
+        },
+      },
+    };
+
+    // Seed 3 rolls 2 and 4 - not doubles, so this is the failed third attempt.
+    const result = executeGameCommand(
+      onLastAttempt,
+      { type: GameCommandType.AttemptJailRoll },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.players[activePlayerId].inJail).toBe(true);
+    expect(result.nextState.pendingDecision.type).toBe(
+      PendingDecisionType.AssetLiquidation
+    );
+    // Not moved off the Jail square either.
+    expect(result.nextState.players[activePlayerId].position).toBe(JAIL_POSITION);
+  });
+});
+
+/**
+ * Mortgaging, redeeming, and settling a debt.
+ *
+ * asset-liquidation used to be a dead end: the payment primitives recorded the
+ * debt without moving any money, and nothing could clear the decision. These
+ * three commands are the way out.
+ */
+describe('mortgage, redeem and settle', () => {
+  /** The active player owning the first street on the board. */
+  const withOwnedStreet = (overrides: Partial<GameState> = {}) => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const street = game.board.find(isStreetSpace);
+    if (!street) {
+      throw new Error('No street on the board');
+    }
+    return {
+      state: {
+        ...game,
+        ownership: {
+          ...game.ownership,
+          [street.id]: { ownerPlayerId: activePlayerId, mortgaged: false, buildLevel: 0 },
+        },
+        ...overrides,
+      } as GameState,
+      street,
+      activePlayerId,
+    };
+  };
+
+  describe('mortgageAsset', () => {
+    it('pays the mortgage value and marks the site mortgaged', () => {
+      const { state, street, activePlayerId } = withOwnedStreet();
+      const cashBefore = state.players[activePlayerId].cash;
+
+      const result = executeGameCommand(
+        state,
+        { type: GameCommandType.MortgageAsset, spaceId: street.id },
+        new SeededRandomSource(3)
+      );
+
+      expect(result.nextState.players[activePlayerId].cash).toBe(
+        cashBefore + street.mortgageValue
+      );
+      expect(result.nextState.ownership[street.id].mortgaged).toBe(true);
+    });
+
+    it('logs the amount, so it reaches the activity log and a toast', () => {
+      const { state, street } = withOwnedStreet();
+
+      const result = executeGameCommand(
+        state,
+        { type: GameCommandType.MortgageAsset, spaceId: street.id },
+        new SeededRandomSource(3)
+      );
+
+      expect(result.nextState.history[0].message).toContain(String(street.mortgageValue));
+      expect(result.nextState.history[0].message).toContain(street.name);
+    });
+
+    it('refuses a site the player does not own', () => {
+      const game = createBaseGame();
+      const street = game.board.find(isStreetSpace);
+
+      expect(() =>
+        executeGameCommand(
+          game,
+          { type: GameCommandType.MortgageAsset, spaceId: street!.id },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/does not own/i);
+    });
+
+    it('refuses a site that is already mortgaged', () => {
+      const { state, street, activePlayerId } = withOwnedStreet();
+      const alreadyMortgaged: GameState = {
+        ...state,
+        ownership: {
+          ...state.ownership,
+          [street.id]: { ownerPlayerId: activePlayerId, mortgaged: true, buildLevel: 0 },
+        },
+      };
+
+      expect(() =>
+        executeGameCommand(
+          alreadyMortgaged,
+          { type: GameCommandType.MortgageAsset, spaceId: street.id },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/already mortgaged/i);
+    });
+
+    // A no-op today because buildLevel is never written, but the rule is real
+    // and the guard has to exist before building lands.
+    it('refuses a site whose colour set still holds buildings', () => {
+      const { state, street, activePlayerId } = withOwnedStreet();
+      const sibling = state.board.find(
+        (space) =>
+          isStreetSpace(space) &&
+          space.colorGroup === street.colorGroup &&
+          space.id !== street.id
+      );
+      if (!sibling) {
+        throw new Error('Expected another street in the same colour group');
+      }
+      const built: GameState = {
+        ...state,
+        ownership: {
+          ...state.ownership,
+          [sibling.id]: {
+            ownerPlayerId: activePlayerId,
+            mortgaged: false,
+            buildLevel: 1,
+          },
+        },
+      };
+
+      expect(() =>
+        executeGameCommand(
+          built,
+          { type: GameCommandType.MortgageAsset, spaceId: street.id },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/sell the buildings/i);
+    });
+
+    it('refuses a space nobody can own', () => {
+      const game = createBaseGame();
+      const chance = game.board.find((space) => space.kind === SpaceKind.Chance);
+
+      expect(() =>
+        executeGameCommand(
+          game,
+          { type: GameCommandType.MortgageAsset, spaceId: chance!.id },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/cannot be mortgaged/i);
+    });
+  });
+
+  describe('unmortgageAsset', () => {
+    const withMortgagedStreet = () => {
+      const { state, street, activePlayerId } = withOwnedStreet();
+      return {
+        street,
+        activePlayerId,
+        state: {
+          ...state,
+          ownership: {
+            ...state.ownership,
+            [street.id]: {
+              ownerPlayerId: activePlayerId,
+              mortgaged: true,
+              buildLevel: 0,
+            },
+          },
+        } as GameState,
+      };
+    };
+
+    it('charges the mortgage value plus interest, rounded up', () => {
+      const { state, street, activePlayerId } = withMortgagedStreet();
+      const cashBefore = state.players[activePlayerId].cash;
+      const expectedCost =
+        street.mortgageValue +
+        Math.ceil((street.mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
+
+      const result = executeGameCommand(
+        state,
+        { type: GameCommandType.UnmortgageAsset, spaceId: street.id },
+        new SeededRandomSource(3)
+      );
+
+      expect(result.nextState.players[activePlayerId].cash).toBe(
+        cashBefore - expectedCost
+      );
+      expect(result.nextState.ownership[street.id].mortgaged).toBe(false);
+    });
+
+    it('refuses a site that is not mortgaged', () => {
+      const { state, street } = withOwnedStreet();
+
+      expect(() =>
+        executeGameCommand(
+          state,
+          { type: GameCommandType.UnmortgageAsset, spaceId: street.id },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/not mortgaged/i);
+    });
+
+    it('refuses when the player cannot afford the redemption', () => {
+      const { state, street, activePlayerId } = withMortgagedStreet();
+      const broke: GameState = {
+        ...state,
+        players: {
+          ...state.players,
+          [activePlayerId]: { ...state.players[activePlayerId], cash: 0 },
+        },
+      };
+
+      expect(() =>
+        executeGameCommand(
+          broke,
+          { type: GameCommandType.UnmortgageAsset, spaceId: street.id },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/cannot afford/i);
+    });
+  });
+
+  describe('settleDebt — the way out of the deadlock', () => {
+    /** A player who lands on an opponent's street with too little cash. */
+    const owingRent = () => {
+      const game = createBaseGame();
+      const [debtorId, creditorId] = game.playerOrder;
+      const street = game.board.find(isStreetSpace);
+      if (!street) {
+        throw new Error('No street on the board');
+      }
+      const rentOwed = street.rents.baseRent;
+
+      return {
+        street,
+        debtorId,
+        creditorId,
+        rentOwed,
+        state: {
+          ...game,
+          players: {
+            ...game.players,
+            // Short of the rent, but owns a site worth mortgaging.
+            [debtorId]: { ...game.players[debtorId], cash: rentOwed - 1 },
+          },
+          ownership: {
+            ...game.ownership,
+            [street.id]: {
+              ownerPlayerId: creditorId,
+              mortgaged: false,
+              buildLevel: 0,
+            },
+          },
+          pendingDecision: {
+            type: PendingDecisionType.AssetLiquidation as const,
+            playerId: debtorId,
+            amountDue: rentOwed,
+            creditorPlayerId: creditorId,
+            reason: `rent on ${street.name}`,
+          },
+          turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+        } as GameState,
+      };
+    };
+
+    it('refuses to settle while the debtor still cannot pay', () => {
+      const { state } = owingRent();
+
+      expect(() =>
+        executeGameCommand(
+          state,
+          { type: GameCommandType.SettleDebt },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/cannot cover/i);
+    });
+
+    it('throws when there is no debt at all', () => {
+      expect(() =>
+        executeGameCommand(
+          createBaseGame(),
+          { type: GameCommandType.SettleDebt },
+          new SeededRandomSource(3)
+        )
+      ).toThrow(/no debt to settle/i);
+    });
+
+    // The whole point of the step: mortgage to raise the cash, then settle.
+    it('lets the debtor mortgage a site and settle, paying the creditor', () => {
+      const { state, debtorId, creditorId, rentOwed } = owingRent();
+      const ownSite = state.board.find(
+        (space) =>
+          isStreetSpace(space) && state.ownership[space.id].ownerPlayerId === null
+      );
+      if (!ownSite) {
+        throw new Error('Expected an unowned street to assign to the debtor');
+      }
+      const withAsset: GameState = {
+        ...state,
+        ownership: {
+          ...state.ownership,
+          [ownSite.id]: { ownerPlayerId: debtorId, mortgaged: false, buildLevel: 0 },
+        },
+      };
+      const creditorCashBefore = withAsset.players[creditorId].cash;
+
+      // The debtor is not the active player here, but mortgaging is theirs to do
+      // - so drive it as the active player would in the real flow.
+      const activeIsDebtor: GameState = {
+        ...withAsset,
+        activePlayerIndex: withAsset.playerOrder.indexOf(debtorId),
+      };
+
+      const mortgaged = executeGameCommand(
+        activeIsDebtor,
+        { type: GameCommandType.MortgageAsset, spaceId: ownSite.id },
+        new SeededRandomSource(3)
+      ).nextState;
+
+      // Mortgaging must not clear the debt - that was the original bug shape.
+      expect(mortgaged.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+      expect(mortgaged.players[debtorId].cash).toBeGreaterThanOrEqual(rentOwed);
+
+      const settled = executeGameCommand(
+        mortgaged,
+        { type: GameCommandType.SettleDebt },
+        new SeededRandomSource(3)
+      ).nextState;
+
+      expect(settled.pendingDecision.type).toBe(PendingDecisionType.None);
+      // The creditor is actually paid - the insolvent branch never did this.
+      expect(settled.players[creditorId].cash).toBe(creditorCashBefore + rentOwed);
+      expect(settled.turn.phase).toBe(TurnPhase.TurnComplete);
+    });
+
+    it('pays the bank when the debt has no creditor', () => {
+      const { state, debtorId, rentOwed } = owingRent();
+      const bankDebt: GameState = {
+        ...state,
+        players: {
+          ...state.players,
+          [debtorId]: { ...state.players[debtorId], cash: rentOwed },
+        },
+        pendingDecision: {
+          type: PendingDecisionType.AssetLiquidation,
+          playerId: debtorId,
+          amountDue: rentOwed,
+          creditorPlayerId: null,
+          reason: 'Income Tax',
+        },
+      };
+
+      const settled = executeGameCommand(
+        bankDebt,
+        { type: GameCommandType.SettleDebt },
+        new SeededRandomSource(3)
+      ).nextState;
+
+      expect(settled.pendingDecision.type).toBe(PendingDecisionType.None);
+      expect(settled.players[debtorId].cash).toBe(0);
+    });
+
+    it('restores the extra roll a double earned before the debt arose', () => {
+      const { state, debtorId, rentOwed } = owingRent();
+      const afterDoubles: GameState = {
+        ...state,
+        players: {
+          ...state.players,
+          [debtorId]: { ...state.players[debtorId], cash: rentOwed },
+        },
+        turn: { ...state.turn, doublesCount: 1, canRollAgain: false },
+      };
+
+      const settled = executeGameCommand(
+        afterDoubles,
+        { type: GameCommandType.SettleDebt },
+        new SeededRandomSource(3)
+      ).nextState;
+
+      expect(settled.turn.canRollAgain).toBe(true);
+      expect(settled.turn.phase).toBe(TurnPhase.AwaitExtraRollOrEnd);
+    });
   });
 });
