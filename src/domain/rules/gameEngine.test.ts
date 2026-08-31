@@ -356,3 +356,95 @@ describe('money events', () => {
     expect(goEvent?.message).toContain('₹200');
   });
 });
+
+/**
+ * Answering a blocking decision has to restore the extra roll a double earned.
+ * `canRollAgain` is false while the decision blocks the turn, so any path that
+ * read it back concluded the turn was over - which is how declining a property
+ * silently forfeited an extra roll that buying it kept.
+ */
+describe('the extra roll survives a decision', () => {
+  /** Lands the active player on an unowned street after rolling doubles. */
+  const gameOnUnownedStreetAfterDoubles = () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const street = game.board.find((space) => space.kind === SpaceKind.Street);
+    if (!street) {
+      throw new Error('No street on the board');
+    }
+    // Seed the doubles the roll would have produced, then land on the street.
+    return {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position: street.index },
+      },
+      ownership: {
+        ...game.ownership,
+        [street.id]: { ownerPlayerId: null, mortgaged: false, buildLevel: 0 },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.LandedUnownedProperty as const,
+        spaceId: street.id,
+        playerId: activePlayerId,
+      },
+      turn: {
+        phase: TurnPhase.AwaitDecision,
+        doublesCount: 1,
+        // False on purpose: this is exactly the state resolveCurrentSpace leaves
+        // behind when a decision blocks the turn.
+        canRollAgain: false,
+        lastRoll: [3, 3],
+        reason: 'Decide whether to buy.',
+      },
+    };
+  };
+
+  it('keeps the extra roll after buying', () => {
+    const result = executeGameCommand(
+      gameOnUnownedStreetAfterDoubles(),
+      { type: GameCommandType.BuyLandedAsset },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.turn.canRollAgain).toBe(true);
+    expect(result.nextState.turn.phase).toBe(TurnPhase.AwaitExtraRollOrEnd);
+  });
+
+  it('keeps the extra roll after declining, once the auction settles', () => {
+    let state = executeGameCommand(
+      gameOnUnownedStreetAfterDoubles(),
+      { type: GameCommandType.DeclineLandedAsset },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    // Every player passes, so the auction ends with nobody buying.
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      if (state.pendingDecision.type !== PendingDecisionType.AuctionBid) {
+        break;
+      }
+      state = executeGameCommand(
+        state,
+        { type: GameCommandType.PassAuction },
+        new SeededRandomSource(3)
+      ).nextState;
+    }
+
+    expect(state.pendingDecision.type).toBe(PendingDecisionType.None);
+    expect(state.turn.canRollAgain).toBe(true);
+    expect(state.turn.phase).toBe(TurnPhase.AwaitExtraRollOrEnd);
+  });
+
+  it('ends the turn after a decision when the roll was not doubles', () => {
+    const game = gameOnUnownedStreetAfterDoubles();
+
+    const result = executeGameCommand(
+      { ...game, turn: { ...game.turn, doublesCount: 0 } },
+      { type: GameCommandType.BuyLandedAsset },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.turn.canRollAgain).toBe(false);
+    expect(result.nextState.turn.phase).toBe(TurnPhase.TurnComplete);
+  });
+});

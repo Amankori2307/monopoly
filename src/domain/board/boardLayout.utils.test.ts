@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { BOARD_SIZE, CORNER_POSITIONS } from '../constants/game.constants';
+import { BOARD_SIZE, CORNER_POSITIONS, MAX_PLAYERS } from '../constants/game.constants';
 import {
   BOARD_GRID_SIZE,
   boardIndexToGridPosition,
   getBoardCellCenter,
+  getTokenCrowdOffset,
 } from './boardLayout.utils';
 
 describe('boardIndexToGridPosition', () => {
@@ -107,5 +108,65 @@ describe('getBoardCellCenter', () => {
       Math.abs(getBoardCellCenter(a).leftPercent - getBoardCellCenter(b).leftPercent);
 
     expect(gap(2, 3)).toBeCloseTo(gap(3, 4), 5);
+  });
+});
+
+describe('getTokenCrowdOffset', () => {
+  /**
+   * The narrowest cell is a non-corner space: one 1fr track out of
+   * 1.7 + 1.7 + 9 = 12.4, so about 8% of the board wide. Half of that either
+   * side of the centre is the budget an offset has to stay inside.
+   */
+  const CELL_HALF_WIDTH_PERCENT = (1 / 12.4 / 2) * 100;
+
+  // Most spaces hold one token or none, so this is the case that has to be right.
+  it('puts a lone token exactly on its space', () => {
+    expect(getTokenCrowdOffset(0)).toEqual({ leftOffset: 0, topOffset: 0 });
+  });
+
+  it('keeps every token inside its cell at the maximum player count', () => {
+    for (let index = 0; index < MAX_PLAYERS; index += 1) {
+      const { leftOffset, topOffset } = getTokenCrowdOffset(index);
+
+      expect(Math.abs(leftOffset)).toBeLessThan(CELL_HALF_WIDTH_PERCENT);
+      expect(Math.abs(topOffset)).toBeLessThan(CELL_HALF_WIDTH_PERCENT);
+    }
+  });
+
+  // The offset used to be `index * step` on both axes, so the eighth token at a
+  // corner landed past 100% - off the board entirely.
+  it('does not grow with the crowd', () => {
+    const extents = Array.from({ length: MAX_PLAYERS }, (unused, index) => {
+      const { leftOffset, topOffset } = getTokenCrowdOffset(index);
+      return Math.max(Math.abs(leftOffset), Math.abs(topOffset));
+    });
+
+    expect(Math.max(...extents)).toBe(Math.max(...extents.slice(0, 2)));
+  });
+
+  it('grows outwards around the centre', () => {
+    const second = getTokenCrowdOffset(1);
+
+    expect(second.leftOffset).toBeLessThan(0);
+    expect(getTokenCrowdOffset(2).leftOffset).toBeGreaterThan(0);
+    expect(getTokenCrowdOffset(2).topOffset).toBe(second.topOffset);
+  });
+
+  it('gives each token in a crowd its own position', () => {
+    const seen = new Set(
+      Array.from({ length: MAX_PLAYERS }, (unused, index) => {
+        const { leftOffset, topOffset } = getTokenCrowdOffset(index);
+        return `${leftOffset},${topOffset}`;
+      })
+    );
+
+    expect(seen.size).toBe(MAX_PLAYERS);
+  });
+
+  // Defensive: the engine caps players at MAX_PLAYERS, but an offset that ran
+  // off the board is exactly the bug being fixed, so clamp rather than trust.
+  it('clamps an index beyond the maximum player count', () => {
+    expect(getTokenCrowdOffset(99)).toEqual(getTokenCrowdOffset(MAX_PLAYERS - 1));
+    expect(getTokenCrowdOffset(-3)).toEqual(getTokenCrowdOffset(0));
   });
 });

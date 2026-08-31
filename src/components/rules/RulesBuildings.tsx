@@ -1,3 +1,10 @@
+import {
+  AUCTION_START_PRICE,
+  HOTELS_AVAILABLE,
+  HOUSES_AVAILABLE,
+} from '../../domain/constants/game.constants';
+import { formatMoney } from '../../shared/utils/money.utils';
+
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesBuildings() {
   return (
@@ -19,8 +26,9 @@ export function RulesBuildings() {
         </li>
         <li>You cannot build in a color set while any city in that set is mortgaged.</li>
         <li>
-          There are 32 houses and 12 hotels. If supply is contested, the Banker auctions
-          the last available building from M10.
+          There are {HOUSES_AVAILABLE} houses and {HOTELS_AVAILABLE} hotels. If supply is
+          contested, the Banker auctions the last available building from{' '}
+          {formatMoney(AUCTION_START_PRICE)}.
         </li>
       </ul>
     </section>

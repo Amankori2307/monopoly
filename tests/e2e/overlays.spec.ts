@@ -56,28 +56,20 @@ test('shows a pending decision as a blocking centre modal', async ({ page }) => 
   await startGame(page);
 
   const modal = page.getByTestId(TEST_IDS.decisionModal);
-  const rollButton = page.getByTestId(TEST_IDS.rollButton);
-  const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
 
-  const MAX_ROLLS = 12;
-  for (let attempt = 0; attempt < MAX_ROLLS; attempt += 1) {
+  // advanceGame waits out the token walk before concluding there is nothing to
+  // do, which a fixed wait here did not - it gave up mid-walk under load.
+  // Answering neither buys nor cards leaves whichever modal appears on screen.
+  for (let attempt = 0; attempt < 30; attempt += 1) {
     if (await modal.isVisible()) {
       break;
     }
-    if (await rollButton.isEnabled()) {
-      await rollButton.click();
-      await page.waitForTimeout(700);
-    } else if (await endTurnButton.isVisible()) {
-      await endTurnButton.click();
-    } else {
-      // Nothing actionable yet: a decision is withheld while the token walks.
-      // Wait for the walk to settle rather than reporting a dead end.
-      await page.waitForTimeout(300);
-      if (attempt > 8 && !(await buyButton.isVisible())) {
-        // Still nothing after a couple of seconds: the game really has no
-        // action, so let the caller's assertion report it.
-        break;
-      }
+    const action = await advanceGame(page, {
+      acknowledgeCards: false,
+      declineBuys: false,
+    });
+    if (action === 'buy-available' || action === 'none') {
+      break;
     }
   }
 

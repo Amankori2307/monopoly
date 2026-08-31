@@ -245,6 +245,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                   | Corner geometry, title deed, ribbon placement, dividers, outlines, theming. |
 | [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                 | Three-column layout, action rail, dice placement, player stack.             |
 | [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)             | Decision modal, activity drawer, player detail drawer, dice roll.           |
+| [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)         | Eight-player layout: token cluster stays on the board, dice stay reachable. |
 | [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)             | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.  |
 
 ## Config

@@ -9,9 +9,20 @@ export const CORNERS = [
   { index: 30, label: 'Go To Jail' },
 ] as const;
 
-/** Creates a fresh game and waits for the board. Every spec starts here. */
-export const startGame = async (page: Page) => {
+/**
+ * Creates a fresh game and waits for the board. Every spec starts here.
+ *
+ * `players` defaults to the form's own default of two. Pass MAX_PLAYERS to
+ * exercise the crowded cases - a full table is where the sidebar and the token
+ * cluster are under the most pressure.
+ */
+export const startGame = async (page: Page, options: { players?: number } = {}) => {
   await page.goto('/');
+
+  if (options.players !== undefined) {
+    await page.getByTestId(TEST_IDS.playerCountInput).fill(String(options.players));
+  }
+
   await page.getByRole('button', { name: 'Create game' }).click();
   await expect(page).toHaveURL(/\/game\//);
   await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();

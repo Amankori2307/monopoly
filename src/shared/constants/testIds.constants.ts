@@ -77,6 +77,7 @@ export const TEST_IDS = {
   rentSchedule: 'rent-schedule',
 
   // Setup
+  playerCountInput: 'player-count-input',
   setupForm: 'setup-form',
   recentGamesList: 'recent-games-list',
   recentGameItem: 'recent-game-item',

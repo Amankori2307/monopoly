@@ -66,6 +66,16 @@ cash directly, and pass-GO wrote its own sentence with the amount and symbol har
 - **Toasts are a polite live region, not an alert.** They report what happened and must not
   interrupt a screen reader. Anything the player has to answer is a decision modal instead.
 
+- **The stack sits in the sidebar's flow, directly above the turn controls — it does not float.**
+  Two attempts at floating it both covered something, because this screen has no free corner:
+  bottom-right is the dice and the end-turn button (a toast there literally swallowed the click that
+  rolled), and bottom-left is the board's own edge and the deed card. In the sidebar it occupies
+  space nothing else wants. Two details make it work: the `margin-top: auto` that bottom-pins the
+  pair lives on the toast stack now rather than on `.turn-controls`, and the stack is **not**
+  `display: none` when empty — that would drop the auto margin and unpin the dice in the common
+  case. It keeps `position: relative; z-index: 45` so it still paints above the decision backdrop
+  (40), because a toast usually reports what the modal on screen just caused.
+
 - **Toasts are never persisted.** They live in `uiSlice`, the documented home for ephemeral UI
   state, and a reload starts clean.
 
@@ -76,20 +86,21 @@ cash directly, and pass-GO wrote its own sentence with the amount and symbol har
 
 ## State and data
 
-- `uiSlice.toasts: Toast[]` — ephemeral, capped at `MAX_VISIBLE_TOASTS`, not persisted.
+- `uiSlice.toasts: Toast[]` — ephemeral, capped at `MAX_VISIBLE_TOASTS` (3, since the stack now
+  reserves sidebar space), not persisted.
 - `GameState.pendingDecision` gains the `card-draw` variant, carrying `{ playerId, deck, card }`.
   Persisted, via `.passthrough()`. No version bump — see Key decisions.
 - `GameState.history` gains events for tax, both jail fines, and every card cash effect.
 
 ## Tests
 
-| Level       | File                                                                                              | Covers                                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Unit        | [toastFeed.utils.test.ts](../../src/features/game/toastFeed.utils.test.ts)                        | tone classification, the history delta, the cap fallback, reading order                                                 |
-| Unit        | [gameEngine.test.ts](../../src/domain/rules/gameEngine.test.ts)                                   | draw holds without applying, acknowledge applies once, jail keeps no extra roll, doubles do, throw branch, money events |
-| Unit        | [CardDrawDecision.test.tsx](../../src/components/game/panels/decisions/CardDrawDecision.test.tsx) | card copy, who drew it, one control only                                                                                |
-| Integration | [persistence.integration.test.ts](../../src/features/persistence/persistence.integration.test.ts) | the drawn card survives save → load, and a card-draw missing its card is rejected                                       |
-| E2E         | [feedback.spec.ts](../../tests/e2e/feedback.spec.ts)                                              | toast appears and dismisses, card is readable and applies only on OK across a reload, ₹ throughout                      |
+| Level       | File                                                                                              | Covers                                                                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit        | [toastFeed.utils.test.ts](../../src/features/game/toastFeed.utils.test.ts)                        | tone classification, the history delta, the cap fallback, reading order                                                                                           |
+| Unit        | [gameEngine.test.ts](../../src/domain/rules/gameEngine.test.ts)                                   | draw holds without applying, acknowledge applies once, jail keeps no extra roll, doubles do, throw branch, money events                                           |
+| Unit        | [CardDrawDecision.test.tsx](../../src/components/game/panels/decisions/CardDrawDecision.test.tsx) | card copy, who drew it, one control only                                                                                                                          |
+| Integration | [persistence.integration.test.ts](../../src/features/persistence/persistence.integration.test.ts) | the drawn card survives save → load, and a card-draw missing its card is rejected                                                                                 |
+| E2E         | [feedback.spec.ts](../../tests/e2e/feedback.spec.ts)                                              | toast appears and dismisses, never intercepts a click on the dice or end-turn (hit-tested), card is readable and applies only on OK across a reload, ₹ throughout |
 
 ## Known gaps
 

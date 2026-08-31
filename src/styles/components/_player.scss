@@ -12,9 +12,25 @@
 // ---------------------------------------------------------------------------
 // No panel around the stack: the cards are the only surface.
 .player-stack-region {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: t.$gap-sm;
   min-width: 0;
+  // Without min-height:0 a flex item refuses to shrink below its content, so at
+  // eight players the stack pushed the turn controls out of the column.
+  min-height: 0;
+  // Resolves against .game-side's definite height. A short stack is unaffected:
+  // this caps the share, it does not claim it.
+  max-height: t.$player-stack-max-share;
+}
+
+// Only the cards scroll; the Collapse button stays pinned below them, or it
+// would scroll out of reach exactly when a long stack needs it.
+.player-stack-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  // Room for the collapsed stack's outermost card, which insets as it tapers.
+  padding-right: 2px;
 }
 
 .player-stack {
@@ -115,7 +131,8 @@
 
 /** Small text control, shown only while the stack is expanded. */
 .player-stack-collapse {
-  justify-self: start;
+  align-self: start;
+  flex: none;
   padding: 4px 10px;
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;

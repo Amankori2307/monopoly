@@ -58,6 +58,12 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   command surface is still growing.
 - **`resolveCurrentSpace` is shared** by dice movement and card-driven movement, so "advance to
   Mumbai" resolves rent exactly like landing there normally.
+- **`doublesCount`, not `canRollAgain`, is what survives a decision.** `resolveCurrentSpace` sets
+  `canRollAgain: false` while a decision blocks the turn, so `resumeTurnAfterDecision` restores the
+  phase from `doublesCount` instead. It is the single place that does so — buying, both auction
+  outcomes, and acknowledging a card all route through it. Before that, declining a property
+  forfeited an extra roll that buying it kept. Full doubles matrix in
+  [india-edition-rules.md](../india-edition-rules.md) section 5.
 - **A drawn card is a decision, not a side effect** — the draw and the effect are two commands, so
   the player sees the card before it acts on them. Rationale and traps in
   [action-feedback.md](action-feedback.md).

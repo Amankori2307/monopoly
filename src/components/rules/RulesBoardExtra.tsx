@@ -1,3 +1,9 @@
+import {
+  AUCTION_MIN_INCREMENT,
+  AUCTION_START_PRICE,
+} from '../../domain/constants/game.constants';
+import { formatMoney } from '../../shared/utils/money.utils';
+
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesBoardExtra() {
   return (
@@ -10,12 +16,14 @@ export function RulesBoardExtra() {
         players.
       </p>
       <ul>
-        <li>Auctions start at M10.</li>
+        <li>Auctions start at {formatMoney(AUCTION_START_PRICE)}.</li>
         <li>
           Any player, including the player who landed there and the Banker if playing, may
           bid.
         </li>
-        <li>Each bid can increase by as little as M1.</li>
+        <li>
+          Each bid can increase by as little as {formatMoney(AUCTION_MIN_INCREMENT)}.
+        </li>
         <li>
           The highest bidder pays the Bank and takes the title deed. If nobody bids, the
           asset remains with the Bank.

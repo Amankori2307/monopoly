@@ -1,4 +1,7 @@
-import { getBoardCellCenter } from '../../../domain/board/boardLayout.utils';
+import {
+  getBoardCellCenter,
+  getTokenCrowdOffset,
+} from '../../../domain/board/boardLayout.utils';
 import type { PlayerState, ThemeToken } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { TokenPositions } from './board.interfaces';
@@ -8,9 +11,6 @@ interface BoardTokenLayerProps {
   players: PlayerState[];
   positions: TokenPositions;
 }
-
-/** Nudge so tokens sharing a space stay individually visible. */
-const CROWD_OFFSET_PERCENT = 1.6;
 
 /**
  * Player tokens, drawn over the board rather than inside the space cells.
@@ -29,10 +29,10 @@ export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLay
         const space = positions[player.id] ?? player.position;
         const { leftPercent, topPercent } = getBoardCellCenter(space);
 
-        // Fan out tokens that share a space so none is hidden behind another.
+        // Cluster tokens that share a space so none is hidden behind another.
         const crowdIndex = occupants.get(space) ?? 0;
         occupants.set(space, crowdIndex + 1);
-        const nudge = crowdIndex * CROWD_OFFSET_PERCENT;
+        const { leftOffset, topOffset } = getTokenCrowdOffset(crowdIndex);
 
         const token = findToken(player.tokenId);
 
@@ -45,8 +45,8 @@ export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLay
             role="img"
             // Base colour inline; the sphere shading is colour-agnostic CSS.
             style={{
-              left: `${leftPercent + nudge}%`,
-              top: `${topPercent + nudge}%`,
+              left: `${leftPercent + leftOffset}%`,
+              top: `${topPercent + topOffset}%`,
               backgroundColor: token?.color,
             }}
             title={player.name}

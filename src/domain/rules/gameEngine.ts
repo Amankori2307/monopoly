@@ -372,16 +372,9 @@ const completeAuctionIfPossible = (state: GameState): GameState => {
 
   if (remainingPlayers.length === 0 || !auction.highestBidderId) {
     return {
-      ...state,
+      ...resumeTurnAfterDecision(state),
       auctionState: null,
       pendingDecision: { type: PendingDecisionType.None },
-      turn: {
-        ...state.turn,
-        phase: state.turn.canRollAgain
-          ? TurnPhase.AwaitExtraRollOrEnd
-          : TurnPhase.TurnComplete,
-        reason: null,
-      },
     };
   }
 
@@ -399,16 +392,9 @@ const completeAuctionIfPossible = (state: GameState): GameState => {
   }));
 
   nextState = {
-    ...nextState,
+    ...resumeTurnAfterDecision(nextState),
     auctionState: null,
     pendingDecision: { type: PendingDecisionType.None },
-    turn: {
-      ...nextState.turn,
-      phase: nextState.turn.canRollAgain
-        ? TurnPhase.AwaitExtraRollOrEnd
-        : TurnPhase.TurnComplete,
-      reason: null,
-    },
   };
 
   return appendEvents(nextState, [
@@ -615,6 +601,31 @@ const getRentForSpace = (
     return getRailwayRent(state, ownerPlayerId);
   }
   return getUtilityRent(state, ownerPlayerId, diceTotal);
+};
+
+/**
+ * The turn state to restore once a blocking decision has been answered.
+ *
+ * `canRollAgain` cannot be read for this: resolveCurrentSpace sets it false
+ * whenever a decision blocks the turn, so anything reading it back after the
+ * decision concludes the turn is over. `doublesCount` is the durable fact.
+ *
+ * Buying used to derive this from doublesCount while the auction paths read
+ * canRollAgain, so declining a property silently forfeited the extra roll that
+ * buying it kept.
+ */
+const resumeTurnAfterDecision = (state: GameState): GameState => {
+  const canRollAgain = state.turn.doublesCount > 0;
+
+  return {
+    ...state,
+    turn: {
+      ...state.turn,
+      phase: canRollAgain ? TurnPhase.AwaitExtraRollOrEnd : TurnPhase.TurnComplete,
+      canRollAgain,
+      reason: null,
+    },
+  };
 };
 
 /** Which phase the turn lands in once the current space has resolved. */
@@ -1101,18 +1112,13 @@ export const executeGameCommand = (
       // unowned site, or a payment the player cannot afford. Only settle the
       // phase when it did not. The inJail guard matters because a card can send
       // the player to jail, and a jailed player must not keep an extra roll.
-      if (nextState.pendingDecision.type === PendingDecisionType.None) {
-        const canRollAgain =
-          nextState.turn.doublesCount > 0 && !getActivePlayer(nextState).inJail;
-        nextState = {
-          ...nextState,
-          turn: {
-            ...nextState.turn,
-            phase: canRollAgain ? TurnPhase.AwaitExtraRollOrEnd : TurnPhase.TurnComplete,
-            canRollAgain,
-            reason: null,
-          },
-        };
+      // A card can send the player to jail, and a jailed player keeps no extra
+      // roll - sendPlayerToJail has already ended the turn, so leave it alone.
+      if (
+        nextState.pendingDecision.type === PendingDecisionType.None &&
+        !getActivePlayer(nextState).inJail
+      ) {
+        nextState = resumeTurnAfterDecision(nextState);
       }
       break;
     }

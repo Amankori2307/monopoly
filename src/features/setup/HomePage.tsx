@@ -95,6 +95,7 @@ export function HomePage() {
                   Players
                   <input
                     className="text-input"
+                    data-testid={TEST_IDS.playerCountInput}
                     max={MAX_PLAYERS}
                     min={MIN_PLAYERS}
                     onChange={(event) => form.setPlayerCount(Number(event.target.value))}

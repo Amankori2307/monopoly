@@ -108,6 +108,10 @@ Starting cash `₹1500` · pass GO `₹200` · jail fine `₹50` · auction open
 Money moves through exactly two choke points, and both log an event: `resolveBankPayment` (out) and
 `creditFromBank` (in). Add a third and feedback silently stops working for it.
 
+**`doublesCount`, not `canRollAgain`, is what survives a blocking decision** — `resolveCurrentSpace`
+sets `canRollAgain: false` while one is pending. Restore the phase with `resumeTurnAfterDecision`;
+anything reading `canRollAgain` back after a decision silently eats the player's extra roll.
+
 Money values live in `domain/board/` and `gameEngine.ts` constants — never hardcode an amount in a component.
 
 ---

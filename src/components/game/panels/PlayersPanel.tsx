@@ -29,34 +29,41 @@ export function PlayersPanel({
 
   return (
     <div className="player-stack-region" data-testid={TEST_IDS.playersPanel}>
-      <div
-        className={`player-stack ${isExpanded ? 'is-expanded' : 'is-collapsed'}`}
-        data-testid={TEST_IDS.playerStack}
-      >
-        {/*
+      {/*
+        The stack scrolls inside its own box. At eight players an expanded stack
+        is taller than the sidebar, and without this it overflowed the column
+        and painted straight over the dice and the end-turn button.
+      */}
+      <div className="player-stack-scroll">
+        <div
+          className={`player-stack ${isExpanded ? 'is-expanded' : 'is-collapsed'}`}
+          data-testid={TEST_IDS.playerStack}
+        >
+          {/*
           Covers the collapsed stack so a click anywhere expands it, while
           keeping a real button for keyboard and screen-reader users.
         */}
-        {isExpanded ? null : (
-          <button
-            aria-expanded={false}
-            aria-label={`Show all ${summaries.length} players`}
-            className="player-stack-expand"
-            data-testid={TEST_IDS.playerStackExpand}
-            onClick={toggle}
-            type="button"
-          />
-        )}
+          {isExpanded ? null : (
+            <button
+              aria-expanded={false}
+              aria-label={`Show all ${summaries.length} players`}
+              className="player-stack-expand"
+              data-testid={TEST_IDS.playerStackExpand}
+              onClick={toggle}
+              type="button"
+            />
+          )}
 
-        {summaries.map((summary) => (
-          <PlayerCard
-            currencySymbol={currencySymbol}
-            isInteractive={isExpanded}
-            key={summary.player.id}
-            onOpen={onSelectPlayer}
-            summary={summary}
-          />
-        ))}
+          {summaries.map((summary) => (
+            <PlayerCard
+              currencySymbol={currencySymbol}
+              isInteractive={isExpanded}
+              key={summary.player.id}
+              onOpen={onSelectPlayer}
+              summary={summary}
+            />
+          ))}
+        </div>
       </div>
 
       {isExpanded ? (

@@ -72,6 +72,48 @@ test('shows a toast for the action just taken', async ({ page }) => {
   await expect(toast).toContainText(/rolled/);
 });
 
+/**
+ * Toasts used to sit bottom-right, which is where the dice and the end-turn
+ * button live - a toast landed on top of them and swallowed the click that
+ * rolled. Hit-testing the button's centre is the assertion that matters: it
+ * fails whether the toast covers it or merely intercepts pointer events.
+ */
+test('never covers the dice or the end-turn button', async ({ page }) => {
+  await startGame(page);
+
+  // Several actions in quick succession, so the stack is at its tallest.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await advanceGame(page);
+  }
+
+  const toasts = page.locator(`[data-testid^="${TEST_IDS.toast}-"]`);
+  await expect(toasts.first()).toBeVisible();
+
+  const blocked = await page.evaluate(
+    ([rollId, endTurnId, toastPrefix]) => {
+      const controls = [rollId, endTurnId]
+        .map((id) => document.querySelector(`[data-testid="${id}"]`))
+        .filter((node): node is Element => node !== null);
+
+      return controls.filter((control) => {
+        const box = control.getBoundingClientRect();
+        if (box.width === 0) {
+          return false;
+        }
+        // Whatever sits at the control's centre is what a click would hit.
+        const atCentre = document.elementFromPoint(
+          box.left + box.width / 2,
+          box.top + box.height / 2
+        );
+        return Boolean(atCentre?.closest(`[data-testid^="${toastPrefix}-"]`));
+      }).length;
+    },
+    [TEST_IDS.rollButton, TEST_IDS.endTurnButton, TEST_IDS.toast] as const
+  );
+
+  expect(blocked, 'a toast is intercepting clicks on a turn control').toBe(0);
+});
+
 test('dismisses a toast when it is clicked', async ({ page }) => {
   await startGame(page);
 
@@ -151,6 +193,9 @@ test('shows a drawn card and applies it only on OK', async ({ page }) => {
  * than that a card appeared.
  */
 test('keeps play moving across many turns, cards included', async ({ page }) => {
+  // Every action waits out a real token walk, so a dozen of them is slower than
+  // the default budget allows once the suite runs in parallel.
+  test.setTimeout(60_000);
   await startGame(page);
 
   const turnNumber = () =>
@@ -161,14 +206,16 @@ test('keeps play moving across many turns, cards included', async ({ page }) => 
       return JSON.parse(localStorage.getItem(key) as string).turnNumber as number;
     });
 
+  // A turn ends after two to four actions, so ten is ample to show progress.
+  // Long-run play is covered by overlays.spec's forty-turn deadlock guard.
   const startingTurn = await turnNumber();
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
     if ((await advanceGame(page)) === 'none') {
       break;
     }
   }
 
-  expect(await turnNumber(), 'play made no progress in 20 actions').toBeGreaterThan(
+  expect(await turnNumber(), 'play made no progress in 10 actions').toBeGreaterThan(
     startingTurn
   );
 });

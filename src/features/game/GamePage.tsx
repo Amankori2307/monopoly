@@ -5,6 +5,7 @@ import { useAnimatedTokenPositions } from '../../components/game/hooks/useAnimat
 import { ActionRail } from '../../components/game/panels/ActionRail';
 import { CommandErrorBanner } from '../../components/game/panels/CommandErrorBanner';
 import { HintsPanel } from '../../components/game/panels/HintsPanel';
+import { ToastStack } from '../../components/game/overlays/ToastStack';
 import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
@@ -12,7 +13,11 @@ import { getPropertyActions } from '../../domain/rules/playerActions.utils';
 import { selectSpaceOwnerMarks } from './boardOwnership.utils';
 import { GameOverlayLayer } from './GameOverlayLayer';
 import { selectSitePanel } from './sitePanel.utils';
-import { BOARD_CENTER_SUBTITLE, BOARD_CENTER_TITLE } from './game.constants';
+import {
+  BOARD_CENTER_SUBTITLE,
+  BOARD_CENTER_TITLE,
+  TOAST_DISMISS_MS,
+} from './game.constants';
 import { GameUnavailable } from './GameUnavailable';
 import {
   makeTokenFinder,
@@ -109,6 +114,18 @@ export function GamePage() {
                 </Link>
               </div>
             </div>
+
+            {/*
+              In the sidebar's own flow, immediately above the dice. Floating it
+              over the board meant it always covered something - first the dice
+              themselves, then the deed card and the board's left column. Here it
+              occupies space nothing else wants.
+            */}
+            <ToastStack
+              dismissAfterMs={TOAST_DISMISS_MS}
+              onDismiss={commands.dismissToast}
+              toasts={commands.toasts}
+            />
 
             <TurnControls
               canEndTurn={selectCanEndTurn(activeGame)}

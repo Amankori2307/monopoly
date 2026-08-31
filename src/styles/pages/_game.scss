@@ -59,12 +59,12 @@
   }
 }
 
-// Pushed to the bottom of the column, whatever the scroll area's height.
+// Sits at the bottom of the column. The auto margin that pushes the pair down
+// is on .toast-stack, which now sits directly above it.
 .turn-controls {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: auto;
   padding-top: 4px;
 }
 

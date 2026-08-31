@@ -80,6 +80,12 @@ exceptions to the sharp-corner system. The base colour is set inline from `Theme
 gradients and inset shading are colour-agnostic overlays, so the sphere reads over any colour.
 Colour is the only thing distinguishing pieces, so the token catalog uses vivid, separable colours.
 
+**Tokens sharing a space cluster around its centre**, from `getTokenCrowdOffset`: a lone token — much
+the commonest case — sits exactly on the space, and a crowd grows outwards around it into a fixed
+set of slots. The extent is bounded by that slot table rather than by the crowd size. The offset used
+to be `index * step` on both axes, which walked the eighth token at a corner clean off the board, so
+with a full table half the pieces ended up outside the grid entirely.
+
 After a roll the token **walks one space at a time** with a tick per step
 ([useAnimatedTokenPositions](../../src/components/game/hooks/useAnimatedTokenPositions.ts)), each
 hop eased fast → slow → fast. Only dice-sized forward hops are walked; a teleport (Go To Jail, a
@@ -93,7 +99,7 @@ then moved on by the card animates the net move, not both legs.
 
 ### Space card
 
-Every space card renders at one height (`$space-card-min-height`, sized to the tallest — a street
+Every space card renders at one height (`$deed-card-height`, sized to the tallest — a street
 with seven rent rows). Railways, utilities, tax, Chance and corners all pad out to match, so the
 card never resizes as you move around the board.
 
@@ -111,6 +117,15 @@ only behind a click.
 Cards render as a **collapsible stack**: the top card is the active player
 (`selectPlayerOrderFromActive`), so order alone conveys whose turn it is and no separate marker is
 needed. Clicking a card opens that player's holdings.
+
+**The stack scrolls inside its own box and may claim only `$player-stack-max-share` of the sidebar.**
+At eight players an expanded stack is taller than the column; without both of those it overflowed its
+flex item and painted straight over the dice and the end-turn button, and squeezed the links below it
+into a clipped strip. Two details make it work: `min-height: 0` on the region, because a flex item
+otherwise refuses to shrink below its content, and keeping the Collapse button _outside_ the scroll
+box so it stays reachable exactly when a long stack needs it. Below `$breakpoint-board` the sidebar
+has no definite height, the percentage cap does not apply, and the page scrolls instead — which is
+correct for a stacked layout.
 
 ### Holdings drawer
 

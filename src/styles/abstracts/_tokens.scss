@@ -75,6 +75,17 @@ $stack-tuck: 7px;
 $stack-inset: 9px;
 $stack-strip-height: 5px;
 $stack-expanded-max-height: 420px;
+// Most of the sidebar the player stack may claim. Eight expanded cards are
+// taller than the column, and without a ceiling they squeezed everything below
+// them - the links and the error banner - down to a clipped strip.
+$player-stack-max-share: 55%;
+
+// Floating controls over the board: the activity button and the toast stack.
+// Toasts sit above the button rather than opposite it, because the opposite
+// corner is where the dice and the end-turn button live - a toast there
+// intercepted the click that rolled.
+$floating-inset: clamp(16px, 2.2vw, 32px);
+$activity-button-height: 44px;
 
 // Player token on the board. Big enough to follow while it moves.
 // Small pieces, like a real board, but big enough to follow while they move.

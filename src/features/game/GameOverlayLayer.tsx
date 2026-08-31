@@ -3,11 +3,9 @@ import { ActivityDrawer } from '../../components/game/overlays/ActivityDrawer';
 import { DecisionModal } from '../../components/game/overlays/DecisionModal';
 import type { SitePanelViewModel } from '../../components/game/overlays/overlays.interfaces';
 import { PlayerDetailDrawer } from '../../components/game/overlays/PlayerDetailDrawer';
-import { ToastStack } from '../../components/game/overlays/ToastStack';
 import type { PlayerSummary } from '../../components/game/panels/panels.interfaces';
 import { SpaceDetailCard } from '../../components/game/SpaceDetailCard';
 import type { GameState } from '../../domain/types/game.interfaces';
-import { TOAST_DISMISS_MS } from './game.constants';
 import { selectDecisionViewModel, selectGroupedHoldings } from './gameView.selectors';
 import type { UseGameCommandsResult } from './hooks/useGameCommands';
 import type { UseGameOverlaysResult } from './hooks/useGameOverlays';
@@ -70,12 +68,6 @@ export function GameOverlayLayer({
         onPropertyAction={commands.runPropertyCommand}
         onProposeTrade={noopUntilTradingLands}
         panel={sitePanel}
-      />
-
-      <ToastStack
-        dismissAfterMs={TOAST_DISMISS_MS}
-        onDismiss={commands.dismissToast}
-        toasts={commands.toasts}
       />
 
       {/* Suppressed while a token walks, so a decision cannot appear before the
