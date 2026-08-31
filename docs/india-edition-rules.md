@@ -16,6 +16,69 @@ the rule, that is stated rather than glossed.
 
 ---
 
+## Quick answers
+
+The questions that actually come up, answered directly. Detail in the numbered sections.
+
+### How many times can I roll in one turn?
+
+**Three, at most.** A double grants one more roll, chained:
+
+| Roll | Doubles                                                                                        | Not doubles              |
+| ---- | ---------------------------------------------------------------------------------------------- | ------------------------ |
+| 1    | Move, resolve, roll again                                                                      | Move, resolve, turn ends |
+| 2    | Move, resolve, roll again                                                                      | Move, resolve, turn ends |
+| 3    | **Straight to Jail. This roll is not played** — no movement, no space resolution, no GO salary | Move, resolve, turn ends |
+
+### I rolled a double and landed in Jail. Do I roll again?
+
+**No. Your turn ends immediately** and the extra roll is forfeited. That holds for all three routes
+into Jail: landing on Go To Jail, drawing a card, or rolling the third double. The engine needs an
+explicit `inJail` guard for this, because the phase logic would otherwise hand the extra roll back —
+covered by a regression test.
+
+### How many rolls do I get while in Jail?
+
+**One per turn, and up to three turns.** The "three" is three _turns_, not three rolls in one turn.
+
+| Jail turn | Doubles                                                                | Fails                                                |
+| --------- | ---------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1         | Leave, move by that roll, **turn ends** — no bonus roll for the double | Stay in Jail, turn ends                              |
+| 2         | Same                                                                   | Stay in Jail, turn ends                              |
+| 3         | Same                                                                   | **Must** pay ₹50 and move using that same third roll |
+
+Doubles rolled in Jail do **not** count toward the three-doubles-to-Jail rule; the counter resets.
+Leaving by fine or card means you then roll normally, and doubles there _do_ grant an extra roll.
+
+### Can I sell a site I own?
+
+| Route                           | Allowed                                                                          |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| Sell to the bank                | **Never.** The bank does not buy property back                                   |
+| Auction it myself               | **No.** An auction only happens when a player _declines_ an **unowned** property |
+| Sell or trade to another player | **Yes**, at any price you both agree                                             |
+| Trade a **mortgaged** site      | **Yes** — the new owner pays it off, or pays 10% to keep it mortgaged            |
+| Trade a **built** site          | **No** — sell every building in its colour group to the bank first               |
+
+### Can I mortgage a site with houses on it?
+
+**No.** Sell every building in that colour group back to the bank first. The same restriction blocks
+trading it.
+
+### When can I build, sell buildings, or mortgage?
+
+The printed rule allows all of it **at any time**, including during another player's turn — that is
+how you raise cash when rent is demanded of you. This app deliberately offers them in safe UI
+windows instead, because a turn-based interface cannot model interrupting someone else's roll. See
+section 2.
+
+### What do buildings sell for?
+
+**Half** what you paid, **to the bank only** — never to another player. Selling must be even, the
+same one-house rule as building, in reverse.
+
+---
+
 ## 1. Source precedence
 
 1. User product requirements
@@ -70,6 +133,9 @@ synchronously inside `resolving_movement`.
 
 ## 5. Doubles — every case
 
+**A turn is at most three rolls.** A double grants one more roll, and the third consecutive double
+sends you to Jail instead of being played. Every case below follows from that.
+
 This is the area with the most edge cases, so each is listed separately.
 
 | #   | Situation                                                                           | Rule                                                                                                      | Status                   |
@@ -102,6 +168,9 @@ covered by a regression test, and `acknowledgeCard` repeats the guard for case 5
 ---
 
 ## 6. Jail — every case
+
+**While in Jail you get one roll per turn, for up to three turns.** The "three" is three turns, not
+three rolls in one turn — and a double that frees you ends the turn rather than earning another roll.
 
 A player in Jail is **not** out of the game: they still collect rent, bid in auctions, build,
 mortgage and trade. ⚠️ — collecting rent works; the rest is unimplemented for everyone.
@@ -292,11 +361,13 @@ commands have no UI entry point beyond a disabled "Offer a deal" button.
 | Utilities                  |                       |
 | Get Out of Jail Free cards |                       |
 
-| Rule                                                                                        |
-| ------------------------------------------------------------------------------------------- |
-| Any price both players agree on is legal — ₹20 for a ₹180 site, or ₹500, both fine          |
-| A property with buildings anywhere in its colour group cannot be traded until they are sold |
-| Mortgaged properties may be traded                                                          |
+| Rule                                                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any price both players agree on is legal — ₹20 for a ₹180 site, or ₹500, both fine                                                                  |
+| A property with buildings anywhere in its colour group cannot be traded until they are sold                                                         |
+| Mortgaged properties may be traded; the new owner pays the mortgage off, or pays 10% to keep it mortgaged                                           |
+| **You cannot auction property you own.** An auction is only ever the bank's forced sale of an _unowned_ property a player declined — see section 7a |
+| **You cannot sell property back to the bank** at any price. Selling to another player is the only route                                             |
 
 ---
 
