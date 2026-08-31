@@ -76,35 +76,36 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
-| File                                                                                                       | What it does                                                                                            |
-| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                                                   | New-game setup form plus the saved-game list with resume/delete.                                        |
-| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                                         | Integration tests for setup rendering and name validation.                                              |
-| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                                                     | Game screen **wiring only**: selects state, derives view models, dispatches commands.                   |
-| [game/GameOverlayLayer.tsx](../src/features/game/GameOverlayLayer.tsx)                                     | Everything that floats over the board: drawers, deed panel, toasts, decision modal.                     |
-| [game/toastFeed.utils.ts](../src/features/game/toastFeed.utils.ts)                                         | Turns the history delta into toasts, and derives each one's tone from its wording.                      |
-| [game/boardOwnership.utils.ts](../src/features/game/boardOwnership.utils.ts)                               | Builds the board's owner-marker map from ownership plus the theme token catalogue.                      |
-| [game/sitePanel.utils.ts](../src/features/game/sitePanel.utils.ts)                                         | Resolves a picked space into the site panel's three ownership states.                                   |
-| [game/toastFeed.utils.test.ts](../src/features/game/toastFeed.utils.test.ts)                               | Tone classification, the history delta, and the behaviour once the history cap is reached.              |
-| [game/gameView.selectors.ts](../src/features/game/gameView.selectors.ts)                                   | **Pure derivations**: game state → the view models the panels render. Where the screen's logic lives.   |
-| [game/gameView.selectors.test.ts](../src/features/game/gameView.selectors.test.ts)                         | Unit tests for every selector, including each decision view model.                                      |
-| [game/game.constants.ts](../src/features/game/game.constants.ts)                                           | Game-screen copy constants (board centre title and subtitle).                                           |
-| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                                                     | Game slice + thunks bridging UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`). |
-| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                                         | Ephemeral UI state not part of the saved game (auction bid input).                                      |
-| [persistence/persistence.ts](../src/features/persistence/persistence.ts)                                   | localStorage read/write: save, load, delete, and the saved-game index.                                  |
-| [persistence/persistence.integration.test.ts](../src/features/persistence/persistence.integration.test.ts) | Save/load round trip, and that a drawn card survives it.                                                |
-| [persistence/schema.ts](../src/features/persistence/schema.ts)                                             | Zod schemas validating anything read back out of storage.                                               |
-| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                   |
-| [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                                       | Integration tests: every nav link resolves to a rendered section.                                       |
-| [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                                       | Shown when the routed game is missing or fails schema validation.                                       |
-| [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                                 | Loads the routed game and resolves its theme and currency symbol.                                       |
-| [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)                             | Binds every command the game screen dispatches.                                                         |
-| [setup/hooks/useGameSetupForm.ts](../src/features/setup/hooks/useGameSetupForm.ts)                         | Setup form state; delegates the rules to setupValidation.utils.                                         |
-| [setup/setup.interfaces.ts](../src/features/setup/setup.interfaces.ts)                                     | The game-setup form draft shape.                                                                        |
-| [setup/setupValidation.utils.ts](../src/features/setup/setupValidation.utils.ts)                           | Pure setup validation: non-empty, unique names, unique tokens.                                          |
-| [setup/setupValidation.utils.test.ts](../src/features/setup/setupValidation.utils.test.ts)                 | Unit tests for every validation rule and its precedence.                                                |
-| [setup/setup.constants.ts](../src/features/setup/setup.constants.ts)                                       | Setup form defaults and error messages.                                                                 |
-| [game/hooks/useGameOverlays.ts](../src/features/game/hooks/useGameOverlays.ts)                             | Which overlay is open: activity drawer, player details, or a space deed.                                |
+| File                                                                                                       | What it does                                                                                                |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                                                   | New-game setup form plus the saved-game list with resume/delete.                                            |
+| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                                         | Integration tests for setup rendering and name validation.                                                  |
+| [game/GamePage.tsx](../src/features/game/GamePage.tsx)                                                     | Game screen **wiring only**: selects state, derives view models, dispatches commands.                       |
+| [game/GameOverlayLayer.tsx](../src/features/game/GameOverlayLayer.tsx)                                     | Everything that floats over the board: drawers, deed panel, toasts, decision modal.                         |
+| [game/toastFeed.utils.ts](../src/features/game/toastFeed.utils.ts)                                         | Turns the history delta into toasts, and derives each one's tone from its wording.                          |
+| [game/boardOwnership.utils.ts](../src/features/game/boardOwnership.utils.ts)                               | Builds the board's owner-marker map from ownership plus the theme token catalogue.                          |
+| [game/sitePanel.utils.ts](../src/features/game/sitePanel.utils.ts)                                         | Resolves a picked space into the site panel's three ownership states.                                       |
+| [game/toastFeed.utils.test.ts](../src/features/game/toastFeed.utils.test.ts)                               | Tone classification, the history delta, and the behaviour once the history cap is reached.                  |
+| [game/gameView.selectors.ts](../src/features/game/gameView.selectors.ts)                                   | **Pure derivations**: game state → the view models the panels render. Where the screen's logic lives.       |
+| [game/gameView.selectors.test.ts](../src/features/game/gameView.selectors.test.ts)                         | Unit tests for every selector, including each decision view model.                                          |
+| [game/game.constants.ts](../src/features/game/game.constants.ts)                                           | Game-screen copy constants (board centre title and subtitle).                                               |
+| [game/gameSlice.ts](../src/features/game/gameSlice.ts)                                                     | Game slice + thunks bridging UI → engine → storage (`runGameCommand`, `createNewGame`, `loadGameById`).     |
+| [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                                         | Ephemeral UI state not part of the saved game (auction bid input).                                          |
+| [persistence/persistence.ts](../src/features/persistence/persistence.ts)                                   | localStorage read/write: save, load, delete, and the saved-game index.                                      |
+| [persistence/persistence.integration.test.ts](../src/features/persistence/persistence.integration.test.ts) | Save/load round trip, and that a drawn card survives it.                                                    |
+| [persistence/schema.ts](../src/features/persistence/schema.ts)                                             | Zod schemas validating anything read back out of storage.                                                   |
+| [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                       |
+| [rules/rulesSync.test.ts](../src/features/rules/rulesSync.test.ts)                                         | Enforces that the booklet and docs/india-edition-rules.md cover the same topics and quote the same numbers. |
+| [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                                       | Integration tests: every nav link resolves to a rendered section.                                           |
+| [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                                       | Shown when the routed game is missing or fails schema validation.                                           |
+| [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                                 | Loads the routed game and resolves its theme and currency symbol.                                           |
+| [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)                             | Binds every command the game screen dispatches.                                                             |
+| [setup/hooks/useGameSetupForm.ts](../src/features/setup/hooks/useGameSetupForm.ts)                         | Setup form state; delegates the rules to setupValidation.utils.                                             |
+| [setup/setup.interfaces.ts](../src/features/setup/setup.interfaces.ts)                                     | The game-setup form draft shape.                                                                            |
+| [setup/setupValidation.utils.ts](../src/features/setup/setupValidation.utils.ts)                           | Pure setup validation: non-empty, unique names, unique tokens.                                              |
+| [setup/setupValidation.utils.test.ts](../src/features/setup/setupValidation.utils.test.ts)                 | Unit tests for every validation rule and its precedence.                                                    |
+| [setup/setup.constants.ts](../src/features/setup/setup.constants.ts)                                       | Setup form defaults and error messages.                                                                     |
+| [game/hooks/useGameOverlays.ts](../src/features/game/hooks/useGameOverlays.ts)                             | Which overlay is open: activity drawer, player details, or a space deed.                                    |
 
 ## `src/components/game/` — presentational (props in, callbacks out, no store)
 
@@ -183,18 +184,20 @@ File-naming rules are in [conventions.md](conventions.md).
 
 Static prose, one component per booklet section, composed by `RulesPage`.
 
-| File                  | What it does                                  |
-| --------------------- | --------------------------------------------- |
-| `RulesIntro.tsx`      | A short history of Monopoly and this edition. |
-| `RulesStart.tsx`      | Setting up before the first roll.             |
-| `RulesTurn.tsx`       | What happens on a turn.                       |
-| `RulesBoard.tsx`      | Space-by-space board reference.               |
-| `RulesBoardExtra.tsx` | Additional board notes.                       |
-| `RulesJail.tsx`       | Going to and leaving Jail.                    |
-| `RulesBuildings.tsx`  | Houses and hotels.                            |
-| `RulesMoney.tsx`      | Money, rent, and mortgages.                   |
-| `RulesSpeedDie.tsx`   | Speed Die, deferred in this ruleset.          |
-| `RulesClosing.tsx`    | Closing notes.                                |
+| File                         | What it does                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `RulesIntro.tsx`             | A short history of Monopoly and this edition.                                                          |
+| `RulesFaq.tsx`               | The questions asked mid-game, mirroring the doc's Quick answers.                                       |
+| `rulesSections.constants.ts` | The booklet's sections: one list behind the nav, the rendered sections, and the matching doc headings. |
+| `RulesStart.tsx`             | Setting up before the first roll.                                                                      |
+| `RulesTurn.tsx`              | What happens on a turn.                                                                                |
+| `RulesBoard.tsx`             | Space-by-space board reference.                                                                        |
+| `RulesBoardExtra.tsx`        | Buying and the forced auction.                                                                         |
+| `RulesJail.tsx`              | Going to and leaving Jail.                                                                             |
+| `RulesBuildings.tsx`         | Houses and hotels.                                                                                     |
+| `RulesMoney.tsx`             | Money, rent, and mortgages.                                                                            |
+| `RulesSpeedDie.tsx`          | Speed Die, deferred in this ruleset.                                                                   |
+| `RulesClosing.tsx`           | Closing notes.                                                                                         |
 
 ## `src/shared/` — cross-cutting helpers
 
@@ -246,6 +249,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                 | Three-column layout, action rail, dice placement, player stack.             |
 | [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)             | Decision modal, activity drawer, player detail drawer, dice roll.           |
 | [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)         | Eight-player layout: token cluster stays on the board, dice stay reachable. |
+| [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                   | Booklet nav resolves, the FAQ answers, and amounts render in ₹.             |
 | [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)             | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.  |
 
 ## Config

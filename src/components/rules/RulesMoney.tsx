@@ -1,3 +1,5 @@
+import { MORTGAGE_INTEREST_PERCENT } from '../../domain/constants/game.constants';
+
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesMoney() {
   return (
@@ -15,7 +17,7 @@ export function RulesMoney() {
           To mortgage, turn the title deed face down and take its mortgage value from the
           Bank. Mortgaged assets collect no rent.
         </li>
-        <li>To unmortgage, pay the mortgage value plus 10%.</li>
+        <li>To unmortgage, pay the mortgage value plus {MORTGAGE_INTEREST_PERCENT}%.</li>
       </ul>
       <h3>Deals and trades</h3>
       <p>
@@ -29,9 +31,9 @@ export function RulesMoney() {
         First try selling buildings and mortgaging property. If you still cannot pay, you
         are bankrupt and leave the game. Debt to another player transfers your mortgaged
         properties and jail-free cards to that player; they must immediately repay the
-        mortgage or pay 10% to keep it mortgaged. Debt to the Bank returns your properties
-        to the Bank, cancels mortgages, and auctions those properties. Play continues
-        until one player remains.
+        mortgage or pay {MORTGAGE_INTEREST_PERCENT}% to keep it mortgaged. Debt to the
+        Bank returns your properties to the Bank, cancels mortgages, and auctions those
+        properties. Play continues until one player remains.
       </p>
     </section>
   );

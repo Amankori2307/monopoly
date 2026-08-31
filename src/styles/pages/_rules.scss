@@ -209,3 +209,35 @@
     padding-inline: 20px !important;
   }
 }
+
+// ---------------------------------------------------------------------------
+// FAQ
+//
+// A definition list rather than headings: each entry is one question and its
+// answer, and a reader scans the questions. Answers are indented under their
+// question so the two never run together.
+// ---------------------------------------------------------------------------
+.rules-faq {
+  margin: 0;
+  max-width: 720px;
+
+  dt {
+    margin-top: t.$gap-lg;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.02rem;
+    line-height: 1.4;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  dd {
+    margin: 6px 0 0;
+    padding-left: t.$gap-md;
+    border-left: 2px solid var(--border-subtle);
+    color: var(--text-body);
+    line-height: 1.65;
+  }
+}

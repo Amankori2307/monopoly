@@ -3,22 +3,14 @@ import { RulesBoard } from '../../components/rules/RulesBoard';
 import { RulesBoardExtra } from '../../components/rules/RulesBoardExtra';
 import { RulesBuildings } from '../../components/rules/RulesBuildings';
 import { RulesClosing } from '../../components/rules/RulesClosing';
+import { RulesFaq } from '../../components/rules/RulesFaq';
 import { RulesIntro } from '../../components/rules/RulesIntro';
+import { RULES_SECTIONS } from '../../components/rules/rulesSections.constants';
 import { RulesJail } from '../../components/rules/RulesJail';
 import { RulesMoney } from '../../components/rules/RulesMoney';
 import { RulesSpeedDie } from '../../components/rules/RulesSpeedDie';
 import { RulesStart } from '../../components/rules/RulesStart';
 import { RulesTurn } from '../../components/rules/RulesTurn';
-
-const sectionLinks = [
-  ['Start', '#start'],
-  ['Turn', '#turn'],
-  ['Board', '#board'],
-  ['Jail', '#jail'],
-  ['Buildings', '#buildings'],
-  ['Money', '#money'],
-  ['Speed Die', '#speed-die'],
-];
 
 export function RulesPage() {
   return (
@@ -37,16 +29,20 @@ export function RulesPage() {
           </Link>
         </header>
 
+        {/* Nav, sections, and the matching headings in
+            docs/india-edition-rules.md all come from RULES_SECTIONS, so they
+            cannot drift apart. rulesSync.test.ts enforces it. */}
         <nav className="rules-nav" aria-label="Rules sections">
-          {sectionLinks.map(([label, href]) => (
-            <a href={href} key={href}>
-              {label}
+          {RULES_SECTIONS.map((section) => (
+            <a href={`#${section.id}`} key={section.id}>
+              {section.label}
             </a>
           ))}
         </nav>
 
         <article className="rules-booklet">
           <RulesIntro />
+          <RulesFaq />
           <RulesStart />
           <RulesTurn />
           <RulesBoard />

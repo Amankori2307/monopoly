@@ -199,7 +199,7 @@ Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a
 | Engine commands, phases, or constants           | §4 above                                                                                           |
 | `GameState` shape or storage keys               | §5 + bump `GAME_STATE_VERSION` + zod schema                                                        |
 | Layer boundaries, new directory                 | §3 + `docs/architecture.md`                                                                        |
-| Ruleset behaviour or values                     | `docs/india-edition-rules.md`                                                                      |
+| Ruleset behaviour or values                     | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below       |
 | Scripts in `package.json`                       | §6                                                                                                 |
 | Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                               |
 | Deleting part of the legacy island              | §2                                                                                                 |
@@ -210,5 +210,20 @@ Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a
 | **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index |
 | Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                             |
 | Adding a theme, or changing theme tokens        | [docs/theming.md](docs/theming.md)                                                                 |
+
+### The rules booklet and the ruleset doc are one thing in two places
+
+`docs/india-edition-rules.md` and the in-app booklet (`src/components/rules/`) must never disagree.
+Two mechanisms hold them together, and both are machine-enforced by
+[rulesSync.test.ts](src/features/rules/rulesSync.test.ts):
+
+- **Topics**: `RULES_SECTIONS` (`components/rules/rulesSections.constants.ts`) is the single list
+  behind the page's nav, the sections it renders, and the matching heading in the markdown. Add a
+  section to one and the test tells you to add it to the other.
+- **Numbers**: the booklet renders every amount from a constant, so it updates itself. The markdown
+  cannot, so the test asserts each constant's formatted value still appears in it. Change
+  `STARTING_CASH` and the test fails naming the constant.
+
+Prose is not diffable, so it is on you: change a rule in one and change it in the other.
 
 Before finishing a task: re-read the sections you touched, delete anything now false, and re-run `npx tsc --noEmit` + `pnpm test`.

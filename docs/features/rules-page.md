@@ -27,11 +27,28 @@ None.
 
 ## Tests
 
-| Level       | File                                                     | Covers                                                  |
-| ----------- | -------------------------------------------------------- | ------------------------------------------------------- |
-| Unit        | —                                                        | _Gap._                                                  |
-| Integration | —                                                        | _Gap: no test that sections and anchors render._        |
-| E2E         | [tests/e2e/setup.spec.ts](../../tests/e2e/setup.spec.ts) | Asserts the Rules link is present from the game screen. |
+| Level       | File                                                              | Covers                                                                                                                         |
+| ----------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Unit        | [rulesSync.test.ts](../../src/features/rules/rulesSync.test.ts)   | The booklet and the ruleset doc cover the same topics and quote the same numbers                                               |
+| Integration | [RulesPage.test.tsx](../../src/features/rules/RulesPage.test.tsx) | Every nav link resolves to a rendered section; the FAQ answers the three most-misread rules                                    |
+| E2E         | [rules.spec.ts](../../tests/e2e/rules.spec.ts)                    | Nav resolves in a browser, the FAQ renders question-and-answer pairs, amounts render in ₹, and the page is reachable from home |
+
+## Staying in sync with the ruleset doc
+
+The booklet and [india-edition-rules.md](../india-edition-rules.md) are one ruleset in two forms:
+the booklet is what a player reads, the doc is what a contributor reads, and they must never
+disagree. Two things hold them together, both enforced by
+[rulesSync.test.ts](../../src/features/rules/rulesSync.test.ts):
+
+- **Topics.** `RULES_SECTIONS` is the single list behind the in-page nav, the sections the page
+  renders, and the heading in the markdown that covers each one. Rename a doc heading or add a
+  booklet section and the test names the mismatch and what to do about it.
+- **Numbers.** Every amount in the booklet renders from a constant, so it can never go stale. The
+  markdown quotes the same values as text, so the test asserts each constant's formatted value still
+  appears there — change `STARTING_CASH` and it fails naming the constant.
+
+Prose is not diffable, so wording remains a human responsibility: change a rule in one place and
+change it in the other.
 
 ## Known gaps
 

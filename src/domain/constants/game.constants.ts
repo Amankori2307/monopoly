@@ -12,6 +12,11 @@ export const STARTING_CASH = 1500;
 export const PASS_GO_AMOUNT = 200;
 export const JAIL_FINE = 50;
 
+/** Interest added to the mortgage value when redeeming a mortgaged site. */
+export const MORTGAGE_INTEREST_PERCENT = 10;
+/** Buildings sell back to the bank at this share of their purchase price. */
+export const BUILDING_SELL_PERCENT = 50;
+
 export const AUCTION_START_PRICE = 10;
 export const AUCTION_MIN_INCREMENT = 1;
 

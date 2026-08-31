@@ -7,7 +7,7 @@ import { formatMoney } from '../../shared/utils/money.utils';
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesBoardExtra() {
   return (
-    <section>
+    <section id="auction">
       <p className="eyebrow">4. Buy and auction</p>
       <h2>Every unowned asset gets a chance to sell</h2>
       <p>
