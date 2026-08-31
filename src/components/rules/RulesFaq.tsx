@@ -21,10 +21,18 @@ export function RulesFaq() {
       <dl className="rules-faq">
         <dt>How many times can I roll in one turn?</dt>
         <dd>
-          At most {DOUBLES_BEFORE_JAIL}. Each double earns one more roll. If your{' '}
-          {DOUBLES_BEFORE_JAIL}
-          rd roll is also a double you go straight to Jail, and that roll is not played at
-          all — no movement, no space to resolve, no GO salary.
+          At most {DOUBLES_BEFORE_JAIL}, and they are separate rolls: you roll, move, and
+          resolve that space completely — buying, paying rent, drawing a card — before
+          rolling again. You do not throw {DOUBLES_BEFORE_JAIL} times and then look at
+          them. Everything your earlier rolls did <strong>stands</strong>.
+        </dd>
+
+        <dt>What happens to my earlier rolls if the third one jails me?</dt>
+        <dd>
+          They still happened. Only the {DOUBLES_BEFORE_JAIL}rd roll is discarded — you
+          move nowhere, resolve no space, and collect no GO salary for it. A site you
+          bought on your first roll is still yours, and rent you paid on your second stays
+          paid. You simply end up in Jail having done all of it.
         </dd>
 
         <dt>I rolled a double and landed in Jail. Do I roll again?</dt>

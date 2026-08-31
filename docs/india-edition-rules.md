@@ -22,13 +22,19 @@ The questions that actually come up, answered directly. Detail in the numbered s
 
 ### How many times can I roll in one turn?
 
-**Three, at most.** A double grants one more roll, chained:
+**At most three — and they are separate rolls, not three dice thrown together.** You roll, move, and
+resolve that space completely before rolling again.
 
-| Roll | Doubles                                                                                        | Not doubles              |
-| ---- | ---------------------------------------------------------------------------------------------- | ------------------------ |
-| 1    | Move, resolve, roll again                                                                      | Move, resolve, turn ends |
-| 2    | Move, resolve, roll again                                                                      | Move, resolve, turn ends |
-| 3    | **Straight to Jail. This roll is not played** — no movement, no space resolution, no GO salary | Move, resolve, turn ends |
+| Roll | Doubles                                                                                           | Not doubles              |
+| ---- | ------------------------------------------------------------------------------------------------- | ------------------------ |
+| 1    | Move, resolve the space, roll again                                                               | Move, resolve, turn ends |
+| 2    | Move, resolve the space, roll again                                                               | Move, resolve, turn ends |
+| 3    | **Straight to Jail, and this roll is discarded** — no movement, no space to resolve, no GO salary | Move, resolve, turn ends |
+
+**The first two rolls still count.** Going to Jail on the third does not undo them: a site bought on
+roll one is still yours, rent paid on roll two stays paid, a card drawn still applied. You end the
+turn in Jail having done all of it. Pinned by a test that buys a property on roll two and asserts it
+is still owned after roll three jails the player.
 
 ### I rolled a double and landed in Jail. Do I roll again?
 
@@ -133,8 +139,11 @@ synchronously inside `resolving_movement`.
 
 ## 5. Doubles — every case
 
-**A turn is at most three rolls.** A double grants one more roll, and the third consecutive double
-sends you to Jail instead of being played. Every case below follows from that.
+**A turn is at most three rolls, taken one at a time.** You roll, move, and resolve the space
+completely before rolling again — a double grants one more roll, and the third consecutive double
+sends you to Jail instead of being played. **Rolls already taken are never undone**: their purchases,
+rent and card effects all stand even when the third roll jails you. Every case below follows from
+that.
 
 This is the area with the most edge cases, so each is listed separately.
 

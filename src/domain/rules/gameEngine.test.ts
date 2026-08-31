@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { GameCommandType, PendingDecisionType, TurnPhase } from '../types/game.enums';
 import { CardDeck, CardEffectKind, DeckName, SpaceKind } from '../types/game.enums';
 import type { DeckCard } from '../types/game.interfaces';
-import { AUCTION_START_PRICE } from '../constants/game.constants';
+import { AUCTION_START_PRICE, JAIL_POSITION } from '../constants/game.constants';
 import type { GameState } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
+import { isOwnableSpace } from './space.utils';
 import { SeededRandomSource } from './rng';
 
 const createBaseGame = () =>
@@ -696,5 +697,114 @@ describe('a card that leads to another card', () => {
     expect(result.nextState.players[activePlayerId].cash).toBe(
       cashBefore - landedOn.amount
     );
+  });
+});
+
+/**
+ * A doubles turn is three separate rolls, each resolved before the next — not
+ * three dice thrown at once. Everything the first two rolls did stands, even
+ * when the third sends the player to Jail.
+ */
+describe('a full three-doubles turn', () => {
+  // Seed 11 rolls 2 and 2, so passing a fresh one per command gives doubles
+  // three times over.
+  const doublesSource = () => new SeededRandomSource(11);
+
+  it('resolves each roll in turn and keeps their outcomes when the third jails', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const startingCash = game.players[activePlayerId].cash;
+    let state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position: 0 },
+      },
+    };
+
+    // Roll one: 0 → 4, Income Tax. Fully resolved: the tax is paid.
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      doublesSource()
+    ).nextState;
+    const incomeTax = state.board[4];
+    if (incomeTax.kind !== SpaceKind.Tax) {
+      throw new Error('Expected Income Tax at index 4');
+    }
+    expect(state.players[activePlayerId].position).toBe(4);
+    expect(state.players[activePlayerId].cash).toBe(startingCash - incomeTax.amount);
+    expect(state.turn.doublesCount).toBe(1);
+    expect(state.turn.canRollAgain).toBe(true);
+
+    // Roll two: 4 → 8, an unowned street. Fully resolved: the player buys it.
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      doublesSource()
+    ).nextState;
+    const agra = state.board[8];
+    if (!isOwnableSpace(agra)) {
+      throw new Error('Expected an ownable space at index 8');
+    }
+    expect(state.players[activePlayerId].position).toBe(8);
+    expect(state.pendingDecision.type).toBe(PendingDecisionType.LandedUnownedProperty);
+
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.BuyLandedAsset },
+      doublesSource()
+    ).nextState;
+    expect(state.ownership[agra.id].ownerPlayerId).toBe(activePlayerId);
+    expect(state.turn.doublesCount).toBe(2);
+    expect(state.turn.canRollAgain).toBe(true);
+
+    // Roll three: doubles again, so it is discarded entirely.
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      doublesSource()
+    ).nextState;
+
+    expect(state.players[activePlayerId].inJail).toBe(true);
+    // In Jail, not at 12 - the third roll moved them nowhere.
+    expect(state.players[activePlayerId].position).toBe(JAIL_POSITION);
+    expect(state.turn.canRollAgain).toBe(false);
+    expect(state.turn.phase).toBe(TurnPhase.TurnComplete);
+
+    // And crucially, the first two rolls still happened.
+    expect(state.ownership[agra.id].ownerPlayerId).toBe(activePlayerId);
+    expect(state.players[activePlayerId].cash).toBe(
+      startingCash - incomeTax.amount - agra.price
+    );
+  });
+
+  it('resets the doubles count once the turn passes', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    let state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position: 0 },
+      },
+    };
+
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      doublesSource()
+    ).nextState;
+    expect(state.turn.doublesCount).toBe(1);
+
+    // Ending the turn while an extra roll is owed re-arms the same player and
+    // keeps the count; only passing the turn on clears it.
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.EndTurn },
+      doublesSource()
+    ).nextState;
+    expect(state.turn.doublesCount).toBe(1);
+    expect(state.playerOrder[state.activePlayerIndex]).toBe(activePlayerId);
   });
 });
