@@ -55,5 +55,6 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 
 ## Known gaps
 
-- No test for duplicate-token or empty-name validation.
-- Player count clamping now says what it did, and deleting a saved game asks first.
+- Nothing outstanding. Duplicate names, duplicate tokens and empty names are each covered in
+  `setupValidation.utils.test.ts`; the player-count clamp says what it did; and deleting a saved
+  game asks first.

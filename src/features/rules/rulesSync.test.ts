@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { RULES_SECTIONS } from '../../components/rules/rulesSections.constants';
@@ -96,5 +96,38 @@ describe('rules page and ruleset doc stay in sync', () => {
 
   it('the doc records that you cannot auction property you own', () => {
     expect(RULES_DOC.toLowerCase()).toContain('cannot auction property you own');
+  });
+});
+
+/**
+ * Every nav link points at a section the page actually renders.
+ *
+ * The nav is built from RULES_SECTIONS, but each section's markup writes its
+ * own `id` by hand - so a renamed id breaks the link silently, and the only
+ * symptom is a nav item that scrolls nowhere.
+ */
+describe('the rules page nav', () => {
+  const RULES_COMPONENT_DIR = resolve(process.cwd(), 'src/components/rules');
+
+  /** Every `id="..."` on a section across the booklet's components. */
+  const renderedSectionIds = (): string[] =>
+    readdirSync(RULES_COMPONENT_DIR)
+      .filter((file) => file.endsWith('.tsx') && !file.endsWith('.test.tsx'))
+      .flatMap((file) => {
+        const source = readFileSync(resolve(RULES_COMPONENT_DIR, file), 'utf8');
+        return [...source.matchAll(/<section id="([^"]+)"/g)].map((match) => match[1]);
+      });
+
+  it.each(RULES_SECTIONS.map((section) => section.id))(
+    'has a section with id "%s" for its nav link to reach',
+    (id) => {
+      expect(renderedSectionIds()).toContain(id);
+    }
+  );
+
+  it('renders no section the nav cannot reach', () => {
+    const navIds = RULES_SECTIONS.map((section) => section.id);
+
+    renderedSectionIds().forEach((id) => expect(navIds).toContain(id));
   });
 });
