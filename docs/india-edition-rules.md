@@ -440,20 +440,26 @@ are short right now. The panel offers **Declare bankruptcy** only at that point,
 refuses the command while the debt is still reachable — so you cannot walk away from a debt you could
 have paid.
 
-| Creditor       | Outcome                                                                                           | Status       |
-| -------------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| Another player | They receive your cash, every property including mortgaged ones, and your jail cards. You are out | ✅           |
-| The bank       | Your properties return to the bank unowned, with their mortgages cancelled. You are out           | ⚠️ see below |
+| Creditor       | Outcome                                                                                            | Status |
+| -------------- | -------------------------------------------------------------------------------------------------- | ------ |
+| Another player | They receive your cash, every property including mortgaged ones, and your jail cards. You are out  | ✅     |
+| The bank       | Your properties return to the bank, mortgages cancelled, and are auctioned one by one. You are out | ✅     |
 
 Players go out in order: `bankruptcyRank` counts up from 1 for the first player eliminated. Turn
 rotation steps over anyone who is out — `nextActivePlayerIndex` — which it did not do before, since
 nobody could go bankrupt.
 
-> **⚠️ Divergence — properties are not auctioned on bankruptcy to the bank.** The printed rule has
-> the bank auction each returned property immediately. Here they simply return unowned and re-enter
-> play when someone lands on them. Chaining auctions needs a queue of pending sales, and a new
-> top-level `GameState` field for it, which the zod schema would silently strip without a version
-> bump. Deferred rather than done badly.
+**Every returned property is auctioned, one after another.** They go onto
+`pendingAuctionSpaceIds` and are sold in turn, because only one auction can run at a time; as each
+finishes the next opens by itself, and the turn resumes when the queue is empty. Any buildings on
+them go back into the bank's stock first.
+
+A queued site nobody bids for simply stays unowned, to be bought by whoever lands on it. And if the
+bankruptcy left one player standing, the game is over and the queue is dropped — auctioning to the
+winner alone is theatre.
+
+An unpaid debt is always answered before the bank starts selling: `afterDecisionResolved` is the one
+place that order is decided, so settling and going bankrupt cannot disagree about it.
 
 ### Winning
 
@@ -594,7 +600,7 @@ increment ₹1 · starting cash ₹1500.
 **A used jail card goes back to the bottom of its own deck.** `jailFreeCards` holds the cards
 themselves rather than a count, so each one knows the deck it came from. Before that it was a bare
 number, and both cards could leave circulation permanently over a long game. The change was a
-`GameState` shape change: `GAME_STATE_VERSION` is 3, and a v1 save's count migrates to that many
+`GameState` shape change: `GAME_STATE_VERSION` is 4, and a v1 save's count migrates to that many
 Chance cards — the deck a v1 card came from is genuinely unrecoverable, and Chance is the likelier
 of the two.
 
@@ -668,11 +674,10 @@ Nothing in the ruleset is type-level only any more.
 Every bug in this section has been fixed. What is left are deliberate divergences, each stated at
 the rule it belongs to:
 
-| Divergence                                            | Where it is explained                                   |
-| ----------------------------------------------------- | ------------------------------------------------------- |
-| No auction when the bank runs out of houses           | Section 8 — building waits until a building is returned |
-| A bankrupt's properties return unowned, not auctioned | Section 11                                              |
-| A mortgaged site still counts toward colour sets      | Section 9 — this one matches the printed rule           |
+| Divergence                                       | Where it is explained                                   |
+| ------------------------------------------------ | ------------------------------------------------------- |
+| No auction when the bank runs out of houses      | Section 8 — building waits until a building is returned |
+| A mortgaged site still counts toward colour sets | Section 9 — this one matches the printed rule           |
 
 Fixed in the pass that closed them: the debt queue (several debts from one card), utility rent
 after a card-driven arrival, `movePlayerTo`'s pass-GO direction, and buying and auctions bypassing

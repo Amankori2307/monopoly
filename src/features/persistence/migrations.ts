@@ -70,9 +70,23 @@ const v2ToV3: Migration = (raw) => {
   };
 };
 
+/**
+ * v3 -> v4: the auction queue.
+ *
+ * A bankruptcy to the bank used to return properties unowned; they are
+ * auctioned now, and the queue is what holds the ones still to be sold. No save
+ * can have been mid-queue, so it starts empty.
+ */
+const v3ToV4 = (raw: Record<string, unknown>): Record<string, unknown> => ({
+  ...raw,
+  pendingAuctionSpaceIds: [],
+  version: 4,
+});
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
+  3: v3ToV4,
 };
 
 /**

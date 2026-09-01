@@ -77,6 +77,7 @@ export const gameStateSchema = z.object({
     ),
   useSpeedDie: z.boolean(),
   tradeState: z.any().nullable(),
+  pendingAuctionSpaceIds: z.array(z.string()),
   auctionState: z.any().nullable(),
   history: z.array(
     z.object({

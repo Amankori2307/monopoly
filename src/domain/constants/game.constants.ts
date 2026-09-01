@@ -16,7 +16,7 @@ import { SpeedDieFace } from '../types/game.enums';
  *    jailFreeCards as held cards rather than a count.
  * 3: turn.pendingMonopolyAdvance, for the Mr. Monopoly face.
  */
-export const GAME_STATE_VERSION = 3;
+export const GAME_STATE_VERSION = 4;
 
 export const STARTING_CASH = 1500;
 export const PASS_GO_AMOUNT = 200;

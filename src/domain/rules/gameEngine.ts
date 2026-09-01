@@ -473,6 +473,70 @@ const nextActiveBidderIndex = (auction: AuctionState): number => {
   return activeBidderIndex;
 };
 
+/**
+ * Starts the next queued auction, or hands the turn back when the queue is
+ * empty.
+ *
+ * A bankruptcy to the bank returns everything at once and the printed rule has
+ * each property auctioned, so they are sold in turn. An auction with nobody
+ * left to bid is skipped rather than stalling - the property just stays
+ * unowned, to be bought by whoever lands on it.
+ */
+const startNextQueuedAuction = (
+  state: GameState,
+  randomSource: RandomSource
+): GameState => {
+  const [nextSpaceId, ...rest] = state.pendingAuctionSpaceIds;
+
+  if (!nextSpaceId) {
+    return resumeTurnAfterDecision(
+      { ...state, pendingDecision: { type: PendingDecisionType.None } },
+      randomSource
+    );
+  }
+
+  const solventPlayers = state.playerOrder.filter(
+    (playerId) => !state.players[playerId].isBankrupt
+  );
+  if (solventPlayers.length === 0) {
+    return startNextQueuedAuction(
+      { ...state, pendingAuctionSpaceIds: rest },
+      randomSource
+    );
+  }
+
+  return startAuction({ ...state, pendingAuctionSpaceIds: rest }, nextSpaceId);
+};
+
+/**
+ * What happens once a liquidation has been answered: the next debt from the
+ * same card, then any queued auction, then the turn itself.
+ *
+ * One function so settling and going bankrupt cannot disagree about the order -
+ * and the order matters, because an unpaid debt has to be answered before the
+ * bank starts selling anyone's property.
+ */
+const afterDecisionResolved = (
+  state: GameState,
+  queued: DebtRecord[] | undefined,
+  randomSource: RandomSource
+): GameState => {
+  const nextDebt = nextDecisionAfterDebt(state, queued);
+
+  if (nextDebt.type === PendingDecisionType.AssetLiquidation) {
+    return {
+      ...state,
+      pendingDecision: nextDebt,
+      turn: { ...state.turn, phase: TurnPhase.AwaitDecision },
+    };
+  }
+
+  return startNextQueuedAuction(
+    { ...state, pendingDecision: { type: PendingDecisionType.None } },
+    randomSource
+  );
+};
+
 const completeAuctionIfPossible = (
   state: GameState,
   randomSource: RandomSource
@@ -490,15 +554,9 @@ const completeAuctionIfPossible = (
     return state;
   }
 
+  // Nobody bid, so the property simply stays unowned and the next one comes up.
   if (remainingPlayers.length === 0 || !auction.highestBidderId) {
-    return resumeTurnAfterDecision(
-      {
-        ...state,
-        auctionState: null,
-        pendingDecision: { type: PendingDecisionType.None },
-      },
-      randomSource
-    );
+    return startNextQueuedAuction({ ...state, auctionState: null }, randomSource);
   }
 
   const winnerId = auction.highestBidderId;
@@ -516,16 +574,7 @@ const completeAuctionIfPossible = (
     ownerPlayerId: winnerId,
   }));
 
-  nextState = resumeTurnAfterDecision(
-    {
-      ...nextState,
-      auctionState: null,
-      pendingDecision: { type: PendingDecisionType.None },
-    },
-    randomSource
-  );
-
-  return nextState;
+  return startNextQueuedAuction({ ...nextState, auctionState: null }, randomSource);
 };
 
 const startAuction = (state: GameState, spaceId: string): GameState => {
@@ -1193,6 +1242,7 @@ export const createGameState = (
     },
     pendingDecision: { type: PendingDecisionType.None },
     tradeState: null,
+    pendingAuctionSpaceIds: [],
     auctionState: null,
     history: [
       createEvent(1, `${name} started with ${input.playerConfigs.length} players.`),
@@ -1757,19 +1807,7 @@ export const executeGameCommand = (
             decision.reason
           );
 
-      // The next debt from the same card, if the card left more than one.
-      const following = nextDecisionAfterDebt(nextState, decision.queued);
-      nextState =
-        following.type === PendingDecisionType.AssetLiquidation
-          ? {
-              ...nextState,
-              pendingDecision: following,
-              turn: { ...nextState.turn, phase: TurnPhase.AwaitDecision },
-            }
-          : resumeTurnAfterDecision(
-              { ...nextState, pendingDecision: following },
-              randomSource
-            );
+      nextState = afterDecisionResolved(nextState, decision.queued, randomSource);
       break;
     }
     case GameCommandType.ConfirmBankruptcy: {
@@ -1788,6 +1826,11 @@ export const executeGameCommand = (
 
       const creditorId = decision.creditorPlayerId;
       const owned = getPlayerOwnedSpaces(nextState, debtor.id);
+      // Captured before ownership is cleared: the buildings have to be counted
+      // back into the bank's stock, and clearing wipes the levels.
+      const buildLevels: Record<string, number> = Object.fromEntries(
+        owned.map((space) => [space.id, nextState.ownership[space.id]?.buildLevel ?? 0])
+      );
 
       if (creditorId) {
         // Everything the debtor has passes to the creditor, mortgages and all.
@@ -1810,9 +1853,9 @@ export const executeGameCommand = (
           ),
         ]);
       } else {
-        // Debt to the bank: the properties return unowned and their mortgages
-        // are cancelled. The printed rule auctions them there and then; see
-        // docs/india-edition-rules.md section 11 for why that is not done yet.
+        // Debt to the bank: everything returns unowned with its mortgage and
+        // buildings cancelled, and the bank auctions each one in turn - which
+        // is what the queue is for, since only one auction can run at a time.
         owned.forEach((space) => {
           nextState = updateSpaceOwnership(nextState, space.id, () => ({
             ownerPlayerId: null,
@@ -1820,10 +1863,34 @@ export const executeGameCommand = (
             buildLevel: 0,
           }));
         });
+        // The buildings go back into stock; they were never the bank's to keep.
+        const returnedHouses = owned.reduce(
+          (total, space) =>
+            total +
+            (buildLevels[space.id] === HOTEL_BUILD_LEVEL
+              ? 0
+              : (buildLevels[space.id] ?? 0)),
+          0
+        );
+        const returnedHotels = owned.filter(
+          (space) => buildLevels[space.id] === HOTEL_BUILD_LEVEL
+        ).length;
+        nextState = {
+          ...nextState,
+          bank: {
+            ...nextState.bank,
+            housesAvailable: nextState.bank.housesAvailable + returnedHouses,
+            hotelsAvailable: nextState.bank.hotelsAvailable + returnedHotels,
+          },
+          pendingAuctionSpaceIds: [
+            ...nextState.pendingAuctionSpaceIds,
+            ...owned.map((space) => space.id),
+          ],
+        };
         nextState = appendEvents(nextState, [
           createEvent(
             nextState.turnNumber,
-            `${debtor.name} went bankrupt. ${owned.length} site(s) returned to the bank.`
+            `${debtor.name} went bankrupt. ${owned.length} site(s) go to auction.`
           ),
         ]);
       }
@@ -1841,21 +1908,22 @@ export const executeGameCommand = (
         bankruptcyRank: alreadyOut + 1,
       }));
 
+      // A bankruptcy is the only way a player leaves, so it is the only place
+      // the game can become won - and it is checked before the queued auctions
+      // run, because auctioning to a lone survivor is theatre.
+      const won = concludeIfWon({
+        ...nextState,
+        turn: { ...nextState.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+      });
+      if (won.status !== GameStatus.InProgress) {
+        nextState = { ...won, pendingAuctionSpaceIds: [] };
+        break;
+      }
+
       // Debts queued behind this one still stand, unless they were this
       // player's - they have left the game and their creditor has already taken
-      // everything they held.
-      const remaining = nextDecisionAfterDebt(nextState, decision.queued);
-      nextState = {
-        ...nextState,
-        pendingDecision: remaining,
-        turn:
-          remaining.type === PendingDecisionType.AssetLiquidation
-            ? { ...nextState.turn, phase: TurnPhase.AwaitDecision }
-            : { ...nextState.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
-      };
-      // A bankruptcy is the only way a player leaves, so it is the only place
-      // the game can become won.
-      nextState = concludeIfWon(nextState);
+      // everything they held. Auctions wait until every debt is answered.
+      nextState = afterDecisionResolved(nextState, decision.queued, randomSource);
       break;
     }
     // Building and selling share their guards with the UI: buildBlockedReason /

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { GAME_STATE_VERSION } from '../../src/domain/constants/game.constants';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { startGame } from './helpers';
 
@@ -36,7 +37,7 @@ test('starts a Speed Die game with the bonus, and an ordinary one without', asyn
 
   expect(speedGame.useSpeedDie).toBe(true);
   expect(speedGame.cash).toBe(2500);
-  expect(speedGame.version).toBe(3);
+  expect(speedGame.version).toBe(GAME_STATE_VERSION);
 });
 
 // A v1 save predates every field the current schema requires, and a plain
@@ -64,11 +65,10 @@ test('loads a saved game written by the previous version', async ({ page }) => {
   await page.goto(`/game/${gameId}`);
   await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
 
-  // Loading migrates in memory; the save is only rewritten by the next command,
-  // so the UI is where the migrated value actually shows.
+  // Loading migrates and writes the upgraded save straight back, so both the UI
+  // and the stored copy are current before any turn is taken.
   await expect(page.getByTestId(TEST_IDS.gameSidebar)).toContainText(/jail card/i);
 
-  // Taking a turn writes the migrated shape back out.
   await page.getByTestId(TEST_IDS.rollButton).click();
   await expect
     .poll(async () =>
@@ -79,8 +79,8 @@ test('loads a saved game written by the previous version', async ({ page }) => {
         return JSON.parse(localStorage.getItem(key) as string).version as number;
       })
     )
-    // Migrated the whole way: v1 -> v2 -> v3.
-    .toBe(3);
+    // Migrated the whole way, however many versions that is by now.
+    .toBe(GAME_STATE_VERSION);
 
   const loaded = await page.evaluate(() => {
     const key = Object.keys(localStorage).find((k) =>

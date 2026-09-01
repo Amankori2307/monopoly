@@ -3096,3 +3096,235 @@ describe('several debts from one card', () => {
     expect(next.pendingDecision.queued).toHaveLength(1);
   });
 });
+
+/**
+ * A bankruptcy to the bank returns everything at once, and the printed rule has
+ * the bank auction each property. Only one auction can run at a time, so they
+ * queue.
+ */
+describe("auctioning a bankrupt player's property", () => {
+  /** Three players; the first owes the bank more than they can ever pay. */
+  const brokeToTheBank = (siteCount = 2) => {
+    const game = createBaseGame();
+    const thirdId = 'player-3';
+    const streets = game.board.filter(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street
+    );
+    const owned = streets.slice(0, siteCount);
+    const debtorId = game.playerOrder[0];
+
+    const ownership = { ...game.ownership };
+    owned.forEach((space) => {
+      ownership[space.id] = {
+        ownerPlayerId: debtorId,
+        mortgaged: false,
+        buildLevel: 0,
+      };
+    });
+
+    return {
+      owned,
+      debtorId,
+      state: {
+        ...game,
+        playerOrder: [...game.playerOrder, thirdId],
+        players: {
+          ...game.players,
+          [debtorId]: { ...game.players[debtorId], cash: 0 },
+          [thirdId]: {
+            ...game.players[game.playerOrder[1]],
+            id: thirdId,
+            name: 'Meera',
+          },
+        },
+        ownership,
+        activePlayerIndex: 0,
+        pendingDecision: {
+          type: PendingDecisionType.AssetLiquidation as const,
+          playerId: debtorId,
+          amountDue: 99_999,
+          // Owed to the bank, which is what sends the property to auction.
+          creditorPlayerId: null,
+          reason: 'Super Tax',
+          queued: [],
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      } as GameState,
+    };
+  };
+
+  const goBankrupt = (state: GameState) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+  it('opens an auction for the first site and queues the rest', () => {
+    const { state, owned } = brokeToTheBank(2);
+
+    const next = goBankrupt(state);
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AuctionBid);
+    expect(next.auctionState?.spaceId).toBe(owned[0].id);
+    expect(next.pendingAuctionSpaceIds).toEqual([owned[1].id]);
+  });
+
+  it('leaves the sites unowned until somebody wins one', () => {
+    const { state, owned } = brokeToTheBank(2);
+
+    const next = goBankrupt(state);
+
+    owned.forEach((space) => {
+      expect(next.ownership[space.id].ownerPlayerId).toBeNull();
+    });
+  });
+
+  it('never invites the bankrupt player to bid', () => {
+    const { state, debtorId } = brokeToTheBank(1);
+
+    const next = goBankrupt(state);
+
+    expect(next.auctionState?.activeBidderOrder).not.toContain(debtorId);
+  });
+
+  const pass = (state: GameState) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.PassAuction },
+      new SeededRandomSource(3)
+    ).nextState;
+
+  // With two solvent bidders and no bid, one pass leaves a single bidder and
+  // nothing bid - so the site goes unsold and the next one comes up.
+  it('moves to the next queued site when one auction ends', () => {
+    const { state, owned } = brokeToTheBank(2);
+
+    const next = pass(goBankrupt(state));
+
+    expect(next.auctionState?.spaceId).toBe(owned[1].id);
+    expect(next.pendingAuctionSpaceIds).toEqual([]);
+  });
+
+  it('hands the turn back once every queued site is done', () => {
+    const { state } = brokeToTheBank(2);
+
+    const next = pass(pass(goBankrupt(state)));
+
+    expect(next.auctionState).toBeNull();
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+    expect(next.pendingAuctionSpaceIds).toEqual([]);
+  });
+
+  it('gives a site to the player who bids for it', () => {
+    const { state, owned } = brokeToTheBank(1);
+    const opened = goBankrupt(state);
+    const bidderId = opened.auctionState?.activeBidderOrder[0] as string;
+    const cashBefore = opened.players[bidderId].cash;
+
+    const won = pass(
+      executeGameCommand(
+        opened,
+        { type: GameCommandType.SubmitAuctionBid, amount: 60 },
+        new SeededRandomSource(3)
+      ).nextState
+    );
+
+    expect(won.ownership[owned[0].id].ownerPlayerId).toBe(bidderId);
+    expect(won.players[bidderId].cash).toBe(cashBefore - 60);
+  });
+
+  it('returns the buildings to the bank', () => {
+    const { state, owned } = brokeToTheBank(2);
+    const withHouses: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [owned[0].id]: { ...state.ownership[owned[0].id], buildLevel: 3 },
+        [owned[1].id]: {
+          ...state.ownership[owned[1].id],
+          buildLevel: HOTEL_BUILD_LEVEL,
+        },
+      },
+    };
+
+    const next = goBankrupt(withHouses);
+
+    expect(next.bank.housesAvailable).toBe(state.bank.housesAvailable + 3);
+    expect(next.bank.hotelsAvailable).toBe(state.bank.hotelsAvailable + 1);
+  });
+
+  // Auctioning to the only player left is theatre, and the game is already over.
+  it('holds no auction when the bankruptcy wins the game', () => {
+    const game = createBaseGame();
+    const debtorId = game.playerOrder[0];
+    const street = game.board.find(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street
+    ) as StreetSpace;
+
+    const twoPlayers: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [debtorId]: { ...game.players[debtorId], cash: 0 },
+      },
+      ownership: {
+        ...game.ownership,
+        [street.id]: { ownerPlayerId: debtorId, mortgaged: false, buildLevel: 0 },
+      },
+      activePlayerIndex: 0,
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation,
+        playerId: debtorId,
+        amountDue: 99_999,
+        creditorPlayerId: null,
+        reason: 'Super Tax',
+        queued: [],
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const next = goBankrupt(twoPlayers);
+
+    expect(next.status).toBe(GameStatus.Completed);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.GameOver);
+    expect(next.pendingAuctionSpaceIds).toEqual([]);
+    expect(next.auctionState).toBeNull();
+  });
+
+  // A debt still owed by somebody else has to be answered before the bank
+  // starts selling.
+  it('answers a queued debt before starting an auction', () => {
+    const { state, debtorId } = brokeToTheBank(1);
+    const otherId = state.playerOrder[1];
+    const withQueuedDebt: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        [otherId]: { ...state.players[otherId], cash: 1 },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation,
+        playerId: debtorId,
+        amountDue: 99_999,
+        creditorPlayerId: null,
+        reason: 'Super Tax',
+        queued: [
+          {
+            playerId: otherId,
+            amountDue: 500,
+            creditorPlayerId: null,
+            reason: 'Super Tax',
+          },
+        ],
+      },
+    };
+
+    const next = goBankrupt(withQueuedDebt);
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+    expect(next.auctionState).toBeNull();
+    // The site is still waiting to be sold.
+    expect(next.pendingAuctionSpaceIds).toHaveLength(1);
+  });
+});

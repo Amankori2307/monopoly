@@ -34,8 +34,8 @@ export function RulesMoney() {
       <p>
         First try selling buildings and mortgaging property. If you still cannot pay, you
         are bankrupt and leave the game. Debt to another player transfers everything you
-        hold to them, mortgages and all. Debt to the Bank returns your properties unowned,
-        to be bought again by whoever lands on them. Play continues until one player
+        hold to them, mortgages and all. Debt to the Bank returns your properties to the
+        Bank, which auctions them one after another. Play continues until one player
         remains, and that player wins.
       </p>
     </section>

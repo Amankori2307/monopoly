@@ -261,6 +261,14 @@ export interface GameState {
   turn: TurnState;
   pendingDecision: PendingDecision;
   tradeState: TradeState | null;
+  /**
+   * Properties waiting to be auctioned, oldest first.
+   *
+   * A bankruptcy to the bank returns everything at once, and the printed rule
+   * has the bank auction each one - so they queue and are sold in turn. Only
+   * one auction can run at a time.
+   */
+  pendingAuctionSpaceIds: SpaceId[];
   auctionState: AuctionState | null;
   history: GameEvent[];
   winnerPlayerId: PlayerId | null;

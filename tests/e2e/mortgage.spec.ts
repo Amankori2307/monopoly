@@ -322,3 +322,85 @@ test('works through every debt one card leaves behind', async ({ page }) => {
   expect(second.firstOut).toBe(true);
   expect(second.pendingPlayer).toBe(second.secondPlayer);
 });
+
+/**
+ * A bankruptcy to the bank returns everything at once, and the printed rule has
+ * the bank auction each property rather than leaving it lying unowned.
+ */
+test("auctions a bankrupt player's sites, one after another", async ({ page }) => {
+  await startGame(page, { players: 3 });
+
+  const seeded = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const debtor = game.playerOrder[0];
+    const streets = game.board.filter(
+      (space: { kind: string }) => space.kind === 'street'
+    );
+    const owned = streets.slice(0, 2);
+
+    owned.forEach((site: { id: string }) => {
+      game.ownership[site.id] = {
+        ownerPlayerId: debtor,
+        mortgaged: false,
+        buildLevel: 0,
+      };
+    });
+    game.players[debtor].cash = 0;
+    game.activePlayerIndex = 0;
+    // Owed to the Bank, which is what sends the sites to auction.
+    game.pendingDecision = {
+      type: 'asset-liquidation',
+      playerId: debtor,
+      amountDue: 99999,
+      creditorPlayerId: null,
+      reason: 'Super Tax',
+      queued: [],
+    };
+    game.turn = {
+      phase: 'await_decision',
+      doublesCount: 0,
+      lastRoll: [3, 4],
+      canRollAgain: false,
+      reason: 'Super Tax',
+      speedDieFace: null,
+      pendingMonopolyAdvance: false,
+    };
+    localStorage.setItem(key, JSON.stringify(game));
+
+    return { first: owned[0].name as string, second: owned[1].name as string };
+  });
+  await page.reload();
+
+  await page.getByTestId(TEST_IDS.declareBankruptcy).click();
+
+  // The first site goes straight to auction rather than lying unowned.
+  const auction = page.getByTestId(TEST_IDS.auctionDecision);
+  await expect(auction).toBeVisible();
+  await expect(auction).toContainText(seeded.first);
+
+  // Somebody takes it.
+  await page.getByTestId(TEST_IDS.bidInput).fill('60');
+  await page.getByTestId(TEST_IDS.submitBidButton).click();
+  await page.getByTestId(TEST_IDS.passAuctionButton).click();
+
+  // And the queue moves on to the next one by itself.
+  await expect(auction).toContainText(seeded.second);
+
+  const state = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const owners = Object.values(
+      game.ownership as Record<string, { ownerPlayerId: string | null }>
+    )
+      .map((entry) => entry.ownerPlayerId)
+      .filter(Boolean);
+    return { queue: game.pendingAuctionSpaceIds as string[], ownedCount: owners.length };
+  });
+  expect(state.queue).toEqual([]);
+  expect(state.ownedCount).toBe(1);
+});

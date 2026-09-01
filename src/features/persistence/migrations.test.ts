@@ -120,11 +120,26 @@ describe('migrating across more than one version', () => {
       version: number;
       useSpeedDie: boolean;
       turn: { speedDieFace: string; pendingMonopolyAdvance: boolean };
+      pendingAuctionSpaceIds: string[];
     };
 
-    expect(migrated.version).toBe(3);
+    // Against the constant, not a literal: every later bump would otherwise
+    // fail this test for the wrong reason.
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
     expect(migrated.useSpeedDie).toBe(true);
     expect(migrated.turn.speedDieFace).toBe('bus');
     expect(migrated.turn.pendingMonopolyAdvance).toBe(false);
+    expect(migrated.pendingAuctionSpaceIds).toEqual([]);
+  });
+
+  // No save can have been written mid-queue, so it starts empty.
+  it('gives a v3 save an empty auction queue', () => {
+    const migrated = migrateSavedGame({
+      version: 3,
+      useSpeedDie: false,
+    }) as { version: number; pendingAuctionSpaceIds: string[] };
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+    expect(migrated.pendingAuctionSpaceIds).toEqual([]);
   });
 });
