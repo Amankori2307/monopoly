@@ -19,21 +19,37 @@ const toast = (id: string): Toast => ({ id, message: `event ${id}`, tone: 'neutr
 const initial = () => uiReducer(undefined, { type: '@@init' });
 
 describe('the auction bid input', () => {
-  it('starts at the opening price', () => {
-    expect(initial().auctionBidInput).toBe(10);
+  const typed = (key: string, amount: number) => ({ key, amount });
+
+  // Nothing typed yet. The field shows the minimum legal bid instead, which
+  // selectBidField derives - the slice holds only what a player actually typed.
+  it('starts holding nothing', () => {
+    expect(initial().auctionBidInput).toBeNull();
   });
 
-  it('takes whatever the panel puts in it', () => {
-    const state = uiReducer(initial(), setAuctionBidInput(250));
+  it('takes whatever the panel puts in it, and the moment it belongs to', () => {
+    const state = uiReducer(initial(), setAuctionBidInput(typed('a:p1:0', 250)));
 
-    expect(state.auctionBidInput).toBe(250);
+    expect(state.auctionBidInput).toEqual({ key: 'a:p1:0', amount: 250 });
   });
 
   // The engine is what rejects a bid below the minimum; the input must not
   // second-guess it, or the panel and the rules would disagree.
   it('does not police the amount', () => {
-    expect(uiReducer(initial(), setAuctionBidInput(0)).auctionBidInput).toBe(0);
-    expect(uiReducer(initial(), setAuctionBidInput(-5)).auctionBidInput).toBe(-5);
+    expect(
+      uiReducer(initial(), setAuctionBidInput(typed('k', 0))).auctionBidInput
+    ).toEqual(typed('k', 0));
+    expect(
+      uiReducer(initial(), setAuctionBidInput(typed('k', -5))).auctionBidInput
+    ).toEqual(typed('k', -5));
+  });
+
+  // Each entry replaces the last: a bidder retyping is still one bid.
+  it('keeps only the latest entry', () => {
+    let state = uiReducer(initial(), setAuctionBidInput(typed('a:p1:0', 20)));
+    state = uiReducer(state, setAuctionBidInput(typed('a:p1:0', 60)));
+
+    expect(state.auctionBidInput).toEqual(typed('a:p1:0', 60));
   });
 });
 
@@ -116,10 +132,10 @@ describe('the toast stack', () => {
   });
 
   it('leaves the bid input alone while toasts come and go', () => {
-    let state = uiReducer(initial(), setAuctionBidInput(120));
+    let state = uiReducer(initial(), setAuctionBidInput({ key: 'a:p1:0', amount: 120 }));
     state = uiReducer(state, pushToasts([toast('a')]));
     state = uiReducer(state, clearToasts());
 
-    expect(state.auctionBidInput).toBe(120);
+    expect(state.auctionBidInput).toEqual({ key: 'a:p1:0', amount: 120 });
   });
 });

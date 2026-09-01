@@ -1,15 +1,20 @@
 import { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import type { Toast } from '../../../components/game/overlays/overlays.interfaces';
-import type { DecisionHandlers } from '../../../components/game/panels/panels.interfaces';
+import type {
+  BidFieldState,
+  DecisionHandlers,
+} from '../../../components/game/panels/panels.interfaces';
 import type { MortgageChoice } from '../../../domain/types/game.enums';
 import type { TradeState } from '../../../domain/types/game.interfaces';
 import { GameCommandType } from '../../../domain/types/game.enums';
 import { runGameCommand, setCommandError } from '../gameSlice';
 import { dismissToast, setAuctionBidInput } from '../uiSlice';
+import { auctionBidKey, selectBidField } from '../auctionViewModel.selectors';
 
 export interface UseGameCommandsResult {
-  auctionBidInput: number;
+  /** The auction bid field, prefilled and guarded. Null with no auction open. */
+  bidField: BidFieldState | null;
   decisionHandlers: DecisionHandlers;
   dismissError: () => void;
   dismissToast: (toastId: string) => void;
@@ -28,12 +33,21 @@ export interface UseGameCommandsResult {
  */
 export const useGameCommands = (): UseGameCommandsResult => {
   const dispatch = useAppDispatch();
-  const auctionBidInput = useAppSelector((state) => state.ui.auctionBidInput);
+  const typedBid = useAppSelector((state) => state.ui.auctionBidInput);
+  const auction = useAppSelector((state) => state.game.activeGame?.auctionState ?? null);
+  const bidderCash = useAppSelector((state) => {
+    const game = state.game.activeGame;
+    const bidderId = auction?.activeBidderOrder[auction.activeBidderIndex];
+    return bidderId ? (game?.players[bidderId]?.cash ?? 0) : 0;
+  });
   const toasts = useAppSelector((state) => state.ui.toasts);
+  // The field is derived, not stored: an untouched field holds the minimum legal
+  // bid, so this is also the amount Submit sends.
+  const bidField = auction ? selectBidField(auction, bidderCash, typedBid) : null;
 
   return useMemo(
     () => ({
-      auctionBidInput,
+      bidField,
       toasts,
       dismissError: () => dispatch(setCommandError(null)),
       runPropertyCommand: (command: GameCommandType, spaceId: string) =>
@@ -53,14 +67,24 @@ export const useGameCommands = (): UseGameCommandsResult => {
         onBuy: () => dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset })),
         onDecline: () =>
           dispatch(runGameCommand({ type: GameCommandType.DeclineLandedAsset })),
-        onBid: () =>
+        onBid: () => {
+          if (!bidField) {
+            return;
+          }
           dispatch(
             runGameCommand({
               type: GameCommandType.SubmitAuctionBid,
-              amount: auctionBidInput,
+              amount: bidField.amount,
             })
-          ),
-        onBidAmountChange: (amount: number) => dispatch(setAuctionBidInput(amount)),
+          );
+        },
+        // Tagged with the moment it was typed at, so it goes stale by itself
+        // once a bid lands or the turn passes to the next bidder.
+        onBidAmountChange: (amount: number) => {
+          if (auction) {
+            dispatch(setAuctionBidInput({ key: auctionBidKey(auction), amount }));
+          }
+        },
         onPass: () => dispatch(runGameCommand({ type: GameCommandType.PassAuction })),
         onPayJailFine: () =>
           dispatch(runGameCommand({ type: GameCommandType.PayJailFine })),
@@ -107,6 +131,6 @@ export const useGameCommands = (): UseGameCommandsResult => {
           ),
       },
     }),
-    [auctionBidInput, dispatch, toasts]
+    [auction, bidField, dispatch, toasts]
   );
 };

@@ -5,6 +5,7 @@ import {
 import { PendingDecisionType, TurnPhase } from '../../types/game.enums';
 import type { BuildingKind } from '../../types/game.enums';
 import type { AuctionState, DebtRecord, GameState } from '../../types/game.interfaces';
+import { openingLedgerEntry } from '../auctionBids.utils';
 import { playersWhoCouldBuild } from '../buildings.utils';
 import type { RandomSource } from '../rng';
 import { nextDecisionAfterDebt, resolveBankPayment } from './money.utils';
@@ -193,6 +194,8 @@ export const startAuction = (
     highestBid: 0,
     highestBidderId: null,
     passedPlayerIds: [],
+    // The panel opens on this line, so a bidder sees the price before any bid.
+    ledger: [openingLedgerEntry(building?.startPrice ?? AUCTION_START_PRICE)],
   };
 
   return appendEvents(

@@ -45,7 +45,8 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   Decline as its actions, so a player weighs rents, mortgage value, and build costs rather than
   a bare price. The view model therefore carries the whole `OwnableSpace`, not a name and price.
   The modal is two columns — site card on one side, the choice on the other — collapsing to one
-  column on narrow screens. Auction handling beyond starting the auction is still to come.
+  column on narrow screens. The auction panel is built the same way; see
+  [auctions.md](auctions.md).
 
 - **Command pattern over direct mutation.** One choke point means saving, logging, and undo are
   possible without touching the UI, and rules stay unit-testable with no React in scope.

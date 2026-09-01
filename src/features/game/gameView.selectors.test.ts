@@ -23,6 +23,9 @@ import {
   selectPlayerSummaries,
 } from './gameView.selectors';
 
+/** The decision view model colours its bidders, so it needs the theme's tokens. */
+const findToken = makeTokenFinder(indiaEditionTheme);
+
 const createGame = (): GameState =>
   createGameState(
     {
@@ -113,7 +116,7 @@ describe('turn selectors', () => {
 
 describe('selectDecisionViewModel', () => {
   it('returns null when nothing is pending', () => {
-    expect(selectDecisionViewModel(createGame())).toBeNull();
+    expect(selectDecisionViewModel(createGame(), findToken)).toBeNull();
   });
 
   it('describes the buy decision after landing on an unowned property', () => {
@@ -125,7 +128,7 @@ describe('selectDecisionViewModel', () => {
       new SeededRandomSource(2)
     );
 
-    const decision = selectDecisionViewModel(nextState);
+    const decision = selectDecisionViewModel(nextState, findToken);
 
     expect(decision?.type).toBe(PendingDecisionType.LandedUnownedProperty);
     if (decision?.type === PendingDecisionType.LandedUnownedProperty) {
@@ -148,7 +151,7 @@ describe('selectDecisionViewModel', () => {
       type: GameCommandType.DeclineLandedAsset,
     });
 
-    const decision = selectDecisionViewModel(declined.nextState);
+    const decision = selectDecisionViewModel(declined.nextState, findToken);
 
     expect(decision?.type).toBe(PendingDecisionType.AuctionBid);
     if (decision?.type === PendingDecisionType.AuctionBid) {
@@ -183,7 +186,7 @@ describe('a jailed player always has something to do', () => {
     game.pendingDecision = { type: PendingDecisionType.None };
     game.turn = { ...game.turn, phase: TurnPhase.AwaitRoll };
 
-    const decision = selectDecisionViewModel(game);
+    const decision = selectDecisionViewModel(game, findToken);
 
     expect(decision?.type).toBe(PendingDecisionType.JailChoice);
     // The action is the decision, not the dice dock: the jail panel offers the
@@ -191,7 +194,9 @@ describe('a jailed player always has something to do', () => {
     // regression cared about - that a jailed player is never left with nothing
     // to do - still holds, and is what this asserts.
     expect(selectHasAvailableAction(game)).toBe(true);
-    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
+    expect(selectDecisionViewModel(game, findToken)?.type).toBe(
+      PendingDecisionType.JailChoice
+    );
   });
 
   it('offers no dock roll to a jailed player, because the panel owns it', () => {
@@ -210,7 +215,9 @@ describe('a jailed player always has something to do', () => {
       playerId: game.playerOrder[game.activePlayerIndex],
     };
 
-    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
+    expect(selectDecisionViewModel(game, findToken)?.type).toBe(
+      PendingDecisionType.JailChoice
+    );
   });
 
   it('does not offer a roll while a blocking decision is open', () => {
@@ -327,7 +334,7 @@ describe('a finished game', () => {
 
   it('shows the winner', () => {
     const game = finishedGame();
-    const decision = selectDecisionViewModel(game);
+    const decision = selectDecisionViewModel(game, findToken);
 
     expect(decision).toEqual({
       type: PendingDecisionType.GameOver,
@@ -354,7 +361,7 @@ describe('the jail decision', () => {
   };
 
   it.each([0, 1, 2])('reports %i attempts used', (served) => {
-    const decision = selectDecisionViewModel(jailedGame(served));
+    const decision = selectDecisionViewModel(jailedGame(served), findToken);
 
     expect(decision).toMatchObject({
       type: PendingDecisionType.JailChoice,
@@ -366,7 +373,9 @@ describe('the jail decision', () => {
   it('offers the choice even with no pending decision recorded', () => {
     const game = jailedGame(0);
 
-    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
+    expect(selectDecisionViewModel(game, findToken)?.type).toBe(
+      PendingDecisionType.JailChoice
+    );
   });
 });
 
@@ -394,7 +403,7 @@ describe('the jail panel and the turn', () => {
   it.each([TurnPhase.AwaitDecision, TurnPhase.AwaitRoll])(
     'offers the choice at the start of the turn (%s)',
     (phase) => {
-      expect(selectDecisionViewModel(jailedAt(phase))?.type).toBe(
+      expect(selectDecisionViewModel(jailedAt(phase), findToken)?.type).toBe(
         PendingDecisionType.JailChoice
       );
     }
@@ -403,7 +412,7 @@ describe('the jail panel and the turn', () => {
   it('offers nothing once the attempt has been spent', () => {
     const spent = jailedAt(TurnPhase.TurnComplete);
 
-    expect(selectDecisionViewModel(spent)).toBeNull();
+    expect(selectDecisionViewModel(spent, findToken)).toBeNull();
     // And what is left to do is end the turn, which is now uncovered.
     expect(selectCanEndTurn(spent)).toBe(true);
     expect(selectHasAvailableAction(spent)).toBe(true);

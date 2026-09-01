@@ -186,3 +186,54 @@ describe('giving old events a tone', () => {
     expect(migrated.history).toEqual([]);
   });
 });
+
+/**
+ * v5 -> v6: an auction records its own bids and passes.
+ *
+ * The old shape never kept the sequence, so a save caught mid-auction cannot
+ * have its bidding reconstructed - it reopens on the opening line alone.
+ */
+describe('giving an in-flight auction a ledger', () => {
+  const auctionSave = (auctionState: unknown) =>
+    migrateSavedGame({ version: 5, auctionState }) as {
+      version: number;
+      auctionState: {
+        ledger?: { kind: string; playerId: null; amount: number }[];
+      } | null;
+    };
+
+  it('opens the ledger at the price the auction started from', () => {
+    const migrated = auctionSave({
+      id: 'a',
+      spaceId: 'space-1',
+      startPrice: 50,
+      minIncrement: 1,
+      activeBidderOrder: ['player-1', 'player-2'],
+      activeBidderIndex: 0,
+      highestBid: 120,
+      highestBidderId: 'player-2',
+      passedPlayerIds: [],
+    });
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+    expect(migrated.auctionState?.ledger).toEqual([
+      { kind: 'start', playerId: null, amount: 50 },
+    ]);
+  });
+
+  it('leaves a save with no auction running alone', () => {
+    const migrated = auctionSave(null);
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+    expect(migrated.auctionState).toBeNull();
+  });
+
+  // It is reading data an older build wrote, so it cannot trust the shape.
+  it('copes with an auction that has no start price', () => {
+    const migrated = auctionSave({ id: 'a', spaceId: 'space-1' });
+
+    expect(migrated.auctionState?.ledger).toEqual([
+      { kind: 'start', playerId: null, amount: 0 },
+    ]);
+  });
+});

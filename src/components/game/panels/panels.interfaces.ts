@@ -5,6 +5,7 @@ import type {
   MortgageableSite,
 } from '../../../domain/rules/holdings.utils';
 import type {
+  AuctionLedgerKind,
   BuildingKind,
   MortgageChoice,
   PendingDecisionType,
@@ -52,12 +53,64 @@ export interface BuyDecisionViewModel {
   space: OwnableSpace;
 }
 
+/**
+ * A player named in the auction log: the one bidding now, or the one a past line
+ * belongs to.
+ *
+ * There is deliberately no `isActive` or `hasPassed` here. Both existed for a
+ * bidder roster that said what the log's own lines already say - "Asha passed",
+ * "Vikram bidding..." - and the panel is a fixed height, so the roster's rows
+ * came out of the log's.
+ */
+export interface AuctionBidderViewModel {
+  playerId: PlayerId;
+  name: string;
+  token: ThemeToken | undefined;
+  cash: number;
+}
+
+/**
+ * One line of the auction's history, with its player already resolved.
+ *
+ * The engine's ledger stores ids; the panel needs the name and the colour, and
+ * resolving that once here keeps the lookup out of the component.
+ */
+export interface AuctionLedgerLineViewModel {
+  kind: AuctionLedgerKind;
+  /** Null on the opening line, which is the bank's. */
+  bidder: AuctionBidderViewModel | null;
+  amount: number | null;
+}
+
+/**
+ * The bid field as the panel shows it: what to put in the input, the bounds, and
+ * why Submit is disabled. Derived in the feature layer from the live auction and
+ * whatever the bidder has typed.
+ */
+export interface BidFieldState {
+  /** What to show: what was typed, or the minimum legal bid when untouched. */
+  amount: number;
+  minimumBid: number;
+  /** Everything the bidder holds - the most they could possibly offer. */
+  maximumBid: number;
+  /** Why this amount cannot be submitted, or null when it can. */
+  blockedReason: string | null;
+}
+
 export interface AuctionDecisionViewModel {
   type: PendingDecisionType.AuctionBid;
+  /** The deed on show. On a building auction, the site that set the price. */
+  space: BoardSpace;
   spaceName: string;
+  /** Set when a house or hotel is what is for sale, not the site. */
+  buildingKind: BuildingKind | undefined;
   activeBidderName: string;
+  /** Whose turn it is to bid - the log's last line names them. */
+  activeBidder: AuctionBidderViewModel;
   highestBid: number;
   minimumBid: number;
+  /** The whole history: opened at, bid, passed, oldest first. */
+  ledger: AuctionLedgerLineViewModel[];
   auction: AuctionState;
 }
 

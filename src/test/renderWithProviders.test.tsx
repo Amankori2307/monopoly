@@ -14,7 +14,7 @@ import { renderWithProviders } from './renderWithProviders';
  */
 function BidReadout() {
   const bid = useAppSelector((state) => state.ui.auctionBidInput);
-  return <span data-testid="bid">{bid}</span>;
+  return <span data-testid="bid">{bid?.amount ?? 'none'}</span>;
 }
 
 describe('renderWithProviders', () => {
@@ -22,7 +22,7 @@ describe('renderWithProviders', () => {
     const first = renderWithProviders(<BidReadout />);
     // act, or React never re-renders and the assertion reads the initial value.
     act(() => {
-      first.store.dispatch(setAuctionBidInput(999));
+      first.store.dispatch(setAuctionBidInput({ key: 'a:p1:0', amount: 999 }));
     });
     expect(first.getByTestId('bid')).toHaveTextContent('999');
     first.unmount();
@@ -35,7 +35,9 @@ describe('renderWithProviders', () => {
 
   it('starts a render from preloadedState', () => {
     renderWithProviders(<BidReadout />, {
-      preloadedState: { ui: { auctionBidInput: 42, toasts: [] } },
+      preloadedState: {
+        ui: { auctionBidInput: { key: 'a:p1:0', amount: 42 }, toasts: [] },
+      },
     });
 
     expect(screen.getByTestId('bid')).toHaveTextContent('42');
@@ -45,9 +47,9 @@ describe('renderWithProviders', () => {
     const { store } = renderWithProviders(<BidReadout />);
 
     act(() => {
-      store.dispatch(setAuctionBidInput(7));
+      store.dispatch(setAuctionBidInput({ key: 'a:p1:0', amount: 7 }));
     });
 
-    expect(store.getState().ui.auctionBidInput).toBe(7);
+    expect(store.getState().ui.auctionBidInput).toEqual({ key: 'a:p1:0', amount: 7 });
   });
 });

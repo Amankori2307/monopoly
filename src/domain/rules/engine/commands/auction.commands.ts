@@ -1,5 +1,10 @@
-import { GameCommandType, PendingDecisionType } from '../../../types/game.enums';
+import {
+  AuctionLedgerKind,
+  GameCommandType,
+  PendingDecisionType,
+} from '../../../types/game.enums';
 import type { AuctionState } from '../../../types/game.interfaces';
+import { appendAuctionEntry, bidBlockedReason } from '../../auctionBids.utils';
 import { completeAuctionIfPossible, nextActiveBidderIndex } from '../auction.utils';
 import {
   appendEvents,
@@ -26,15 +31,11 @@ export const auctionCommands: CommandHandlers = {
     }
     const activeBidderId = auction.activeBidderOrder[auction.activeBidderIndex];
     const activeBidder = getPlayerById(nextState, activeBidderId);
-    const minimumBid = Math.max(
-      auction.startPrice,
-      auction.highestBid + auction.minIncrement
-    );
-    if (command.amount < minimumBid) {
-      throw new Error(`Bid must be at least ${minimumBid}.`);
-    }
-    if (command.amount > activeBidder.cash) {
-      throw new Error('Bid exceeds available cash.');
+    // Stated once, in auctionBids.utils - the panel disables its button from
+    // the same function, so the two cannot disagree about what is legal.
+    const blockedReason = bidBlockedReason(auction, activeBidder.cash, command.amount);
+    if (blockedReason) {
+      throw new Error(blockedReason);
     }
 
     nextState = {
@@ -44,6 +45,11 @@ export const auctionCommands: CommandHandlers = {
         highestBid: command.amount,
         highestBidderId: activeBidderId,
         activeBidderIndex: nextActiveBidderIndex(auction),
+        ledger: appendAuctionEntry(auction, {
+          kind: AuctionLedgerKind.Bid,
+          playerId: activeBidderId,
+          amount: command.amount,
+        }),
       },
     };
     nextState = appendEvents(nextState, [
@@ -68,6 +74,11 @@ export const auctionCommands: CommandHandlers = {
         const withPass: AuctionState = {
           ...auction,
           passedPlayerIds: [...auction.passedPlayerIds, activeBidderId],
+          ledger: appendAuctionEntry(auction, {
+            kind: AuctionLedgerKind.Pass,
+            playerId: activeBidderId,
+            amount: null,
+          }),
         };
         return {
           ...withPass,

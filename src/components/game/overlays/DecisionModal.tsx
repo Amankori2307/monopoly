@@ -1,9 +1,13 @@
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { DecisionPanel } from '../panels/decisions/DecisionPanel';
-import type { DecisionHandlers, DecisionViewModel } from '../panels/panels.interfaces';
+import type {
+  BidFieldState,
+  DecisionHandlers,
+  DecisionViewModel,
+} from '../panels/panels.interfaces';
 
 interface DecisionModalProps {
-  bidAmount: number;
+  bidField: BidFieldState | null;
   currencySymbol: string;
   decision: DecisionViewModel | null;
   handlers: DecisionHandlers;
@@ -17,7 +21,7 @@ interface DecisionModalProps {
  * would only strand the player with no way back to it.
  */
 export function DecisionModal({
-  bidAmount,
+  bidField,
   currencySymbol,
   decision,
   handlers,
@@ -35,7 +39,7 @@ export function DecisionModal({
         role="dialog"
       >
         <DecisionPanel
-          bidAmount={bidAmount}
+          bidField={bidField}
           currencySymbol={currencySymbol}
           decision={decision}
           handlers={handlers}

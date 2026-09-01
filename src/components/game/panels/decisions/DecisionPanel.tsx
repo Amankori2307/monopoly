@@ -1,5 +1,10 @@
 import { PendingDecisionType } from '../../../../domain/types/game.enums';
-import type { DecisionHandlers, DecisionViewModel } from '../panels.interfaces';
+import type {
+  AuctionDecisionViewModel,
+  BidFieldState,
+  DecisionHandlers,
+  DecisionViewModel,
+} from '../panels.interfaces';
 import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { AuctionDecision } from './AuctionDecision';
 import { BuildingPlacementDecision } from './BuildingPlacementDecision';
@@ -13,11 +18,37 @@ import { SpeedDieDestinationDecision } from './SpeedDieDestinationDecision';
 import { TradeResponseDecision } from './TradeResponseDecision';
 
 interface DecisionPanelProps {
-  bidAmount: number;
+  /** Null unless an auction is open; the auction branch is the only reader. */
+  bidField: BidFieldState | null;
   currencySymbol: string;
   decision: DecisionViewModel | null;
   handlers: DecisionHandlers;
 }
+
+/**
+ * The auction branch, pulled out so this file's own branching stays inside the
+ * complexity limit - and because it is the one case with a second condition:
+ * the bid field arrives separately, from the ui slice rather than the game.
+ */
+const auctionPanel = (
+  decision: AuctionDecisionViewModel,
+  bidField: BidFieldState | null,
+  currencySymbol: string,
+  handlers: DecisionHandlers
+) =>
+  bidField ? (
+    <AuctionDecision
+      activeBidder={decision.activeBidder}
+      bidField={bidField}
+      buildingKind={decision.buildingKind}
+      currencySymbol={currencySymbol}
+      ledger={decision.ledger}
+      onBid={handlers.onBid}
+      onBidAmountChange={handlers.onBidAmountChange}
+      onPass={handlers.onPass}
+      space={decision.space}
+    />
+  ) : null;
 
 /**
  * Renders whichever decision is pending.
@@ -26,7 +57,7 @@ interface DecisionPanelProps {
  * in gameView.selectors - otherwise the game stalls with no way to advance.
  */
 export function DecisionPanel({
-  bidAmount,
+  bidField,
   currencySymbol,
   decision,
   handlers,
@@ -47,19 +78,9 @@ export function DecisionPanel({
         />
       ) : null}
 
-      {decision.type === PendingDecisionType.AuctionBid ? (
-        <AuctionDecision
-          activeBidderName={decision.activeBidderName}
-          bidAmount={bidAmount}
-          currencySymbol={currencySymbol}
-          highestBid={decision.highestBid}
-          minimumBid={decision.minimumBid}
-          onBid={handlers.onBid}
-          onBidAmountChange={handlers.onBidAmountChange}
-          onPass={handlers.onPass}
-          spaceName={decision.spaceName}
-        />
-      ) : null}
+      {decision.type === PendingDecisionType.AuctionBid
+        ? auctionPanel(decision, bidField, currencySymbol, handlers)
+        : null}
 
       {decision.type === PendingDecisionType.JailChoice ? (
         <JailDecision

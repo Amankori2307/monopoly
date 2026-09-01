@@ -117,9 +117,9 @@ export function GameOverlayLayer({
       {/* Suppressed while a token walks, so a decision cannot appear before the
           move that caused it has finished. */}
       <DecisionModal
-        bidAmount={commands.auctionBidInput}
+        bidField={commands.bidField}
         currencySymbol={currencySymbol}
-        decision={isMoving ? null : selectDecisionViewModel(activeGame)}
+        decision={isMoving ? null : selectDecisionViewModel(activeGame, findToken)}
         handlers={commands.decisionHandlers}
       />
     </>

@@ -1,6 +1,10 @@
 import { GAME_STATE_VERSION } from '../../domain/constants/game.constants';
-import { GameEventTone } from '../../domain/types/game.enums';
-import { CardDeck, CardEffectKind } from '../../domain/types/game.enums';
+import {
+  AuctionLedgerKind,
+  CardDeck,
+  CardEffectKind,
+  GameEventTone,
+} from '../../domain/types/game.enums';
 import type { GameState } from '../../domain/types/game.interfaces';
 
 /**
@@ -114,11 +118,39 @@ const toneFromWording = (message: string): GameEventTone => {
     : GameEventTone.Neutral;
 };
 
+/**
+ * v6 gave an auction a ledger of its bids and passes.
+ *
+ * A save caught mid-auction cannot have its bidding reconstructed - the old
+ * shape never recorded the sequence - so it reopens showing the opening line
+ * alone. Those bids are still in the game's own history, which is where they
+ * were readable before this existed.
+ */
+const v5ToV6 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const auction = raw.auctionState;
+
+  if (typeof auction !== 'object' || auction === null) {
+    return { ...raw, version: 6 };
+  }
+
+  const startPrice = Number((auction as { startPrice?: unknown }).startPrice) || 0;
+
+  return {
+    ...raw,
+    auctionState: {
+      ...(auction as object),
+      ledger: [{ kind: AuctionLedgerKind.Start, playerId: null, amount: startPrice }],
+    },
+    version: 6,
+  };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
   3: v3ToV4,
   4: v4ToV5,
+  5: v5ToV6,
 };
 
 /**

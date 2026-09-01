@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AuctionLedgerKind,
   BuildingKind,
   ColorGroup,
   GameCommandType,
@@ -31,6 +32,8 @@ import { RAILWAY_RENT_BY_COUNT } from '../constants/board.constants';
 import { chanceCards, communityChestCards } from '../cards/indiaEditionCards';
 import { indiaEditionTheme } from '../themes/indiaEditionTheme';
 import { getPlacementSites } from './buildings.utils';
+import { startAuction } from './engine/auction.utils';
+import { getThemeOrDefault } from './engine/state.utils';
 import { findMonopolyAdvance } from './engine/turn.utils';
 import { SeededRandomSource } from './rng';
 import { scriptedRolls } from '../../test/scriptedRandomSource';
@@ -640,6 +643,135 @@ describe('auction bidder rotation', () => {
     const declinerId = state.playerOrder[state.activePlayerIndex];
 
     expect(state.auctionState?.activeBidderOrder).toContain(declinerId);
+  });
+
+  /**
+   * The ledger: what the auction panel reads to show how the bidding got here.
+   *
+   * None of it can be recovered from the rest of the auction state, which keeps
+   * only the standing high bid and who has left - so the sequence is recorded as
+   * it happens.
+   */
+  describe('the ledger', () => {
+    /** Plays a sequence of bids and passes, and returns the ledger as prose. */
+    const playAndRead = (actions: (number | 'pass')[]) => {
+      let state = openAuction();
+      const bidders: string[] = [];
+
+      for (const action of actions) {
+        bidders.push(state.players[currentBidder(state)].name);
+        state = executeGameCommand(
+          state,
+          action === 'pass'
+            ? { type: GameCommandType.PassAuction }
+            : { type: GameCommandType.SubmitAuctionBid, amount: action },
+          new SeededRandomSource(3)
+        ).nextState;
+      }
+
+      return { state, bidders };
+    };
+
+    it('opens on the price the bidding starts from', () => {
+      const auction = openAuction().auctionState;
+
+      expect(auction?.ledger).toEqual([
+        { kind: AuctionLedgerKind.Start, playerId: null, amount: AUCTION_START_PRICE },
+      ]);
+    });
+
+    it('records each bid against the player who made it, oldest first', () => {
+      const { state, bidders } = playAndRead([20, 50, 100]);
+
+      expect(state.auctionState?.ledger.slice(1)).toEqual([
+        { kind: AuctionLedgerKind.Bid, playerId: expect.any(String), amount: 20 },
+        { kind: AuctionLedgerKind.Bid, playerId: expect.any(String), amount: 50 },
+        { kind: AuctionLedgerKind.Bid, playerId: expect.any(String), amount: 100 },
+      ]);
+      // The ids are the players who were asked to act, in that order.
+      expect(
+        state.auctionState?.ledger
+          .slice(1)
+          .map((entry) => state.players[entry.playerId as string].name)
+      ).toEqual(bidders);
+    });
+
+    it('records a pass with no amount, since a pass names none', () => {
+      const { state } = playAndRead([20, 'pass']);
+
+      expect(state.auctionState?.ledger.at(-1)).toEqual({
+        kind: AuctionLedgerKind.Pass,
+        playerId: expect.any(String),
+        amount: null,
+      });
+    });
+
+    /**
+     * The user's narrative, end to end: opened at ₹10, bid up to ₹120 through
+     * two rounds with players dropping out, and it reads back in order.
+     */
+    it('reads back as the story of the auction', () => {
+      const { state } = playAndRead([20, 50, 100, 'pass', 'pass', 120]);
+      const symbol = getThemeOrDefault(state.themeId).currencySymbol;
+
+      const lines = state.auctionState?.ledger.map((entry) => {
+        const who = entry.playerId ? state.players[entry.playerId].name : null;
+        if (entry.kind === AuctionLedgerKind.Start) {
+          return `Auction started at ${symbol}${entry.amount}`;
+        }
+        return entry.kind === AuctionLedgerKind.Pass
+          ? `${who} passed`
+          : `${who} bid ${symbol}${entry.amount}`;
+      });
+
+      // Bidding opens on whoever the opening roll put first, which under this
+      // fixture's seed is Meera - the order round the table from there is fixed.
+      expect(lines).toEqual([
+        'Auction started at ₹10',
+        'Meera bid ₹20',
+        'Rahul bid ₹50',
+        'Asha bid ₹100',
+        'Vikram passed',
+        'Meera passed',
+        'Rahul bid ₹120',
+      ]);
+    });
+
+    // A building auction opens at the site's printed cost, not the ₹10 floor.
+    it('opens a building auction at the building price', () => {
+      const state = openAuction();
+      const started = startAuction(state, state.board[1].id, {
+        buildingKind: BuildingKind.House,
+        startPrice: 50,
+      });
+
+      expect(started.auctionState?.ledger).toEqual([
+        { kind: AuctionLedgerKind.Start, playerId: null, amount: 50 },
+      ]);
+    });
+
+    // A rejected bid must leave no trace - the auction is exactly as it was.
+    it('records nothing for a bid the engine refuses', () => {
+      const state = openAuction();
+
+      expect(() =>
+        executeGameCommand(
+          state,
+          { type: GameCommandType.SubmitAuctionBid, amount: 1 },
+          new SeededRandomSource(3)
+        )
+      ).toThrow();
+      expect(state.auctionState?.ledger).toHaveLength(1);
+    });
+
+    // The auction is discarded once it settles, so the ledger goes with it -
+    // the win line lives in the game history, which is what the toast reads.
+    it('is gone once the auction settles, and the win is in the history', () => {
+      const { state } = playAndRead([20, 'pass', 'pass', 'pass']);
+
+      expect(state.auctionState).toBeNull();
+      expect(state.history[0].message).toMatch(/won the auction/i);
+    });
   });
 });
 

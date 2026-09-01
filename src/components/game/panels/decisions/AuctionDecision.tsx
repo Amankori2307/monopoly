@@ -1,67 +1,84 @@
+import type { BuildingKind } from '../../../../domain/types/game.enums';
+import type { BoardSpace } from '../../../../domain/types/game.interfaces';
+import type {
+  AuctionBidderViewModel,
+  AuctionLedgerLineViewModel,
+  BidFieldState,
+} from '../panels.interfaces';
 import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
-import { formatMoney } from '../../../../shared/utils/money.utils';
+import { SpaceCard } from '../../deed/SpaceCard';
+import { AuctionBidForm } from './AuctionBidForm';
+import { AuctionLedger } from './AuctionLedger';
 
 interface AuctionDecisionProps {
-  activeBidderName: string;
-  bidAmount: number;
+  activeBidder: AuctionBidderViewModel;
+  bidField: BidFieldState;
+  /** Set when a house or hotel is for sale, not the site itself. */
+  buildingKind: BuildingKind | undefined;
   currencySymbol: string;
-  highestBid: number;
-  minimumBid: number;
+  ledger: AuctionLedgerLineViewModel[];
   onBid: () => void;
   onBidAmountChange: (amount: number) => void;
   onPass: () => void;
-  spaceName: string;
+  space: BoardSpace;
 }
 
+const HEADING_ID = 'auction-decision-title';
+
+/**
+ * Two columns: the deed on the left, the bidding on the right.
+ *
+ * The deed is the whole basis for deciding what a site is worth, and this modal
+ * covers the board - so it travels with the decision rather than being named in
+ * a sentence, exactly as the buy decision does.
+ *
+ * **The panel is exactly one deed card tall and does not grow.** It used to
+ * stretch with the ledger, so the modal moved every time somebody bid and the
+ * buttons walked down the screen. The ledger is the one row that gives: it takes
+ * whatever height is left and scrolls, pinned to the newest bid.
+ *
+ * Nothing on the right is said twice. There is no heading (the card names the
+ * space in bigger type a few pixels away), no bidder roster and no label on the
+ * bid field - the log's own last line, "<name> bidding...", is where whose turn
+ * it is gets said. Each duplicate cost the log rows it needed.
+ */
 export function AuctionDecision({
-  activeBidderName,
-  bidAmount,
+  activeBidder,
+  bidField,
+  buildingKind,
   currencySymbol,
-  highestBid,
-  minimumBid,
+  ledger,
   onBid,
   onBidAmountChange,
   onPass,
-  spaceName,
+  space,
 }: AuctionDecisionProps) {
   return (
     <div className="auction-decision" data-testid={TEST_IDS.auctionDecision}>
-      <h2>Auction</h2>
-      <p>
-        Bidding for <strong>{spaceName}</strong>. Current high bid:{' '}
-        <strong>{formatMoney(highestBid, currencySymbol)}</strong>.
-      </p>
-      <p>
-        Active bidder: <strong>{activeBidderName}</strong>
-      </p>
-      <label>
-        Bid amount
-        <input
-          className="text-input"
-          data-testid={TEST_IDS.bidInput}
-          min={minimumBid}
-          onChange={(event) => onBidAmountChange(Number(event.target.value))}
-          type="number"
-          value={bidAmount}
+      {/* A building auction has no deed of its own: the card shows the site
+          whose build request set the opening price, for context. */}
+      <SpaceCard currencySymbol={currencySymbol} headingId={HEADING_ID} space={space} />
+
+      <div className="auction-bidding">
+        <p className="eyebrow auction-eyebrow">
+          {buildingKind
+            ? `Auction · the bank's last ${buildingKind}`
+            : 'Auction · highest bid takes it'}
+        </p>
+
+        <AuctionLedger
+          activeBidder={activeBidder}
+          currencySymbol={currencySymbol}
+          lines={ledger}
         />
-      </label>
-      <div className="button-row">
-        <button
-          className="primary-button"
-          data-testid={TEST_IDS.submitBidButton}
-          onClick={onBid}
-          type="button"
-        >
-          Submit bid
-        </button>
-        <button
-          className="secondary-button"
-          data-testid={TEST_IDS.passAuctionButton}
-          onClick={onPass}
-          type="button"
-        >
-          Pass
-        </button>
+        <AuctionBidForm
+          bidder={activeBidder}
+          currencySymbol={currencySymbol}
+          field={bidField}
+          onBid={onBid}
+          onBidAmountChange={onBidAmountChange}
+          onPass={onPass}
+        />
       </div>
     </div>
   );

@@ -125,7 +125,8 @@ export const selectCanRollDice = (game: GameState) => {
 export const selectHasAvailableAction = (game: GameState) =>
   selectCanRollDice(game) ||
   selectCanEndTurn(game) ||
-  selectDecisionViewModel(game) !== null;
+  // Only whether a decision exists, so it needs no theme to colour it with.
+  selectDecisionViewModel(game, () => undefined) !== null;
 
 /** A player's holdings grouped for the holdings drawer. */
 export const selectGroupedHoldings = (game: GameState, playerId: PlayerId) =>

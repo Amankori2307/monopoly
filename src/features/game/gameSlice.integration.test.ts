@@ -1,8 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeStore } from '../../app/appStore';
-import { GAME_STATE_VERSION, STARTING_CASH } from '../../domain/constants/game.constants';
+import {
+  AUCTION_START_PRICE,
+  GAME_STATE_VERSION,
+  STARTING_CASH,
+} from '../../domain/constants/game.constants';
 import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
-import { GameCommandType, TurnPhase } from '../../domain/types/game.enums';
+import {
+  GameCommandType,
+  PendingDecisionType,
+  SpaceKind,
+  TurnPhase,
+} from '../../domain/types/game.enums';
 import type { CreateGameInput } from '../../domain/types/game.interfaces';
 import { StorageWriteError } from '../persistence/persistence.errors';
 import { loadGame, saveGame } from '../persistence/persistence';
@@ -327,5 +336,148 @@ describe('store isolation', () => {
     });
 
     expect(store.getState().game.activeGame?.id).toBe(seeded.id);
+  });
+});
+
+/**
+ * The auction's ledger, through the store and onto disk.
+ *
+ * It is game state, so a bid that reaches the store without reaching
+ * localStorage would come back missing on resume - the same failure mode every
+ * other case here checks for, on the newest piece of state.
+ */
+describe('an auction through the store', () => {
+  /**
+   * Declines a landed site, which is what opens an auction.
+   *
+   * Three players, not the file's usual two: with two, the first pass leaves a
+   * single bidder and settles the auction immediately, so there is nothing left
+   * to assert a ledger on.
+   */
+  const openAuction = (store: ReturnType<typeof makeStore>) => {
+    const game = store.dispatch(
+      createNewGame(
+        input({
+          playerConfigs: [
+            { name: 'Asha', tokenId: 'elephant' },
+            { name: 'Vikram', tokenId: 'train' },
+            { name: 'Meera', tokenId: 'auto' },
+          ],
+        })
+      )
+    );
+    const street = game.board.find((space) => space.kind === SpaceKind.Street);
+    if (!street) {
+      throw new Error('No street on the board');
+    }
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    store.dispatch(
+      setActiveGame({
+        ...game,
+        players: {
+          ...game.players,
+          [activePlayerId]: { ...game.players[activePlayerId], position: street.index },
+        },
+        pendingDecision: {
+          type: PendingDecisionType.LandedUnownedProperty,
+          spaceId: street.id,
+          playerId: activePlayerId,
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      })
+    );
+    store.dispatch(runGameCommand({ type: GameCommandType.DeclineLandedAsset }));
+
+    return game.id;
+  };
+
+  it('opens the ledger on the start price, in the store and on disk', () => {
+    const store = makeStore();
+
+    const gameId = openAuction(store);
+
+    const opening = { kind: 'start', playerId: null, amount: AUCTION_START_PRICE };
+    expect(store.getState().game.activeGame?.auctionState?.ledger).toEqual([opening]);
+    expect(storedGame(gameId).auctionState.ledger).toEqual([opening]);
+  });
+
+  it('carries a bid onto disk, against the player who made it', () => {
+    const store = makeStore();
+    const gameId = openAuction(store);
+    const bidderId =
+      store.getState().game.activeGame?.auctionState?.activeBidderOrder[
+        store.getState().game.activeGame?.auctionState?.activeBidderIndex ?? 0
+      ];
+
+    store.dispatch(
+      runGameCommand({ type: GameCommandType.SubmitAuctionBid, amount: 60 })
+    );
+
+    expect(storedGame(gameId).auctionState.ledger.at(-1)).toEqual({
+      kind: 'bid',
+      playerId: bidderId,
+      amount: 60,
+    });
+  });
+
+  it('carries a pass onto disk, with no amount', () => {
+    const store = makeStore();
+    const gameId = openAuction(store);
+
+    store.dispatch(runGameCommand({ type: GameCommandType.PassAuction }));
+
+    expect(storedGame(gameId).auctionState.ledger.at(-1)).toMatchObject({
+      kind: 'pass',
+      amount: null,
+    });
+  });
+
+  // The whole run, in order - what the panel reads back.
+  it('accumulates the bidding in order', () => {
+    const store = makeStore();
+    const gameId = openAuction(store);
+
+    store.dispatch(
+      runGameCommand({ type: GameCommandType.SubmitAuctionBid, amount: 20 })
+    );
+    store.dispatch(
+      runGameCommand({ type: GameCommandType.SubmitAuctionBid, amount: 50 })
+    );
+
+    expect(
+      storedGame(gameId).auctionState.ledger.map(
+        (entry: { kind: string; amount: number | null }) => [entry.kind, entry.amount]
+      )
+    ).toEqual([
+      ['start', AUCTION_START_PRICE],
+      ['bid', 20],
+      ['bid', 50],
+    ]);
+  });
+
+  // A save written mid-auction has to come back through zod with its ledger.
+  it('reloads a game caught mid-auction with its bidding intact', () => {
+    const store = makeStore();
+    const gameId = openAuction(store);
+    store.dispatch(
+      runGameCommand({ type: GameCommandType.SubmitAuctionBid, amount: 35 })
+    );
+
+    expect(loadGame(gameId)?.auctionState?.ledger.at(-1)).toMatchObject({
+      kind: 'bid',
+      amount: 35,
+    });
+  });
+
+  // A rejected bid must leave no trace: the panel guards against this, but the
+  // store is where a dispatch that slipped past it would land.
+  it('records nothing for a bid the engine refuses', () => {
+    const store = makeStore();
+    const gameId = openAuction(store);
+
+    store.dispatch(runGameCommand({ type: GameCommandType.SubmitAuctionBid, amount: 1 }));
+
+    expect(storedGame(gameId).auctionState.ledger).toHaveLength(1);
+    expect(store.getState().game.commandError).toMatch(/at least/i);
   });
 });

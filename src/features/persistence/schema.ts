@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  AuctionLedgerKind,
   BuildingKind,
   CardDeck,
   CardEffectKind,
@@ -161,6 +162,12 @@ const ownershipSchema = z.object({
 
 // -- In-flight state ---------------------------------------------------------
 
+const auctionLedgerEntrySchema = z.object({
+  kind: z.nativeEnum(AuctionLedgerKind),
+  playerId: z.string().nullable(),
+  amount: z.number().nullable(),
+});
+
 const auctionStateSchema = z.object({
   id: z.string(),
   spaceId: z.string(),
@@ -173,6 +180,7 @@ const auctionStateSchema = z.object({
   highestBid: z.number(),
   highestBidderId: z.string().nullable(),
   passedPlayerIds: z.array(z.string()),
+  ledger: z.array(auctionLedgerEntrySchema),
 });
 
 const tradeStateSchema = z.object({

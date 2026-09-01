@@ -6,6 +6,7 @@
  * ../constants/game.constants.ts.
  */
 import type {
+  AuctionLedgerKind,
   BuildingKind,
   CardDeck,
   CardEffectKind,
@@ -216,6 +217,23 @@ export interface AuctionState {
   highestBid: number;
   highestBidderId: PlayerId | null;
   passedPlayerIds: PlayerId[];
+  /**
+   * Every bid and pass, oldest first, opening line included.
+   *
+   * Not derivable from the rest of this state, which keeps only the standing
+   * high bid and who has left - nor from `GameState.history`, whose events are
+   * prose without a player id, shared with the whole game, and capped.
+   */
+  ledger: AuctionLedgerEntry[];
+}
+
+/** One line of an auction's ledger. */
+export interface AuctionLedgerEntry {
+  kind: AuctionLedgerKind;
+  /** Null on the opening line, which is the bank's, not a player's. */
+  playerId: PlayerId | null;
+  /** The bid, or the opening price. Null on a pass, which names no amount. */
+  amount: number | null;
 }
 
 export interface TradeState {

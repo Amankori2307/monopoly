@@ -251,10 +251,48 @@ describe('in-flight state', () => {
         highestBid: 0,
         highestBidderId: null,
         passedPlayerIds: [],
+        ledger: [{ kind: 'start', playerId: null, amount: 50 }],
       };
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('refuses an auction with no ledger', () => {
+    expect(
+      corrupt((game) => {
+        game.auctionState = {
+          id: 'a',
+          spaceId: game.board[1].id,
+          startPrice: 10,
+          minIncrement: 1,
+          activeBidderOrder: game.playerOrder,
+          activeBidderIndex: 0,
+          highestBid: 0,
+          highestBidderId: null,
+          passedPlayerIds: [],
+        };
+      }).success
+    ).toBe(false);
+  });
+
+  it('refuses a ledger line with an unknown kind', () => {
+    expect(
+      corrupt((game) => {
+        game.auctionState = {
+          id: 'a',
+          spaceId: game.board[1].id,
+          startPrice: 10,
+          minIncrement: 1,
+          activeBidderOrder: game.playerOrder,
+          activeBidderIndex: 0,
+          highestBid: 0,
+          highestBidderId: null,
+          passedPlayerIds: [],
+          ledger: [{ kind: 'shouted', playerId: null, amount: 10 }],
+        };
+      }).success
+    ).toBe(false);
   });
 
   it('refuses a trade missing one side', () => {

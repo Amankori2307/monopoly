@@ -1,0 +1,167 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+// The auction is two columns: the deed on one side, the bidding on the other.
+// The same grid as .buy-decision, for the same reason - the card column is
+// exactly one card wide, because the deed is the same object it is everywhere
+// else and does not stretch to fill a share of the modal.
+//
+// The height is the deed's, fixed. It used to be the taller of the two columns,
+// so every bid grew the panel and walked the buttons down the screen.
+.auction-decision {
+  display: grid;
+  grid-template-columns: t.$deed-card-width minmax(0, 1fr);
+  gap: t.$gap-xl;
+  height: t.$deed-card-height;
+  overflow: hidden;
+}
+
+// Eyebrow, log, bid. The log is the only flexible row: everything else is what a
+// bidder must be able to reach, so the history is what gives.
+.auction-bidding {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 11px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.auction-eyebrow {
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// The auction log
+// ---------------------------------------------------------------------------
+// A chat log, not a stack of cards: plain lines, no per-entry box, no border of
+// its own. It takes the leftover height and scrolls, and AuctionLedger keeps it
+// pinned to the bottom - the newest line is the one being answered.
+.auction-log {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 0;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+
+.auction-log-line {
+  margin: 0;
+  color: var(--text-body);
+  font-size: 0.83rem;
+  line-height: 1.35;
+}
+
+// The opening line is the bank's, and belongs to no player.
+.auction-log-line.is-start,
+.auction-log-line.is-pass {
+  color: var(--text-muted);
+}
+
+// Whose turn it is, and the only place the panel says so.
+.auction-log-line.is-pending {
+  margin-top: 1px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.auction-log-who {
+  font-weight: 700;
+}
+
+// ---------------------------------------------------------------------------
+// The bid
+// ---------------------------------------------------------------------------
+.auction-bid-form {
+  display: grid;
+  gap: 7px;
+}
+
+// The field and its raises on one row: four more rows of chips and banners is
+// what pushed the panel past the deed's height.
+.auction-bid-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+
+  .text-input {
+    flex: 1 1 76px;
+    min-width: 0;
+    padding-inline: 9px;
+  }
+}
+
+.auction-bid-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+// Why Submit is disabled, stated where the bidder is looking. The wording comes
+// from the same function the engine throws with.
+.auction-bid-blocked {
+  margin: 0;
+  color: var(--error-text);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.auction-bid-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.chip-button {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  border: 1px solid var(--border-input);
+  border-radius: t.$radius-sharp;
+  background: var(--surface-panel);
+  color: var(--text-body);
+  font: 700 0.74rem t.$font-mono;
+  cursor: pointer;
+
+  &:not(:disabled):hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.auction-decision .primary-button:disabled,
+.auction-decision .secondary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  // One column, and the fixed height comes off: the deed alone is most of a
+  // phone screen, so here the modal is what scrolls.
+  .auction-decision {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    overflow: visible;
+    justify-items: center;
+  }
+
+  .auction-bidding {
+    width: 100%;
+    grid-template-rows: none;
+  }
+
+  .auction-log {
+    max-height: 190px;
+  }
+}

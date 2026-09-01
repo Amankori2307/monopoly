@@ -153,6 +153,20 @@ export enum MortgageChoice {
   Keep = 'keep',
 }
 
+/**
+ * What one line of an auction's ledger records.
+ *
+ * The ledger is the panel's narrative of a single auction, kept apart from the
+ * game history: that is prose for players, this is structured so the panel can
+ * name the bidder and wear their colour.
+ */
+export enum AuctionLedgerKind {
+  /** The auction opening, at its start price. Belongs to no player. */
+  Start = 'start',
+  Bid = 'bid',
+  Pass = 'pass',
+}
+
 /** What is being auctioned when the bank runs short of buildings. */
 export enum BuildingKind {
   House = 'house',

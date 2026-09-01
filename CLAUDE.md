@@ -136,6 +136,14 @@ Money moves through exactly three choke points, and all of them log an event: `r
 to move cash inline and log their own line; they go through the primitives now, so the invariant is
 total. Add a fourth and feedback silently stops working for it.
 
+**An auction records its own bidding.** `AuctionState.ledger` is every bid and pass, oldest first,
+opening line included - it cannot be derived from the standing high bid and `passedPlayerIds`, and
+the game history is prose without a player id. The panel reads it; the _win_ is not in it, because
+the auction is discarded the moment it settles and the win is logged by `resolveBankPayment` like
+any other payment. **What makes a bid legal is stated once**, in `bidBlockedReason`
+([auctionBids.utils.ts](src/domain/rules/auctionBids.utils.ts)): the engine throws from it and the
+panel disables Submit from it. See [docs/features/auctions.md](docs/features/auctions.md).
+
 **A utility's rent is charged on the dice that brought the player there.** `resolveCurrentSpace`
 takes the total: the turn's own roll when they rolled their way in, a fresh throw when a card or a
 Mr. Monopoly advance put them there.
@@ -151,7 +159,7 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 ## 5. Persistence
 
 - Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
-- `GAME_STATE_VERSION = 5`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
+- `GAME_STATE_VERSION = 6`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
 - **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. `pendingDecision` is `.passthrough()`, so a decision's own payload survives — which is why the drawn Chance / Community Chest card rides inside the decision rather than in a field of its own. Add the field to the schema, or put it where it will survive.

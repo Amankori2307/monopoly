@@ -10,7 +10,6 @@ import type {
   PlayerState,
 } from '../../domain/types/game.interfaces';
 import type {
-  AuctionDecisionViewModel,
   BuildingPlacementDecisionViewModel,
   BuyDecisionViewModel,
   SpeedDieBusDecisionViewModel,
@@ -28,7 +27,9 @@ import {
 import { getMortgageableSites } from '../../domain/rules/holdings.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
 import { getMortgageTransferFee, getTransferFees } from '../../domain/rules/trade.utils';
+import { selectAuctionDecision } from './auctionViewModel.selectors';
 import { selectActivePlayer } from './gameView.selectors';
+import type { TokenFinder } from './gameView.interfaces';
 
 /**
  * One view model per pending decision.
@@ -73,23 +74,6 @@ const jailDecisionIfActionable = (
   activePlayer: PlayerState
 ): DecisionViewModel | null =>
   activePlayer.inJail && canActFromJail(game) ? jailDecision(activePlayer) : null;
-
-const auctionDecision = (game: GameState): AuctionDecisionViewModel | null => {
-  const auction = game.auctionState;
-  if (!auction) {
-    return null;
-  }
-  const bidderId = auction.activeBidderOrder[auction.activeBidderIndex];
-  const space = game.board.find((candidate) => candidate.id === auction.spaceId);
-  return {
-    type: PendingDecisionType.AuctionBid,
-    spaceName: space?.name ?? '',
-    activeBidderName: game.players[bidderId]?.name ?? '',
-    highestBid: auction.highestBid,
-    minimumBid: Math.max(auction.startPrice, auction.highestBid + auction.minIncrement),
-    auction,
-  };
-};
 
 /**
  * Everything the liquidation panel needs to be self-contained.
@@ -240,7 +224,15 @@ const busDecision = (
   whiteDice: decision.whiteDice,
 });
 
-export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
+/**
+ * The one decision that needs more than the game state: the auction panel names
+ * its bidders and wears their colours, and a token id only becomes a colour
+ * through the active theme. `selectTradeBuilder` takes the same argument.
+ */
+export const selectDecisionViewModel = (
+  game: GameState,
+  findToken: TokenFinder
+): DecisionViewModel | null => {
   const decision = game.pendingDecision;
   const activePlayer = selectActivePlayer(game);
 
@@ -248,7 +240,7 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
     case PendingDecisionType.LandedUnownedProperty:
       return buyDecision(game, decision.spaceId, activePlayer);
     case PendingDecisionType.AuctionBid:
-      return auctionDecision(game);
+      return selectAuctionDecision(game, findToken);
     case PendingDecisionType.JailChoice:
       return jailDecisionIfActionable(game, activePlayer);
     case PendingDecisionType.CardDraw:

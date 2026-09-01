@@ -32,7 +32,8 @@
 
 // The buy decision is two columns (site card | choice), so it needs the room:
 // one fixed card, the gap, and a choice column of about the same width.
-.decision-modal:has(.buy-decision) {
+.decision-modal:has(.buy-decision),
+.decision-modal:has(.auction-decision) {
   width: min(100%, calc(2 * #{t.$deed-card-width} + #{t.$gap-xl}));
 }
 
