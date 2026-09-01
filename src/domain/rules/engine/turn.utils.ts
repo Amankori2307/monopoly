@@ -137,9 +137,13 @@ export const findMonopolyAdvance = (
   const unowned = stepsTo((spaceId) => !state.ownership[spaceId]?.ownerPlayerId);
   if (unowned !== null) return unowned;
 
+  // An opponent's site, but not a mortgaged one: the printed rule says the next
+  // *unmortgaged* property, and marching a player to a mortgaged site would
+  // collect nothing - the advance would achieve exactly nothing.
   return stepsTo((spaceId) => {
-    const owner = state.ownership[spaceId]?.ownerPlayerId;
-    return Boolean(owner) && owner !== playerId;
+    const ownership = state.ownership[spaceId];
+    const owner = ownership?.ownerPlayerId;
+    return Boolean(owner) && owner !== playerId && !ownership?.mortgaged;
   });
 };
 

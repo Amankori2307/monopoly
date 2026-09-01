@@ -241,6 +241,7 @@ The mandate above is the standard going forward. The repository does **not** mee
 | `SpaceCard`, `SpaceDetailCard`                 | 2 files         | —           | yes          |
 | Holdings drawer + stack                        | 2 files         | 1 test      | yes          |
 | Documented rules (all 153, by id)              | 7 tests         | —           | —            |
+| Doubles and Speed Die interactions             | 33 tests        | —           | yes          |
 | The documented board (§13, doc as fixture)     | 11 tests        | —           | —            |
 | Bankruptcy, win detection, the debt queue      | in engine       | —           | yes          |
 | Bankruptcy + building auctions                 | in engine       | —           | yes          |
@@ -258,6 +259,26 @@ matters. All three blockers:
 Both fixes are themselves tested ([renderWithProviders.test.tsx](../src/test/renderWithProviders.test.tsx), [setupTests.test.ts](../src/setupTests.test.ts)) — the isolation was latent, since jsdom is per file and contamination could only ever happen _within_ a file, which is precisely where it would have gone unnoticed.
 
 **Deliberately not done:** `setupTests.ts` does not call `vi.restoreAllMocks()`. Several suites install spies they never restore (`logger.utils.test.ts` mocks `Storage.prototype.setItem`; others mock `console`), and restoring them globally would change those tests' behaviour rather than fix it. Left as a separate, known hazard.
+
+### Scripting the dice
+
+Use [scriptedRolls](../src/test/scriptedRandomSource.ts) when a test is about a **particular** roll,
+rather than hunting for a seed that happens to produce one:
+
+```ts
+executeGameCommand(
+  state,
+  { type: GameCommandType.RollTurnDice },
+  scriptedRolls([{ white: [3, 3], speedDie: SpeedDieFace.Three }])
+);
+```
+
+A roll is three draws — two white dice, then the Speed Die's face index when it is in play — and each
+queued draw records which it is, so a script that falls out of step with the engine throws instead of
+handing back a face index where a die was wanted. Once the script runs out it falls through to a
+seeded source, so a test need not script what it is not about.
+
+`SeededRandomSource` is still right when a test only needs determinism, not a specific outcome.
 
 ### Writing an integration test
 

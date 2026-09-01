@@ -20,11 +20,13 @@ export function RulesSpeedDie() {
         <li>
           On Mr. Monopoly, move by the white dice as usual, resolve that space, then
           advance to the next unowned asset to buy or auction. If none are unowned,
-          advance to the next player-owned asset and pay rent.
+          advance to the next unmortgaged player-owned asset and pay rent — a mortgaged
+          one is skipped, since it collects nothing.
         </li>
         <li>
           Only white dice count for doubles and for rolling out of Jail. If all three dice
-          match, move to any space on the board.
+          match, move to any space on the board — a triple is not a double, so it earns no
+          extra roll, and it does not send you to Jail even as your third double in a row.
         </li>
       </ul>
       <p className="source-note">

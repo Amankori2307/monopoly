@@ -32,9 +32,19 @@ export const TURN_RULE_COVERAGE: RuleCoverageMap = {
     'starts every player with the bonus when it is on',
     'starts a Speed Die game with the bonus, and an ordinary one without',
   ],
-  '5.1': ['resolves each roll in turn and keeps their outcomes when the third jails'],
-  '5.2': ['resolves each roll in turn and keeps their outcomes when the third jails'],
-  '5.3': ['resolves each roll in turn and keeps their outcomes when the third jails'],
+  '5.1': [
+    'grants an extra roll for the first double',
+    'resolves each roll in turn and keeps their outcomes when the third jails',
+  ],
+  '5.2': [
+    'grants another for the second',
+    'resolves each roll in turn and keeps their outcomes when the third jails',
+  ],
+  '5.3': [
+    'sends the third double to Jail without playing the roll',
+    'resolves each roll in turn and keeps their outcomes when the third jails',
+    'offers no fourth double, because the third jailed them',
+  ],
   '5.4': ['never leaves a jailed player able to roll again'],
   '5.5': [
     'ends the turn when a card sends the player to jail on a doubles roll',
@@ -48,7 +58,10 @@ export const TURN_RULE_COVERAGE: RuleCoverageMap = {
   ],
   '5.8': ['frees a player who rolls doubles, and ends their turn'],
   '5.9': ['does not count a Jail double toward the three-doubles rule'],
-  '5.10': ['grants an extra roll for doubles rolled after paying the fine'],
+  '5.10': [
+    'grants an extra roll for doubles rolled after paying the fine',
+    'grants an ordinary double after leaving Jail with a card',
+  ],
   '5.11': ['leaves a bankrupt player no extra roll, even after doubles'],
   '6.1': ['sends a player who lands on Go To Jail there, with no GO salary'],
   '6.2': ['ends the turn when a card sends the player to jail on a doubles roll'],

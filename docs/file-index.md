@@ -296,25 +296,28 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Test infrastructure
 
-| File                                                                              | What it does                                                                                                      |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx)           | RTL helper: a component in a **fresh** Redux store + `MemoryRouter`; returns the store, accepts `preloadedState`. |
-| [src/test/renderWithProviders.test.tsx](../src/test/renderWithProviders.test.tsx) | Proves each render gets its own store and that `preloadedState` reaches a selector.                               |
-| [src/setupTests.ts](../src/setupTests.ts)                                         | Vitest setup; jest-dom matchers and a `localStorage` reset before each test.                                      |
-| [src/setupTests.test.ts](../src/setupTests.test.ts)                               | Proves the storage reset actually runs between tests.                                                             |
-| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                                   | Shared `startGame` / `advanceGame` helpers and corner reference data.                                             |
-| [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                             | Creating a game and landing on a resumable route.                                                                 |
-| [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                             | Corner geometry, title deed, ribbon placement, dividers, outlines, theming.                                       |
-| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                           | Two-column layout, site-panel actions, dice placement, player stack.                                              |
-| [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)                       | Decision modal, activity drawer, player detail drawer, dice roll.                                                 |
-| [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)                   | Eight-player layout: token cluster stays on the board, dice stay reachable.                                       |
-| [tests/e2e/mortgage.spec.ts](../tests/e2e/mortgage.spec.ts)                       | Mortgaging out of a debt, the dead end without assets, and the site panel.                                        |
-| [tests/e2e/buildings.spec.ts](../tests/e2e/buildings.spec.ts)                     | Building and selling from the site panel, the even rules, and selling buildings mid-liquidation.                  |
-| [tests/e2e/jail.spec.ts](../tests/e2e/jail.spec.ts)                               | A jailed player taking their three free attempts at doubles.                                                      |
-| [tests/e2e/trade.spec.ts](../tests/e2e/trade.spec.ts)                             | Proposing, accepting and rejecting a two-sided deal.                                                              |
-| [tests/e2e/speed-die.spec.ts](../tests/e2e/speed-die.spec.ts)                     | The third die, the bus choice, and a three-of-a-kind move.                                                        |
-| [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                             | Booklet nav resolves, the FAQ answers, and amounts render in ₹.                                                   |
-| [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)                       | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.                                        |
+| File                                                                                      | What it does                                                                                                      |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [src/test/renderWithProviders.tsx](../src/test/renderWithProviders.tsx)                   | RTL helper: a component in a **fresh** Redux store + `MemoryRouter`; returns the store, accepts `preloadedState`. |
+| [test/scriptedRandomSource.ts](../src/test/scriptedRandomSource.ts)                       | Dice that roll what a test asks for, and fail loudly if the script drifts.                                        |
+| [test/scriptedRandomSource.interfaces.ts](../src/test/scriptedRandomSource.interfaces.ts) | ScriptedRoll: the two white dice and an optional Speed Die face.                                                  |
+| [test/scriptedRandomSource.test.ts](../src/test/scriptedRandomSource.test.ts)             | That the scripted source is honest about drift and range.                                                         |
+| [src/test/renderWithProviders.test.tsx](../src/test/renderWithProviders.test.tsx)         | Proves each render gets its own store and that `preloadedState` reaches a selector.                               |
+| [src/setupTests.ts](../src/setupTests.ts)                                                 | Vitest setup; jest-dom matchers and a `localStorage` reset before each test.                                      |
+| [src/setupTests.test.ts](../src/setupTests.test.ts)                                       | Proves the storage reset actually runs between tests.                                                             |
+| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                                           | Shared `startGame` / `advanceGame` helpers and corner reference data.                                             |
+| [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                                     | Creating a game and landing on a resumable route.                                                                 |
+| [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                                     | Corner geometry, title deed, ribbon placement, dividers, outlines, theming.                                       |
+| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                                   | Two-column layout, site-panel actions, dice placement, player stack.                                              |
+| [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)                               | Decision modal, activity drawer, player detail drawer, dice roll.                                                 |
+| [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)                           | Eight-player layout: token cluster stays on the board, dice stay reachable.                                       |
+| [tests/e2e/mortgage.spec.ts](../tests/e2e/mortgage.spec.ts)                               | Mortgaging out of a debt, the dead end without assets, and the site panel.                                        |
+| [tests/e2e/buildings.spec.ts](../tests/e2e/buildings.spec.ts)                             | Building and selling from the site panel, the even rules, and selling buildings mid-liquidation.                  |
+| [tests/e2e/jail.spec.ts](../tests/e2e/jail.spec.ts)                                       | A jailed player taking their three free attempts at doubles.                                                      |
+| [tests/e2e/trade.spec.ts](../tests/e2e/trade.spec.ts)                                     | Proposing, accepting and rejecting a two-sided deal.                                                              |
+| [tests/e2e/speed-die.spec.ts](../tests/e2e/speed-die.spec.ts)                             | The third die, the bus choice, and a three-of-a-kind move.                                                        |
+| [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                                     | Booklet nav resolves, the FAQ answers, and amounts render in ₹.                                                   |
+| [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)                               | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.                                        |
 
 ## Config
 

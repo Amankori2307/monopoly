@@ -27,12 +27,13 @@ import {
 import type { GameState, StreetSpace, TradeState } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
-import { speedDieSteps } from './speedDie.utils';
 import { RAILWAY_RENT_BY_COUNT } from '../constants/board.constants';
 import { chanceCards, communityChestCards } from '../cards/indiaEditionCards';
 import { indiaEditionTheme } from '../themes/indiaEditionTheme';
 import { getPlacementSites } from './buildings.utils';
+import { findMonopolyAdvance } from './engine/turn.utils';
 import { SeededRandomSource } from './rng';
+import { scriptedRolls } from '../../test/scriptedRandomSource';
 
 /** A stand-in Get Out of Jail Free card, for tests that only need to hold one. */
 const JAIL_CARD: DeckCard = {
@@ -2394,60 +2395,49 @@ describe('rolling with the Speed Die', () => {
     expect(rollWith(createBaseGame(), 4).turn.speedDieFace).toBeNull();
   });
 
-  // The face is added after the doubles check, so it can never make or break
-  // one - the white dice alone decide.
+  /**
+   * These three used to hunt for a seed that happened to roll the face they
+   * wanted, and gave up with a thrown "no seed produced" error. Scripting the
+   * dice says what the scenario is instead of discovering it - and a scenario
+   * that cannot be found is now a failure rather than a silent skip.
+   */
+  const rollFace = (state: GameState, white: [number, number], face: SpeedDieFace) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      scriptedRolls([{ white, speedDie: face }])
+    ).nextState;
+
   it('adds a numeric face to the move without touching the doubles count', () => {
     const game = liveSpeedGame();
     const playerId = game.playerOrder[game.activePlayerIndex];
+    const from = game.players[playerId].position;
 
-    // Find a seed that rolls a plain number, which is what this asserts about.
-    for (let seed = 1; seed < 60; seed += 1) {
-      const next = rollWith(game, seed);
-      const face = next.turn.speedDieFace;
-      const steps = speedDieSteps(face);
-      if (steps === 0 || next.turn.lastRoll === null) continue;
+    const next = rollFace(game, [1, 3], SpeedDieFace.Two);
 
-      const [white1, white2] = next.turn.lastRoll;
-      if (white1 === white2 && white1 === steps) continue; // a triple, tested below
-
-      expect(next.players[playerId].position).toBe(
-        (white1 + white2 + steps) % next.board.length
-      );
-      expect(next.turn.doublesCount).toBe(white1 === white2 ? 1 : 0);
-      return;
-    }
-    throw new Error('No seed produced a plain numeric Speed Die face');
+    expect(next.players[playerId].position).toBe((from + 6) % next.board.length);
+    expect(next.turn.doublesCount).toBe(0);
   });
 
   it('asks where to go when all three dice match', () => {
     const game = liveSpeedGame();
 
-    for (let seed = 1; seed < 400; seed += 1) {
-      const next = rollWith(game, seed);
-      if (next.pendingDecision.type !== PendingDecisionType.SpeedDieDestination) continue;
+    const next = rollFace(game, [3, 3], SpeedDieFace.Three);
 
-      const [white1, white2] = next.turn.lastRoll as number[];
-      expect(white1).toBe(white2);
-      // A triple is not a double: no extra roll, and no step towards Jail.
-      expect(next.turn.doublesCount).toBe(0);
-      expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
-      return;
-    }
-    throw new Error('No seed produced a triple');
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.SpeedDieDestination);
+    // A triple is not a double: no extra roll, and no step towards Jail.
+    expect(next.turn.doublesCount).toBe(0);
+    expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
   });
 
   it('asks which dice to move by on a Bus', () => {
     const game = liveSpeedGame();
 
-    for (let seed = 1; seed < 200; seed += 1) {
-      const next = rollWith(game, seed);
-      if (next.pendingDecision.type !== PendingDecisionType.SpeedDieBus) continue;
+    const next = rollFace(game, [2, 5], SpeedDieFace.Bus);
 
-      expect(next.turn.speedDieFace).toBe('bus');
-      expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
-      return;
-    }
-    throw new Error('No seed produced a Bus');
+    expect(next.turn.speedDieFace).toBe(SpeedDieFace.Bus);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.SpeedDieBus);
+    expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
   });
 });
 
@@ -4464,5 +4454,522 @@ describe('setting up a game', () => {
       game.playerOrder.map((id) => game.players[id].name);
     const seeds = [1, 2, 3, 5, 7, 11, 13].map((seed) => names(orderFor(seed)).join(','));
     expect(new Set(seeds).size).toBeGreaterThan(1);
+  });
+});
+
+/**
+ * Doubles, exhaustively.
+ *
+ * The most tangled rule in the game, and the one that has produced the most
+ * bugs here - so every case is scripted rather than hunted for with seeds. A
+ * roll is three draws (two white dice, then the Speed Die's face when it is in
+ * play), and `scriptedRolls` fails loudly if a script drifts out of step with
+ * that, so a scenario cannot silently test something other than what it says.
+ *
+ * Definitions, which the whole suite turns on:
+ *   - a **double** is the two WHITE dice matching. The Speed Die never counts.
+ *   - a **triple** is all three matching. It is its own outcome, not a double:
+ *     move anywhere, no extra roll, and no Jail even as the would-be third.
+ */
+describe('doubles, without a Speed Die', () => {
+  /** A plain game, active player parked on GO with a clear turn. */
+  const atGo = () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      playerId,
+      state: {
+        ...game,
+        players: {
+          ...game.players,
+          [playerId]: { ...game.players[playerId], position: 0 },
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitRoll, doublesCount: 0 },
+      } as GameState,
+    };
+  };
+
+  const roll = (state: GameState, white: [number, number]) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      scriptedRolls([{ white }])
+    ).nextState;
+
+  it('grants an extra roll for the first double', () => {
+    const { state } = atGo();
+
+    const next = roll(state, [2, 2]);
+
+    expect(next.turn.doublesCount).toBe(1);
+    expect(next.turn.canRollAgain).toBe(true);
+  });
+
+  it('grants another for the second', () => {
+    const { state } = atGo();
+
+    // 0 -> 10 (Just Visiting) -> 20 (Free Parking): both doubles, and neither
+    // landing raises a decision, so the next roll is not legitimately blocked.
+    const next = roll(roll(state, [5, 5]), [5, 5]);
+
+    expect(next.turn.doublesCount).toBe(2);
+    expect(next.turn.canRollAgain).toBe(true);
+  });
+
+  it('ends the turn on a roll that is not a double', () => {
+    const { state } = atGo();
+
+    const next = roll(state, [4, 6]);
+
+    expect(next.turn.doublesCount).toBe(0);
+    expect(next.turn.canRollAgain).toBe(false);
+  });
+
+  it('breaks the run when a double is followed by a plain roll', () => {
+    const { state } = atGo();
+
+    const next = roll(roll(state, [5, 5]), [4, 6]);
+
+    expect(next.turn.doublesCount).toBe(0);
+    expect(next.turn.canRollAgain).toBe(false);
+  });
+
+  /**
+   * The third double is discarded entirely - the player goes straight to Jail
+   * without playing it. Every part of "not played" is asserted, because each is
+   * a separate thing the engine could get wrong.
+   */
+  it('sends the third double to Jail without playing the roll', () => {
+    const { state, playerId } = atGo();
+    const twoDoubles = roll(roll(state, [5, 5]), [5, 5]);
+    const positionBefore = twoDoubles.players[playerId].position;
+    const cashBefore = twoDoubles.players[playerId].cash;
+
+    const next = roll(twoDoubles, [3, 3]);
+
+    expect(next.players[playerId].inJail).toBe(true);
+    expect(next.players[playerId].position).toBe(JAIL_POSITION);
+    // Not moved by the roll, so not from where it would have landed either.
+    expect(next.players[playerId].position).not.toBe(positionBefore + 6);
+    // No space resolved, and no GO salary for the trip.
+    expect(next.players[playerId].cash).toBe(cashBefore);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+    expect(next.turn.canRollAgain).toBe(false);
+  });
+
+  // A fourth is unreachable by construction: the third put them in Jail, and a
+  // plain roll from there is refused.
+  it('offers no fourth double, because the third jailed them', () => {
+    const { state } = atGo();
+    const jailed = roll(roll(roll(state, [5, 5]), [5, 5]), [3, 3]);
+
+    expect(() =>
+      executeGameCommand(
+        jailed,
+        { type: GameCommandType.RollTurnDice },
+        scriptedRolls([{ white: [4, 4] }])
+      )
+    ).toThrow(/Jail action first/i);
+  });
+
+  it('grants an ordinary double after leaving Jail with a card', () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const jailedWithCard: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: {
+          ...game.players[playerId],
+          inJail: true,
+          position: JAIL_POSITION,
+          jailFreeCards: [
+            {
+              id: 'chance-jail-free',
+              deck: CardDeck.Chance,
+              title: 'Get Out of Jail Free',
+              description: 'Keep this card until needed.',
+              effect: { kind: CardEffectKind.JailFree },
+            },
+          ],
+        },
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const freed = executeGameCommand(
+      jailedWithCard,
+      { type: GameCommandType.UseJailFreeCard },
+      scriptedRolls([])
+    ).nextState;
+    expect(freed.players[playerId].inJail).toBe(false);
+
+    const next = roll(freed, [2, 2]);
+
+    expect(next.turn.doublesCount).toBe(1);
+  });
+});
+
+/**
+ * The Speed Die's interactions with doubles.
+ *
+ * The question this suite exists to answer: does the third die count towards a
+ * double? No - and the two ways it could leak in are both asserted. It cannot
+ * *create* a double (2,3 plus a 1 is a six, not a pair) and it cannot *break*
+ * one (3,3 plus a 1 is still a pair), because the check happens on the white
+ * dice before the third is even rolled.
+ *
+ * The exception is a triple, which is not a double at all: move anywhere, no
+ * extra roll, and - verified against the printed rules and two outside sources -
+ * no Jail even when it lands as the would-be third consecutive double.
+ */
+describe('doubles and the Speed Die', () => {
+  /** A Speed Die game with the die live, active player on GO. */
+  const liveAtGo = () => {
+    const game = createGameState(
+      {
+        name: 'Speed doubles',
+        playerConfigs: [
+          { name: 'Asha', tokenId: 'elephant' },
+          { name: 'Vikram', tokenId: 'train' },
+        ],
+        themeId: 'india-edition',
+        createdAt: '2026-08-29T00:00:00.000Z',
+        useSpeedDie: true,
+      },
+      new SeededRandomSource(7)
+    );
+    const playerId = game.playerOrder[game.activePlayerIndex];
+
+    return {
+      playerId,
+      state: {
+        ...game,
+        players: Object.fromEntries(
+          Object.entries(game.players).map(([id, player]) => [
+            id,
+            {
+              ...player,
+              hasPassedGo: true,
+              position: id === playerId ? 0 : player.position,
+            },
+          ])
+        ),
+        turn: { ...game.turn, phase: TurnPhase.AwaitRoll, doublesCount: 0 },
+      } as GameState,
+    };
+  };
+
+  const rollSpeed = (state: GameState, white: [number, number], speedDie: SpeedDieFace) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      scriptedRolls([{ white, speedDie }])
+    ).nextState;
+
+  describe('a numeric face', () => {
+    it('adds its steps to the move', () => {
+      const { state, playerId } = liveAtGo();
+
+      const next = rollSpeed(state, [4, 6], SpeedDieFace.Three);
+
+      expect(next.players[playerId].position).toBe(13);
+      expect(next.turn.speedDieFace).toBe(SpeedDieFace.Three);
+    });
+
+    it('leaves a double a double, and adds its steps too', () => {
+      const { state, playerId } = liveAtGo();
+
+      // 3 and 3 is a double; the extra 1 moves them seven, not six.
+      const next = rollSpeed(state, [3, 3], SpeedDieFace.One);
+
+      expect(next.turn.doublesCount).toBe(1);
+      expect(next.players[playerId].position).toBe(7);
+    });
+
+    it('cannot create a double by matching one of the white dice', () => {
+      const { state } = liveAtGo();
+
+      // The three dice read 1, 3, 1 - two of them match. Only the WHITE pair
+      // counts, and 1 and 3 are not a pair, so there is no extra roll. This is
+      // the probe for a reading of "any two dice matching".
+      const next = rollSpeed(state, [1, 3], SpeedDieFace.One);
+
+      expect(next.turn.doublesCount).toBe(0);
+      expect(next.turn.canRollAgain).toBe(false);
+    });
+
+    it('cannot create a double by matching the total a real double would give', () => {
+      const { state } = liveAtGo();
+
+      // 2 and 3 with a 1 totals six, the same as a 3,3 double - the total is
+      // not what decides it.
+      const next = rollSpeed(state, [2, 3], SpeedDieFace.One);
+
+      expect(next.turn.doublesCount).toBe(0);
+    });
+
+    it('cannot break a double by making the total odd', () => {
+      const { state } = liveAtGo();
+
+      // 4,4 plus a 2 is ten - Just Visiting, which asks nothing, so the extra
+      // roll shows up immediately rather than waiting behind a decision.
+      const next = rollSpeed(state, [4, 4], SpeedDieFace.Two);
+
+      expect(next.turn.doublesCount).toBe(1);
+      expect(next.turn.canRollAgain).toBe(true);
+    });
+  });
+
+  describe('a triple', () => {
+    it('asks the player to move anywhere, and grants no extra roll', () => {
+      const { state, playerId } = liveAtGo();
+
+      const next = rollSpeed(state, [3, 3], SpeedDieFace.Three);
+
+      expect(next.pendingDecision.type).toBe(PendingDecisionType.SpeedDieDestination);
+      expect(next.turn.doublesCount).toBe(0);
+      // Not moved yet: the destination is theirs to pick.
+      expect(next.players[playerId].position).toBe(0);
+    });
+
+    it('leaves no extra roll once the destination is chosen', () => {
+      const { state } = liveAtGo();
+      const asked = rollSpeed(state, [2, 2], SpeedDieFace.Two);
+
+      const moved = executeGameCommand(
+        asked,
+        { type: GameCommandType.ChooseSpeedDieDestination, spaceId: asked.board[20].id },
+        scriptedRolls([])
+      ).nextState;
+
+      expect(moved.turn.canRollAgain).toBe(false);
+      expect(moved.turn.phase).toBe(TurnPhase.TurnComplete);
+    });
+
+    it('grants no extra roll even when a double came first', () => {
+      const { state } = liveAtGo();
+      // 0 -> 10 on a double, then a triple.
+      const afterDouble = rollSpeed(state, [4, 4], SpeedDieFace.Two);
+      expect(afterDouble.turn.doublesCount).toBe(1);
+
+      const tripled = rollSpeed(afterDouble, [3, 3], SpeedDieFace.Three);
+
+      expect(tripled.turn.doublesCount).toBe(0);
+      expect(tripled.pendingDecision.type).toBe(PendingDecisionType.SpeedDieDestination);
+    });
+
+    /**
+     * The rule the ruleset doc got wrong, and the reason this suite exists.
+     *
+     * Two doubles already, then all three dice match. The white dice DO match, so
+     * a naive reading sends them to Jail - but a triple is not a double. Both
+     * outside sources are explicit: they move anywhere instead, and do not roll
+     * again.
+     */
+    it('does not send a player to Jail as the would-be third double', () => {
+      const { state, playerId } = liveAtGo();
+      // 0 -> 10 -> 20, both doubles, neither landing raising anything.
+      const settled = rollSpeed(
+        rollSpeed(state, [4, 4], SpeedDieFace.Two),
+        [4, 4],
+        SpeedDieFace.Two
+      );
+      expect(settled.turn.doublesCount).toBe(2);
+
+      const tripled = rollSpeed(settled, [1, 1], SpeedDieFace.One);
+
+      expect(tripled.players[playerId].inJail).toBe(false);
+      expect(tripled.pendingDecision.type).toBe(PendingDecisionType.SpeedDieDestination);
+      expect(tripled.turn.doublesCount).toBe(0);
+    });
+
+    // The numeric faces stop at three, so those are the only triples possible.
+    it.each([1, 2, 3])('is possible on %i, the faces the die carries', (value) => {
+      const { state } = liveAtGo();
+      const face = [SpeedDieFace.One, SpeedDieFace.Two, SpeedDieFace.Three][value - 1];
+
+      const next = rollSpeed(state, [value, value], face);
+
+      expect(next.pendingDecision.type).toBe(PendingDecisionType.SpeedDieDestination);
+    });
+
+    it.each([4, 5, 6])('is impossible on %i, which no face shows', (value) => {
+      const { state } = liveAtGo();
+
+      // A matching pair above three is an ordinary double, whatever the face.
+      const next = rollSpeed(state, [value, value], SpeedDieFace.Three);
+
+      expect(next.pendingDecision.type).not.toBe(PendingDecisionType.SpeedDieDestination);
+      expect(next.turn.doublesCount).toBe(1);
+    });
+  });
+
+  describe('three consecutive doubles in a Speed Die game', () => {
+    it('still sends the player to Jail when the third is not a triple', () => {
+      const { state, playerId } = liveAtGo();
+      const settled = rollSpeed(
+        rollSpeed(state, [4, 4], SpeedDieFace.Two),
+        [4, 4],
+        SpeedDieFace.Two
+      );
+      expect(settled.turn.doublesCount).toBe(2);
+
+      // 6,6 cannot be a triple, so this is the third double proper.
+      const jailed = rollSpeed(settled, [6, 6], SpeedDieFace.Three);
+
+      expect(jailed.players[playerId].inJail).toBe(true);
+      expect(jailed.players[playerId].position).toBe(JAIL_POSITION);
+    });
+  });
+
+  describe('the Bus', () => {
+    it('keeps the extra roll a double earned, once the move is chosen', () => {
+      const { state } = liveAtGo();
+      const asked = rollSpeed(state, [5, 5], SpeedDieFace.Bus);
+
+      const moved = executeGameCommand(
+        asked,
+        { type: GameCommandType.ChooseBusMove, steps: 10 },
+        scriptedRolls([])
+      ).nextState;
+
+      expect(moved.turn.doublesCount).toBe(1);
+      expect(moved.turn.canRollAgain).toBe(true);
+    });
+
+    it('ends the turn when the white dice were not a double', () => {
+      const { state } = liveAtGo();
+      const asked = rollSpeed(state, [4, 6], SpeedDieFace.Bus);
+
+      const moved = executeGameCommand(
+        asked,
+        { type: GameCommandType.ChooseBusMove, steps: 10 },
+        scriptedRolls([])
+      ).nextState;
+
+      expect(moved.turn.doublesCount).toBe(0);
+      expect(moved.turn.canRollAgain).toBe(false);
+    });
+  });
+
+  describe('where the Speed Die is not rolled at all', () => {
+    it('is left out of a Jail attempt', () => {
+      const { state, playerId } = liveAtGo();
+      const jailed: GameState = {
+        ...state,
+        players: {
+          ...state.players,
+          [playerId]: {
+            ...state.players[playerId],
+            inJail: true,
+            position: JAIL_POSITION,
+          },
+        },
+        turn: { ...state.turn, phase: TurnPhase.AwaitDecision },
+      };
+
+      // Only two draws are scripted. A third would throw as out of step, which
+      // is what proves the Speed Die is not rolled here.
+      const next = executeGameCommand(
+        jailed,
+        { type: GameCommandType.AttemptJailRoll },
+        scriptedRolls([{ white: [2, 5] }])
+      ).nextState;
+
+      expect(next.turn.speedDieFace).toBeNull();
+    });
+
+    it('is left out until every player has passed GO', () => {
+      const { state, playerId } = liveAtGo();
+      const beforeAnyonePassed: GameState = {
+        ...state,
+        players: Object.fromEntries(
+          Object.entries(state.players).map(([id, player]) => [
+            id,
+            { ...player, hasPassedGo: false },
+          ])
+        ),
+      };
+
+      const next = executeGameCommand(
+        beforeAnyonePassed,
+        { type: GameCommandType.RollTurnDice },
+        scriptedRolls([{ white: [4, 6] }])
+      ).nextState;
+
+      expect(next.turn.speedDieFace).toBeNull();
+      expect(next.players[playerId].position).toBe(10);
+    });
+  });
+});
+
+/**
+ * Mr. Monopoly's fall-through, when every asset is already owned.
+ *
+ * The printed rule sends the player to the next opponent-owned **unmortgaged**
+ * property. Ours used to accept any opponent property, mortgaged included -
+ * which collects no rent, so the advance achieved nothing at all.
+ */
+describe('a Mr. Monopoly advance with nothing unowned', () => {
+  /** Every ownable space taken, so the fall-through is the only path. */
+  const allOwned = (mortgage: (index: number) => boolean) => {
+    const game = createBaseGame();
+    const [mover, opponent] = game.playerOrder;
+    const ownership = { ...game.ownership };
+
+    game.board.forEach((space) => {
+      if (!isOwnableSpace(space)) return;
+      // The mover owns the first few so the search has to walk past them.
+      const owner = space.index < 5 ? mover : opponent;
+      ownership[space.id] = {
+        ownerPlayerId: owner,
+        mortgaged: owner === opponent && mortgage(space.index),
+        buildLevel: 0,
+      };
+    });
+
+    return {
+      mover,
+      opponent,
+      state: {
+        ...game,
+        ownership,
+        players: {
+          ...game.players,
+          [mover]: { ...game.players[mover], position: 0 },
+        },
+      } as GameState,
+    };
+  };
+
+  it('walks past a mortgaged site to one that actually charges rent', () => {
+    // Everything from 5 to 11 mortgaged, so the nearest chargeable site is later.
+    const { state, mover } = allOwned((index) => index >= 5 && index <= 11);
+
+    const steps = findMonopolyAdvance(state, mover);
+    if (steps === null) throw new Error('Expected somewhere to advance to');
+
+    const landed = state.board[(0 + steps) % state.board.length];
+    expect(state.ownership[landed.id].mortgaged).toBe(false);
+    expect(state.ownership[landed.id].ownerPlayerId).not.toBe(mover);
+  });
+
+  it('advances to the nearest opponent site when none are mortgaged', () => {
+    const { state, mover } = allOwned(() => false);
+
+    const steps = findMonopolyAdvance(state, mover);
+    if (steps === null) throw new Error('Expected somewhere to advance to');
+
+    const landed = state.board[steps % state.board.length];
+    expect(state.ownership[landed.id].ownerPlayerId).not.toBe(mover);
+    // The mover holds everything below index 5, so the search cleared them.
+    expect(landed.index).toBeGreaterThanOrEqual(5);
+  });
+
+  it('finds nowhere to go when every opponent site is mortgaged', () => {
+    const { state, mover } = allOwned(() => true);
+
+    expect(findMonopolyAdvance(state, mover)).toBeNull();
   });
 });

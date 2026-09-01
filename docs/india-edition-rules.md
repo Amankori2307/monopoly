@@ -500,24 +500,31 @@ die, which is why `SPEED_DIE_FACES` is a list rather than the enum's values.
 
 ### The faces
 
-| ID   | Face             | Effect                                                                                                                                                                          |
-| ---- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 12.5 | **1, 2, 3**      | Added to the two white dice, then move and resolve normally — ✅                                                                                                                |
-| 12.6 | **Bus**          | Choose one white die, the other, or both. Three buttons, because those are the only legal answers — ✅                                                                          |
-| 12.7 | **Mr. Monopoly** | Move by the white dice and resolve, **then** advance to the next unowned asset to buy or auction; if none are unowned, to the next asset an opponent owns and pay its rent — ✅ |
+| ID   | Face             | Effect                                                                                                                                                                                                                                                  |
+| ---- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 12.5 | **1, 2, 3**      | Added to the two white dice, then move and resolve normally — ✅                                                                                                                                                                                        |
+| 12.6 | **Bus**          | Choose one white die, the other, or both. Three buttons, because those are the only legal answers — ✅                                                                                                                                                  |
+| 12.7 | **Mr. Monopoly** | Move by the white dice and resolve, **then** advance to the next unowned asset to buy or auction; if none are unowned, to the next **unmortgaged** asset an opponent owns and pay its rent — a mortgaged one is skipped, since it collects nothing — ✅ |
 
 ### Speed Die interaction with doubles and Jail
 
 The edge cases the user is most likely to hit, and the reason this section exists:
 
-| ID    | Rule                                                                                                                                             |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 12.8  | **Only the two white dice count for doubles.** A Speed Die showing the same number as them is irrelevant                                         |
-| 12.9  | **Only the two white dice count for rolling out of Jail**                                                                                        |
-| 12.10 | A Speed Die 1/2/3 is added _after_ the doubles check, so it never creates or breaks a double                                                     |
-| 12.11 | **If all three dice show the same number, move to any space on the board of your choice** — and that is not a double, so it grants no extra roll |
-| 12.12 | Three consecutive white-dice doubles still send you to Jail, exactly as in the base game                                                         |
-| 12.13 | A Mr. Monopoly advance happens after the space is resolved; if the white dice were doubles, the extra roll still follows                         |
+| ID    | Rule                                                                                                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 12.8  | **Only the two white dice count for doubles.** A Speed Die showing the same number as them is irrelevant                                                                  |
+| 12.9  | **Only the two white dice count for rolling out of Jail**                                                                                                                 |
+| 12.10 | A Speed Die 1/2/3 is added _after_ the doubles check, so it never creates or breaks a double                                                                              |
+| 12.11 | **If all three dice show the same number, move to any space on the board of your choice** — and that is not a double, so it grants no extra roll                          |
+| 12.12 | Three consecutive white-dice doubles send you to Jail as in the base game — **unless the third roll is a triple**, which moves you anywhere instead and does not jail you |
+| 12.13 | A Mr. Monopoly advance happens after the space is resolved; if the white dice were doubles, the extra roll still follows                                                  |
+
+**Why a triple is not the third double.** All three dice matching means the white pair matched too, so
+a naive reading jails a player on their third consecutive double. The printed rule is that a triple is
+its own outcome: they move anywhere and their turn ends. Both outside sources are explicit — _"if a
+player rolls doubles twice and then a triple, they do not go to jail... and the player does not roll
+again."_ The engine implements it by resetting `doublesCount` to 0 on a triple, which is load-bearing:
+without it, `resumeTurnAfterDecision` would hand back an extra roll after the destination was chosen.
 
 **How the Mr. Monopoly advance survives a decision.** The landed space may raise one — a buy, a
 card, a debt — and the advance is still owed when it is answered. It is therefore a turn field,
