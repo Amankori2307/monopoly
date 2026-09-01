@@ -40,23 +40,41 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Rules
 
-| File                                                                                 | What it does                                                                                                          |
-| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| [rules/gameEngine.ts](../src/domain/rules/gameEngine.ts)                             | **The rules engine.** `createGameState` + `executeGameCommand`: turn, rent, auction, jail, and card logic.            |
-| [rules/rng.ts](../src/domain/rules/rng.ts)                                           | Dice randomness: `RandomSource`, `DefaultRandomSource`, `SeededRandomSource`, `rollDie`, `shuffle`.                   |
-| [rules/rng.test.ts](../src/domain/rules/rng.test.ts)                                 | Determinism per seed, range bounds, and that shuffle keeps every value.                                               |
-| [rules/space.utils.ts](../src/domain/rules/space.utils.ts)                           | Board-space type guards: `isOwnableSpace`, `isStreetSpace`.                                                           |
-| [rules/playerActions.utils.ts](../src/domain/rules/playerActions.utils.ts)           | Which property actions a player may take and why one is unavailable. Drives the site panel.                           |
-| [rules/holdings.interfaces.ts](../src/domain/rules/holdings.interfaces.ts)           | Shapes returned by holdings.utils.                                                                                    |
-| [rules/playerActions.interfaces.ts](../src/domain/rules/playerActions.interfaces.ts) | The property-action descriptor.                                                                                       |
-| [rules/rng.interfaces.ts](../src/domain/rules/rng.interfaces.ts)                     | The randomness seam.                                                                                                  |
-| [board/boardLayout.interfaces.ts](../src/domain/board/boardLayout.interfaces.ts)     | Board grid geometry shapes.                                                                                           |
-| [rules/holdings.utils.ts](../src/domain/rules/holdings.utils.ts)                     | Net worth, mortgaged count, colour-set progress, grouped holdings, and `ownsEntireColorSet` (shared with the engine). |
-| [rules/buildings.utils.ts](../src/domain/rules/buildings.utils.ts)                   | Both even rules, bank inventory checks, and what a player could raise by selling buildings.                           |
-| [rules/buildings.interfaces.ts](../src/domain/rules/buildings.interfaces.ts)         | SellableBuilding: one building a player could sell, and what it pays.                                                 |
-| [rules/trade.utils.ts](../src/domain/rules/trade.utils.ts)                           | What may go into a trade, why it may not, and the 10% a receiver owes on a mortgaged site.                            |
-| [rules/trade.interfaces.ts](../src/domain/rules/trade.interfaces.ts)                 | TradableSite and TradeSide: the shapes the offer builder works in.                                                    |
-| [rules/speedDie.utils.ts](../src/domain/rules/speedDie.utils.ts)                     | When the Speed Die is in play, what it rolls, and what a three-of-a-kind means.                                       |
+| File                                                                                                     | What it does                                                                                                          |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [rules/gameEngine.ts](../src/domain/rules/gameEngine.ts)                                                 | **The rules engine.** `createGameState` + `executeGameCommand`: turn, rent, auction, jail, and card logic.            |
+| [rules/engine/state.utils.ts](../src/domain/rules/engine/state.utils.ts)                                 | State plumbing every other engine module is built from; depends on none of them.                                      |
+| [rules/engine/money.utils.ts](../src/domain/rules/engine/money.utils.ts)                                 | The three money choke points, the debt queue, and redemption cost.                                                    |
+| [rules/engine/rent.utils.ts](../src/domain/rules/engine/rent.utils.ts)                                   | What is owed for landing on a street, a railway or a utility.                                                         |
+| [rules/engine/movement.utils.ts](../src/domain/rules/engine/movement.utils.ts)                           | Moving a token, and settling whatever it landed on.                                                                   |
+| [rules/engine/cards.utils.ts](../src/domain/rules/engine/cards.utils.ts)                                 | Drawing a card, and returning a used jail card to its deck.                                                           |
+| [rules/engine/turn.utils.ts](../src/domain/rules/engine/turn.utils.ts)                                   | Whose turn it is, resuming after a decision, and the win check.                                                       |
+| [rules/engine/auction.utils.ts](../src/domain/rules/engine/auction.utils.ts)                             | The auction loop and the queue of properties behind it.                                                               |
+| [rules/engine/tradeSettlement.utils.ts](../src/domain/rules/engine/tradeSettlement.utils.ts)             | Carrying out a trade both players agreed to.                                                                          |
+| [rules/engine/commands/command.interfaces.ts](../src/domain/rules/engine/commands/command.interfaces.ts) | CommandHandlers: one handler per command, each with its command narrowed.                                             |
+| [rules/engine/commands/turn.commands.ts](../src/domain/rules/engine/commands/turn.commands.ts)           | rollTurnDice and endTurn.                                                                                             |
+| [rules/engine/commands/jail.commands.ts](../src/domain/rules/engine/commands/jail.commands.ts)           | The three ways out of Jail and the forced fourth.                                                                     |
+| [rules/engine/commands/property.commands.ts](../src/domain/rules/engine/commands/property.commands.ts)   | Buy, decline, mortgage, redeem.                                                                                       |
+| [rules/engine/commands/auction.commands.ts](../src/domain/rules/engine/commands/auction.commands.ts)     | Bidding and passing.                                                                                                  |
+| [rules/engine/commands/card.commands.ts](../src/domain/rules/engine/commands/card.commands.ts)           | Acknowledging a card, and applying what it says.                                                                      |
+| [rules/engine/commands/debt.commands.ts](../src/domain/rules/engine/commands/debt.commands.ts)           | Settling a debt, and going bankrupt.                                                                                  |
+| [rules/engine/commands/building.commands.ts](../src/domain/rules/engine/commands/building.commands.ts)   | Build, sell, and place a building won at auction.                                                                     |
+| [rules/engine/commands/speedDie.commands.ts](../src/domain/rules/engine/commands/speedDie.commands.ts)   | The Bus and the move-anywhere triple.                                                                                 |
+| [rules/engine/commands/trade.commands.ts](../src/domain/rules/engine/commands/trade.commands.ts)         | Propose, accept, reject.                                                                                              |
+| [rules/rng.ts](../src/domain/rules/rng.ts)                                                               | Dice randomness: `RandomSource`, `DefaultRandomSource`, `SeededRandomSource`, `rollDie`, `shuffle`.                   |
+| [rules/rng.test.ts](../src/domain/rules/rng.test.ts)                                                     | Determinism per seed, range bounds, and that shuffle keeps every value.                                               |
+| [rules/space.utils.ts](../src/domain/rules/space.utils.ts)                                               | Board-space type guards: `isOwnableSpace`, `isStreetSpace`.                                                           |
+| [rules/playerActions.utils.ts](../src/domain/rules/playerActions.utils.ts)                               | Which property actions a player may take and why one is unavailable. Drives the site panel.                           |
+| [rules/holdings.interfaces.ts](../src/domain/rules/holdings.interfaces.ts)                               | Shapes returned by holdings.utils.                                                                                    |
+| [rules/playerActions.interfaces.ts](../src/domain/rules/playerActions.interfaces.ts)                     | The property-action descriptor.                                                                                       |
+| [rules/rng.interfaces.ts](../src/domain/rules/rng.interfaces.ts)                                         | The randomness seam.                                                                                                  |
+| [board/boardLayout.interfaces.ts](../src/domain/board/boardLayout.interfaces.ts)                         | Board grid geometry shapes.                                                                                           |
+| [rules/holdings.utils.ts](../src/domain/rules/holdings.utils.ts)                                         | Net worth, mortgaged count, colour-set progress, grouped holdings, and `ownsEntireColorSet` (shared with the engine). |
+| [rules/buildings.utils.ts](../src/domain/rules/buildings.utils.ts)                                       | Both even rules, bank inventory checks, and what a player could raise by selling buildings.                           |
+| [rules/buildings.interfaces.ts](../src/domain/rules/buildings.interfaces.ts)                             | SellableBuilding: one building a player could sell, and what it pays.                                                 |
+| [rules/trade.utils.ts](../src/domain/rules/trade.utils.ts)                                               | What may go into a trade, why it may not, and the 10% a receiver owes on a mortgaged site.                            |
+| [rules/trade.interfaces.ts](../src/domain/rules/trade.interfaces.ts)                                     | TradableSite and TradeSide: the shapes the offer builder works in.                                                    |
+| [rules/speedDie.utils.ts](../src/domain/rules/speedDie.utils.ts)                                         | When the Speed Die is in play, what it rolls, and what a three-of-a-kind means.                                       |
 
 ### Data
 

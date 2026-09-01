@@ -49,7 +49,10 @@ src/App.tsx                      routes only
        SpaceDetailCard.tsx       title-deed modal
   └─ domain/                     PURE — no React, no Redux, no DOM
        types/game.ts             single source of truth for all game types
-       rules/gameEngine.ts       createGameState + executeGameCommand
+       rules/gameEngine.ts       createGameState + the command dispatch table
+       rules/engine/             the engine by concern: state, money, rent,
+                                 movement, cards, turn, auction, trade settlement
+       rules/engine/commands/    one handler per command, grouped by area
        rules/rng.ts              RandomSource (Default / Seeded)
        board/, cards/, themes/   India Edition data
   └─ app/                        store wiring + typed hooks
@@ -100,6 +103,14 @@ All twenty-four runtime commands are implemented: `rollTurnDice`, `buyLandedAsse
 
 `GameCommandResult.uiHints` is consequently always empty - it only ever carried "not implemented
 yet" notices, and nothing renders it now. Feedback goes through the history and the toasts.
+
+**The engine is nine modules and nine command groups, and the layering is one-way.**
+`engine/state.utils.ts` depends on nothing else and everything is built from it; commands sit on
+top and nothing imports them but the dispatch table in `gameEngine.ts`. `applyCardEffect` lives with
+its command rather than beside `drawCard` because applying an effect resolves a space, and keeping
+that out of `cards.utils.ts` is what stops the two forming a cycle. **`gameEngine.ts` no longer has
+an eslint exemption** — it had one for `max-lines`, `max-lines-per-function` and `complexity`, and
+the split is what removed the need for it. Do not add another.
 
 ### Locked economics (`gameEngine.ts` constants)
 

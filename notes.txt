@@ -1,6 +1,3 @@
-split games engine, and other big files, which can be split
-
-
 After everything is done add small interaction
     - money getting credited sound
     - money debiting sound
@@ -18,11 +15,4 @@ Build a better UI and theme
 
 
 Improve auction UI
-
-
-
 Make sure that every rule we have listed out has a test against it to make sure core rules are built correctly
-
-
-
-remove old monopoly code no longer used anyqhwer src/components/monopoly/Monopoly.tsx

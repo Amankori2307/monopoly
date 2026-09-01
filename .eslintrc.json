@@ -211,14 +211,6 @@
       }
     },
     {
-      "files": ["src/domain/rules/gameEngine.ts"],
-      "rules": {
-        "max-lines": "off",
-        "max-lines-per-function": "off",
-        "complexity": "off"
-      }
-    },
-    {
       "files": ["src/domain/**/*.ts", "src/domain/**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
