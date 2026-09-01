@@ -142,18 +142,20 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Board
 
-| File                                                                          | What it does                                                                           |
-| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)             | The 11x11 board: centre plus all 40 space cells.                                       |
-| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx)   | One square: colour bar (streets only), icon, name, player tokens.                      |
-| [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)         | Decorative centre: deck markers and logo ribbon.                                       |
-| [board/BoardTokenLayer.tsx](../src/components/game/board/BoardTokenLayer.tsx) | Player tokens drawn over the board, placed by grid cell so they cannot resize a space. |
+| File                                                                                  | What it does                                                                           |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)                     | The 11x11 board: centre plus all 40 space cells.                                       |
+| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx)           | One square: colour bar (streets only), icon, name, player tokens.                      |
+| [board/BoardSpaceCell.test.tsx](../src/components/game/board/BoardSpaceCell.test.tsx) | Accessible names, the owner dot, and the building pips.                                |
+| [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)                 | Decorative centre: deck markers and logo ribbon.                                       |
+| [board/BoardTokenLayer.tsx](../src/components/game/board/BoardTokenLayer.tsx)         | Player tokens drawn over the board, placed by grid cell so they cannot resize a space. |
 
 ### Panels
 
 | File                                                                                                                        | What it does                                                                                                                            |
 | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | [panels/CommandErrorBanner.tsx](../src/components/game/panels/CommandErrorBanner.tsx)                                       | Shows a command the engine rejected, instead of failing silently.                                                                       |
+| [panels/CommandErrorBanner.test.tsx](../src/components/game/panels/CommandErrorBanner.test.tsx)                             | Hidden when clear, alert role, dismissal.                                                                                               |
 | [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                                   | Player cards: cash, property count, position, jail status.                                                                              |
 | [panels/panels.interfaces.ts](../src/components/game/panels/panels.interfaces.ts)                                           | Shared panel view models and decision handler types.                                                                                    |
 | [panels/decisions/DecisionPanel.tsx](../src/components/game/panels/decisions/DecisionPanel.tsx)                             | Picks the right decision UI for the pending decision.                                                                                   |
@@ -175,6 +177,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [hooks/useAnimatedTokenPositions.ts](../src/components/game/hooks/useAnimatedTokenPositions.ts)                             | Walks tokens one space at a time with a tick per step; snaps teleports.                                                                 |
 | [hooks/useAnimatedTokenPositions.test.ts](../src/components/game/hooks/useAnimatedTokenPositions.test.ts)                   | Step-by-step walk, wrapping past GO, per-step tick, teleport snap.                                                                      |
 | [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                                   | Bottom-right cluster: end-turn button plus the dice, level with the board.                                                              |
+| [panels/TurnControls.test.tsx](../src/components/game/panels/TurnControls.test.tsx)                                         | End-turn vs take-extra-roll, the roll label, and the Speed Die.                                                                         |
 | [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                                         | Stack collapse/expand, click target, token colours, full-table support.                                                                 |
 | [overlays/DecisionModal.tsx](../src/components/game/overlays/DecisionModal.tsx)                                             | Blocking centre modal for a pending decision. Deliberately not dismissible.                                                             |
 | [overlays/SideDrawer.tsx](../src/components/game/overlays/SideDrawer.tsx)                                                   | Right-hand drawer shell: backdrop, header, Escape to close.                                                                             |
@@ -285,16 +288,16 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Config
 
-| File                                            | What it does                                                                                       |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| [vite.config.mjs](../vite.config.mjs)           | Vite build/dev config **and** the Vitest config (jsdom, globals, setup file).                      |
-| [project.json](../project.json)                 | NX targets wrapping Vite: serve, build, test, lint, preview.                                       |
-| [nx.json](../nx.json)                           | NX workspace config: caching, target defaults.                                                     |
-| [tsconfig.json](../tsconfig.json)               | TypeScript config. `strict: true`, target es2020, no exclusions; path aliases declared but unused. |
-| [.eslintrc.json](../.eslintrc.json)             | Lint rules: layer boundaries, naming conventions, file naming, size limits.                        |
-| [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                                       |
-| [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                                   |
-| [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                                       |
+| File                                            | What it does                                                                      |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| [vite.config.mjs](../vite.config.mjs)           | Vite build/dev config **and** the Vitest config (jsdom, globals, setup file).     |
+| [project.json](../project.json)                 | NX targets wrapping Vite: serve, build, test, lint, preview.                      |
+| [nx.json](../nx.json)                           | NX workspace config: caching, target defaults.                                    |
+| [tsconfig.json](../tsconfig.json)               | TypeScript config. `strict: true`, target es2020, no exclusions, no path aliases. |
+| [.eslintrc.json](../.eslintrc.json)             | Lint rules: layer boundaries, naming conventions, file naming, size limits.       |
+| [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                      |
+| [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                  |
+| [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                      |
 
 ## Other
 

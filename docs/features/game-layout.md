@@ -192,4 +192,6 @@ local state: the selected space id for the title-deed modal.
 
 ## Known gaps
 
-- No dedicated component tests for the board and panel components (covered indirectly).
+- Nothing outstanding. The board cell, turn controls and error banner have their own tests;
+  BoardGrid, BoardCenter and BoardTokenLayer stay covered through the page and e2e tests, where
+  their layout is the thing under test.

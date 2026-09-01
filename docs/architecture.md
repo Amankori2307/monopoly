@@ -209,6 +209,6 @@ Extend `SpaceKind` + the `BoardSpace` union, then handle it in `resolveCurrentSp
 - **Vite** (`vite.config.mjs`): dev port 3000, output `build/`, base `/monopoly/` in production for GitHub Pages. Also hosts the Vitest config (jsdom, globals, `src/**/*.test.{ts,tsx}`, setup `src/setupTests.ts`).
 - **NX** (`project.json`) wraps Vite for `serve`/`build`/`test`/`lint` with caching.
 - **Playwright** (`playwright.config.ts`): `tests/e2e`, auto-starts the dev server, reuses a running one.
-- **TypeScript**: `strict: true`, `target: es2020`, no `exclude`. Path aliases declared but unused.
+- **TypeScript**: `strict: true`, `target: es2020`, no `exclude`, no path aliases — imports are relative.
 
 Test layering: pure rules → engine unit tests; page behaviour → RTL via `renderWithProviders`; user journeys → Playwright.

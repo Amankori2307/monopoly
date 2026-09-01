@@ -171,7 +171,7 @@ Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc`
 - `components/game/` are presentational: props in, callbacks out, no `useAppSelector`.
 - Slices hold state; _thunks_ hold orchestration. Business rules belong in the engine.
 - **Enums live in `*.enums.ts`; exported interfaces and type aliases in `\*.interfaces.ts.** Machine-enforced by `no-restricted-syntax`. Component `Props`, hook `Use*Result`/`Use*Options`, and type aliases derived from a value in the same file are exempt — see [docs/conventions.md](docs/conventions.md) §1, which also explains why the rule must stay in a single `overrides` entry.
-- Path aliases exist in `tsconfig.json` (`@app/*`, `@domain/*`, `@features/*`, `@components/*`, `@test/*`) but **nothing uses them yet** — the codebase is uniformly relative-import. Pick one style deliberately rather than mixing.
+- **Relative imports, everywhere.** The `@app/*`-style path aliases are gone: `nxViteTsPaths()` made them work, but nothing used them across 570 relative imports, and a working-but-unused second style is exactly the drift to avoid. Re-adding them is a `paths` block in `tsconfig.json` if that call is ever revisited.
 
 **DRY — known duplication, fix on contact**
 | Duplicated | Locations |
