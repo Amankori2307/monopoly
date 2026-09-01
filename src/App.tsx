@@ -3,16 +3,19 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { GamePage } from './features/game/GamePage';
 import { RulesPage } from './features/rules/RulesPage';
 import { HomePage } from './features/setup/HomePage';
+import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/rules" element={<RulesPage />} />
-        <Route path="/game/:gameId" element={<GamePage />} />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/rules" element={<RulesPage />} />
+          <Route path="/game/:gameId" element={<GamePage />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

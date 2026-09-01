@@ -110,6 +110,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [persistence/migrations.test.ts](../src/features/persistence/migrations.test.ts)                           | v1 saves upgrading, and future versions passing through untouched.                                            |
 | [persistence/persistence.errors.test.ts](../src/features/persistence/persistence.errors.test.ts)           | Quota failures, and a behind-version save being written back.                                                 |
 | [persistence/schema.ts](../src/features/persistence/schema.ts)                                             | Zod schemas validating anything read back out of storage.                                                     |
+| [persistence/schema.test.ts](../src/features/persistence/schema.test.ts)                                   | The corruption the schema now refuses at the boundary.                                                        |
 | [persistence/migrations.ts](../src/features/persistence/migrations.ts)                                     | Brings an older save up to the current GAME_STATE_VERSION, before validation.                                 |
 | [persistence/persistence.errors.ts](../src/features/persistence/persistence.errors.ts)                     | StorageWriteError: a write the browser refused, told apart from a bug.                                        |
 | [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                         |
@@ -234,17 +235,19 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## `src/shared/` — cross-cutting helpers
 
-| File                                                                           | What it does                                                                            |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts) | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
-| [utils/logger.enums.ts](../src/shared/utils/logger.enums.ts)                   | Log severity levels.                                                                    |
-| [utils/logger.interfaces.ts](../src/shared/utils/logger.interfaces.ts)         | One captured log entry.                                                                 |
-| [utils/logger.utils.ts](../src/shared/utils/logger.utils.ts)                   | App log: console + capped ring + localStorage, exposed as `window.monopolyLog`.         |
-| [utils/logger.utils.test.ts](../src/shared/utils/logger.utils.test.ts)         | Ring cap, persistence, error filtering, storage-failure safety.                         |
-| [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                     | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
-| [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)           | Unit tests for money formatting.                                                        |
-| [hooks/useEscapeKey.ts](../src/shared/hooks/useEscapeKey.ts)                   | Escape-to-dismiss for overlays, with listener cleanup.                                  |
-| [hooks/useEscapeKey.test.ts](../src/shared/hooks/useEscapeKey.test.ts)         | Unit tests, including that the listener is removed on unmount.                          |
+| File                                                                                        | What it does                                                                            |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts)              | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
+| [utils/logger.enums.ts](../src/shared/utils/logger.enums.ts)                                | Log severity levels.                                                                    |
+| [utils/logger.interfaces.ts](../src/shared/utils/logger.interfaces.ts)                      | One captured log entry.                                                                 |
+| [utils/logger.utils.ts](../src/shared/utils/logger.utils.ts)                                | App log: console + capped ring + localStorage, exposed as `window.monopolyLog`.         |
+| [shared/components/ErrorBoundary.tsx](../src/shared/components/ErrorBoundary.tsx)           | Catches a render that throws, logs it, and offers a way back.                           |
+| [shared/components/ErrorBoundary.test.tsx](../src/shared/components/ErrorBoundary.test.tsx) | The fallback, the log entry, and the full-reload way out.                               |
+| [utils/logger.utils.test.ts](../src/shared/utils/logger.utils.test.ts)                      | Ring cap, persistence, error filtering, storage-failure safety.                         |
+| [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                                  | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
+| [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)                        | Unit tests for money formatting.                                                        |
+| [hooks/useEscapeKey.ts](../src/shared/hooks/useEscapeKey.ts)                                | Escape-to-dismiss for overlays, with listener cleanup.                                  |
+| [hooks/useEscapeKey.test.ts](../src/shared/hooks/useEscapeKey.test.ts)                      | Unit tests, including that the listener is removed on unmount.                          |
 
 ## `src/styles/` — SCSS
 

@@ -1,5 +1,6 @@
 import type { GameState, StoredGameIndexEntry } from '../../domain/types/game.interfaces';
 import { migrateSavedGame, needsMigration } from './migrations';
+import { logger } from '../../shared/utils/logger.utils';
 import { StorageWriteError } from './persistence.errors';
 import { gameStateSchema, storedGameIndexSchema } from './schema';
 
@@ -69,6 +70,30 @@ export const saveGame = (gameState: GameState) => {
   writeToStorage(STORAGE_INDEX_KEY, JSON.stringify(nextIndex));
 };
 
+/**
+ * Validates a migrated save, turning a schema failure into a sentence.
+ *
+ * zod's own `message` is a JSON dump of every issue - useful in a log, useless
+ * on screen. The player gets what is wrong and where; the full report goes to
+ * the logger for whoever has to fix it.
+ */
+const parseSavedGame = (migrated: unknown): GameState => {
+  const result = gameStateSchema.safeParse(migrated);
+  if (result.success) {
+    return result.data as GameState;
+  }
+
+  const [first] = result.error.issues;
+  const where = first?.path.join('.') || 'the save';
+  logger.error('persistence', 'a saved game failed validation', {
+    issues: result.error.issues,
+  });
+
+  throw new Error(
+    `This saved game is damaged: ${first?.message ?? 'unexpected shape'} (at ${where}).`
+  );
+};
+
 export const loadGame = (gameId: string): GameState | null => {
   const rawValue = getStorage().getItem(getGameStorageKey(gameId));
   if (!rawValue) {
@@ -79,7 +104,7 @@ export const loadGame = (gameId: string): GameState | null => {
   // Migrate before validating: the schema describes the current shape, so an
   // older save has to be brought up to it or it fails to parse and is lost.
   const wasBehind = needsMigration(stored);
-  const game = gameStateSchema.parse(migrateSavedGame(stored)) as GameState;
+  const game = parseSavedGame(migrateSavedGame(stored));
 
   // Write the upgraded save back. Without this the migration ran again on every
   // load, and a game opened but not played stayed on the old shape on disk -

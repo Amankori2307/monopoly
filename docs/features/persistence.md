@@ -50,6 +50,8 @@ these alongside any shape change.
 
 ## Known gaps
 
-- Nothing outstanding. Migrations run on load and write the upgraded save back;
+- Nothing outstanding. The schema is tight — a corrupt player, a malformed space or an unknown
+  card effect is refused at the boundary rather than crashing a component later, and `ErrorBoundary`
+  catches whatever still gets through. Migrations run on load and write the upgraded save back;
   `StorageWriteError` turns a full quota or a private-mode refusal into something the UI can say,
   and a failed save no longer costs the player the move they just made.

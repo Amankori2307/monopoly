@@ -141,7 +141,8 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 
 - Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
 - `GAME_STATE_VERSION = 5`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
-- Loads are validated with zod (`features/persistence/schema.ts`). The schema is deliberately loose in places (`z.any()` for players/board/ownership) — tighten it alongside any shape change.
+- Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
+- **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. `pendingDecision` is `.passthrough()`, so a decision's own payload survives — which is why the drawn Chance / Community Chest card rides inside the decision rather than in a field of its own. Add the field to the schema, or put it where it will survive.
 - Every command save is a full-state write, then the index is rewritten sorted by `updatedAt`.
 

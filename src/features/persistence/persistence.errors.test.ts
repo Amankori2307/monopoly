@@ -3,6 +3,7 @@ import { createGameState } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
 import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
 import { GAME_STATE_VERSION } from '../../domain/constants/game.constants';
+import { clearLog, getLogErrors } from '../../shared/utils/logger.utils';
 import { StorageWriteError } from './persistence.errors';
 import { loadGame, saveGame } from './persistence';
 
@@ -94,5 +95,63 @@ describe('loading a save that is behind', () => {
     loadGame(game.id);
 
     expect(localStorage.getItem(key)).toBe(before);
+  });
+});
+
+/**
+ * A damaged save is refused at the boundary. What the player reads should be a
+ * sentence, not zod's JSON dump of every issue.
+ */
+describe('loading a damaged save', () => {
+  const damage = (mutate: (game: Record<string, unknown>) => void) => {
+    const game = createGame();
+    saveGame(game);
+    const key = `monopoly.game.${game.id}.v1`;
+    const stored = JSON.parse(localStorage.getItem(key) as string);
+    mutate(stored);
+    localStorage.setItem(key, JSON.stringify(stored));
+    return game.id;
+  };
+
+  it('says what is wrong, and where, in a sentence', () => {
+    const gameId = damage((stored) => {
+      const players = stored.players as Record<string, Record<string, unknown>>;
+      delete players[(stored.playerOrder as string[])[0]].cash;
+    });
+
+    expect(() => loadGame(gameId)).toThrow(/damaged/i);
+    expect(() => loadGame(gameId)).toThrow(/players\..*\.cash/);
+  });
+
+  it('keeps zod issue codes off the screen', () => {
+    const gameId = damage((stored) => {
+      (stored.board as unknown[]) = [];
+    });
+
+    try {
+      loadGame(gameId);
+      expect.unreachable('loadGame should have thrown');
+    } catch (error) {
+      const message = (error as Error).message;
+      expect(message).not.toMatch(/invalid_type|"code"/);
+      expect(message.length).toBeLessThan(200);
+    }
+  });
+
+  it('logs the full issue list for whoever has to fix it', () => {
+    const gameId = damage((stored) => {
+      const players = stored.players as Record<string, Record<string, unknown>>;
+      delete players[(stored.playerOrder as string[])[0]].cash;
+    });
+    clearLog();
+
+    try {
+      loadGame(gameId);
+    } catch {
+      // expected
+    }
+
+    const errors = getLogErrors();
+    expect(errors.some((entry) => /failed validation/i.test(entry.message))).toBe(true);
   });
 });

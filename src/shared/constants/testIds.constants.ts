@@ -86,6 +86,7 @@ export const TEST_IDS = {
   activityPanel: 'activity-panel',
   hintsPanel: 'hints-panel',
   commandError: 'command-error',
+  errorBoundary: 'error-boundary',
 
   // Controls
   turnControls: 'turn-controls',

@@ -514,3 +514,48 @@
   color: var(--text-body);
   line-height: 1.5;
 }
+
+// The error boundary's fallback. Deliberately plain: whatever threw may have
+// been a style-dependent component, so this leans on tokens and nothing else.
+.error-panel {
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-sm;
+  max-width: 560px;
+  margin: t.$gap-xl auto;
+  padding: t.$gap-xl;
+  border: 1px solid var(--border-subtle);
+  border-radius: t.$radius-md;
+  background: var(--surface-panel);
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+  }
+
+  .eyebrow {
+    margin: 0;
+  }
+
+  .primary-button {
+    align-self: flex-start;
+    text-decoration: none;
+  }
+}
+
+.error-panel-message {
+  margin: 0;
+  padding: t.$gap-sm;
+  border-radius: t.$radius-md;
+  background: var(--surface-muted);
+  color: var(--error-text);
+  font: 500 0.85rem/1.45 t.$font-mono;
+  overflow-wrap: anywhere;
+}
+
+.error-panel-help {
+  margin: 0;
+  color: var(--text-body);
+  line-height: 1.55;
+}
