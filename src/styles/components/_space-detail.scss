@@ -28,6 +28,9 @@
 
 .space-detail-close {
   position: absolute;
+  // Above the deed, which is positioned so it can hold the mortgage watermark -
+  // and, being later in the DOM, painted over this button without it.
+  z-index: 2;
   top: 12px;
   right: 12px;
   display: grid;
@@ -49,6 +52,8 @@
 // reads identically in the title-deed modal, the buy decision, and the holdings
 // drawer. Callers position it; they never restyle it.
 .deed-card {
+  // Positions the mortgage watermark, which is struck across the whole card.
+  position: relative;
   width: t.$deed-card-width;
   height: t.$deed-card-height;
   padding: t.$deed-card-pad;
@@ -273,17 +278,6 @@
 
 // Struck through, like a stamp on the deed: a mortgaged site collects no rent,
 // so the card has to say so wherever it appears.
-.deed-mortgaged {
-  align-self: flex-start;
-  margin: 0 0 2px;
-  padding: 1px 6px;
-  border: 1px dashed var(--border-dashed);
-  color: var(--error-text);
-  font: 500 0.6rem t.$font-mono;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 // ---------------------------------------------------------------------------
 // Site panel actions
 //

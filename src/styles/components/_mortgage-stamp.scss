@@ -1,0 +1,71 @@
+@use '../abstracts/tokens' as t;
+
+/**
+ * The mortgage watermark.
+ *
+ * A watermark, not a badge: the point is that the site reads straight through
+ * it. Opacity lives here rather than in the SVG so both variants are tunable in
+ * one place, and the colour is the same token the mortgage action button uses -
+ * a raw hex here would break theming.
+ */
+.mortgage-stamp {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  // Never intercepts a click: both the board square and a stacked deed are
+  // buttons, and the stamp covers the whole of them.
+  pointer-events: none;
+  color: var(--action-mortgage);
+
+  svg {
+    width: 100%;
+    height: auto;
+  }
+}
+
+// On a deed the stamp is the notice itself, so it carries the most weight it can
+// while leaving the rent table legible underneath.
+.mortgage-stamp.is-deed {
+  // Over the card's content, which is all in normal flow beneath it.
+  z-index: 1;
+  padding: 0 t.$gap-lg;
+  opacity: 0.16;
+}
+
+/**
+ * On a board square: the frame alone, and smaller relative to the cell.
+ *
+ * z-index 7 puts it over the cell's ::after divider (5) and the owner dot (6) -
+ * the dot stays, because it is the one mortgage signal that still reads when the
+ * squares shrink on a phone.
+ */
+.mortgage-stamp.is-space {
+  z-index: 7;
+  opacity: 0.34;
+  overflow: hidden;
+
+  // Deliberately larger than the cell, and clipped by it: a stamp struck across
+  // a square runs off the edges. Fitted inside, the frame shrank to a small
+  // badge in the middle of a tall cell instead of reading as a strike.
+  svg {
+    width: 116%;
+    height: 116%;
+    aspect-ratio: 1;
+    // The cell is portrait on the top and bottom rows and landscape on the
+    // sides, so cover the longer axis either way.
+    min-width: 116%;
+    min-height: 116%;
+  }
+}
+
+/**
+ * A stacked holding is clipped to a peek of its full height, so a stamp centred
+ * on the card would sit entirely below the fold. Pulled up into what is actually
+ * visible - the same SVG, repositioned rather than a second component.
+ */
+.holdings-stack-card .mortgage-stamp.is-deed {
+  inset: 0 0 auto;
+  height: t.$holdings-peek;
+  opacity: 0.2;
+}

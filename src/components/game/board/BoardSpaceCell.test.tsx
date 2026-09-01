@@ -130,3 +130,46 @@ describe('BoardSpaceCell', () => {
     });
   });
 });
+
+/**
+ * The mortgage stamp, struck across the square.
+ *
+ * The hollow owner dot stays - it is the one signal that still reads when the
+ * squares shrink to 29px on a phone - but a 7px dot is not something anyone
+ * spots across forty squares, which is what the stamp is for.
+ */
+describe('a mortgaged square', () => {
+  const stampId = scopedTestId(TEST_IDS.spaceMortgaged, street.index);
+
+  it('is struck with the stamp', () => {
+    renderCell(street, mark({ mortgaged: true }));
+
+    expect(screen.getByTestId(stampId)).toBeInTheDocument();
+  });
+
+  it('still shows the space name, because the stamp is a watermark', () => {
+    renderCell(street, mark({ mortgaged: true }));
+
+    expect(screen.getByText(street.name)).toBeInTheDocument();
+  });
+
+  it('keeps the hollow owner dot as well', () => {
+    renderCell(street, mark({ mortgaged: true }));
+
+    expect(
+      screen.getByTestId(scopedTestId(TEST_IDS.spaceOwnerDot, street.index))
+    ).toHaveClass('is-mortgaged');
+  });
+
+  it('is not struck when the site is owned outright', () => {
+    renderCell(street, mark({ mortgaged: false }));
+
+    expect(screen.queryByTestId(stampId)).not.toBeInTheDocument();
+  });
+
+  it('is not struck when nobody owns it', () => {
+    renderCell(street);
+
+    expect(screen.queryByTestId(stampId)).not.toBeInTheDocument();
+  });
+});

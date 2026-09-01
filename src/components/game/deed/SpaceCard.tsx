@@ -4,6 +4,7 @@ import { SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace, OwnershipState } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { getSpaceIcon } from '../spaceIcons.constants';
+import { MortgageStamp } from './MortgageStamp';
 import { RailwayDeed } from './RailwayDeed';
 import { SpaceDescription } from './SpaceDescription';
 import { StreetDeed } from './StreetDeed';
@@ -76,11 +77,11 @@ export function SpaceCard({
         />
       ) : null}
       <p className="eyebrow">{title}</p>
-      {ownership?.mortgaged ? (
-        <p className="deed-mortgaged" data-testid={TEST_IDS.deedMortgaged}>
-          Mortgaged
-        </p>
-      ) : null}
+      {/* Struck across the whole card rather than labelled above the title: a
+          mortgage is a state the deed is *in*, and the pill this replaced read
+          as a note about it. Low enough opacity that the rent table still
+          reads through - see MortgageStamp. */}
+      {ownership?.mortgaged ? <MortgageStamp variant="deed" /> : null}
       <div className="space-detail-title-row">
         {icon ? (
           <img alt="" aria-hidden="true" className="space-detail-icon" src={icon} />

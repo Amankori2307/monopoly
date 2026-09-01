@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { HoldingsSection } from '../../../domain/rules/holdings.utils';
-import type { SpaceId } from '../../../domain/types/game.interfaces';
+import type { OwnershipState, SpaceId } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { formatMoney } from '../../../shared/utils/money.utils';
 import { SpaceCard } from '../deed/SpaceCard';
@@ -11,6 +11,8 @@ import { SideDrawer } from './SideDrawer';
 interface PlayerDetailDrawerProps {
   currencySymbol: string;
   onClose: () => void;
+  /** Ownership by space, so a mortgaged holding is struck here as on the board. */
+  ownership: Record<SpaceId, OwnershipState>;
   sections: HoldingsSection[];
   summary: PlayerSummary | null;
 }
@@ -26,6 +28,7 @@ interface PlayerDetailDrawerProps {
 export function PlayerDetailDrawer({
   currencySymbol,
   onClose,
+  ownership,
   sections,
   summary,
 }: PlayerDetailDrawerProps) {
@@ -78,12 +81,14 @@ export function PlayerDetailDrawer({
             <SpaceCard
               currencySymbol={currencySymbol}
               headingId="holdings-featured-title"
+              ownership={ownership[featured.id]}
               space={featured}
             />
           </div>
 
           <HoldingsStack
             currencySymbol={currencySymbol}
+            ownership={ownership}
             onSelect={setSelectedSpaceId}
             sections={sections}
             selectedSpaceId={featured.id}

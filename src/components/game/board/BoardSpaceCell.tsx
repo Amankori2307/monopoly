@@ -7,6 +7,7 @@ import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.utils';
 import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
+import { MortgageStamp } from '../deed/MortgageStamp';
 import { getCornerIcon, getSpaceIcon } from '../spaceIcons.constants';
 import type { SpaceOwnerMark } from './board.interfaces';
 
@@ -88,6 +89,16 @@ export function BoardSpaceCell({
               ? { borderColor: ownerMark.color }
               : { backgroundColor: ownerMark.color }
           }
+        />
+      ) : null}
+
+      {/* Struck across the square, so a mortgaged site reads at a glance across
+          forty of them rather than only from the hollow dot. No wording at this
+          size - see MortgageStamp. */}
+      {ownerMark?.mortgaged ? (
+        <MortgageStamp
+          testId={scopedTestId(TEST_IDS.spaceMortgaged, space.index)}
+          variant="space"
         />
       ) : null}
 

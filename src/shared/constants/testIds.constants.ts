@@ -31,6 +31,7 @@ export const TEST_IDS = {
   // Panels
   turnPanel: 'turn-panel',
   deedMortgaged: 'deed-mortgaged',
+  spaceMortgaged: 'space-mortgaged',
   siteActions: 'site-actions',
   siteAction: 'site-action',
   siteOwner: 'site-owner',

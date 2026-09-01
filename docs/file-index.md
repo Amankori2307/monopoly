@@ -164,6 +164,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [SpaceDetailCard.test.tsx](../src/components/game/SpaceDetailCard.test.tsx)       | Per-kind rendering, themed colour-group class, close on button/Escape/backdrop.                                                                                                               |
 | [spaceIcons.constants.ts](../src/components/game/spaceIcons.constants.ts)         | Icon lookup for board spaces, shared by the board cell and the title deed.                                                                                                                    |
 | [deed/SpaceCard.tsx](../src/components/game/deed/SpaceCard.tsx)                   | The site card: colour strip, title, icon, per-kind deed body, and optional actions. Supplies its own fixed-size surface; shared by the deed modal, the buy decision, and the holdings drawer. |
+| [deed/MortgageStamp.tsx](../src/components/game/deed/MortgageStamp.tsx)           | The mortgage watermark: a rubber stamp for a deed, and the frame alone for a board square.                                                                                                    |
+| [deed/MortgageStamp.test.tsx](../src/components/game/deed/MortgageStamp.test.tsx) | The wording, who announces it, the grunge filter, and a unique filter id per instance.                                                                                                        |
 | [deed/SpaceCard.test.tsx](../src/components/game/deed/SpaceCard.test.tsx)         | The card shell class, the colour strip and its per-kind colour, the deed label, and optional actions.                                                                                         |
 | [trade/TradeBuilder.test.tsx](../src/components/game/trade/TradeBuilder.test.tsx) | Both columns, picking and unpicking, blocked sites, jail-card limits.                                                                                                                         |
 | [deed/StreetDeed.tsx](../src/components/game/deed/StreetDeed.tsx)                 | Title-deed body for a street: site values and full rent schedule (the colour strip belongs to SpaceCard).                                                                                     |
@@ -286,27 +288,28 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## `src/styles/` — SCSS
 
-| File                                                                          | What it does                                                                                 |
-| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [main.scss](../src/styles/main.scss)                                          | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.              |
-| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                     | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                   |
-| [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)   | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.  |
-| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)               | Non-themeable tokens: fonts, radii, spacing, breakpoints, board geometry, colour-group list. |
-| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)               | Shared mixins: `below()`, `mono-label()`, `card-surface()`.                                  |
-| [base/\_reset.scss](../src/styles/base/_reset.scss)                           | Box-sizing, body, default control resets.                                                    |
-| [base/\_typography.scss](../src/styles/base/_typography.scss)                 | Headings, `.eyebrow`, helper and error text.                                                 |
-| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                       | `.app-shell`, `.page`, shared grid/flex helpers.                                             |
-| [components/\_board.scss](../src/styles/components/_board.scss)               | Board grid, centre ribbon, deck markers, and **space row templates**.                        |
-| [components/\_buttons.scss](../src/styles/components/_buttons.scss)           | Primary / secondary / danger buttons.                                                        |
-| [components/\_forms.scss](../src/styles/components/_forms.scss)               | Inputs, selects, labels, setup form grids.                                                   |
-| [components/\_panels.scss](../src/styles/components/_panels.scss)             | Panel/hero/summary/decision surfaces, headings, badges, empty states.                        |
-| [components/\_dice.scss](../src/styles/components/_dice.scss)                 | Dice dock, die faces, pip grid positions, tumble keyframes.                                  |
-| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss) | Title-deed modal: backdrop, card, colour band, rent table.                                   |
-| [components/\_auction.scss](../src/styles/components/_auction.scss)           | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                   |
-| [components/\_player.scss](../src/styles/components/_player.scss)             | Player cards, metrics, owned-property cards.                                                 |
-| [pages/\_game.scss](../src/styles/pages/_game.scss)                           | Three-column game layout, turn panel, activity list, responsive rules.                       |
-| [pages/\_home.scss](../src/styles/pages/_home.scss)                           | Recent-games list styling.                                                                   |
-| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                         | Rules booklet typography and tables.                                                         |
+| File                                                                              | What it does                                                                                 |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [main.scss](../src/styles/main.scss)                                              | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.              |
+| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                         | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                   |
+| [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)       | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.  |
+| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)                   | Non-themeable tokens: fonts, radii, spacing, breakpoints, board geometry, colour-group list. |
+| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)                   | Shared mixins: `below()`, `mono-label()`, `card-surface()`.                                  |
+| [base/\_reset.scss](../src/styles/base/_reset.scss)                               | Box-sizing, body, default control resets.                                                    |
+| [base/\_typography.scss](../src/styles/base/_typography.scss)                     | Headings, `.eyebrow`, helper and error text.                                                 |
+| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                           | `.app-shell`, `.page`, shared grid/flex helpers.                                             |
+| [components/\_board.scss](../src/styles/components/_board.scss)                   | Board grid, centre ribbon, deck markers, and **space row templates**.                        |
+| [components/\_buttons.scss](../src/styles/components/_buttons.scss)               | Primary / secondary / danger buttons.                                                        |
+| [components/\_forms.scss](../src/styles/components/_forms.scss)                   | Inputs, selects, labels, setup form grids.                                                   |
+| [components/\_panels.scss](../src/styles/components/_panels.scss)                 | Panel/hero/summary/decision surfaces, headings, badges, empty states.                        |
+| [components/\_dice.scss](../src/styles/components/_dice.scss)                     | Dice dock, die faces, pip grid positions, tumble keyframes.                                  |
+| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss)     | Title-deed modal: backdrop, card, colour band, rent table.                                   |
+| [components/\_mortgage-stamp.scss](../src/styles/components/_mortgage-stamp.scss) | The mortgage watermark's placement and opacity, on a deed and on a board square.             |
+| [components/\_auction.scss](../src/styles/components/_auction.scss)               | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                   |
+| [components/\_player.scss](../src/styles/components/_player.scss)                 | Player cards, metrics, owned-property cards.                                                 |
+| [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Three-column game layout, turn panel, activity list, responsive rules.                       |
+| [pages/\_home.scss](../src/styles/pages/_home.scss)                               | Recent-games list styling.                                                                   |
+| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                             | Rules booklet typography and tables.                                                         |
 
 ## Test infrastructure
 

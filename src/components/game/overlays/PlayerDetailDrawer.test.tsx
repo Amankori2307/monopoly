@@ -61,11 +61,21 @@ const summary: PlayerSummary = {
   setProgress: [],
 };
 
-const renderDrawer = (sections: HoldingsSection[]) =>
+/** Mortgage state by space, which is what the deeds in here read. */
+const ownershipOf = (mortgagedSpaceIds: string[] = []) =>
+  Object.fromEntries(
+    mortgagedSpaceIds.map((spaceId) => [
+      spaceId,
+      { ownerPlayerId: 'player-1', mortgaged: true, buildLevel: 0 },
+    ])
+  );
+
+const renderDrawer = (sections: HoldingsSection[], mortgagedSpaceIds: string[] = []) =>
   render(
     <PlayerDetailDrawer
       currencySymbol="M"
       onClose={vi.fn()}
+      ownership={ownershipOf(mortgagedSpaceIds)}
       sections={sections}
       summary={summary}
     />
@@ -83,6 +93,7 @@ describe('PlayerDetailDrawer', () => {
       <PlayerDetailDrawer
         currencySymbol="M"
         onClose={vi.fn()}
+        ownership={{}}
         sections={[]}
         summary={null}
       />
@@ -196,5 +207,65 @@ describe('PlayerDetailDrawer', () => {
       'aria-pressed',
       'false'
     );
+  });
+});
+
+/**
+ * Mortgage state in the portfolio.
+ *
+ * A real gap until now: the drawer rendered every deed without passing
+ * `ownership`, so a player browsing their own holdings saw mortgaged sites as
+ * though they were clear - the one place they would go to check.
+ */
+describe('a mortgaged holding', () => {
+  const brown = streetsIn(ColorGroup.Brown);
+
+  it('strikes the featured deed', () => {
+    renderDrawer([section()], [brown[0].id]);
+
+    expect(
+      within(screen.getByTestId(TEST_IDS.holdingsFeatured)).getByTestId(
+        TEST_IDS.deedMortgaged
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('strikes it in the stack too, where only a peek of the card shows', () => {
+    // The second site is the one in the stack; the first is featured.
+    renderDrawer([section()], [brown[1].id]);
+
+    expect(
+      within(screen.getByTestId(TEST_IDS.holdingsStack)).getByTestId(
+        TEST_IDS.deedMortgaged
+      )
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * The stack lists every holding, the featured one included, so the count is
+   * what pins this rather than presence: one stamp per mortgaged site and no
+   * more.
+   */
+  it('strikes only the sites that are actually mortgaged', () => {
+    renderDrawer([section()], [brown[0].id]);
+    const stack = within(screen.getByTestId(TEST_IDS.holdingsStack));
+
+    expect(
+      stack.getAllByTestId(TEST_IDS.holdingsStackCard, { exact: false })
+    ).toHaveLength(brown.length);
+    expect(stack.getAllByTestId(TEST_IDS.deedMortgaged)).toHaveLength(1);
+  });
+
+  it('leaves a clear portfolio unmarked', () => {
+    renderDrawer([section()]);
+
+    expect(screen.queryByTestId(TEST_IDS.deedMortgaged)).not.toBeInTheDocument();
+  });
+
+  // The watermark must not hide what a player came here to read.
+  it('keeps the holding titles readable', () => {
+    renderDrawer([section()], [brown[0].id, brown[1].id]);
+
+    expect(stackTitles()).toContain(brown[1].name);
   });
 });

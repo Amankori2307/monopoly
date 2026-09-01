@@ -200,6 +200,38 @@ test('the site panel can mortgage and redeem a site directly', async ({ page }) 
     page.getByTestId(`${TEST_IDS.siteAction}-${PropertyAction.Redeem}`)
   ).toBeEnabled();
   await expect(mortgage).toBeDisabled();
+
+  /**
+   * The stamp is a *watermark*: obvious, but everything under it still reads.
+   * That is the whole requirement, so it is asserted rather than assumed - the
+   * opacity lives in CSS, which is only measurable here.
+   */
+  const deedStampOpacity = await page
+    .getByTestId(TEST_IDS.deedMortgaged)
+    .evaluate((node) => Number(getComputedStyle(node).opacity));
+  expect(deedStampOpacity).toBeGreaterThan(0);
+  expect(deedStampOpacity).toBeLessThan(0.5);
+
+  // The board square is struck too, and its name is still readable through it.
+  await page.keyboard.press('Escape');
+  const square = page.getByTestId(scopedTestId(TEST_IDS.boardSpace, streetIndex));
+  await expect(
+    square.getByTestId(scopedTestId(TEST_IDS.spaceMortgaged, streetIndex))
+  ).toBeVisible();
+  await expect(square.locator('.space-name')).toBeVisible();
+
+  // And it covers the whole square without swallowing the click that opens it.
+  const stampBlocksClick = await square.evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    const atCentre = document.elementFromPoint(
+      box.left + box.width / 2,
+      box.top + box.height / 2
+    );
+    return Boolean(atCentre?.closest('.mortgage-stamp'));
+  });
+  expect(stampBlocksClick, 'the stamp is intercepting clicks on the square').toBe(false);
+  await square.click();
+  await expect(page.getByTestId(TEST_IDS.spaceDetailCard)).toBeVisible();
 });
 
 test('a full table can still play after a debt is settled', async ({ page }) => {

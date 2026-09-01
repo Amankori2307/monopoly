@@ -66,6 +66,35 @@ UI supplied one.
 - **A mortgaged dot is hollow rather than a second colour.** It still has to identify the owner, so
   the colour is spent on that; hollow carries "collects no rent".
 
+- **A mortgaged site is struck with a rubber stamp** —
+  [MortgageStamp](../../src/components/game/deed/MortgageStamp.tsx), inline SVG at low opacity, on
+  the board square and on the deed. A _watermark_, deliberately: the space name and the whole rent
+  schedule read straight through it. Mortgaging is one of the most consequential states in the game
+  and it used to be carried by a 7px hollow dot and a small dashed pill above the deed's title -
+  neither of which anyone notices. The pill is gone; the stamp says it once, and the accessible name
+  rides on the stamp.
+
+- **The board stamp carries no wording.** A square is around 52x89px and already holds the space
+  name and the colour ribbon, so the word across it would be a seven-pixel font over existing text.
+  A rotated double rule reads as "stamped" at that size and cannot be mistaken for the ribbon or a
+  building pip. Its viewBox is square and it is sized _past_ the cell and clipped by it - fitted
+  inside, the deed's 2.5:1 frame shrank to a small badge in the middle of a tall cell. The hollow dot
+  stays alongside it, because it is the one signal that still reads when the squares drop to 29px on
+  a phone.
+
+- **The stamp takes `--action-mortgage`**, the token the mortgage button already uses, so it needs no
+  new theme token and reads in both themes. Colour comes through `currentColor` and opacity from CSS,
+  so both are tunable in one place.
+
+- **`useId` gives each deed stamp its own filter id.** The drawer shows a featured deed with the
+  stack behind it, so two stamps are on screen at once; a hard-coded id would collide and one would
+  render unfiltered.
+
+- **The holdings drawer used to show no mortgage state at all.** It rendered every deed without
+  passing `ownership`, so a player browsing their own portfolio - the one place they would go to
+  check - saw mortgaged sites as though they were clear. The drawer now takes the game's `ownership`
+  map: `HoldingsSection.spaces` is `OwnableSpace[]` and carries none.
+
 ## State and data
 
 Reads `GameState.ownership` and `GameState.players`. Its four actions dispatch real commands:

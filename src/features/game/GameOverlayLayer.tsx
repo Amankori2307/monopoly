@@ -66,6 +66,7 @@ export function GameOverlayLayer({
       <PlayerDetailDrawer
         currencySymbol={currencySymbol}
         onClose={overlays.closePlayer}
+        ownership={activeGame.ownership}
         sections={
           selectedSummary
             ? selectGroupedHoldings(activeGame, selectedSummary.player.id)

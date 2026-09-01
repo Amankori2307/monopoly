@@ -160,3 +160,43 @@ describe('the live rent row', () => {
     expect(rows.querySelectorAll('[aria-current="true"]')).toHaveLength(0);
   });
 });
+
+/**
+ * The mortgage watermark replaced a small dashed pill above the title. A
+ * mortgage is a state the deed is *in*, not a note about it - and the pill was
+ * easy to miss on a card this dense.
+ */
+describe('a mortgaged deed', () => {
+  const street = findSpace(SpaceKind.Street);
+  const ownership = (mortgaged: boolean) => ({
+    ownerPlayerId: 'player-1',
+    mortgaged,
+    buildLevel: 0,
+  });
+
+  it('is struck with the stamp', () => {
+    render(<SpaceCard currencySymbol="M" ownership={ownership(true)} space={street} />);
+
+    expect(screen.getByTestId(TEST_IDS.deedMortgaged)).toBeInTheDocument();
+  });
+
+  // The point of a watermark: everything it covers still reads.
+  it('keeps the name and the rent schedule readable beside it', () => {
+    render(<SpaceCard currencySymbol="M" ownership={ownership(true)} space={street} />);
+
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(street.name);
+    expect(screen.getByText(/Rent schedule/i)).toBeInTheDocument();
+  });
+
+  it('is absent on a deed that is not mortgaged', () => {
+    render(<SpaceCard currencySymbol="M" ownership={ownership(false)} space={street} />);
+
+    expect(screen.queryByTestId(TEST_IDS.deedMortgaged)).not.toBeInTheDocument();
+  });
+
+  it('is absent when ownership is unknown, as on the buy decision', () => {
+    render(<SpaceCard currencySymbol="M" space={street} />);
+
+    expect(screen.queryByTestId(TEST_IDS.deedMortgaged)).not.toBeInTheDocument();
+  });
+});
