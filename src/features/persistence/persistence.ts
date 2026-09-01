@@ -22,10 +22,16 @@ const writeToStorage = (key: string, value: string) => {
   try {
     getStorage().setItem(key, value);
   } catch (error) {
-    throw new StorageWriteError(
-      'The game could not be saved. Browser storage is full or unavailable.',
-      error
-    );
+    // Only the browser refusing the write. A TypeError from our own
+    // serialisation is a bug, and telling the player their disk is full would
+    // send them looking in the wrong place - so it goes up as itself.
+    if (error instanceof DOMException) {
+      throw new StorageWriteError(
+        'The game could not be saved. Browser storage is full or unavailable.',
+        error
+      );
+    }
+    throw error;
   }
 };
 

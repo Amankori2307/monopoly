@@ -29,6 +29,27 @@ const randomDie = () => Math.floor(Math.random() * (DIE_MAX - DIE_MIN + 1)) + DI
  * Extracted from DiceDock so the timing and cleanup can be tested without
  * rendering, and so the component is markup only.
  */
+/**
+ * Plays the roll sound if the browser will, and says nothing if it will not.
+ *
+ * Autoplay policy, a missing file and an environment with no audio at all are
+ * all the same thing here: no sound, and a roll that still happens.
+ */
+const playRollSound = (audio: HTMLAudioElement | null) => {
+  if (!audio) {
+    return;
+  }
+  try {
+    audio.currentTime = 0;
+    const played: unknown = audio.play();
+    if (played instanceof Promise) {
+      void played.catch(() => undefined);
+    }
+  } catch {
+    // No sound. The roll carries on.
+  }
+};
+
 export const useDiceRoller = ({
   canRoll,
   lastRoll,
@@ -77,11 +98,12 @@ export const useDiceRoller = ({
     setIsRolling(true);
     setDisplayValues([randomDie(), randomDie()]);
 
-    const audio = audioRef.current;
-    if (audio) {
-      audio.currentTime = 0;
-      void audio.play().catch(() => undefined);
-    }
+    // The sound is decoration and must never be able to stop the roll.
+    // `play()` does not return a promise everywhere - jsdom returns undefined,
+    // and so did older Safari - so `.catch()` on it threw synchronously, out of
+    // `roll` and into React's event handler, before either timer below was set.
+    // The click then did nothing at all.
+    playRollSound(audioRef.current);
 
     shuffleTimerRef.current = window.setInterval(() => {
       setDisplayValues([randomDie(), randomDie()]);

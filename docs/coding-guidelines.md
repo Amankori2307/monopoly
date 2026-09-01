@@ -222,33 +222,32 @@ existing areas out to growing it further.
 
 The mandate above is the standard going forward. The repository does **not** meet it today. Honest baseline:
 
-| Area                                           | Unit      | Integration | E2E                 |
-| ---------------------------------------------- | --------- | ----------- | ------------------- |
-| `gameEngine` (all 20 commands)                 | 97 tests  | —           | yes                 |
-| Card draw / acknowledge                        | 7 tests   | 4 tests     | yes                 |
-| Action feedback (toasts)                       | 13 tests  | —           | yes                 |
-| `rng` (`SeededRandomSource`, `shuffle`)        | **none**  | —           | — ⚠️ gap            |
-| `persistence` (save/load/index/delete/corrupt) | 5 tests   | 6 tests     | 1 spec              |
-| Saved-game migrations (v1 → v5)                | 18 tests  | —           | 1 spec              |
-| Buildings (both even rules, bank inventory)    | 21 tests  | —           | yes                 |
-| Trading (proposal guards, transfer fees)       | 14 tests  | —           | yes                 |
-| Speed Die (activation, faces, triples)         | 10 tests  | —           | yes                 |
-| `gameSlice` thunks                             | —         | **none**    | — ⚠️ gap            |
-| `uiSlice`                                      | **none**  | —           | — ⚠️ gap            |
-| `HomePage`                                     | —         | 2 tests     | partial             |
-| `GamePage` (board, decision panels)            | —         | **none**    | 1 smoke spec ⚠️ gap |
-| `DiceDock`                                     | via hook  | —           | partial             |
-| `SpaceCard`, `SpaceDetailCard`                 | 2 files   | —           | yes                 |
-| Holdings drawer + stack                        | 2 files   | 1 test      | yes                 |
-| Bankruptcy, win detection, the debt queue      | in engine | —           | yes                 |
-| Bankruptcy + building auctions                 | in engine | —           | yes                 |
-| Board cell, turn controls, error banner        | 3 files   | —           | yes                 |
+| Area                                           | Unit            | Integration | E2E          |
+| ---------------------------------------------- | --------------- | ----------- | ------------ |
+| `gameEngine` (all 24 commands)                 | 128 tests       | —           | yes          |
+| Card draw / acknowledge                        | 7 tests         | 4 tests     | yes          |
+| Action feedback (toasts)                       | 13 tests        | —           | yes          |
+| `rng` (`SeededRandomSource`, `shuffle`)        | 17 tests        | —           | —            |
+| `persistence` (save/load/index/delete/corrupt) | 5 tests         | 6 tests     | 1 spec       |
+| Saved-game migrations (v1 → v5)                | 18 tests        | —           | 1 spec       |
+| Buildings (both even rules, bank inventory)    | 21 tests        | —           | yes          |
+| Trading (proposal guards, transfer fees)       | 14 tests        | —           | yes          |
+| Speed Die (activation, faces, triples)         | 10 tests        | —           | yes          |
+| `gameSlice` thunks                             | —               | 24 tests    | yes          |
+| `uiSlice`                                      | 13 tests        | —           | —            |
+| `HomePage`                                     | —               | 2 tests     | partial      |
+| `GamePage` (board, decision panels)            | —               | 8 tests     | 1 smoke spec |
+| `DiceDock`                                     | 10 tests (hook) | —           | partial      |
+| `SpaceCard`, `SpaceDetailCard`                 | 2 files         | —           | yes          |
+| Holdings drawer + stack                        | 2 files         | 1 test      | yes          |
+| Bankruptcy, win detection, the debt queue      | in engine       | —           | yes          |
+| Bankruptcy + building auctions                 | in engine       | —           | yes          |
+| Board cell, turn controls, error banner        | 3 files         | —           | yes          |
 
-**The harness blockers are cleared.** All three are done, so the integration mandate in §1 is
-achievable — but four rows above are still marked ⚠️, and the thunk row is the one that matters most:
-this section says thunks are the highest-value layer to test and they have no tests at all.
-
-**The harness blockers are cleared.** All three are done, so the integration mandate in §1 is now achievable:
+**The harness blockers are cleared, and so is the coverage gap they existed to unblock.** The
+thunks — the layer this section calls the highest-value one to test — now have 24 integration tests
+that assert on the store _and_ on what landed in `localStorage`, which is the disagreement that
+matters. All three blockers:
 
 1. ~~`pnpm lint` is broken~~ — **fixed.** `.eslintrc.json` exists and `pnpm lint` passes clean. It also machine-enforces the layer boundaries (see below).
 2. ~~`renderWithProviders` shares one singleton store~~ — **fixed.** `makeStore(preloadedState?)` in [appStore.ts](../src/app/appStore.ts) builds a store; `appStore` is just `makeStore()` for the app, and [renderWithProviders](../src/test/renderWithProviders.tsx) builds a fresh one per render. It also **returns the store**, so a test can assert on what a dispatch did, and accepts `preloadedState` to start from a given slice of state instead of dispatching its way there.

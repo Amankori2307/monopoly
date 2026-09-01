@@ -190,7 +190,7 @@ When you touch one of these, extract it (colors/icons → a shared board-present
 
 **Testing — mandatory, all three levels.** Every feature, entity, and behaviour ships with **unit + integration + e2e** coverage in the same change. Unit: pure logic, `SeededRandomSource` for dice, cover every `throw` branch. Integration: thunk → engine → persistence → store, and pages via `src/test/renderWithProviders.tsx`. E2E: the user journey in Playwright, queried by accessible role and name.
 
-Full definition of done, per-layer patterns, and the current coverage gap: [docs/coding-guidelines.md](docs/coding-guidelines.md). The three harness blockers are cleared — `pnpm lint` works, `makeStore()` gives a fresh store per test, and `localStorage` is reset between them. **What is still thin is the integration layer**: `gameSlice`'s thunks, `uiSlice` and `GamePage` have no tests of their own, and `SeededRandomSource` — which every deterministic test leans on — has none either.
+Full definition of done, per-layer patterns, and the current coverage gap: [docs/coding-guidelines.md](docs/coding-guidelines.md). The three harness blockers are cleared — `pnpm lint` works, `makeStore()` gives a fresh store per test, and `localStorage` is reset between them. The integration layer is covered too: `gameSlice`'s thunks have 24 tests asserting on the store _and_ on `localStorage`, and `uiSlice`, `GamePage` and `SeededRandomSource` have their own.
 
 ---
 
