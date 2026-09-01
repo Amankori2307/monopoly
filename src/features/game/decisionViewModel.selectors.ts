@@ -1,9 +1,10 @@
-import { DeckName, PendingDecisionType } from '../../domain/types/game.enums';
+import { DeckName, PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
 import type {
   GameState,
   PendingDecisionAssetLiquidation,
   PendingDecisionBuildingPlacement,
   PendingDecisionCardDraw,
+  PendingDecisionSpeedDieBus,
   PendingDecisionTrade,
   PlayerId,
   PlayerState,
@@ -12,6 +13,7 @@ import type {
   AuctionDecisionViewModel,
   BuildingPlacementDecisionViewModel,
   BuyDecisionViewModel,
+  SpeedDieBusDecisionViewModel,
   CardDrawDecisionViewModel,
   DecisionViewModel,
   GameOverDecisionViewModel,
@@ -47,6 +49,30 @@ const jailDecision = (activePlayer: PlayerState): DecisionViewModel => ({
   canUseJailCard: activePlayer.jailFreeCards.length > 0,
   attemptsUsed: activePlayer.jailTurnsServed,
 });
+
+/**
+ * True while a jailed player still has this turn's action to take.
+ *
+ * A failed attempt ends the turn, and offering the panel afterwards would show
+ * three buttons the engine rejects - and keep its backdrop over the End Turn
+ * button, which is the only thing left to do. The panel returns on their next
+ * turn, which advanceToNextTurn starts in AwaitDecision.
+ */
+const canActFromJail = (game: GameState): boolean =>
+  game.turn.phase === TurnPhase.AwaitDecision || game.turn.phase === TurnPhase.AwaitRoll;
+
+/**
+ * The jail choice, or nothing if this turn's attempt is already spent.
+ *
+ * Shared by the explicit `jail-choice` case and the fallback beneath the switch,
+ * which is what lets a jailed player be offered their options even when
+ * `pendingDecision` has drifted away from the flag.
+ */
+const jailDecisionIfActionable = (
+  game: GameState,
+  activePlayer: PlayerState
+): DecisionViewModel | null =>
+  activePlayer.inJail && canActFromJail(game) ? jailDecision(activePlayer) : null;
 
 const auctionDecision = (game: GameState): AuctionDecisionViewModel | null => {
   const auction = game.auctionState;
@@ -204,6 +230,16 @@ const buildingPlacementDecision = (
   sites: getPlacementSites(game, decision.playerId, decision.buildingKind),
 });
 
+const busDecision = (
+  game: GameState,
+  decision: PendingDecisionSpeedDieBus,
+  activePlayer: PlayerState
+): SpeedDieBusDecisionViewModel => ({
+  type: PendingDecisionType.SpeedDieBus,
+  playerName: nameOfDecider(game, decision.playerId, activePlayer),
+  whiteDice: decision.whiteDice,
+});
+
 export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
   const decision = game.pendingDecision;
   const activePlayer = selectActivePlayer(game);
@@ -214,7 +250,7 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
     case PendingDecisionType.AuctionBid:
       return auctionDecision(game);
     case PendingDecisionType.JailChoice:
-      return jailDecision(activePlayer);
+      return jailDecisionIfActionable(game, activePlayer);
     case PendingDecisionType.CardDraw:
       return cardDrawDecision(game, decision, activePlayer);
     case PendingDecisionType.AssetLiquidation:
@@ -222,11 +258,7 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
     case PendingDecisionType.TradeResponse:
       return tradeResponseDecision(game, decision);
     case PendingDecisionType.SpeedDieBus:
-      return {
-        type: PendingDecisionType.SpeedDieBus,
-        playerName: nameOfDecider(game, decision.playerId, activePlayer),
-        whiteDice: decision.whiteDice,
-      };
+      return busDecision(game, decision, activePlayer);
     case PendingDecisionType.SpeedDieDestination:
       return {
         type: PendingDecisionType.SpeedDieDestination,
@@ -244,5 +276,5 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
       break;
   }
 
-  return activePlayer.inJail ? jailDecision(activePlayer) : null;
+  return jailDecisionIfActionable(game, activePlayer);
 };

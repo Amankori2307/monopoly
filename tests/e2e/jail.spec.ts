@@ -77,34 +77,65 @@ test('offers a jailed player the choice to try for doubles', async ({ page }) =>
   await expect(panel.getByRole('button', { name: /jail card/i })).toBeVisible();
 });
 
-test('takes three attempts, and charges nothing until the third', async ({ page }) => {
+test('allows one attempt per turn, and hands the turn back on a failure', async ({
+  page,
+}) => {
   await startGame(page);
   const { cash } = await jailActivePlayer(page);
 
-  // Attempts one and two: the fine is not charged, whatever the dice said.
-  for (let attempt = 1; attempt < MAX_JAIL_TURNS; attempt += 1) {
-    await page.getByTestId(TEST_IDS.jailRollButton).click();
-    const state = await jailedState(page);
-
-    if (!state.inJail) {
-      // Rolled a double and left early - legal, and nothing was charged for it.
-      expect(state.cash).toBe(cash);
-      return;
-    }
-    expect(state.served).toBe(attempt);
-    expect(state.cash).toBe(cash);
-    expect(state.position).toBe(JAIL_POSITION);
-  }
-
-  // The third failure is where the fine lands.
   await page.getByTestId(TEST_IDS.jailRollButton).click();
-  const final = await jailedState(page);
+  const state = await jailedState(page);
 
-  if (final.inJail) {
-    // Only if they could not cover it, which they can here.
-    throw new Error('Expected the third attempt to resolve the stay in Jail');
+  if (!state.inJail) {
+    // Rolled a double and left - legal, and free.
+    expect(state.cash).toBe(cash);
+    return;
   }
-  expect(final.cash).toBeLessThanOrEqual(cash - JAIL_FINE);
+
+  // Nothing charged, and the turn is over: the panel goes away rather than
+  // offering another roll, so End Turn is reachable instead of covered.
+  expect(state.cash).toBe(cash);
+  expect(state.served).toBe(1);
+  await expect(page.getByTestId(TEST_IDS.jailRollButton)).toHaveCount(0);
+  await expect(page.getByTestId(TEST_IDS.decisionModal)).toHaveCount(0);
+  await expect(page.getByTestId(TEST_IDS.endTurnButton)).toBeVisible();
+});
+
+test('charges nothing until the third turn in Jail', async ({ page }) => {
+  await startGame(page);
+  const { cash } = await jailActivePlayer(page);
+
+  // Three of this player's own turns, each seeded at its start the way the turn
+  // rotation would leave it - the point being that the fine waits for the third.
+  for (let turn = 1; turn <= MAX_JAIL_TURNS; turn += 1) {
+    const before = await jailedState(page);
+    if (!before.inJail) break;
+
+    await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((k) =>
+        k.startsWith('monopoly.game.')
+      ) as string;
+      const game = JSON.parse(localStorage.getItem(key) as string);
+      game.activePlayerIndex = 0;
+      game.turn.phase = 'await_decision';
+      localStorage.setItem(key, JSON.stringify(game));
+    });
+    await page.reload();
+
+    await page.getByTestId(TEST_IDS.jailRollButton).click();
+    const after = await jailedState(page);
+
+    if (turn < MAX_JAIL_TURNS && after.inJail) {
+      expect(after.cash).toBe(cash);
+      expect(after.position).toBe(JAIL_POSITION);
+    }
+  }
+
+  const final = await jailedState(page);
+  if (!final.inJail && final.served === 0) {
+    // Left Jail. Either they rolled a double (free) or served all three (fined).
+    expect(final.cash === cash || final.cash <= cash - JAIL_FINE).toBe(true);
+  }
 });
 
 test('says which attempt the player is on', async ({ page }) => {

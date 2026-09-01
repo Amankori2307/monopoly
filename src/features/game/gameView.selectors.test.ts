@@ -369,3 +369,43 @@ describe('the jail decision', () => {
     expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
   });
 });
+
+/**
+ * One roll per turn, so the jail panel is offered only while the player still
+ * has this turn's action to take.
+ *
+ * Offering it after a failed attempt showed three buttons the engine rejects,
+ * and kept its backdrop over the End Turn button - the only thing left to do.
+ */
+describe('the jail panel and the turn', () => {
+  const jailedAt = (phase: TurnPhase): GameState => {
+    const game = createGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], inJail: true },
+      },
+      turn: { ...game.turn, phase },
+    };
+  };
+
+  it.each([TurnPhase.AwaitDecision, TurnPhase.AwaitRoll])(
+    'offers the choice at the start of the turn (%s)',
+    (phase) => {
+      expect(selectDecisionViewModel(jailedAt(phase))?.type).toBe(
+        PendingDecisionType.JailChoice
+      );
+    }
+  );
+
+  it('offers nothing once the attempt has been spent', () => {
+    const spent = jailedAt(TurnPhase.TurnComplete);
+
+    expect(selectDecisionViewModel(spent)).toBeNull();
+    // And what is left to do is end the turn, which is now uncovered.
+    expect(selectCanEndTurn(spent)).toBe(true);
+    expect(selectHasAvailableAction(spent)).toBe(true);
+  });
+});

@@ -88,6 +88,15 @@ export const jailCommands: CommandHandlers = {
     if (!activePlayer.inJail) {
       throw new Error('Active player is not in Jail.');
     }
+    // One roll per turn. The three-turn limit is three of the player's own
+    // turns, each separated by everybody else's - not three rolls taken back to
+    // back, which is what this guard's absence allowed.
+    if (
+      nextState.turn.phase !== TurnPhase.AwaitDecision &&
+      nextState.turn.phase !== TurnPhase.AwaitRoll
+    ) {
+      throw new Error('Only one Jail roll per turn - end the turn first.');
+    }
     const dieOne = rollDie(randomSource);
     const dieTwo = rollDie(randomSource);
     nextState = {

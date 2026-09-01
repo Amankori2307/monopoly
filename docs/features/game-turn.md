@@ -110,6 +110,13 @@ give them.
 now, and an enabled-but-covered button is worse than no button. `selectHasAvailableAction` still
 holds, because the decision itself counts.
 
+**One attempt per turn.** The three-turn limit is three of the player's _own_ turns, each separated by
+everybody else's — not three rolls in a row. Two things enforce it: `AttemptJailRoll` throws unless
+the turn is at its start (`AwaitDecision` or `AwaitRoll`), and the panel is only offered while that
+holds, so a failed attempt takes the modal away and leaves End Turn uncovered. Without the first
+guard the panel's new roll button could be clicked three times in one turn; without the second the
+backdrop would sit over the only thing left to do.
+
 **The audit that followed:** all ten decision panels were checked for the same shape — a control the
 player needs while the modal is up, rendered outside it. Jail was the only one.
 `SpeedDieDestinationDecision` and `BuildingPlacementDecision` render their own lists, and

@@ -3661,22 +3661,74 @@ describe('Jail', () => {
   });
 
   /**
-   * 6.9 / 6.12: three attempts, and the first two are free.
-   *
-   * Walked as a sequence on purpose. The other jail tests each seed a single
-   * attempt, so between them they never pinned *how many* free attempts there
-   * are - changing the comparison to `>= MAX_JAIL_TURNS - 1` gave two instead of
-   * three and passed the entire suite.
+   * One roll per turn. The "three" in the three-turn limit is three of the
+   * player's OWN turns, each separated by everybody else's - not three rolls
+   * taken back to back.
    */
-  it('gives three attempts, charging nothing until the third fails', () => {
+  it('allows only one attempt per turn', () => {
+    const { state } = jailed();
+
+    const afterFirst = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      NOT_DOUBLE()
+    ).nextState;
+
+    // The turn is over, so the second attempt has to wait for the next one.
+    expect(afterFirst.turn.phase).toBe(TurnPhase.TurnComplete);
+    expect(() =>
+      executeGameCommand(
+        afterFirst,
+        { type: GameCommandType.AttemptJailRoll },
+        NOT_DOUBLE()
+      )
+    ).toThrow(/one Jail roll per turn/i);
+  });
+
+  it("starts a jailed player's next turn ready for their attempt", () => {
+    const { state, playerId } = jailed();
+    const failed = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      NOT_DOUBLE()
+    ).nextState;
+
+    const passed = executeGameCommand(
+      failed,
+      { type: GameCommandType.EndTurn },
+      NOT_DOUBLE()
+    ).nextState;
+
+    // Somebody else's turn now.
+    expect(passed.playerOrder[passed.activePlayerIndex]).not.toBe(playerId);
+  });
+
+  /**
+   * 6.9 / 6.12: three of the player's OWN turns, and the first two are free.
+   *
+   * The turn is handed back between attempts, which is the whole point - the
+   * "three" is three turns, each separated by everybody else's, not three rolls
+   * in a row. An earlier version of this test took all three back to back and
+   * passed, because the engine let it; it was encoding the bug rather than the
+   * rule.
+   *
+   * Each turn starts the way advanceToNextTurn starts a jailed player's -
+   * AwaitDecision - which the test below this one pins.
+   */
+  const startOfJailTurn = (state: GameState): GameState => ({
+    ...state,
+    turn: { ...state.turn, phase: TurnPhase.AwaitDecision },
+  });
+
+  it('gives three turns, charging nothing until the third fails', () => {
     const { state, playerId } = jailed();
     const cashAtStart = state.players[playerId].cash;
     let current = state;
 
-    // Attempts one and two: still inside, nothing taken, nowhere moved.
+    // Turns one and two: one attempt each, nothing taken, nowhere moved.
     for (const expectedServed of [1, 2]) {
       current = executeGameCommand(
-        current,
+        startOfJailTurn(current),
         { type: GameCommandType.AttemptJailRoll },
         NOT_DOUBLE()
       ).nextState;
@@ -3685,11 +3737,13 @@ describe('Jail', () => {
       expect(current.players[playerId].inJail).toBe(true);
       expect(current.players[playerId].cash).toBe(cashAtStart);
       expect(current.players[playerId].position).toBe(JAIL_POSITION);
+      // And the turn really did end, rather than allowing another roll.
+      expect(current.turn.phase).toBe(TurnPhase.TurnComplete);
     }
 
-    // The third failure is where the fine finally lands.
+    // The third turn is where the fine finally lands.
     current = executeGameCommand(
-      current,
+      startOfJailTurn(current),
       { type: GameCommandType.AttemptJailRoll },
       NOT_DOUBLE()
     ).nextState;
@@ -3699,14 +3753,14 @@ describe('Jail', () => {
     expect(current.players[playerId].cash).toBeLessThanOrEqual(cashAtStart - JAIL_FINE);
   });
 
-  it('takes no money at all across two failed attempts', () => {
+  it('takes no money at all across two failed turns', () => {
     const { state, playerId } = jailed();
     const cashAtStart = state.players[playerId].cash;
 
     const afterTwo = [1, 2].reduce(
       (current) =>
         executeGameCommand(
-          current,
+          startOfJailTurn(current),
           { type: GameCommandType.AttemptJailRoll },
           NOT_DOUBLE()
         ).nextState,
@@ -3716,6 +3770,35 @@ describe('Jail', () => {
     expect(afterTwo.players[playerId].cash).toBe(cashAtStart);
     // And nothing was logged as paid either, so no silent charge.
     expect(afterTwo.history.some((event) => /paid/i.test(event.message))).toBe(false);
+  });
+
+  // Pins the fixture above: this is the phase a jailed player's turn really
+  // starts in, so constructing it by hand stays faithful.
+  it('starts a jailed player on a decision, not a plain roll', () => {
+    const { state, playerId } = jailed();
+    const failed = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      NOT_DOUBLE()
+    ).nextState;
+
+    // Hand the turn on, then force it back round to the jailed player.
+    const passed = executeGameCommand(
+      failed,
+      { type: GameCommandType.EndTurn },
+      NOT_DOUBLE()
+    ).nextState;
+    const backRound = executeGameCommand(
+      {
+        ...passed,
+        turn: { ...passed.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+      },
+      { type: GameCommandType.EndTurn },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(backRound.playerOrder[backRound.activePlayerIndex]).toBe(playerId);
+    expect(backRound.turn.phase).toBe(TurnPhase.AwaitDecision);
   });
 
   // 6.6: paying up front is not a wasted turn either - you roll and move as
