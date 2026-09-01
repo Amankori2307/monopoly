@@ -3,6 +3,7 @@ import {
   BuildingKind,
   ColorGroup,
   GameCommandType,
+  GameEventTone,
   GameStatus,
   MortgageChoice,
   PendingDecisionType,
@@ -2799,6 +2800,7 @@ describe('the command result', () => {
         turnNumber: 1,
         createdAt: '2026-08-29T00:00:00.000Z',
         message: `filler ${index}`,
+        tone: GameEventTone.Neutral,
       })),
     };
 

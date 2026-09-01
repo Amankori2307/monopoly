@@ -1,4 +1,5 @@
 import { GAME_STATE_VERSION } from '../../domain/constants/game.constants';
+import { GameEventTone } from '../../domain/types/game.enums';
 import { CardDeck, CardEffectKind } from '../../domain/types/game.enums';
 import type { GameState } from '../../domain/types/game.interfaces';
 
@@ -83,10 +84,41 @@ const v3ToV4 = (raw: Record<string, unknown>): Record<string, unknown> => ({
   version: 4,
 });
 
+/**
+ * v4 -> v5: events carry their own tone.
+ *
+ * Toast colour used to be guessed from the wording, so old events are run
+ * through that same reading once, here, rather than losing their colours. It is
+ * the last time those patterns are needed.
+ */
+const v4ToV5 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const history = Array.isArray(raw.history) ? raw.history : [];
+
+  return {
+    ...raw,
+    history: history.map((event) => {
+      const message = String((event as { message?: unknown }).message ?? '');
+      return { ...(event as object), tone: toneFromWording(message) };
+    }),
+    version: 5,
+  };
+};
+
+/** The wording-based reading toasts used before events carried a tone. */
+const toneFromWording = (message: string): GameEventTone => {
+  if (/\bpaid\b|\bbought\b|\bwon the auction\b|\bbid\b/i.test(message)) {
+    return GameEventTone.Debit;
+  }
+  return /\bcollected\b|\breceived\b/i.test(message)
+    ? GameEventTone.Credit
+    : GameEventTone.Neutral;
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
   3: v3ToV4,
+  4: v4ToV5,
 };
 
 /**

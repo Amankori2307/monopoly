@@ -1,41 +1,50 @@
 import { describe, expect, it } from 'vitest';
+import { GameEventTone } from '../../domain/types/game.enums';
 import type { GameEvent } from '../../domain/types/game.interfaces';
 import { classifyEventTone, toToasts } from './toastFeed.utils';
 
-const event = (id: string, message: string): GameEvent => ({
+const event = (
+  id: string,
+  message: string,
+  tone: GameEventTone = GameEventTone.Neutral
+): GameEvent => ({
   id,
   turnNumber: 1,
   createdAt: '2026-08-31T00:00:00.000Z',
   message,
+  tone,
 });
 
+/**
+ * The tone comes with the event now. It used to be read back out of the wording,
+ * which meant rephrasing a message silently changed its colour - and any
+ * sentence containing "paid" was a debit whether money moved or not.
+ */
 describe('classifyEventTone', () => {
   it.each([
-    'Asha paid the bank ₹100 - Income Tax.',
-    'Asha paid Vikram ₹35 - rent on Delhi.',
-    'Asha bought Delhi for ₹350.',
-    'Asha won the auction for Delhi at ₹200.',
-  ])('reads money leaving a player as a debit: %s', (message) => {
-    expect(classifyEventTone(message)).toBe('debit');
+    [GameEventTone.Debit, 'debit'],
+    [GameEventTone.Credit, 'credit'],
+    [GameEventTone.Neutral, 'neutral'],
+  ])('maps %s to the %s toast', (tone, expected) => {
+    expect(classifyEventTone(event('a', 'anything', tone))).toBe(expected);
   });
 
-  it.each(['Asha collected ₹200 - passing GO.', 'Asha collected ₹50 - Bank dividend.'])(
-    'reads money arriving as a credit: %s',
-    (message) => {
-      expect(classifyEventTone(message)).toBe('credit');
-    }
-  );
-
-  it('reads anything else as neutral', () => {
-    expect(classifyEventTone('Asha rolled 3 and 5.')).toBe('neutral');
-  });
-
-  // "paid" is checked first on purpose: a rent sentence names both players, and
-  // reading it as a credit would colour the payer's toast the wrong way.
-  it('prefers debit when a message could read as both', () => {
-    expect(classifyEventTone('Asha paid Vikram ₹35 and collected nothing.')).toBe(
-      'debit'
+  // The wording is for players, not for parsing: a sentence naming both sides
+  // of a payment used to be read by keyword and could land either way.
+  it('ignores the wording entirely', () => {
+    const misleading = event(
+      'a',
+      'Asha paid Vikram ₹35 and collected nothing.',
+      GameEventTone.Credit
     );
+
+    expect(classifyEventTone(misleading)).toBe('credit');
+  });
+
+  it('falls back to neutral on a tone it does not know', () => {
+    const unknown = { ...event('a', 'from the future'), tone: 'sideways' };
+
+    expect(classifyEventTone(unknown as unknown as GameEvent)).toBe('neutral');
   });
 });
 
@@ -48,7 +57,13 @@ describe('toToasts', () => {
   });
 
   it('carries the event id so the same event cannot toast twice', () => {
-    expect(toToasts([event('a', 'Asha collected ₹200 - passing GO.')])).toEqual([
+    const collected = event(
+      'a',
+      'Asha collected ₹200 - passing GO.',
+      GameEventTone.Credit
+    );
+
+    expect(toToasts([collected])).toEqual([
       { id: 'a', message: 'Asha collected ₹200 - passing GO.', tone: 'credit' },
     ]);
   });

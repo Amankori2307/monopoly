@@ -609,7 +609,7 @@ increment ₹1 · starting cash ₹1500.
 **A used jail card goes back to the bottom of its own deck.** `jailFreeCards` holds the cards
 themselves rather than a count, so each one knows the deck it came from. Before that it was a bare
 number, and both cards could leave circulation permanently over a long game. The change was a
-`GameState` shape change: `GAME_STATE_VERSION` is 4, and a v1 save's count migrates to that many
+`GameState` shape change: `GAME_STATE_VERSION` is 5, and a v1 save's count migrates to that many
 Chance cards — the deck a v1 card came from is genuinely unrecoverable, and Chance is the likelier
 of the two.
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { GameEventTone } from '../../domain/types/game.enums';
 import { PendingDecisionType } from '../../domain/types/game.enums';
 
 export const storedGameIndexEntrySchema = z.object({
@@ -85,6 +86,7 @@ export const gameStateSchema = z.object({
       turnNumber: z.number(),
       createdAt: z.string(),
       message: z.string(),
+      tone: z.nativeEnum(GameEventTone),
     })
   ),
   winnerPlayerId: z.string().nullable(),

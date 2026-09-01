@@ -158,3 +158,15 @@ export enum BuildingKind {
   House = 'house',
   Hotel = 'hotel',
 }
+
+/**
+ * Which way money moved in an event, if it moved at all.
+ *
+ * Set by the engine at the three money choke points rather than guessed from
+ * the wording afterwards - the sentence is for players, not for parsing.
+ */
+export enum GameEventTone {
+  Debit = 'debit',
+  Credit = 'credit',
+  Neutral = 'neutral',
+}

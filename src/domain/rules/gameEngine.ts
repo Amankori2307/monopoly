@@ -25,6 +25,7 @@ import {
   CardDeck,
   DeckName,
   GameCommandType,
+  GameEventTone,
   GameStatus,
   MortgageChoice,
   PendingDecisionType,
@@ -82,11 +83,23 @@ import {
 } from './speedDie.utils';
 import { DefaultRandomSource, rollDie, shuffle, type RandomSource } from './rng';
 
-const createEvent = (turnNumber: number, message: string): GameEvent => ({
+/**
+ * One history line.
+ *
+ * `tone` defaults to neutral because most events move no money; the three
+ * choke points that do pass it explicitly, which is why nothing else has to
+ * remember to.
+ */
+const createEvent = (
+  turnNumber: number,
+  message: string,
+  tone: GameEventTone = GameEventTone.Neutral
+): GameEvent => ({
   id: crypto.randomUUID(),
   turnNumber,
   createdAt: new Date().toISOString(),
   message,
+  tone,
 });
 
 /**
@@ -210,7 +223,8 @@ const creditFromBank = (
   return appendEvents(nextState, [
     createEvent(
       nextState.turnNumber,
-      `${player.name} collected ${money(nextState, amount)} - ${reason}.`
+      `${player.name} collected ${money(nextState, amount)} - ${reason}.`,
+      GameEventTone.Credit
     ),
   ]);
 };
@@ -329,7 +343,8 @@ const resolveBankPayment = (
     return appendEvents(paidState, [
       createEvent(
         paidState.turnNumber,
-        `${player.name} paid ${money(paidState, amount)} to the bank - ${reason}.`
+        `${player.name} paid ${money(paidState, amount)} to the bank - ${reason}.`,
+        GameEventTone.Debit
       ),
     ]);
   }
@@ -363,7 +378,8 @@ const resolvePlayerPayment = (
     return appendEvents(nextState, [
       createEvent(
         nextState.turnNumber,
-        `${payer.name} paid ${payee.name} ${money(nextState, amount)} - ${reason}.`
+        `${payer.name} paid ${payee.name} ${money(nextState, amount)} - ${reason}.`,
+        GameEventTone.Debit
       ),
     ]);
   }

@@ -143,3 +143,46 @@ describe('migrating across more than one version', () => {
     expect(migrated.pendingAuctionSpaceIds).toEqual([]);
   });
 });
+
+/**
+ * v4 -> v5: events carry their own tone, and old ones keep the colours the
+ * wording used to give them.
+ */
+describe('giving old events a tone', () => {
+  const migrate = (history: { message: string }[]) =>
+    migrateSavedGame({ version: 4, history }) as {
+      version: number;
+      history: { message: string; tone: string }[];
+    };
+
+  it('reads money leaving a player as a debit', () => {
+    const migrated = migrate([
+      { message: 'Asha paid the bank ₹100 - Income Tax.' },
+      { message: 'Asha bought Delhi for ₹350.' },
+    ]);
+
+    expect(migrated.history.map((event) => event.tone)).toEqual(['debit', 'debit']);
+  });
+
+  it('reads money arriving as a credit', () => {
+    expect(
+      migrate([{ message: 'Asha collected ₹200 - passing GO.' }]).history[0].tone
+    ).toBe('credit');
+  });
+
+  it('reads anything else as neutral', () => {
+    expect(migrate([{ message: 'Asha rolled 3 and 5.' }]).history[0].tone).toBe(
+      'neutral'
+    );
+  });
+
+  it('copes with a save that has no history at all', () => {
+    const migrated = migrateSavedGame({ version: 4 }) as {
+      version: number;
+      history: unknown[];
+    };
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+    expect(migrated.history).toEqual([]);
+  });
+});

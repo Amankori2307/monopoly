@@ -14,6 +14,7 @@ import type {
   MortgageChoice,
   SpeedDieFace,
   GameCommandType,
+  GameEventTone,
   GameStatus,
   SpaceKind,
   TurnPhase,
@@ -233,6 +234,8 @@ export interface GameEvent {
   turnNumber: number;
   createdAt: string;
   message: string;
+  /** Which way money moved, set where it moved. */
+  tone: GameEventTone;
 }
 
 // -- Theme -------------------------------------------------------------------
