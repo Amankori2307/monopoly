@@ -96,6 +96,8 @@ export const useGameCommands = (): UseGameCommandsResult => {
           ),
         onRejectTrade: () =>
           dispatch(runGameCommand({ type: GameCommandType.RejectTrade })),
+        onChooseBuildingSite: (spaceId: string) =>
+          dispatch(runGameCommand({ type: GameCommandType.ChooseBuildingSite, spaceId })),
         onChooseBusMove: (steps: number) =>
           dispatch(runGameCommand({ type: GameCommandType.ChooseBusMove, steps })),
         onChooseDestination: (spaceId: string) =>

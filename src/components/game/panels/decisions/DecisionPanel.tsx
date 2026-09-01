@@ -2,6 +2,7 @@ import { PendingDecisionType } from '../../../../domain/types/game.enums';
 import type { DecisionHandlers, DecisionViewModel } from '../panels.interfaces';
 import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { AuctionDecision } from './AuctionDecision';
+import { BuildingPlacementDecision } from './BuildingPlacementDecision';
 import { BuyOrAuctionDecision } from './BuyOrAuctionDecision';
 import { CardDrawDecision } from './CardDrawDecision';
 import { GameOverDecision } from './GameOverDecision';
@@ -105,6 +106,17 @@ export function DecisionPanel({
           board={decision.board}
           onChoose={handlers.onChooseDestination}
           playerName={decision.playerName}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.BuildingPlacement ? (
+        <BuildingPlacementDecision
+          buildingKind={decision.buildingKind}
+          currencySymbol={currencySymbol}
+          onChoose={handlers.onChooseBuildingSite}
+          paidAmount={decision.paidAmount}
+          playerName={decision.playerName}
+          sites={decision.sites}
         />
       ) : null}
 

@@ -330,8 +330,8 @@ Illegal — a two-house gap:
 | Rule                                                                            | Status                                                                                                  |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | The bank holds 32 houses and 12 hotels (`HOUSES_AVAILABLE`, `HOTELS_AVAILABLE`) | ✅ decremented on every build and returned on every sale; a hotel takes its four houses back into stock |
-| When the bank runs out, building is refused                                     | ✅ the site panel says so and the engine throws                                                         |
-| When the bank runs out, players wanting to build bid for what is available      | ❌ see the divergence below                                                                             |
+| When the bank is empty, building is refused — there is nothing to bid for       | ✅                                                                                                      |
+| When the bank runs out, players wanting to build bid for what is available      | ✅ opening price is the printed cost; the winner picks the site                                         |
 
 ### Selling buildings
 
@@ -348,11 +348,20 @@ Legal sell-down from 3/3/3: → 2/3/3 → 2/2/3 → 2/2/2. Illegal: 3/3/3 → 0/
 bank to do it. A hotel can therefore be temporarily unsellable during a house shortage — that is
 the printed rule, and the panel says so rather than failing silently.
 
-> **⚠️ Divergence — no building auction on a shortage.** The printed rule has players bid for the
-> last houses when the bank runs short. Here building is simply refused until a house is returned.
-> An auction needs a queue of pending sales and a new top-level `GameState` field, which the zod
-> schema would silently strip without a version bump — the same reason bankruptcy's property
-> auction is deferred. Deferred rather than done badly.
+**When the bank cannot satisfy everyone who could build, the next building goes to auction.** Asking
+to build opens the bidding instead of placing a house: the opening price is that site's printed house
+or hotel cost, and only players who could legally build are invited. The winner pays their bid — not
+the printed price — and then chooses which of their own eligible sites it goes on, because the
+auction sold the building, not the site.
+
+Zero stock is not contention: there is nothing to bid for, so the build is simply refused.
+
+> **How "wishes to buy" is read.** The printed rule triggers on "two or more players wish to buy more
+> than the Bank has". Nobody can be asked what they want on someone else's turn, so contention is
+> read as **more players who _could_ legally build than there are buildings left**. Cash and stock
+> are deliberately left out of that count — stock is the thing being contested, and a player who
+> cannot afford the printed price may still outbid from what they raise. In practice this only fires
+> when the bank is nearly exhausted, which is exactly when the rule matters.
 
 **Rounding:** a building refund is `floor(cost / 2)`, so the bank keeps the odd rupee. Redemption
 rounds the other way, up, for the same reason — both favour the bank, deliberately and
@@ -669,16 +678,16 @@ Nothing in the ruleset is type-level only any more.
 | **`events` returned the whole history**         | And `saveRequired` was hardcoded true, so neither answered the question its name asks. The feedback layer had to diff the history itself                                     |
 | **A backward move could collect the GO salary** | The wrap test was a bare `next < current`, true of any backward move. Latent, because the one backward card passed `collectGo: false`                                        |
 
-### Known divergences and bugs, still open
+### Divergences from the printed rules
 
-Every bug in this section has been fixed. What is left are deliberate divergences, each stated at
-the rule it belongs to:
+None that change how the game plays. Every bug and every deferred rule in earlier drafts of this
+document has been closed; what is left are two readings rather than departures:
 
-| Divergence                                       | Where it is explained                                   |
-| ------------------------------------------------ | ------------------------------------------------------- |
-| No auction when the bank runs out of houses      | Section 8 — building waits until a building is returned |
-| A mortgaged site still counts toward colour sets | Section 9 — this one matches the printed rule           |
+| Reading                                               | Where it is explained                                  |
+| ----------------------------------------------------- | ------------------------------------------------------ |
+| A mortgaged site still counts toward colour sets      | Section 9 — this one matches the printed rule          |
+| "Wishes to buy" a scarce building means "could build" | Section 8 — nobody can be asked on someone else's turn |
 
-Fixed in the pass that closed them: the debt queue (several debts from one card), utility rent
-after a card-driven arrival, `movePlayerTo`'s pass-GO direction, and buying and auctions bypassing
-the money primitives. Each is listed in the table above this one.
+The one real departure is the deliberate one in section 2: building, selling, mortgaging and trading
+are offered in safe UI windows rather than at literally any moment, because a turn-based interface
+cannot model interrupting another player's roll.

@@ -92,11 +92,11 @@ applied by `acknowledgeCard`. A new decision type must also be added to `BLOCKIN
 
 ### Commands
 
-All twenty runtime commands are implemented: `rollTurnDice`, `buyLandedAsset`,
+All twenty-four runtime commands are implemented: `rollTurnDice`, `buyLandedAsset`,
 `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`,
 `attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`,
 `confirmBankruptcy`, `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `proposeTrade`,
-`acceptTrade`, `rejectTrade`, `chooseBusMove`, `chooseSpeedDieDestination`, `endTurn`.
+`acceptTrade`, `rejectTrade`, `chooseBusMove`, `chooseSpeedDieDestination`, `chooseBuildingSite`, `endTurn`.
 
 `GameCommandResult.uiHints` is consequently always empty - it only ever carried "not implemented
 yet" notices, and nothing renders it now. Feedback goes through the history and the toasts.

@@ -197,3 +197,89 @@ test('offers building sales inside the liquidation panel', async ({ page }) => {
   // The debt is still standing: selling raises cash, it does not settle it.
   await expect(panel).toBeVisible();
 });
+
+/**
+ * The printed rule: when the bank cannot satisfy everyone who could build, the
+ * last buildings go to auction rather than to whoever asked first.
+ */
+test('auctions the last house when two players could use it', async ({ page }) => {
+  await startGame(page);
+
+  const seeded = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const [first, second] = game.playerOrder;
+    const streets = game.board.filter(
+      (space: { kind: string }) => space.kind === 'street'
+    );
+
+    // A complete colour set each, so both could legally build.
+    const groups: Record<string, { id: string; index: number }[]> = {};
+    streets.forEach((space: { colorGroup: string; id: string; index: number }) => {
+      groups[space.colorGroup] = groups[space.colorGroup] ?? [];
+      groups[space.colorGroup].push(space);
+    });
+    const names = Object.keys(groups);
+    groups[names[0]].forEach((space) => {
+      game.ownership[space.id] = {
+        ownerPlayerId: first,
+        mortgaged: false,
+        buildLevel: 0,
+      };
+    });
+    groups[names[1]].forEach((space) => {
+      game.ownership[space.id] = {
+        ownerPlayerId: second,
+        mortgaged: false,
+        buildLevel: 0,
+      };
+    });
+
+    // One house left in the bank: that is the contention.
+    game.bank.housesAvailable = 1;
+    game.players[first].cash = 5000;
+    game.players[second].cash = 5000;
+    game.activePlayerIndex = 0;
+    game.turn = {
+      phase: 'turn_complete',
+      doublesCount: 0,
+      lastRoll: [3, 4],
+      canRollAgain: false,
+      reason: 'done',
+      speedDieFace: null,
+      pendingMonopolyAdvance: false,
+    };
+    localStorage.setItem(key, JSON.stringify(game));
+
+    return { siteIndex: groups[names[0]][0].index as number };
+  });
+  await page.reload();
+
+  // Asking to build opens an auction instead of building.
+  await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, seeded.siteIndex)).click();
+  await page.getByTestId(scopedTestId(TEST_IDS.siteAction, PropertyAction.Build)).click();
+
+  await expect(page.getByTestId(TEST_IDS.auctionDecision)).toBeVisible();
+
+  await page.getByTestId(TEST_IDS.bidInput).fill('120');
+  await page.getByTestId(TEST_IDS.submitBidButton).click();
+  await page.getByTestId(TEST_IDS.passAuctionButton).click();
+
+  // The winner says where it goes - the auction sold the house, not the site.
+  const placement = page.getByTestId(TEST_IDS.buildingPlacement);
+  await expect(placement).toBeVisible();
+  await expect(placement).toContainText('₹120');
+
+  await placement
+    .locator(`[data-testid^="${TEST_IDS.buildingPlacementSite}-"]`)
+    .first()
+    .click();
+
+  const after = await readGame(page);
+  expect(after.housesAvailable).toBe(0);
+  expect(Object.values(after.ownership).some((entry) => entry.buildLevel === 1)).toBe(
+    true
+  );
+});

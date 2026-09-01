@@ -491,3 +491,26 @@
   font-size: 0.78rem;
   font-style: italic;
 }
+
+// Where a building won at auction goes.
+.building-placement {
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-sm;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .eyebrow {
+    margin: 0;
+  }
+}
+
+.building-placement-lede {
+  margin: 0;
+  color: var(--text-body);
+  line-height: 1.5;
+}

@@ -60,6 +60,8 @@ export enum PendingDecisionType {
   SpeedDieBus = 'speed-die-bus',
   /** All three dice matched: pick any space on the board. */
   SpeedDieDestination = 'speed-die-destination',
+  /** Won a building at auction: pick which of your sites it goes on. */
+  BuildingPlacement = 'building-placement',
   GameOver = 'game-over',
 }
 
@@ -113,6 +115,7 @@ export enum GameCommandType {
   BuildHotel = 'buildHotel',
   SellHouse = 'sellHouse',
   SellHotel = 'sellHotel',
+  ChooseBuildingSite = 'chooseBuildingSite',
   MortgageAsset = 'mortgageAsset',
   UnmortgageAsset = 'unmortgageAsset',
   ProposeTrade = 'proposeTrade',
@@ -148,4 +151,10 @@ export enum MortgageChoice {
   Redeem = 'redeem',
   /** Pay the interest only, and take it still mortgaged. */
   Keep = 'keep',
+}
+
+/** What is being auctioned when the bank runs short of buildings. */
+export enum BuildingKind {
+  House = 'house',
+  Hotel = 'hotel',
 }

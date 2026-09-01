@@ -2,6 +2,7 @@ import type { SellableBuilding } from './buildings.interfaces';
 
 export type { SellableBuilding } from './buildings.interfaces';
 
+import { BuildingKind } from '../types/game.enums';
 import {
   BUILDING_SELL_PERCENT,
   HOTEL_BUILD_LEVEL,
@@ -202,3 +203,79 @@ export const getLiquidationValue = (state: GameState, playerId: PlayerId): numbe
   getPlayerOwnedSpaces(state, playerId)
     .filter((space) => !state.ownership[space.id]?.mortgaged)
     .reduce((total, space) => total + space.mortgageValue, 0);
+
+/**
+ * Players who could legally put a building up right now, ignoring the bank's
+ * stock and their own cash.
+ *
+ * This is the closest a turn-based game can get to the printed rule's "two or
+ * more players wish to buy": nobody can be asked what they want on someone
+ * else's turn, so the standing is what everyone *could* do. Stock and cash are
+ * left out deliberately - stock is the thing being contested, and a player who
+ * cannot afford the printed price may still outbid at auction from what they
+ * raise.
+ */
+export const playersWhoCouldBuild = (state: GameState, kind: BuildingKind): PlayerId[] =>
+  state.playerOrder.filter((playerId) => {
+    if (state.players[playerId].isBankrupt) return false;
+
+    return getPlayerOwnedSpaces(state, playerId)
+      .filter(isStreetSpace)
+      .some((space) => {
+        const level = getBuildLevel(state, space.id);
+        const wantsHotel = level === MAX_HOUSES_PER_SITE;
+        if (wantsHotel !== (kind === BuildingKind.Hotel)) return false;
+
+        // Every rule except the two this auction exists to settle.
+        return (
+          colourSetBlockedReason(state, space, playerId) === '' &&
+          level < HOTEL_BUILD_LEVEL &&
+          wouldStayEven(state, space, level + 1)
+        );
+      });
+  });
+
+/**
+ * True when the bank cannot satisfy everyone who could build, which is when the
+ * printed rule sends the last buildings to auction rather than to whoever asked
+ * first.
+ *
+ * Zero stock is not contention - there is nothing to bid for, and the build is
+ * simply refused.
+ */
+export const isBuildingStockContested = (
+  state: GameState,
+  kind: BuildingKind
+): boolean => {
+  const available =
+    kind === BuildingKind.Hotel ? state.bank.hotelsAvailable : state.bank.housesAvailable;
+
+  return available > 0 && available < playersWhoCouldBuild(state, kind).length;
+};
+
+/** The sites this player could legally place a won building on. */
+export const getPlacementSites = (
+  state: GameState,
+  playerId: PlayerId,
+  kind: BuildingKind
+): SellableBuilding[] =>
+  getPlayerOwnedSpaces(state, playerId)
+    .filter(isStreetSpace)
+    .filter((space) => {
+      const level = getBuildLevel(state, space.id);
+      const wantsHotel = level === MAX_HOUSES_PER_SITE;
+      return (
+        wantsHotel === (kind === BuildingKind.Hotel) &&
+        colourSetBlockedReason(state, space, playerId) === '' &&
+        level < HOTEL_BUILD_LEVEL &&
+        wouldStayEven(state, space, level + 1)
+      );
+    })
+    .map((space) => ({
+      spaceId: space.id,
+      name: space.name,
+      colorGroup: space.colorGroup,
+      buildLevel: getBuildLevel(state, space.id),
+      refund: 0,
+      isHotel: kind === BuildingKind.Hotel,
+    }));

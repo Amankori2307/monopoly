@@ -64,6 +64,8 @@ export const TEST_IDS = {
   acknowledgeCardButton: 'acknowledge-card-button',
   decisionPanel: 'decision-panel',
   auctionDecision: 'auction-decision',
+  buildingPlacement: 'building-placement',
+  buildingPlacementSite: 'building-placement-site',
   bidInput: 'bid-input',
   submitBidButton: 'submit-bid-button',
   passAuctionButton: 'pass-auction-button',

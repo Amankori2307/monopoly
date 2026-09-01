@@ -5,6 +5,7 @@ import type {
   MortgageableSite,
 } from '../../../domain/rules/holdings.utils';
 import type {
+  BuildingKind,
   MortgageChoice,
   PendingDecisionType,
 } from '../../../domain/types/game.enums';
@@ -130,6 +131,15 @@ export interface SpeedDieDestinationDecisionViewModel {
   board: BoardSpace[];
 }
 
+export interface BuildingPlacementDecisionViewModel {
+  type: PendingDecisionType.BuildingPlacement;
+  playerName: string;
+  buildingKind: BuildingKind;
+  paidAmount: number;
+  /** The sites this player may legally put it on. */
+  sites: SellableBuilding[];
+}
+
 export interface GameOverDecisionViewModel {
   type: PendingDecisionType.GameOver;
   winnerName: string;
@@ -144,6 +154,7 @@ export type DecisionViewModel =
   | TradeResponseDecisionViewModel
   | SpeedDieBusDecisionViewModel
   | SpeedDieDestinationDecisionViewModel
+  | BuildingPlacementDecisionViewModel
   | GameOverDecisionViewModel;
 
 export interface DecisionHandlers {
@@ -161,6 +172,7 @@ export interface DecisionHandlers {
   onDeclareBankruptcy: () => void;
   onAcceptTrade: (choices: Record<SpaceId, MortgageChoice>) => void;
   onRejectTrade: () => void;
+  onChooseBuildingSite: (spaceId: SpaceId) => void;
   onChooseBusMove: (steps: number) => void;
   onChooseDestination: (spaceId: SpaceId) => void;
 }

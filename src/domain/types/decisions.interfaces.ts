@@ -1,4 +1,4 @@
-import type { DeckName, PendingDecisionType } from './game.enums';
+import type { BuildingKind, DeckName, PendingDecisionType } from './game.enums';
 import type { AuctionId, DeckCard, PlayerId, SpaceId } from './game.interfaces';
 
 /**
@@ -64,6 +64,14 @@ export interface PendingDecisionAssetLiquidation extends DebtRecord {
   queued: DebtRecord[];
 }
 
+export interface PendingDecisionBuildingPlacement {
+  type: PendingDecisionType.BuildingPlacement;
+  playerId: PlayerId;
+  buildingKind: BuildingKind;
+  /** What they won it for - already paid, recorded so the panel can say so. */
+  paidAmount: number;
+}
+
 export interface PendingDecisionTrade {
   type: PendingDecisionType.TradeResponse;
   proposerPlayerId: PlayerId;
@@ -102,4 +110,5 @@ export type PendingDecision =
   | PendingDecisionBankruptcy
   | PendingDecisionSpeedDieBus
   | PendingDecisionSpeedDieDestination
+  | PendingDecisionBuildingPlacement
   | PendingDecisionGameOver;

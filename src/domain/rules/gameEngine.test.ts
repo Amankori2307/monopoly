@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BuildingKind,
   ColorGroup,
   GameCommandType,
   GameStatus,
@@ -24,6 +25,7 @@ import type { GameState, StreetSpace, TradeState } from '../types/game.interface
 import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { speedDieSteps } from './speedDie.utils';
+import { getPlacementSites } from './buildings.utils';
 import { SeededRandomSource } from './rng';
 
 /** A stand-in Get Out of Jail Free card, for tests that only need to hold one. */
@@ -3326,5 +3328,210 @@ describe("auctioning a bankrupt player's property", () => {
     expect(next.auctionState).toBeNull();
     // The site is still waiting to be sold.
     expect(next.pendingAuctionSpaceIds).toHaveLength(1);
+  });
+});
+
+/**
+ * The printed rule: when the bank cannot satisfy everyone who could build, the
+ * last buildings go to auction rather than to whoever asked first.
+ */
+describe("a run on the bank's buildings", () => {
+  /** Two players who each own a complete colour set, and a scarce bank. */
+  const twoBuilders = (housesAvailable: number) => {
+    const game = createBaseGame();
+    const [first, second] = game.playerOrder;
+    const streets = game.board.filter(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street
+    );
+    const brown = streets.filter((space) => space.colorGroup === ColorGroup.Brown);
+    const lightBlue = streets.filter(
+      (space) => space.colorGroup === ColorGroup.LightBlue
+    );
+
+    const ownership = { ...game.ownership };
+    brown.forEach((space) => {
+      ownership[space.id] = { ownerPlayerId: first, mortgaged: false, buildLevel: 0 };
+    });
+    lightBlue.forEach((space) => {
+      ownership[space.id] = { ownerPlayerId: second, mortgaged: false, buildLevel: 0 };
+    });
+
+    return {
+      firstSite: brown[0],
+      secondSite: lightBlue[0],
+      first,
+      second,
+      state: {
+        ...game,
+        ownership,
+        bank: { ...game.bank, housesAvailable },
+        players: {
+          ...game.players,
+          [first]: { ...game.players[first], cash: 5000 },
+          [second]: { ...game.players[second], cash: 5000 },
+        },
+        turn: { ...game.turn, phase: TurnPhase.TurnComplete },
+      } as GameState,
+    };
+  };
+
+  const build = (state: GameState, spaceId: string) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.BuildHouse, spaceId },
+      new SeededRandomSource(3)
+    ).nextState;
+
+  it('builds normally while the bank has plenty', () => {
+    const { state, firstSite } = twoBuilders(32);
+
+    const next = build(state, firstSite.id);
+
+    expect(next.ownership[firstSite.id].buildLevel).toBe(1);
+    expect(next.auctionState).toBeNull();
+  });
+
+  // One house, two players who could use it: that is the contention the rule
+  // is about.
+  it('sends the last house to auction', () => {
+    const { state, firstSite } = twoBuilders(1);
+
+    const next = build(state, firstSite.id);
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AuctionBid);
+    expect(next.auctionState?.buildingKind).toBe(BuildingKind.House);
+    // Nothing was built and nothing was paid yet.
+    expect(next.ownership[firstSite.id].buildLevel).toBe(0);
+    expect(next.players[state.playerOrder[0]].cash).toBe(5000);
+  });
+
+  it('opens the bidding at the printed cost of the house', () => {
+    const { state, firstSite } = twoBuilders(1);
+
+    const next = build(state, firstSite.id);
+
+    expect(next.auctionState?.startPrice).toBe(firstSite.houseCost);
+  });
+
+  it('invites only the players who could actually build', () => {
+    const { state, firstSite, first, second } = twoBuilders(1);
+
+    const next = build(state, firstSite.id);
+
+    expect(next.auctionState?.activeBidderOrder).toEqual(
+      expect.arrayContaining([first, second])
+    );
+    expect(next.auctionState?.activeBidderOrder).toHaveLength(2);
+  });
+
+  // No contention when only one player could build, however low the stock.
+  it('builds normally when nobody else could use the house', () => {
+    const game = createBaseGame();
+    const [first] = game.playerOrder;
+    const brown = game.board.filter(
+      (space): space is StreetSpace =>
+        space.kind === SpaceKind.Street && space.colorGroup === ColorGroup.Brown
+    );
+    const ownership = { ...game.ownership };
+    brown.forEach((space) => {
+      ownership[space.id] = { ownerPlayerId: first, mortgaged: false, buildLevel: 0 };
+    });
+    const soleBuilder: GameState = {
+      ...game,
+      ownership,
+      bank: { ...game.bank, housesAvailable: 1 },
+      players: { ...game.players, [first]: { ...game.players[first], cash: 5000 } },
+      turn: { ...game.turn, phase: TurnPhase.TurnComplete },
+    };
+
+    const next = build(soleBuilder, brown[0].id);
+
+    expect(next.ownership[brown[0].id].buildLevel).toBe(1);
+    expect(next.auctionState).toBeNull();
+  });
+
+  it('refuses outright when the bank has none left', () => {
+    const { state, firstSite } = twoBuilders(0);
+
+    expect(() => build(state, firstSite.id)).toThrow(/no houses left/i);
+  });
+
+  it('asks the winner where the house goes, and takes their bid', () => {
+    const { state, firstSite } = twoBuilders(1);
+    const auctioned = build(state, firstSite.id);
+    const bidderId = auctioned.auctionState?.activeBidderOrder[0] as string;
+    const cashBefore = auctioned.players[bidderId].cash;
+
+    const won = executeGameCommand(
+      executeGameCommand(
+        auctioned,
+        { type: GameCommandType.SubmitAuctionBid, amount: 90 },
+        new SeededRandomSource(3)
+      ).nextState,
+      { type: GameCommandType.PassAuction },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(won.pendingDecision.type).toBe(PendingDecisionType.BuildingPlacement);
+    expect(won.players[bidderId].cash).toBe(cashBefore - 90);
+    // Still nothing built until they say where.
+    expect(won.bank.housesAvailable).toBe(1);
+  });
+
+  it('places the house where the winner chooses', () => {
+    const { state, firstSite } = twoBuilders(1);
+    const auctioned = build(state, firstSite.id);
+    const bidderId = auctioned.auctionState?.activeBidderOrder[0] as string;
+
+    let next = executeGameCommand(
+      auctioned,
+      { type: GameCommandType.SubmitAuctionBid, amount: 90 },
+      new SeededRandomSource(3)
+    ).nextState;
+    next = executeGameCommand(
+      next,
+      { type: GameCommandType.PassAuction },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    const decision = next.pendingDecision;
+    if (decision.type !== PendingDecisionType.BuildingPlacement) {
+      throw new Error('Expected a placement decision');
+    }
+    const site = getPlacementSites(next, bidderId, BuildingKind.House)[0];
+
+    const placed = executeGameCommand(
+      next,
+      { type: GameCommandType.ChooseBuildingSite, spaceId: site.spaceId },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(placed.ownership[site.spaceId].buildLevel).toBe(1);
+    expect(placed.bank.housesAvailable).toBe(0);
+    expect(placed.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+
+  it('refuses a site the even rule does not allow', () => {
+    const { state, firstSite } = twoBuilders(1);
+    const auctioned = build(state, firstSite.id);
+
+    let next = executeGameCommand(
+      auctioned,
+      { type: GameCommandType.SubmitAuctionBid, amount: 90 },
+      new SeededRandomSource(3)
+    ).nextState;
+    next = executeGameCommand(
+      next,
+      { type: GameCommandType.PassAuction },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(() =>
+      executeGameCommand(
+        next,
+        { type: GameCommandType.ChooseBuildingSite, spaceId: state.board[0].id },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/cannot take this building/i);
   });
 });

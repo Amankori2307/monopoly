@@ -20,6 +20,7 @@ import {
   STARTING_CASH,
 } from '../constants/game.constants';
 import {
+  BuildingKind,
   CardEffectKind,
   CardDeck,
   DeckName,
@@ -65,6 +66,9 @@ import {
 import {
   buildBlockedReason,
   getBuildLevel,
+  getPlacementSites,
+  isBuildingStockContested,
+  playersWhoCouldBuild,
   getLiquidationValue,
   getSaleRefund,
   sellBlockedReason,
@@ -566,8 +570,26 @@ const completeAuctionIfPossible = (
     state,
     winnerId,
     auction.highestBid,
-    `won the auction for ${space.name}`
+    auction.buildingKind
+      ? `won a ${auction.buildingKind} at auction`
+      : `won the auction for ${space.name}`
   );
+
+  // A building auction sells the building, not the site: the winner picks which
+  // of their own sites it goes on.
+  if (auction.buildingKind) {
+    return {
+      ...nextState,
+      auctionState: null,
+      pendingDecision: {
+        type: PendingDecisionType.BuildingPlacement,
+        playerId: winnerId,
+        buildingKind: auction.buildingKind,
+        paidAmount: auction.highestBid,
+      },
+      turn: { ...nextState.turn, phase: TurnPhase.AwaitDecision },
+    };
+  }
 
   nextState = updateSpaceOwnership(nextState, auction.spaceId, (ownership) => ({
     ...ownership,
@@ -577,14 +599,21 @@ const completeAuctionIfPossible = (
   return startNextQueuedAuction({ ...nextState, auctionState: null }, randomSource);
 };
 
-const startAuction = (state: GameState, spaceId: string): GameState => {
-  const eligiblePlayers = state.playerOrder.filter(
-    (playerId) => !state.players[playerId].isBankrupt
-  );
+const startAuction = (
+  state: GameState,
+  spaceId: string,
+  // A building auction is the same machinery with a different subject: only the
+  // eligible bidders, the opening price and what the winner receives differ.
+  building?: { buildingKind: BuildingKind; startPrice: number }
+): GameState => {
+  const eligiblePlayers = building
+    ? playersWhoCouldBuild(state, building.buildingKind)
+    : state.playerOrder.filter((playerId) => !state.players[playerId].isBankrupt);
   const auctionState: AuctionState = {
     id: crypto.randomUUID(),
     spaceId,
-    startPrice: AUCTION_START_PRICE,
+    buildingKind: building?.buildingKind,
+    startPrice: building?.startPrice ?? AUCTION_START_PRICE,
     minIncrement: AUCTION_MIN_INCREMENT,
     activeBidderOrder: eligiblePlayers,
     activeBidderIndex: 0,
@@ -610,7 +639,9 @@ const startAuction = (state: GameState, spaceId: string): GameState => {
     [
       createEvent(
         state.turnNumber,
-        `Auction started for ${getSpaceById(state, spaceId).name}.`
+        building
+          ? `The bank is short of ${building.buildingKind}s - one goes to auction.`
+          : `Auction started for ${getSpaceById(state, spaceId).name}.`
       ),
     ]
   );
@@ -1944,6 +1975,18 @@ export const executeGameCommand = (
       const level = getBuildLevel(nextState, space.id);
       const isHotel = level === MAX_HOUSES_PER_SITE;
       const cost = isHotel ? space.hotelCost : space.houseCost;
+      const kind = isHotel ? BuildingKind.Hotel : BuildingKind.House;
+
+      // The printed rule: when the bank cannot satisfy everyone who could
+      // build, the last buildings are sold at auction rather than to whoever
+      // asked first. Opening price is this site's printed cost.
+      if (isBuildingStockContested(nextState, kind)) {
+        nextState = startAuction(nextState, space.id, {
+          buildingKind: kind,
+          startPrice: cost,
+        });
+        break;
+      }
 
       nextState = resolveBankPayment(
         nextState,
@@ -1969,6 +2012,51 @@ export const executeGameCommand = (
             : nextState.bank.hotelsAvailable,
         },
       };
+      break;
+    }
+    case GameCommandType.ChooseBuildingSite: {
+      const decision = nextState.pendingDecision;
+      if (decision.type !== PendingDecisionType.BuildingPlacement) {
+        throw new Error('There is no building waiting to be placed.');
+      }
+      const legalSites = getPlacementSites(
+        nextState,
+        decision.playerId,
+        decision.buildingKind
+      );
+      if (!legalSites.some((site) => site.spaceId === command.spaceId)) {
+        throw new Error('That site cannot take this building.');
+      }
+
+      const space = getSpaceById(nextState, command.spaceId);
+      const isHotel = decision.buildingKind === BuildingKind.Hotel;
+      // Already paid for at auction, so this only moves the building.
+      nextState = updateSpaceOwnership(nextState, command.spaceId, (ownership) => ({
+        ...ownership,
+        buildLevel: ownership.buildLevel + 1,
+      }));
+      nextState = {
+        ...nextState,
+        bank: {
+          ...nextState.bank,
+          housesAvailable: isHotel
+            ? nextState.bank.housesAvailable + MAX_HOUSES_PER_SITE
+            : nextState.bank.housesAvailable - 1,
+          hotelsAvailable: isHotel
+            ? nextState.bank.hotelsAvailable - 1
+            : nextState.bank.hotelsAvailable,
+        },
+      };
+      nextState = appendEvents(nextState, [
+        createEvent(
+          nextState.turnNumber,
+          `${getPlayerById(nextState, decision.playerId).name} placed the ${decision.buildingKind} on ${space.name}.`
+        ),
+      ]);
+      nextState = resumeTurnAfterDecision(
+        { ...nextState, pendingDecision: { type: PendingDecisionType.None } },
+        randomSource
+      );
       break;
     }
     case GameCommandType.SellHouse:

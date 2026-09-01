@@ -29,8 +29,9 @@ export function RulesBuildings() {
         </li>
         <li>
           There are {HOUSES_AVAILABLE} houses and {HOTELS_AVAILABLE} hotels. When the Bank
-          runs out, building waits until a building comes back - this edition does not
-          auction the last one.
+          cannot supply everyone who could build, the next building is auctioned: bidding
+          opens at that site&apos;s printed cost, and the winner chooses where it goes.
+          When the Bank is empty, building waits until one comes back.
         </li>
       </ul>
     </section>

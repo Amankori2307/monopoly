@@ -6,6 +6,7 @@
  * ../constants/game.constants.ts.
  */
 import type {
+  BuildingKind,
   CardDeck,
   CardEffectKind,
   ColorGroup,
@@ -183,6 +184,7 @@ export type {
   PendingDecisionAssetLiquidation,
   PendingDecisionAuction,
   PendingDecisionBankruptcy,
+  PendingDecisionBuildingPlacement,
   PendingDecisionCardDraw,
   PendingDecisionGameOver,
   PendingDecisionJail,
@@ -195,7 +197,17 @@ export type {
 
 export interface AuctionState {
   id: AuctionId;
+  /**
+   * The property being auctioned, or - for a building auction - the site whose
+   * build request triggered it. The winner of a building auction picks their
+   * own site, so this is only what set the opening price.
+   */
   spaceId: SpaceId;
+  /**
+   * Set when the bank is short of buildings and this auction is for one of
+   * them rather than for the property itself.
+   */
+  buildingKind?: BuildingKind;
   startPrice: number;
   minIncrement: number;
   activeBidderOrder: PlayerId[];
@@ -327,6 +339,7 @@ export type GameCommand =
   | { type: GameCommandType.BuildHotel; spaceId: SpaceId }
   | { type: GameCommandType.SellHouse; spaceId: SpaceId }
   | { type: GameCommandType.SellHotel; spaceId: SpaceId }
+  | { type: GameCommandType.ChooseBuildingSite; spaceId: SpaceId }
   | { type: GameCommandType.MortgageAsset; spaceId: SpaceId }
   | { type: GameCommandType.UnmortgageAsset; spaceId: SpaceId }
   | { type: GameCommandType.ProposeTrade; payload: TradeState }
