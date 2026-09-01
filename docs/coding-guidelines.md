@@ -222,24 +222,31 @@ existing areas out to growing it further.
 
 The mandate above is the standard going forward. The repository does **not** meet it today. Honest baseline:
 
-| Area                                           | Unit     | Integration | E2E          |
-| ---------------------------------------------- | -------- | ----------- | ------------ |
-| `gameEngine` (all 20 commands)                 | 97 tests | —           | yes          |
-| Card draw / acknowledge                        | 7 tests  | 4 tests     | yes          |
-| Action feedback (toasts)                       | 13 tests | —           | yes          |
-| `rng` (`SeededRandomSource`, `shuffle`)        | none     | —           | —            |
-| `persistence` (save/load/index/delete/corrupt) | none     | 4 tests     | —            |
-| Saved-game migrations (v1 → v2 → v3)           | 19 tests | —           | 1 spec       |
-| Buildings (both even rules, bank inventory)    | 21 tests | —           | yes          |
-| Trading (proposal guards, transfer fees)       | 14 tests | —           | yes          |
-| Speed Die (activation, faces, triples)         | 10 tests | —           | yes          |
-| `gameSlice` thunks                             | —        | none        | —            |
-| `uiSlice`                                      | none     | —           | —            |
-| `HomePage`                                     | —        | 2 tests     | partial      |
-| `GamePage` (board, decision panels)            | —        | none        | 1 smoke spec |
-| `DiceDock`                                     | none     | —           | partial      |
-| `SpaceCard`, `SpaceDetailCard`                 | 2 files  | —           | yes          |
-| Holdings drawer + stack                        | 2 files  | 1 test      | yes          |
+| Area                                           | Unit      | Integration | E2E                 |
+| ---------------------------------------------- | --------- | ----------- | ------------------- |
+| `gameEngine` (all 20 commands)                 | 97 tests  | —           | yes                 |
+| Card draw / acknowledge                        | 7 tests   | 4 tests     | yes                 |
+| Action feedback (toasts)                       | 13 tests  | —           | yes                 |
+| `rng` (`SeededRandomSource`, `shuffle`)        | **none**  | —           | — ⚠️ gap            |
+| `persistence` (save/load/index/delete/corrupt) | 5 tests   | 6 tests     | 1 spec              |
+| Saved-game migrations (v1 → v5)                | 18 tests  | —           | 1 spec              |
+| Buildings (both even rules, bank inventory)    | 21 tests  | —           | yes                 |
+| Trading (proposal guards, transfer fees)       | 14 tests  | —           | yes                 |
+| Speed Die (activation, faces, triples)         | 10 tests  | —           | yes                 |
+| `gameSlice` thunks                             | —         | **none**    | — ⚠️ gap            |
+| `uiSlice`                                      | **none**  | —           | — ⚠️ gap            |
+| `HomePage`                                     | —         | 2 tests     | partial             |
+| `GamePage` (board, decision panels)            | —         | **none**    | 1 smoke spec ⚠️ gap |
+| `DiceDock`                                     | via hook  | —           | partial             |
+| `SpaceCard`, `SpaceDetailCard`                 | 2 files   | —           | yes                 |
+| Holdings drawer + stack                        | 2 files   | 1 test      | yes                 |
+| Bankruptcy, win detection, the debt queue      | in engine | —           | yes                 |
+| Bankruptcy + building auctions                 | in engine | —           | yes                 |
+| Board cell, turn controls, error banner        | 3 files   | —           | yes                 |
+
+**The harness blockers are cleared.** All three are done, so the integration mandate in §1 is
+achievable — but four rows above are still marked ⚠️, and the thunk row is the one that matters most:
+this section says thunks are the highest-value layer to test and they have no tests at all.
 
 **The harness blockers are cleared.** All three are done, so the integration mandate in §1 is now achievable:
 
