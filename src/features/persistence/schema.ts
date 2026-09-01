@@ -57,6 +57,7 @@ export const gameStateSchema = z.object({
     reason: z.string().nullable(),
     // A new key in this object would be stripped on load without a line here.
     speedDieFace: z.string().nullable(),
+    pendingMonopolyAdvance: z.boolean(),
   }),
   // Deliberately loose plus one targeted check. `.passthrough()` is what lets a
   // decision carry its own payload - notably the drawn Chance / Community Chest

@@ -53,6 +53,7 @@ const seedUnpayableDebt = async (
       canRollAgain: false,
       reason: 'rent',
       speedDieFace: null,
+      pendingMonopolyAdvance: false,
     };
     localStorage.setItem(key, JSON.stringify(game));
 

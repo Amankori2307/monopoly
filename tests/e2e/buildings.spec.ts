@@ -41,6 +41,7 @@ const seedCompleteSet = async (page: Page, levels: number[] = [0, 0]) => {
       canRollAgain: false,
       reason: 'done',
       speedDieFace: null,
+      pendingMonopolyAdvance: false,
     };
     localStorage.setItem(key, JSON.stringify(game));
 
@@ -175,6 +176,7 @@ test('offers building sales inside the liquidation panel', async ({ page }) => {
       canRollAgain: false,
       reason: 'rent',
       speedDieFace: null,
+      pendingMonopolyAdvance: false,
     };
     localStorage.setItem(key, JSON.stringify(game));
   });

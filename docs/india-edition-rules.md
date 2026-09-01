@@ -464,11 +464,14 @@ finished, including after a reload. The only way on is back to the home page.
 A player's `bankruptcyRank` records the order they went out, so a finished game still shows who
 placed where.
 
-## 12. Speed Die — ❌ not implemented
+## 12. Speed Die — ✅ implemented
 
-Optional faster-play rules from the India Edition box. The in-app booklet
-([RulesSpeedDie.tsx](../src/components/rules/RulesSpeedDie.tsx)) is the canonical copy; this is the
-same ruleset stated as testable rules.
+Optional faster-play rules from the India Edition box, switched on at setup and fixed for the
+game's lifetime. The in-app booklet ([RulesSpeedDie.tsx](../src/components/rules/RulesSpeedDie.tsx))
+is the canonical copy; this is the same ruleset stated as testable rules.
+
+The die's six faces are 1, 2, 3, **Bus, Bus** and Mr. Monopoly — Bus appears twice on the printed
+die, which is why `SPEED_DIE_FACES` is a list rather than the enum's values.
 
 ### When it is used
 
@@ -481,11 +484,11 @@ same ruleset stated as testable rules.
 
 ### The faces
 
-| Face             | Effect                                                                                                                                                                                                                |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1, 2, 3**      | Add that number to the two white dice total, then move and resolve normally                                                                                                                                           |
-| **Bus**          | Choose the value of **one** white die, or of **both** white dice, and move that many spaces                                                                                                                           |
-| **Mr. Monopoly** | Move by the white dice as usual and resolve that space. **Then** advance to the next unowned asset and buy or auction it. If every asset is owned, advance to the next asset owned by another player and pay its rent |
+| Face             | Effect                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1, 2, 3**      | Added to the two white dice, then move and resolve normally — ✅                                                                                                                |
+| **Bus**          | Choose one white die, the other, or both. Three buttons, because those are the only legal answers — ✅                                                                          |
+| **Mr. Monopoly** | Move by the white dice and resolve, **then** advance to the next unowned asset to buy or auction; if none are unowned, to the next asset an opponent owns and pay its rent — ✅ |
 
 ### Speed Die interaction with doubles and Jail
 
@@ -499,6 +502,20 @@ The edge cases the user is most likely to hit, and the reason this section exist
 | **If all three dice show the same number, move to any space on the board of your choice** — and that is not a double, so it grants no extra roll |
 | Three consecutive white-dice doubles still send you to Jail, exactly as in the base game                                                         |
 | A Mr. Monopoly advance happens after the space is resolved; if the white dice were doubles, the extra roll still follows                         |
+
+**How the Mr. Monopoly advance survives a decision.** The landed space may raise one — a buy, a
+card, a debt — and the advance is still owed when it is answered. It is therefore a turn field,
+`turn.pendingMonopolyAdvance`, applied by `resumeTurnAfterDecision` rather than run inline. That is
+also why `BuyLandedAsset` no longer restates the resume rules itself: it used to, and an advance
+owed across a buy decision was silently dropped.
+
+**A utility reached without rolling is charged on a fresh throw.** `resolveCurrentSpace` takes the
+dice total that rent is charged on: the turn's own roll when the player rolled their way there, and
+a new throw after a Mr. Monopoly advance or a three-of-a-kind move. Before the Speed Die this was
+latent — no card in either deck lands on a utility — and now it is reachable.
+
+**A three-of-a-kind move travels forward.** The token walks round the board to the chosen space
+rather than teleporting, so it collects the GO salary on the way if it passes GO.
 
 ---
 
@@ -626,9 +643,9 @@ complete auction loop, street/railway/utility rent with colour-set doubling, all
 the three-turn limit, turn rotation, ₹ throughout, per-action feedback, and **mortgaging, redeeming
 and settling a debt you could not otherwise pay, bankruptcy when you cannot, the win that ends
 the game, and building and selling houses and hotels with both even rules and a real bank
-inventory, and trading between players**.
+inventory, trading between players, and the optional Speed Die**.
 
-**Type-level only, no runtime behaviour:** Speed Die.
+Nothing in the ruleset is type-level only any more.
 
 ### Fixed so far
 

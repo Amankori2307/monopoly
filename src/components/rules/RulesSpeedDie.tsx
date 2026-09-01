@@ -14,6 +14,7 @@ export function RulesSpeedDie() {
       </p>
       <ul>
         <li>Roll the Speed Die with the two white dice on your turn.</li>
+        <li>Its six faces are 1, 2, 3, Bus, Bus, and Mr. Monopoly.</li>
         <li>On 1, 2, or 3, add that number to the two white dice total.</li>
         <li>On a Bus, choose the value of one white die or both white dice.</li>
         <li>
@@ -27,8 +28,8 @@ export function RulesSpeedDie() {
         </li>
       </ul>
       <p className="source-note">
-        In this app, the Speed Die rules are documented here but gameplay support is
-        planned for a later release.
+        Turn it on when you create a game. It cannot be switched on mid-game, which is
+        also what keeps the starting bonus fair.
       </p>
     </section>
   );

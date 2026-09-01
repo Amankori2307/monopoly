@@ -107,6 +107,8 @@ const BLOCKING_DECISIONS: ReadonlySet<PendingDecisionType> = new Set([
   PendingDecisionType.AssetLiquidation,
   PendingDecisionType.TradeResponse,
   PendingDecisionType.BankruptcyResolution,
+  PendingDecisionType.SpeedDieBus,
+  PendingDecisionType.SpeedDieDestination,
   PendingDecisionType.GameOver,
 ]);
 
@@ -278,6 +280,13 @@ const gameOverDecision = (game: GameState): GameOverDecisionViewModel => ({
   winnerName: game.winnerPlayerId ? (game.players[game.winnerPlayerId]?.name ?? '') : '',
 });
 
+/** Whose decision it is, falling back to the active player. */
+const nameOfDecider = (
+  game: GameState,
+  playerId: PlayerId,
+  activePlayer: PlayerState
+): string => game.players[playerId]?.name ?? activePlayer.name;
+
 export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
   const decision = game.pendingDecision;
   const activePlayer = selectActivePlayer(game);
@@ -295,6 +304,19 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
       return liquidationDecision(game, decision, activePlayer);
     case PendingDecisionType.TradeResponse:
       return tradeResponseDecision(game, decision);
+    case PendingDecisionType.SpeedDieBus:
+      return {
+        type: PendingDecisionType.SpeedDieBus,
+        playerName: nameOfDecider(game, decision.playerId, activePlayer),
+        whiteDice: decision.whiteDice,
+      };
+    case PendingDecisionType.SpeedDieDestination:
+      return {
+        type: PendingDecisionType.SpeedDieDestination,
+        playerName: nameOfDecider(game, decision.playerId, activePlayer),
+        // Any space is a legal answer, so the panel gets the whole board.
+        board: game.board,
+      };
     case PendingDecisionType.GameOver:
       return gameOverDecision(game);
     default:

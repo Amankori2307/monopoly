@@ -57,8 +57,22 @@ const v1ToV2: Migration = (raw) => {
   };
 };
 
+/**
+ * v2 -> v3: the Mr. Monopoly advance has to survive a decision, so it is a turn
+ * field rather than something computed inline. A v2 game never had one owed.
+ */
+const v2ToV3: Migration = (raw) => {
+  const turn = (raw.turn ?? {}) as Record<string, unknown>;
+  return {
+    ...raw,
+    version: 3,
+    turn: { ...turn, pendingMonopolyAdvance: turn.pendingMonopolyAdvance ?? false },
+  };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
+  2: v2ToV3,
 };
 
 /**

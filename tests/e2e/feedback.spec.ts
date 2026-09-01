@@ -41,6 +41,7 @@ const seedOwnership = async (page: Page, seeds: OwnershipSeed[]) => {
       canRollAgain: false,
       reason: null,
       speedDieFace: null,
+      pendingMonopolyAdvance: false,
     };
     localStorage.setItem(key, JSON.stringify(game));
 
@@ -162,6 +163,7 @@ test('shows a drawn card and applies it only on OK', async ({ page }) => {
       canRollAgain: false,
       reason: 'drew a card',
       speedDieFace: null,
+      pendingMonopolyAdvance: false,
     };
     localStorage.setItem(key, JSON.stringify(game));
     return game.players[playerId].cash as number;

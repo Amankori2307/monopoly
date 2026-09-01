@@ -84,3 +84,47 @@ describe('migrateSavedGame', () => {
     expect(needsMigration(null)).toBe(false);
   });
 });
+
+/**
+ * A v1 save has to cross two versions to reach the current one, which is the
+ * point of keying migrations by the version they upgrade from.
+ */
+describe('migrating across more than one version', () => {
+  it('carries a v1 save the whole way', () => {
+    const migrated = migrateSavedGame({
+      version: 1,
+      players: { 'player-1': { jailFreeCards: 1 } },
+      turn: { phase: 'await_roll' },
+    }) as {
+      version: number;
+      useSpeedDie: boolean;
+      turn: { speedDieFace: string | null; pendingMonopolyAdvance: boolean };
+      players: Record<string, { jailFreeCards: unknown[] }>;
+    };
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+    // v2's fields and v3's, from one call.
+    expect(migrated.useSpeedDie).toBe(false);
+    expect(migrated.turn.speedDieFace).toBeNull();
+    expect(migrated.turn.pendingMonopolyAdvance).toBe(false);
+    expect(migrated.players['player-1'].jailFreeCards).toHaveLength(1);
+  });
+
+  it('upgrades a v2 save without touching what v2 already had', () => {
+    const migrated = migrateSavedGame({
+      version: 2,
+      useSpeedDie: true,
+      players: { 'player-1': { jailFreeCards: [], hasPassedGo: true } },
+      turn: { phase: 'await_roll', speedDieFace: 'bus' },
+    }) as {
+      version: number;
+      useSpeedDie: boolean;
+      turn: { speedDieFace: string; pendingMonopolyAdvance: boolean };
+    };
+
+    expect(migrated.version).toBe(3);
+    expect(migrated.useSpeedDie).toBe(true);
+    expect(migrated.turn.speedDieFace).toBe('bus');
+    expect(migrated.turn.pendingMonopolyAdvance).toBe(false);
+  });
+});

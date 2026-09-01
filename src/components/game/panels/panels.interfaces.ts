@@ -107,6 +107,19 @@ export interface TradeResponseDecisionViewModel {
   outgoing: TradeSideSummary;
 }
 
+export interface SpeedDieBusDecisionViewModel {
+  type: PendingDecisionType.SpeedDieBus;
+  playerName: string;
+  whiteDice: [number, number];
+}
+
+export interface SpeedDieDestinationDecisionViewModel {
+  type: PendingDecisionType.SpeedDieDestination;
+  playerName: string;
+  /** The whole board, because any space on it is a legal answer. */
+  board: BoardSpace[];
+}
+
 export interface GameOverDecisionViewModel {
   type: PendingDecisionType.GameOver;
   winnerName: string;
@@ -119,6 +132,8 @@ export type DecisionViewModel =
   | CardDrawDecisionViewModel
   | LiquidationDecisionViewModel
   | TradeResponseDecisionViewModel
+  | SpeedDieBusDecisionViewModel
+  | SpeedDieDestinationDecisionViewModel
   | GameOverDecisionViewModel;
 
 export interface DecisionHandlers {
@@ -136,4 +151,6 @@ export interface DecisionHandlers {
   onDeclareBankruptcy: () => void;
   onAcceptTrade: () => void;
   onRejectTrade: () => void;
+  onChooseBusMove: (steps: number) => void;
+  onChooseDestination: (spaceId: SpaceId) => void;
 }

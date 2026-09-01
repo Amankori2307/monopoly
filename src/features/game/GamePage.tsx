@@ -117,6 +117,7 @@ export function GamePage() {
               canEndTurn={selectCanEndTurn(activeGame)}
               canRoll={selectCanRollDice(activeGame)}
               canRollAgain={activeGame.turn.canRollAgain}
+              speedDieFace={activeGame.turn.speedDieFace}
               lastRoll={activeGame.turn.lastRoll}
               onEndTurn={commands.endTurn}
               onRoll={() => commands.rollDice(isJailRoll)}

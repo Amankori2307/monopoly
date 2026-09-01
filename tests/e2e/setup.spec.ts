@@ -36,7 +36,7 @@ test('starts a Speed Die game with the bonus, and an ordinary one without', asyn
 
   expect(speedGame.useSpeedDie).toBe(true);
   expect(speedGame.cash).toBe(2500);
-  expect(speedGame.version).toBe(2);
+  expect(speedGame.version).toBe(3);
 });
 
 // A v1 save predates every field the current schema requires, and a plain
@@ -56,6 +56,7 @@ test('loads a saved game written by the previous version', async ({ page }) => {
     delete game.useSpeedDie;
     game.playerOrder.forEach((id: string) => delete game.players[id].hasPassedGo);
     delete game.turn.speedDieFace;
+    delete game.turn.pendingMonopolyAdvance;
     localStorage.setItem(key, JSON.stringify(game));
     return game.id as string;
   });
@@ -78,7 +79,8 @@ test('loads a saved game written by the previous version', async ({ page }) => {
         return JSON.parse(localStorage.getItem(key) as string).version as number;
       })
     )
-    .toBe(2);
+    // Migrated the whole way: v1 -> v2 -> v3.
+    .toBe(3);
 
   const loaded = await page.evaluate(() => {
     const key = Object.keys(localStorage).find((k) =>

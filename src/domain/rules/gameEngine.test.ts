@@ -7,7 +7,7 @@ import {
   SpaceKind,
   TurnPhase,
 } from '../types/game.enums';
-import { CardDeck, CardEffectKind, DeckName } from '../types/game.enums';
+import { CardDeck, CardEffectKind, DeckName, SpeedDieFace } from '../types/game.enums';
 import type { DeckCard } from '../types/game.interfaces';
 import {
   AUCTION_START_PRICE,
@@ -22,6 +22,7 @@ import {
 import type { GameState, StreetSpace, TradeState } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
+import { speedDieSteps } from './speedDie.utils';
 import { SeededRandomSource } from './rng';
 
 /** A stand-in Get Out of Jail Free card, for tests that only need to hold one. */
@@ -425,6 +426,7 @@ describe('the extra roll survives a decision', () => {
         lastRoll: [3, 3],
         reason: 'Decide whether to buy.',
         speedDieFace: null,
+        pendingMonopolyAdvance: false,
       },
     };
   };
@@ -2229,5 +2231,434 @@ describe('Speed Die setup', () => {
     ).nextState;
 
     expect(next.players[playerId].hasPassedGo).toBe(true);
+  });
+});
+
+/**
+ * The Speed Die in play. The interesting cases are all about what it does NOT
+ * change: doubles, Jail, and the extra roll.
+ */
+describe('rolling with the Speed Die', () => {
+  /** A Speed Die game with everyone past GO, so the die is live. */
+  const liveSpeedGame = (): GameState => {
+    const game = createGameState(
+      {
+        name: 'Speed',
+        playerConfigs: [
+          { name: 'Asha', tokenId: 'elephant' },
+          { name: 'Vikram', tokenId: 'train' },
+        ],
+        themeId: 'india-edition',
+        createdAt: '2026-08-29T00:00:00.000Z',
+        useSpeedDie: true,
+      },
+      new SeededRandomSource(7)
+    );
+
+    return {
+      ...game,
+      players: Object.fromEntries(
+        Object.entries(game.players).map(([id, player]) => [
+          id,
+          { ...player, hasPassedGo: true },
+        ])
+      ),
+    };
+  };
+
+  const rollWith = (state: GameState, seed: number) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(seed)
+    ).nextState;
+
+  it('rolls a third die once it is live', () => {
+    const next = rollWith(liveSpeedGame(), 4);
+
+    expect(next.turn.speedDieFace).not.toBeNull();
+    expect(next.turn.lastRoll).toHaveLength(2);
+  });
+
+  it('rolls no third die before everyone has passed GO', () => {
+    const game = liveSpeedGame();
+    const early: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        'player-2': { ...game.players['player-2'], hasPassedGo: false },
+      },
+    };
+
+    expect(rollWith(early, 4).turn.speedDieFace).toBeNull();
+  });
+
+  it('rolls no third die in an ordinary game', () => {
+    expect(rollWith(createBaseGame(), 4).turn.speedDieFace).toBeNull();
+  });
+
+  // The face is added after the doubles check, so it can never make or break
+  // one - the white dice alone decide.
+  it('adds a numeric face to the move without touching the doubles count', () => {
+    const game = liveSpeedGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+
+    // Find a seed that rolls a plain number, which is what this asserts about.
+    for (let seed = 1; seed < 60; seed += 1) {
+      const next = rollWith(game, seed);
+      const face = next.turn.speedDieFace;
+      const steps = speedDieSteps(face);
+      if (steps === 0 || next.turn.lastRoll === null) continue;
+
+      const [white1, white2] = next.turn.lastRoll;
+      if (white1 === white2 && white1 === steps) continue; // a triple, tested below
+
+      expect(next.players[playerId].position).toBe(
+        (white1 + white2 + steps) % next.board.length
+      );
+      expect(next.turn.doublesCount).toBe(white1 === white2 ? 1 : 0);
+      return;
+    }
+    throw new Error('No seed produced a plain numeric Speed Die face');
+  });
+
+  it('asks where to go when all three dice match', () => {
+    const game = liveSpeedGame();
+
+    for (let seed = 1; seed < 400; seed += 1) {
+      const next = rollWith(game, seed);
+      if (next.pendingDecision.type !== PendingDecisionType.SpeedDieDestination) continue;
+
+      const [white1, white2] = next.turn.lastRoll as number[];
+      expect(white1).toBe(white2);
+      // A triple is not a double: no extra roll, and no step towards Jail.
+      expect(next.turn.doublesCount).toBe(0);
+      expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
+      return;
+    }
+    throw new Error('No seed produced a triple');
+  });
+
+  it('asks which dice to move by on a Bus', () => {
+    const game = liveSpeedGame();
+
+    for (let seed = 1; seed < 200; seed += 1) {
+      const next = rollWith(game, seed);
+      if (next.pendingDecision.type !== PendingDecisionType.SpeedDieBus) continue;
+
+      expect(next.turn.speedDieFace).toBe('bus');
+      expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
+      return;
+    }
+    throw new Error('No seed produced a Bus');
+  });
+});
+
+describe('answering the Speed Die', () => {
+  const busPending = (whiteDice: [number, number]): GameState => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      ...game,
+      useSpeedDie: true,
+      pendingDecision: {
+        type: PendingDecisionType.SpeedDieBus,
+        playerId,
+        whiteDice,
+      },
+      turn: {
+        ...game.turn,
+        phase: TurnPhase.AwaitDecision,
+        lastRoll: whiteDice,
+        speedDieFace: SpeedDieFace.Bus,
+        doublesCount: 0,
+      },
+    };
+  };
+
+  it('moves by one white die, the other, or both', () => {
+    const state = busPending([2, 5]);
+    const playerId = state.playerOrder[state.activePlayerIndex];
+
+    [2, 5, 7].forEach((steps) => {
+      const next = executeGameCommand(
+        state,
+        { type: GameCommandType.ChooseBusMove, steps },
+        new SeededRandomSource(3)
+      ).nextState;
+
+      expect(next.players[playerId].position).toBe(steps);
+    });
+  });
+
+  it('refuses any other number of steps', () => {
+    expect(() =>
+      executeGameCommand(
+        busPending([2, 5]),
+        { type: GameCommandType.ChooseBusMove, steps: 4 },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/moves 2, 5 or 7/i);
+  });
+
+  // The bus decides how far, not whether the turn continues. Landing on Free
+  // Parking keeps the assertion about the extra roll rather than about whatever
+  // decision another space would have raised.
+  it('keeps the extra roll when the white dice were a double', () => {
+    const pending = busPending([3, 3]);
+    const playerId = pending.playerOrder[pending.activePlayerIndex];
+    const state: GameState = {
+      ...pending,
+      players: {
+        ...pending.players,
+        [playerId]: { ...pending.players[playerId], position: 17 },
+      },
+      // What RollTurnDice would already have counted for this double.
+      turn: { ...pending.turn, doublesCount: 1 },
+    };
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ChooseBusMove, steps: 3 },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[playerId].position).toBe(20);
+    expect(next.turn.canRollAgain).toBe(true);
+  });
+
+  it('refuses a bus move when no bus is pending', () => {
+    expect(() =>
+      executeGameCommand(
+        createBaseGame(),
+        { type: GameCommandType.ChooseBusMove, steps: 3 },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/no bus/i);
+  });
+
+  const destinationPending = (): GameState => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      ...game,
+      useSpeedDie: true,
+      pendingDecision: {
+        type: PendingDecisionType.SpeedDieDestination,
+        playerId,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision, doublesCount: 0 },
+    };
+  };
+
+  it('moves to any chosen space', () => {
+    const state = destinationPending();
+    const playerId = state.playerOrder[state.activePlayerIndex];
+    const target = state.board[25];
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ChooseSpeedDieDestination, spaceId: target.id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[playerId].position).toBe(25);
+  });
+
+  // The token travels forward round the board rather than teleporting, so a
+  // destination behind the player still collects the GO salary.
+  it('pays the GO salary when the move wraps', () => {
+    const game = destinationPending();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: 35 },
+      },
+    };
+    const cashBefore = state.players[playerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ChooseSpeedDieDestination, spaceId: state.board[5].id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[playerId].position).toBe(5);
+    expect(next.players[playerId].cash).toBeGreaterThan(cashBefore);
+  });
+
+  it('grants no extra roll: a triple is not a double', () => {
+    const state = destinationPending();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ChooseSpeedDieDestination, spaceId: state.board[25].id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.turn.canRollAgain).toBe(false);
+  });
+
+  it('refuses a space that is not on the board', () => {
+    expect(() =>
+      executeGameCommand(
+        destinationPending(),
+        { type: GameCommandType.ChooseSpeedDieDestination, spaceId: 'nowhere' },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/no such space/i);
+  });
+});
+
+/**
+ * Mr. Monopoly advances the player on *after* the landed space is resolved,
+ * and that space may raise a decision of its own - so the advance has to
+ * survive it rather than run inline.
+ */
+describe('the Mr. Monopoly face', () => {
+  /** A turn whose landing has resolved, with the advance still owed. */
+  const advanceOwed = (overrides: Partial<GameState> = {}): GameState => {
+    const game = createBaseGame();
+    return {
+      ...game,
+      useSpeedDie: true,
+      turn: {
+        ...game.turn,
+        phase: TurnPhase.AwaitDecision,
+        speedDieFace: SpeedDieFace.MrMonopoly,
+        pendingMonopolyAdvance: true,
+        lastRoll: [2, 3],
+        doublesCount: 0,
+      },
+      ...overrides,
+    };
+  };
+
+  // With nothing left unowned, the advance goes to the next asset an opponent
+  // holds and pays its rent - which is the half of the rule people forget.
+  it('falls through to an opponent asset when nothing is unowned', () => {
+    const game = advanceOwed();
+    const [playerId, opponentId] = game.playerOrder;
+    const street = game.board.find(isStreetSpace) as StreetSpace;
+    const streetIndex = game.board.findIndex((space) => space.id === street.id);
+
+    // Every ownable space belongs to the opponent, except the one being landed
+    // on, which the active player already owns.
+    const ownership = { ...game.ownership };
+    game.board.filter(isOwnableSpace).forEach((space) => {
+      ownership[space.id] = {
+        ownerPlayerId: opponentId,
+        mortgaged: false,
+        buildLevel: 0,
+      };
+    });
+    ownership[street.id] = {
+      ownerPlayerId: playerId,
+      mortgaged: false,
+      buildLevel: 0,
+    };
+
+    const state: GameState = {
+      ...game,
+      activePlayerIndex: game.playerOrder.indexOf(playerId),
+      ownership,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: streetIndex, cash: 5000 },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation,
+        playerId,
+        amountDue: 10,
+        creditorPlayerId: opponentId,
+        reason: 'rent',
+      },
+    };
+    const opponentCashBefore = state.players[opponentId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.SettleDebt },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    // Moved on to one of the opponent's sites, and paid for the privilege.
+    expect(next.players[playerId].position).not.toBe(streetIndex);
+    expect(
+      next.ownership[next.board[next.players[playerId].position].id].ownerPlayerId
+    ).toBe(opponentId);
+    expect(next.players[opponentId].cash).toBeGreaterThan(opponentCashBefore + 10);
+  });
+
+  // The advance is owed across the decision the landing raised, which is the
+  // whole reason it is a turn field rather than something computed inline.
+  it('runs once the decision the landing raised has been answered', () => {
+    const game = advanceOwed();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const street = game.board.find(isStreetSpace) as StreetSpace;
+    const streetIndex = game.board.findIndex((space) => space.id === street.id);
+
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: streetIndex },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.LandedUnownedProperty,
+        playerId,
+        spaceId: street.id,
+      },
+    };
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.BuyLandedAsset },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    // Bought the site it landed on, then moved on to the next asset.
+    expect(next.ownership[street.id].ownerPlayerId).toBe(playerId);
+    expect(next.players[playerId].position).not.toBe(streetIndex);
+    expect(next.turn.pendingMonopolyAdvance).toBe(false);
+  });
+
+  it('stops owing an advance once it has been taken', () => {
+    const game = advanceOwed();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const street = game.board.find(isStreetSpace) as StreetSpace;
+    const streetIndex = game.board.findIndex((space) => space.id === street.id);
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: streetIndex },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.LandedUnownedProperty,
+        playerId,
+        spaceId: street.id,
+      },
+    };
+
+    const afterBuy = executeGameCommand(
+      state,
+      { type: GameCommandType.BuyLandedAsset },
+      new SeededRandomSource(3)
+    ).nextState;
+    const landedOn = afterBuy.players[playerId].position;
+
+    // Answering the decision the advance itself raised must not advance again.
+    if (afterBuy.pendingDecision.type === PendingDecisionType.LandedUnownedProperty) {
+      const afterSecond = executeGameCommand(
+        afterBuy,
+        { type: GameCommandType.DeclineLandedAsset },
+        new SeededRandomSource(3)
+      ).nextState;
+      expect(afterSecond.players[playerId].position).toBe(landedOn);
+    }
+    expect(afterBuy.turn.pendingMonopolyAdvance).toBe(false);
   });
 });

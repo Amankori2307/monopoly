@@ -7,6 +7,8 @@ import { CardDrawDecision } from './CardDrawDecision';
 import { GameOverDecision } from './GameOverDecision';
 import { JailDecision } from './JailDecision';
 import { LiquidationDecision } from './LiquidationDecision';
+import { SpeedDieBusDecision } from './SpeedDieBusDecision';
+import { SpeedDieDestinationDecision } from './SpeedDieDestinationDecision';
 import { TradeResponseDecision } from './TradeResponseDecision';
 
 interface DecisionPanelProps {
@@ -86,6 +88,22 @@ export function DecisionPanel({
           onReject={handlers.onRejectTrade}
           outgoing={decision.outgoing}
           recipientName={decision.recipientName}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.SpeedDieBus ? (
+        <SpeedDieBusDecision
+          onChoose={handlers.onChooseBusMove}
+          playerName={decision.playerName}
+          whiteDice={decision.whiteDice}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.SpeedDieDestination ? (
+        <SpeedDieDestinationDecision
+          board={decision.board}
+          onChoose={handlers.onChooseDestination}
+          playerName={decision.playerName}
         />
       ) : null}
 

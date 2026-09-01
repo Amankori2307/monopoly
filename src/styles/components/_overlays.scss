@@ -438,3 +438,48 @@
   color: var(--text-body);
   line-height: 1.55;
 }
+
+/**
+ * The two Speed Die decisions. Both are a short explanation and a set of
+ * buttons - the answers are few and fixed, so there is nothing to type.
+ */
+.speed-die-decision {
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-sm;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .eyebrow {
+    margin: 0;
+  }
+}
+
+.speed-die-lede {
+  margin: 0;
+  color: var(--text-body);
+  line-height: 1.5;
+  font-size: 0.85rem;
+}
+
+// Forty spaces, so it scrolls rather than growing the modal past the screen.
+.destination-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  max-height: 48vh;
+  overflow-y: auto;
+  list-style: none;
+
+  button {
+    width: 100%;
+    text-align: left;
+    font-size: 0.78rem;
+  }
+}

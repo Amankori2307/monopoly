@@ -56,6 +56,10 @@ export enum PendingDecisionType {
   AssetLiquidation = 'asset-liquidation',
   TradeResponse = 'trade-response',
   BankruptcyResolution = 'bankruptcy-resolution',
+  /** A Bus face: pick one white die, or both, and move that many. */
+  SpeedDieBus = 'speed-die-bus',
+  /** All three dice matched: pick any space on the board. */
+  SpeedDieDestination = 'speed-die-destination',
   GameOver = 'game-over',
 }
 
@@ -112,6 +116,8 @@ export enum GameCommandType {
   MortgageAsset = 'mortgageAsset',
   UnmortgageAsset = 'unmortgageAsset',
   ProposeTrade = 'proposeTrade',
+  ChooseBusMove = 'chooseBusMove',
+  ChooseSpeedDieDestination = 'chooseSpeedDieDestination',
   AcceptTrade = 'acceptTrade',
   RejectTrade = 'rejectTrade',
   ConfirmBankruptcy = 'confirmBankruptcy',

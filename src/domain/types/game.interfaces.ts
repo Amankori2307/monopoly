@@ -13,7 +13,6 @@ import type {
   SpeedDieFace,
   GameCommandType,
   GameStatus,
-  PendingDecisionType,
   SpaceKind,
   TurnPhase,
 } from './game.enums';
@@ -167,75 +166,30 @@ export interface TurnState {
    * a third entry in that array would have to be excluded at every reader.
    */
   speedDieFace: SpeedDieFace | null;
+  /**
+   * True while a Mr. Monopoly advance is owed. The advance happens *after* the
+   * landed space is resolved, and that space may itself raise a decision - so
+   * it cannot simply run inline, and has to survive until the turn is clear.
+   */
+  pendingMonopolyAdvance: boolean;
 }
 
-export interface PendingDecisionNone {
-  type: PendingDecisionType.None;
-}
+import type { PendingDecision } from './decisions.interfaces';
 
-export interface PendingDecisionProperty {
-  type: PendingDecisionType.LandedUnownedProperty;
-  spaceId: SpaceId;
-  playerId: PlayerId;
-}
-
-export interface PendingDecisionAuction {
-  type: PendingDecisionType.AuctionBid;
-  auctionId: AuctionId;
-}
-
-export interface PendingDecisionJail {
-  type: PendingDecisionType.JailChoice;
-  playerId: PlayerId;
-}
-
-/**
- * A drawn Chance or Community Chest card, waiting to be acknowledged. The card
- * rides inside the decision rather than in a field of its own on GameState:
- * schema.ts validates pendingDecision with `.passthrough()`, so it survives a
- * save/load round trip, whereas a new top-level field would be silently
- * stripped by the surrounding `z.object`.
- */
-export interface PendingDecisionCardDraw {
-  type: PendingDecisionType.CardDraw;
-  playerId: PlayerId;
-  deck: DeckName;
-  card: DeckCard;
-}
-
-export interface PendingDecisionAssetLiquidation {
-  type: PendingDecisionType.AssetLiquidation;
-  playerId: PlayerId;
-  amountDue: number;
-  creditorPlayerId: PlayerId | null;
-  reason: string;
-}
-
-export interface PendingDecisionTrade {
-  type: PendingDecisionType.TradeResponse;
-  proposerPlayerId: PlayerId;
-  recipientPlayerId: PlayerId;
-}
-
-export interface PendingDecisionBankruptcy {
-  type: PendingDecisionType.BankruptcyResolution;
-  playerId: PlayerId;
-}
-
-export interface PendingDecisionGameOver {
-  type: PendingDecisionType.GameOver;
-}
-
-export type PendingDecision =
-  | PendingDecisionNone
-  | PendingDecisionProperty
-  | PendingDecisionAuction
-  | PendingDecisionJail
-  | PendingDecisionCardDraw
-  | PendingDecisionAssetLiquidation
-  | PendingDecisionTrade
-  | PendingDecisionBankruptcy
-  | PendingDecisionGameOver;
+export type {
+  PendingDecision,
+  PendingDecisionAssetLiquidation,
+  PendingDecisionAuction,
+  PendingDecisionBankruptcy,
+  PendingDecisionCardDraw,
+  PendingDecisionGameOver,
+  PendingDecisionJail,
+  PendingDecisionNone,
+  PendingDecisionProperty,
+  PendingDecisionSpeedDieBus,
+  PendingDecisionSpeedDieDestination,
+  PendingDecisionTrade,
+} from './decisions.interfaces';
 
 export interface AuctionState {
   id: AuctionId;
@@ -366,6 +320,8 @@ export type GameCommand =
   | { type: GameCommandType.MortgageAsset; spaceId: SpaceId }
   | { type: GameCommandType.UnmortgageAsset; spaceId: SpaceId }
   | { type: GameCommandType.ProposeTrade; payload: TradeState }
+  | { type: GameCommandType.ChooseBusMove; steps: number }
+  | { type: GameCommandType.ChooseSpeedDieDestination; spaceId: SpaceId }
   | { type: GameCommandType.AcceptTrade }
   | { type: GameCommandType.RejectTrade }
   | { type: GameCommandType.ConfirmBankruptcy };

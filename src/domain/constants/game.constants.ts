@@ -1,3 +1,5 @@
+import { SpeedDieFace } from '../types/game.enums';
+
 /**
  * Ruleset values for the India Edition. Nothing outside this file should
  * hardcode a money amount, a board index, or a bank inventory count.
@@ -12,8 +14,9 @@
  *
  * 2: the Speed Die (useSpeedDie, turn.speedDieFace, player.hasPassedGo) and
  *    jailFreeCards as held cards rather than a count.
+ * 3: turn.pendingMonopolyAdvance, for the Mr. Monopoly face.
  */
-export const GAME_STATE_VERSION = 2;
+export const GAME_STATE_VERSION = 3;
 
 export const STARTING_CASH = 1500;
 export const PASS_GO_AMOUNT = 200;
@@ -57,3 +60,15 @@ export const DEFAULT_CURRENCY_SYMBOL = '₹';
 
 /** Speed Die variant, documented in the rules booklet but not implemented. */
 export const SPEED_DIE_BONUS_CASH = 1000;
+/**
+ * The printed Speed Die's six faces: 1, 2, 3, two buses, and Mr. Monopoly.
+ * Bus appears twice, which is why it is a list rather than the enum's values.
+ */
+export const SPEED_DIE_FACES = [
+  SpeedDieFace.One,
+  SpeedDieFace.Two,
+  SpeedDieFace.Three,
+  SpeedDieFace.Bus,
+  SpeedDieFace.Bus,
+  SpeedDieFace.MrMonopoly,
+] as const;

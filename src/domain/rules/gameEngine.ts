@@ -26,6 +26,7 @@ import {
   GameCommandType,
   GameStatus,
   PendingDecisionType,
+  SpeedDieFace,
   SpaceKind,
   TurnPhase,
 } from '../types/game.enums';
@@ -66,6 +67,12 @@ import {
   sellBlockedReason,
 } from './buildings.utils';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
+import {
+  isSpeedDieActive,
+  isTriple,
+  rollSpeedDie,
+  speedDieSteps,
+} from './speedDie.utils';
 import { DefaultRandomSource, rollDie, shuffle, type RandomSource } from './rng';
 
 const createEvent = (turnNumber: number, message: string): GameEvent => ({
@@ -417,7 +424,10 @@ const nextActiveBidderIndex = (auction: AuctionState): number => {
   return activeBidderIndex;
 };
 
-const completeAuctionIfPossible = (state: GameState): GameState => {
+const completeAuctionIfPossible = (
+  state: GameState,
+  randomSource: RandomSource
+): GameState => {
   const auction = state.auctionState;
   if (!auction) {
     return state;
@@ -432,11 +442,14 @@ const completeAuctionIfPossible = (state: GameState): GameState => {
   }
 
   if (remainingPlayers.length === 0 || !auction.highestBidderId) {
-    return {
-      ...resumeTurnAfterDecision(state),
-      auctionState: null,
-      pendingDecision: { type: PendingDecisionType.None },
-    };
+    return resumeTurnAfterDecision(
+      {
+        ...state,
+        auctionState: null,
+        pendingDecision: { type: PendingDecisionType.None },
+      },
+      randomSource
+    );
   }
 
   const winnerId = auction.highestBidderId;
@@ -452,11 +465,14 @@ const completeAuctionIfPossible = (state: GameState): GameState => {
     ownerPlayerId: winnerId,
   }));
 
-  nextState = {
-    ...resumeTurnAfterDecision(nextState),
-    auctionState: null,
-    pendingDecision: { type: PendingDecisionType.None },
-  };
+  nextState = resumeTurnAfterDecision(
+    {
+      ...nextState,
+      auctionState: null,
+      pendingDecision: { type: PendingDecisionType.None },
+    },
+    randomSource
+  );
 
   return appendEvents(nextState, [
     createEvent(
@@ -540,6 +556,7 @@ const advanceToNextTurn = (state: GameState): GameState => {
       lastRoll: null,
       canRollAgain: false,
       speedDieFace: null,
+      pendingMonopolyAdvance: false,
       reason: nextPlayer.inJail
         ? `${nextPlayer.name} must choose how to leave Jail.`
         : null,
@@ -814,13 +831,32 @@ const settleTrade = (state: GameState, trade: TradeState): GameState => {
   ]);
 };
 
-const resumeTurnAfterDecision = (state: GameState): GameState => {
-  const canRollAgain = state.turn.doublesCount > 0;
+const resumeTurnAfterDecision = (
+  state: GameState,
+  randomSource: RandomSource
+): GameState => {
+  // A Mr. Monopoly advance owed from before the decision is still owed now.
+  const owedAdvance = state.turn.pendingMonopolyAdvance;
+  const advanced = owedAdvance
+    ? applyPendingMonopolyAdvance(
+        state,
+        state.playerOrder[state.activePlayerIndex],
+        randomSource
+      )
+    : state;
+  // Only when the advance actually ran and raised a decision of its own: some
+  // callers resume before clearing the decision they answered, and that is not
+  // the same thing at all.
+  if (owedAdvance && advanced.pendingDecision.type !== PendingDecisionType.None) {
+    return advanced;
+  }
+
+  const canRollAgain = advanced.turn.doublesCount > 0;
 
   return {
-    ...state,
+    ...advanced,
     turn: {
-      ...state.turn,
+      ...advanced.turn,
       phase: canRollAgain ? TurnPhase.AwaitExtraRollOrEnd : TurnPhase.TurnComplete,
       canRollAgain,
       reason: null,
@@ -842,11 +878,19 @@ const resolvePhaseAfterLanding = (
 const resolveCurrentSpace = (
   state: GameState,
   playerId: PlayerId,
-  allowExtraRoll: boolean
+  allowExtraRoll: boolean,
+  /**
+   * The dice total a utility's rent is charged on. Defaults to the turn's own
+   * roll, which is right when the player got here by rolling. A player brought
+   * here another way - a card, a Mr. Monopoly advance - throws afresh, which is
+   * the printed rule and is why this is a parameter rather than a lookup.
+   */
+  rentDiceTotal?: number
 ): GameState => {
   const player = getPlayerById(state, playerId);
   const space = state.board[player.position];
-  const lastRollTotal = state.turn.lastRoll?.reduce((sum, roll) => sum + roll, 0) ?? 0;
+  const lastRollTotal =
+    rentDiceTotal ?? state.turn.lastRoll?.reduce((sum, roll) => sum + roll, 0) ?? 0;
   let nextState = state;
 
   if (space.kind === SpaceKind.Tax) {
@@ -920,6 +964,109 @@ const resolveCurrentSpace = (
   };
 };
 
+/** How a Speed Die face reads in the history. */
+const describeSpeedDie = (face: SpeedDieFace): string => {
+  if (face === SpeedDieFace.Bus) return 'a Bus';
+  if (face === SpeedDieFace.MrMonopoly) return 'Mr. Monopoly';
+  return face;
+};
+
+/**
+ * Moves a player forward and resolves where they land.
+ *
+ * Shared by the ordinary roll and every Speed Die face, so a bus move and a
+ * rolled move cannot drift apart in what they collect or resolve.
+ */
+const advanceAndResolve = (
+  state: GameState,
+  playerId: PlayerId,
+  steps: number,
+  allowExtraRoll: boolean,
+  rentDiceTotal?: number
+): GameState => {
+  const player = getPlayerById(state, playerId);
+  const destination = (player.position + steps) % state.board.length;
+  const moved = movePlayerTo(state, playerId, destination, true);
+  return resolveCurrentSpace(moved, playerId, allowExtraRoll, rentDiceTotal);
+};
+
+/**
+ * Mr. Monopoly's advance: on to the next unowned asset, or failing that the
+ * next one an opponent owns.
+ *
+ * Returns the number of forward steps, or null when there is nothing to advance
+ * to - which happens only when the player owns every asset on the board, and is
+ * a win in all but name.
+ */
+const findMonopolyAdvance = (state: GameState, playerId: PlayerId): number | null => {
+  const player = getPlayerById(state, playerId);
+  const size = state.board.length;
+
+  const stepsTo = (predicate: (spaceId: SpaceId) => boolean): number | null => {
+    for (let steps = 1; steps <= size; steps += 1) {
+      const space = state.board[(player.position + steps) % size];
+      if (isOwnableSpace(space) && predicate(space.id)) {
+        return steps;
+      }
+    }
+    return null;
+  };
+
+  // Unowned first: the printed rule is to buy or auction if anything is going.
+  const unowned = stepsTo((spaceId) => !state.ownership[spaceId]?.ownerPlayerId);
+  if (unowned !== null) return unowned;
+
+  return stepsTo((spaceId) => {
+    const owner = state.ownership[spaceId]?.ownerPlayerId;
+    return Boolean(owner) && owner !== playerId;
+  });
+};
+
+/**
+ * Carries out an owed Mr. Monopoly advance, if the turn is clear to take it.
+ *
+ * Called wherever a space finishes resolving - both straight after the landing
+ * and after a decision that landing raised has been answered - because the
+ * advance is owed either way.
+ */
+const applyPendingMonopolyAdvance = (
+  state: GameState,
+  playerId: PlayerId,
+  randomSource: RandomSource
+): GameState => {
+  if (!state.turn.pendingMonopolyAdvance) return state;
+  if (state.pendingDecision.type !== PendingDecisionType.None) return state;
+
+  // Cleared before the advance, so the decision the advance itself may raise
+  // cannot send us round again.
+  const cleared: GameState = {
+    ...state,
+    turn: { ...state.turn, pendingMonopolyAdvance: false },
+  };
+
+  const steps = findMonopolyAdvance(cleared, playerId);
+  if (steps === null) return cleared;
+
+  const player = getPlayerById(cleared, playerId);
+  const target = cleared.board[(player.position + steps) % cleared.board.length];
+  const announced = appendEvents(cleared, [
+    createEvent(
+      cleared.turnNumber,
+      `Mr. Monopoly moved ${player.name} on to ${target.name}.`
+    ),
+  ]);
+
+  // A utility reached this way is charged on a fresh throw, not on the roll
+  // that started the turn - the player did not roll their way here.
+  return advanceAndResolve(
+    announced,
+    playerId,
+    steps,
+    cleared.turn.doublesCount > 0,
+    rollDie(randomSource) + rollDie(randomSource)
+  );
+};
+
 export const createGameState = (
   input: CreateGameInput,
   randomSource: RandomSource = new DefaultRandomSource()
@@ -963,6 +1110,7 @@ export const createGameState = (
       canRollAgain: false,
       reason: null,
       speedDieFace: null,
+      pendingMonopolyAdvance: false,
     },
     pendingDecision: { type: PendingDecisionType.None },
     tradeState: null,
@@ -1038,8 +1186,17 @@ export const executeGameCommand = (
 
       const dieOne = rollDie(randomSource);
       const dieTwo = rollDie(randomSource);
+      // Only the white dice decide a double. The Speed Die is rolled after,
+      // and a matching face is irrelevant to it.
       const isDouble = dieOne === dieTwo;
-      const nextDoublesCount = isDouble ? nextState.turn.doublesCount + 1 : 0;
+      const speedDieFace = isSpeedDieActive(nextState)
+        ? rollSpeedDie(randomSource)
+        : null;
+      const rolledTriple = isTriple(dieOne, dieTwo, speedDieFace);
+      // A triple is its own outcome, not a double: it grants no extra roll and
+      // it does not count towards the three that send a player to Jail.
+      const nextDoublesCount =
+        isDouble && !rolledTriple ? nextState.turn.doublesCount + 1 : 0;
 
       nextState = {
         ...nextState,
@@ -1048,10 +1205,20 @@ export const executeGameCommand = (
           doublesCount: nextDoublesCount,
           lastRoll: [dieOne, dieTwo],
           canRollAgain: false,
-          speedDieFace: null,
+          speedDieFace,
+          // Mr. Monopoly's advance is owed once the landed space has resolved.
+          pendingMonopolyAdvance: speedDieFace === SpeedDieFace.MrMonopoly,
           reason: null,
         },
       };
+      nextState = appendEvents(nextState, [
+        createEvent(
+          nextState.turnNumber,
+          speedDieFace
+            ? `${activePlayer.name} rolled ${dieOne}, ${dieTwo} and ${describeSpeedDie(speedDieFace)}.`
+            : `${activePlayer.name} rolled ${dieOne} and ${dieTwo}.`
+        ),
+      ]);
 
       if (nextDoublesCount === DOUBLES_BEFORE_JAIL) {
         nextState = sendPlayerToJail(
@@ -1062,16 +1229,49 @@ export const executeGameCommand = (
         break;
       }
 
-      const total = dieOne + dieTwo;
-      const destination = (activePlayer.position + total) % nextState.board.length;
-      nextState = movePlayerTo(nextState, activePlayer.id, destination, true);
-      nextState = appendEvents(nextState, [
-        createEvent(
-          nextState.turnNumber,
-          `${activePlayer.name} rolled ${dieOne} and ${dieTwo}.`
-        ),
-      ]);
-      nextState = resolveCurrentSpace(nextState, activePlayer.id, isDouble);
+      // Three of a kind: the player picks anywhere on the board.
+      if (rolledTriple) {
+        nextState = {
+          ...nextState,
+          pendingDecision: {
+            type: PendingDecisionType.SpeedDieDestination,
+            playerId: activePlayer.id,
+          },
+          turn: {
+            ...nextState.turn,
+            phase: TurnPhase.AwaitDecision,
+            reason: `${activePlayer.name} may move to any space.`,
+          },
+        };
+        break;
+      }
+
+      // A Bus lets the player choose which white dice to move by, so the move
+      // waits on their answer.
+      if (speedDieFace === SpeedDieFace.Bus) {
+        nextState = {
+          ...nextState,
+          pendingDecision: {
+            type: PendingDecisionType.SpeedDieBus,
+            playerId: activePlayer.id,
+            whiteDice: [dieOne, dieTwo],
+          },
+          turn: {
+            ...nextState.turn,
+            phase: TurnPhase.AwaitDecision,
+            reason: `${activePlayer.name} caught the bus.`,
+          },
+        };
+        break;
+      }
+
+      nextState = advanceAndResolve(
+        nextState,
+        activePlayer.id,
+        dieOne + dieTwo + speedDieSteps(speedDieFace),
+        isDouble
+      );
+      nextState = applyPendingMonopolyAdvance(nextState, activePlayer.id, randomSource);
       break;
     }
     case GameCommandType.BuyLandedAsset: {
@@ -1096,25 +1296,19 @@ export const executeGameCommand = (
         ...ownership,
         ownerPlayerId: buyer.id,
       }));
-      nextState = {
-        ...nextState,
-        pendingDecision: { type: PendingDecisionType.None },
-        turn: {
-          ...nextState.turn,
-          phase:
-            nextState.turn.doublesCount > 0
-              ? TurnPhase.AwaitExtraRollOrEnd
-              : TurnPhase.TurnComplete,
-          canRollAgain: nextState.turn.doublesCount > 0,
-          reason: null,
-        },
-      };
       nextState = appendEvents(nextState, [
         createEvent(
           nextState.turnNumber,
           `${buyer.name} bought ${space.name} for ${getThemeOrDefault(nextState.themeId).currencySymbol}${space.price}.`
         ),
       ]);
+      // Through the shared resume rather than repeating its phase rules here:
+      // this case used to restate them, which is why a Mr. Monopoly advance
+      // owed across the buy decision was silently dropped.
+      nextState = resumeTurnAfterDecision(
+        { ...nextState, pendingDecision: { type: PendingDecisionType.None } },
+        randomSource
+      );
       break;
     }
     case GameCommandType.DeclineLandedAsset:
@@ -1156,7 +1350,7 @@ export const executeGameCommand = (
           `${activeBidder.name} bid ${getThemeOrDefault(nextState.themeId).currencySymbol}${command.amount}.`
         ),
       ]);
-      nextState = completeAuctionIfPossible(nextState);
+      nextState = completeAuctionIfPossible(nextState, randomSource);
       break;
     }
     case GameCommandType.PassAuction: {
@@ -1184,7 +1378,7 @@ export const executeGameCommand = (
           `${getPlayerById(nextState, activeBidderId).name} passed in the auction.`
         ),
       ]);
-      nextState = completeAuctionIfPossible(nextState);
+      nextState = completeAuctionIfPossible(nextState, randomSource);
       break;
     }
     case GameCommandType.PayJailFine: {
@@ -1259,6 +1453,7 @@ export const executeGameCommand = (
           reason: null,
           // Only the white dice get a player out of Jail, so no Speed Die here.
           speedDieFace: null,
+          pendingMonopolyAdvance: false,
         },
       };
       nextState = appendEvents(nextState, [
@@ -1370,7 +1565,7 @@ export const executeGameCommand = (
         nextState.pendingDecision.type === PendingDecisionType.None &&
         !getActivePlayer(nextState).inJail
       ) {
-        nextState = resumeTurnAfterDecision(nextState);
+        nextState = resumeTurnAfterDecision(nextState, randomSource);
       }
       break;
     }
@@ -1467,10 +1662,13 @@ export const executeGameCommand = (
             decision.reason
           );
 
-      nextState = {
-        ...resumeTurnAfterDecision(nextState),
-        pendingDecision: { type: PendingDecisionType.None },
-      };
+      nextState = resumeTurnAfterDecision(
+        {
+          ...nextState,
+          pendingDecision: { type: PendingDecisionType.None },
+        },
+        randomSource
+      );
       break;
     }
     case GameCommandType.ConfirmBankruptcy: {
@@ -1638,6 +1836,80 @@ export const executeGameCommand = (
       // alone: selling buildings is how a player raises cash mid-liquidation.
       break;
     }
+    case GameCommandType.ChooseBusMove: {
+      const decision = nextState.pendingDecision;
+      if (decision.type !== PendingDecisionType.SpeedDieBus) {
+        throw new Error('There is no bus to catch.');
+      }
+      const [whiteOne, whiteTwo] = decision.whiteDice;
+      // One die, the other, or both - and nothing else. A free choice of steps
+      // would be a different game.
+      const allowed = [whiteOne, whiteTwo, whiteOne + whiteTwo];
+      if (!allowed.includes(command.steps)) {
+        throw new Error(
+          `A bus moves ${whiteOne}, ${whiteTwo} or ${whiteOne + whiteTwo} spaces.`
+        );
+      }
+
+      const busPlayer = getPlayerById(nextState, decision.playerId);
+      nextState = {
+        ...nextState,
+        pendingDecision: { type: PendingDecisionType.None },
+        turn: { ...nextState.turn, phase: TurnPhase.ResolvingMovement, reason: null },
+      };
+      nextState = appendEvents(nextState, [
+        createEvent(
+          nextState.turnNumber,
+          `${busPlayer.name} took the bus ${command.steps} spaces.`
+        ),
+      ]);
+      // The white dice were a double, so the extra roll still follows: the bus
+      // decides how far, not whether the turn continues.
+      nextState = advanceAndResolve(
+        nextState,
+        decision.playerId,
+        command.steps,
+        whiteOne === whiteTwo
+      );
+      break;
+    }
+    case GameCommandType.ChooseSpeedDieDestination: {
+      const decision = nextState.pendingDecision;
+      if (decision.type !== PendingDecisionType.SpeedDieDestination) {
+        throw new Error('There is no free move to make.');
+      }
+      const target = nextState.board.findIndex((space) => space.id === command.spaceId);
+      if (target < 0) {
+        throw new Error('No such space.');
+      }
+
+      const moving = getPlayerById(nextState, decision.playerId);
+      nextState = {
+        ...nextState,
+        pendingDecision: { type: PendingDecisionType.None },
+        turn: { ...nextState.turn, phase: TurnPhase.ResolvingMovement, reason: null },
+      };
+      nextState = appendEvents(nextState, [
+        createEvent(
+          nextState.turnNumber,
+          `${moving.name} moved to ${nextState.board[target].name}.`
+        ),
+      ]);
+      // Forward round the board, so the trip past GO is paid for like any
+      // other - the printed rule moves the token, it does not teleport it.
+      const forwardSteps =
+        (target - moving.position + nextState.board.length) % nextState.board.length;
+      // A triple grants no extra roll: it is not a double. And a utility picked
+      // this way is charged on a fresh throw rather than the matching triple.
+      nextState = advanceAndResolve(
+        nextState,
+        decision.playerId,
+        forwardSteps,
+        false,
+        rollDie(randomSource) + rollDie(randomSource)
+      );
+      break;
+    }
     case GameCommandType.ProposeTrade: {
       const activePlayer = getActivePlayer(nextState);
       const trade = command.payload;
@@ -1684,11 +1956,14 @@ export const executeGameCommand = (
       }
 
       nextState = settleTrade(nextState, trade);
-      nextState = resumeTurnAfterDecision({
-        ...nextState,
-        tradeState: null,
-        pendingDecision: { type: PendingDecisionType.None },
-      });
+      nextState = resumeTurnAfterDecision(
+        {
+          ...nextState,
+          tradeState: null,
+          pendingDecision: { type: PendingDecisionType.None },
+        },
+        randomSource
+      );
       break;
     }
     case GameCommandType.RejectTrade: {
@@ -1708,7 +1983,7 @@ export const executeGameCommand = (
         },
         [createEvent(nextState.turnNumber, `${recipient.name} rejected the trade.`)]
       );
-      nextState = resumeTurnAfterDecision(nextState);
+      nextState = resumeTurnAfterDecision(nextState, randomSource);
       break;
     }
     default:

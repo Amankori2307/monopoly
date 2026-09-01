@@ -101,7 +101,7 @@ All twenty runtime commands are implemented: `rollTurnDice`, `buyLandedAsset`,
 `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`,
 `attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`,
 `confirmBankruptcy`, `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `proposeTrade`,
-`acceptTrade`, `rejectTrade`, `endTurn`.
+`acceptTrade`, `rejectTrade`, `chooseBusMove`, `chooseSpeedDieDestination`, `endTurn`.
 
 `GameCommandResult.uiHints` is consequently always empty - it only ever carried "not implemented
 yet" notices, and nothing renders it now. Feedback goes through the history and the toasts.
@@ -109,6 +109,16 @@ yet" notices, and nothing renders it now. Feedback goes through the history and 
 ### Locked economics (`gameEngine.ts` constants)
 
 Starting cash `₹1500` · pass GO `₹200` · jail fine `₹50` · auction opens at `₹10`, min increment `1` · 40 spaces · 32 houses / 12 hotels (now really decremented) · buildings refund `floor(cost/2)` · history capped at 120 events, newest first.
+
+**The Speed Die is optional and fixed at setup.** `useSpeedDie` on `GameState`, and it stays inert
+until every non-bankrupt player has `hasPassedGo`. Only the two white dice decide doubles and Jail;
+`turn.speedDieFace` is deliberately separate from `turn.lastRoll` so no reader has to remember to
+exclude it. A three-of-a-kind is **not** a double - no extra roll, no step towards Jail.
+
+**Mr. Monopoly's advance survives a decision.** It is `turn.pendingMonopolyAdvance`, applied by
+`resumeTurnAfterDecision` once the turn is clear - the landed space may raise a decision of its own.
+Any command that answers a decision must go through `resumeTurnAfterDecision` rather than restating
+its phase rules, or the advance is silently dropped.
 
 **Both even rules are one comparison.** No two sites in a colour group may differ by more than one
 `buildLevel` (0-4 houses, 5 a hotel). `buildBlockedReason` / `sellBlockedReason` in

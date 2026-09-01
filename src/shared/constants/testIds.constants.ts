@@ -80,6 +80,11 @@ export const TEST_IDS = {
   turnControls: 'turn-controls',
   diceDock: 'dice-dock',
   dieFace: 'die-face',
+  speedDieFace: 'speed-die-face',
+  busDecision: 'bus-decision',
+  busChoice: 'bus-choice',
+  destinationDecision: 'destination-decision',
+  destinationChoice: 'destination-choice',
   rollButton: 'roll-button',
   endTurnButton: 'end-turn-button',
 
