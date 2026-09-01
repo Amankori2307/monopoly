@@ -104,10 +104,11 @@ cash directly, and pass-GO wrote its own sentence with the amount and symbol har
 
 ## Known gaps
 
-- **`AssetLiquidation` resolves.** The panel lists the buildings you could sell and the sites you
-  could mortgage, a Pay button settles once the cash is there, and bankruptcy is offered when
-  nothing is left. What remains: only one liquidation can be pending, so several debts from one
-  card still stop at the first player who cannot pay.
+- **`AssetLiquidation` resolves, and several debts from one card all stand.** The panel lists the
+  buildings you could sell and the sites you could mortgage, says how many debts are waiting behind
+  this one, and offers bankruptcy when nothing is left.
+- Toasts now come from `GameCommandResult.events` rather than from diffing the history: the engine
+  says what it appended.
 - Toast tone is inferred from wording. A structured `GameEvent` would be more robust, but costs a
   schema change and a version bump for a cosmetic gain.
 - `CardEffectKind.PayEach` is implemented in the engine but no card uses it.

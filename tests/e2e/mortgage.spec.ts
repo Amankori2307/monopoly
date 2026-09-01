@@ -250,3 +250,75 @@ test('declares a winner when the last opponent goes bankrupt', async ({ page }) 
   await page.getByTestId(TEST_IDS.gameOverHome).click();
   await expect(page).toHaveURL(/\/$/);
 });
+
+/**
+ * One card can leave several players unable to pay. Before the queue, everyone
+ * after the first was silently forgiven.
+ */
+test('works through every debt one card leaves behind', async ({ page }) => {
+  await startGame(page, { players: 3 });
+
+  await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const [collector, brokeOne, brokeTwo] = game.playerOrder;
+
+    game.activePlayerIndex = 0;
+    game.players[brokeOne].cash = 10;
+    game.players[brokeTwo].cash = 10;
+    // Two debts owed to the same collector, the second queued behind the first.
+    game.pendingDecision = {
+      type: 'asset-liquidation',
+      playerId: brokeOne,
+      amountDue: 100,
+      creditorPlayerId: collector,
+      reason: 'birthday money',
+      queued: [
+        {
+          playerId: brokeTwo,
+          amountDue: 100,
+          creditorPlayerId: collector,
+          reason: 'birthday money',
+        },
+      ],
+    };
+    game.turn = {
+      phase: 'await_decision',
+      doublesCount: 0,
+      lastRoll: [3, 4],
+      canRollAgain: false,
+      reason: 'birthday money',
+      speedDieFace: null,
+      pendingMonopolyAdvance: false,
+    };
+    localStorage.setItem(key, JSON.stringify(game));
+  });
+  await page.reload();
+
+  // The panel says another debt is waiting, rather than springing it later.
+  await expect(page.getByTestId(TEST_IDS.liquidationQueued)).toContainText(
+    /1 more debt/i
+  );
+
+  // Neither can pay, so both go bankrupt in turn - and the second debt survives
+  // the first player leaving.
+  await page.getByTestId(TEST_IDS.declareBankruptcy).click();
+  await expect(page.getByTestId(TEST_IDS.liquidationDecision)).toBeVisible();
+  await expect(page.getByTestId(TEST_IDS.liquidationQueued)).toHaveCount(0);
+
+  const second = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    return {
+      pendingPlayer: game.pendingDecision.playerId as string,
+      secondPlayer: game.playerOrder[2] as string,
+      firstOut: game.players[game.playerOrder[1]].isBankrupt as boolean,
+    };
+  });
+  expect(second.firstOut).toBe(true);
+  expect(second.pendingPlayer).toBe(second.secondPlayer);
+});

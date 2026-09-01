@@ -103,8 +103,10 @@ File-naming rules are in [conventions.md](conventions.md).
 | [persistence/persistence.ts](../src/features/persistence/persistence.ts)                                   | localStorage read/write: save, load, delete, and the saved-game index.                                      |
 | [persistence/persistence.integration.test.ts](../src/features/persistence/persistence.integration.test.ts) | Save/load round trip, and that a drawn card survives it.                                                    |
 | [persistence/migrations.test.ts](../src/features/persistence/migrations.test.ts)                           | v1 saves upgrading, and future versions passing through untouched.                                          |
+| [persistence/persistence.errors.test.ts](../src/features/persistence/persistence.errors.test.ts)           | Quota failures, and a behind-version save being written back.                                               |
 | [persistence/schema.ts](../src/features/persistence/schema.ts)                                             | Zod schemas validating anything read back out of storage.                                                   |
 | [persistence/migrations.ts](../src/features/persistence/migrations.ts)                                     | Brings an older save up to the current GAME_STATE_VERSION, before validation.                               |
+| [persistence/persistence.errors.ts](../src/features/persistence/persistence.errors.ts)                     | StorageWriteError: a write the browser refused, told apart from a bug.                                      |
 | [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                       |
 | [rules/rulesSync.test.ts](../src/features/rules/rulesSync.test.ts)                                         | Enforces that the booklet and docs/india-edition-rules.md cover the same topics and quote the same numbers. |
 | [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                                       | Integration tests: every nav link resolves to a rendered section.                                           |
@@ -112,6 +114,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                                 | Loads the routed game and resolves its theme and currency symbol.                                           |
 | [game/hooks/useGameCommands.ts](../src/features/game/hooks/useGameCommands.ts)                             | Binds every command the game screen dispatches.                                                             |
 | [setup/hooks/useGameSetupForm.ts](../src/features/setup/hooks/useGameSetupForm.ts)                         | Setup form state; delegates the rules to setupValidation.utils.                                             |
+| [hooks/useGameSetupForm.test.ts](../src/features/setup/hooks/useGameSetupForm.test.ts)                     | The player-count clamp notice and the Speed Die setting.                                                    |
 | [setup/setup.interfaces.ts](../src/features/setup/setup.interfaces.ts)                                     | The game-setup form draft shape.                                                                            |
 | [setup/setupValidation.utils.ts](../src/features/setup/setupValidation.utils.ts)                           | Pure setup validation: non-empty, unique names, unique tokens.                                              |
 | [setup/setupValidation.utils.test.ts](../src/features/setup/setupValidation.utils.test.ts)                 | Unit tests for every validation rule and its precedence.                                                    |
@@ -190,14 +193,15 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/components/setup/` — presentational setup components
 
-| File                                                                           | What it does                                                    |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)                         | Intro card: what the app is and the locked v1 scope.            |
-| [setup/SpeedDieToggle.tsx](../src/components/setup/SpeedDieToggle.tsx)         | The one optional ruleset choice, agreed before the game starts. |
-| [setup/RulesetSummary.tsx](../src/components/setup/RulesetSummary.tsx)         | Headline economics, quoted from the constants.                  |
-| [setup/GameIdentityFields.tsx](../src/components/setup/GameIdentityFields.tsx) | Game name and theme.                                            |
-| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx)             | One player's name and token inputs.                             |
-| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx)             | Saved games with continue and delete, or the empty state.       |
+| File                                                                               | What it does                                                    |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)                             | Intro card: what the app is and the locked v1 scope.            |
+| [setup/SpeedDieToggle.tsx](../src/components/setup/SpeedDieToggle.tsx)             | The one optional ruleset choice, agreed before the game starts. |
+| [setup/RulesetSummary.tsx](../src/components/setup/RulesetSummary.tsx)             | Headline economics, quoted from the constants.                  |
+| [setup/GameIdentityFields.tsx](../src/components/setup/GameIdentityFields.tsx)     | Game name and theme.                                            |
+| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx)                 | One player's name and token inputs.                             |
+| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx)                 | Saved games with continue and delete, or the empty state.       |
+| [setup/RecentGamesList.test.tsx](../src/components/setup/RecentGamesList.test.tsx) | The two-step delete.                                            |
 
 ## `src/components/rules/` — rules booklet sections
 

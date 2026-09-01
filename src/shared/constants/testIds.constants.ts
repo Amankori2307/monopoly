@@ -52,6 +52,7 @@ export const TEST_IDS = {
   liquidationSell: 'liquidation-sell',
   liquidationSettle: 'liquidation-settle',
   liquidationDeadEnd: 'liquidation-dead-end',
+  liquidationQueued: 'liquidation-queued',
   declareBankruptcy: 'declare-bankruptcy',
   gameOverDecision: 'game-over-decision',
   gameOverHome: 'game-over-home',
@@ -99,10 +100,13 @@ export const TEST_IDS = {
 
   // Setup
   playerCountInput: 'player-count-input',
+  playerCountNotice: 'player-count-notice',
   speedDieToggle: 'speed-die-toggle',
   setupForm: 'setup-form',
   recentGamesList: 'recent-games-list',
   recentGameItem: 'recent-game-item',
+  deleteGame: 'delete-game',
+  confirmDeleteGame: 'confirm-delete-game',
 } as const;
 
 export type TestId = (typeof TEST_IDS)[keyof typeof TEST_IDS];

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { StoredGameIndexEntry } from '../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../shared/constants/testIds.constants';
 
@@ -7,7 +8,16 @@ interface RecentGamesListProps {
   onDelete: (gameId: string) => void;
 }
 
+/**
+ * Saved games, with a two-step delete.
+ *
+ * Deleting a save is the one irreversible thing this screen does, and the
+ * button sat one click away from Continue - so it asks first, in place, rather
+ * than through a dialog that would need dismissing.
+ */
 export function RecentGamesList({ games, onContinue, onDelete }: RecentGamesListProps) {
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
   if (games.length === 0) {
     return (
       <div className="empty-state">No saved games yet. Create one to get started.</div>
@@ -36,13 +46,37 @@ export function RecentGamesList({ games, onContinue, onDelete }: RecentGamesList
             >
               Continue
             </button>
-            <button
-              className="danger-button"
-              onClick={() => onDelete(game.id)}
-              type="button"
-            >
-              Delete
-            </button>
+            {confirmingId === game.id ? (
+              <>
+                <button
+                  className="danger-button"
+                  data-testid={scopedTestId(TEST_IDS.confirmDeleteGame, game.id)}
+                  onClick={() => {
+                    onDelete(game.id);
+                    setConfirmingId(null);
+                  }}
+                  type="button"
+                >
+                  Delete for good
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => setConfirmingId(null)}
+                  type="button"
+                >
+                  Keep
+                </button>
+              </>
+            ) : (
+              <button
+                className="danger-button"
+                data-testid={scopedTestId(TEST_IDS.deleteGame, game.id)}
+                onClick={() => setConfirmingId(game.id)}
+                type="button"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </article>
       ))}

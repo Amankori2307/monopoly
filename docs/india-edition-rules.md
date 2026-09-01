@@ -649,20 +649,31 @@ Nothing in the ruleset is type-level only any more.
 
 ### Fixed so far
 
-| Bug                                            | Effect                                                                                                                                                                 |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Extra roll lost on decline                     | Rolling doubles, landing on an unowned site and **declining** forfeited the extra roll that **buying** it kept. One `resumeTurnAfterDecision` now serves both          |
-| Passed bidders re-prompted                     | The auction index wrapped without skipping players who had passed, so a bid/pass interleave could hand the turn back to someone who had left                           |
-| **`asset-liquidation` was a dead end**         | A player who could not pay was stuck for the rest of the game. `settleDebt` is the exit; mortgaging raises the cash. The insolvent branches also moved no money at all |
-| **The Jail fine released an insolvent player** | Both paths — the voluntary fine and the mandatory third-turn one — overwrote the liquidation decision and let a player with under ₹50 walk out                         |
-| `CollectFromEach` / `PayEach` stale reads      | Both loops decided who pays from a snapshot taken before any payment happened                                                                                          |
-| **A game could never end**                     | The last player standing is now declared the winner; before this a two-player game carried on with one bankrupt player who could do nothing                            |
+| Bug                                             | Effect                                                                                                                                                                       |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extra roll lost on decline                      | Rolling doubles, landing on an unowned site and **declining** forfeited the extra roll that **buying** it kept. One `resumeTurnAfterDecision` now serves both                |
+| Passed bidders re-prompted                      | The auction index wrapped without skipping players who had passed, so a bid/pass interleave could hand the turn back to someone who had left                                 |
+| **`asset-liquidation` was a dead end**          | A player who could not pay was stuck for the rest of the game. `settleDebt` is the exit; mortgaging raises the cash. The insolvent branches also moved no money at all       |
+| **The Jail fine released an insolvent player**  | Both paths — the voluntary fine and the mandatory third-turn one — overwrote the liquidation decision and let a player with under ₹50 walk out                               |
+| `CollectFromEach` / `PayEach` stale reads       | Both loops decided who pays from a snapshot taken before any payment happened                                                                                                |
+| **A game could never end**                      | The last player standing is now declared the winner; before this a two-player game carried on with one bankrupt player who could do nothing                                  |
+| **Several debts from one card**                 | One card can leave more than one player unable to pay, and only the first was recorded - everyone after them was silently forgiven. The extras queue inside the decision now |
+| **Buying and auctions moved money inline**      | Both bypassed the payment primitives, so the "every amount goes through one choke point" invariant was not total                                                             |
+| **`events` returned the whole history**         | And `saveRequired` was hardcoded true, so neither answered the question its name asks. The feedback layer had to diff the history itself                                     |
+| **A backward move could collect the GO salary** | The wrap test was a bare `next < current`, true of any backward move. Latent, because the one backward card passed `collectGo: false`                                        |
 
 ### Known divergences and bugs, still open
 
-| Issue                                                        | Notes                                                                                                                                        |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Several debts from one card                                  | Only one liquidation can be pending, so the loop stops at the first player who cannot pay. Needs a debt queue, which belongs with bankruptcy |
-| Utility rent after a card-driven arrival                     | Uses the turn's original roll rather than a fresh throw. Not reachable with the current deck                                                 |
-| `movePlayerTo`'s pass-GO test is `nextPosition < position`   | True for _any_ backward move. Safe only because `MoveSteps` always passes `collectGo: false`                                                 |
-| `BuyLandedAsset` and the auction bypass the money primitives | They mutate cash inline and log their own event, so the "every amount goes through one of two choke points" invariant is not total           |
+Every bug in this section has been fixed. What is left are deliberate divergences, each stated at
+the rule it belongs to:
+
+| Divergence                                               | Where it is explained                                   |
+| -------------------------------------------------------- | ------------------------------------------------------- |
+| No auction when the bank runs out of houses              | Section 8 — building waits until a building is returned |
+| A bankrupt's properties return unowned, not auctioned    | Section 11                                              |
+| The receiver of a mortgaged site pays 10% with no choice | Section 10                                              |
+| A mortgaged site still counts toward colour sets         | Section 9 — this one matches the printed rule           |
+
+Fixed in the pass that closed them: the debt queue (several debts from one card), utility rent
+after a card-driven arrival, `movePlayerTo`'s pass-GO direction, and buying and auctions bypassing
+the money primitives. Each is listed in the table above this one.

@@ -123,9 +123,10 @@ export function DecisionPanel({
           onMortgageSite={handlers.onMortgageSite}
           onSellBuilding={handlers.onSellBuilding}
           onSettleDebt={handlers.onSettleDebt}
-          sellableBuildings={decision.sellableBuildings}
           playerName={decision.playerName}
+          queuedDebtCount={decision.queuedDebtCount}
           reason={decision.reason}
+          sellableBuildings={decision.sellableBuildings}
         />
       ) : null}
     </section>

@@ -483,3 +483,11 @@
     font-size: 0.78rem;
   }
 }
+
+// More debts from the same card, so the next one is not a surprise.
+.liquidation-queued {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-style: italic;
+}

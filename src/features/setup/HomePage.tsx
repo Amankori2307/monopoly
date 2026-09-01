@@ -79,6 +79,15 @@ export function HomePage() {
                     type="number"
                     value={form.playerCount}
                   />
+                  {form.playerCountNotice ? (
+                    <span
+                      className="helper-text"
+                      data-testid={TEST_IDS.playerCountNotice}
+                      role="status"
+                    >
+                      {form.playerCountNotice}
+                    </span>
+                  ) : null}
                 </label>
                 <RulesetSummary
                   currencySymbol={currencySymbol}

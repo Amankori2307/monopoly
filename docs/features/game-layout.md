@@ -192,6 +192,4 @@ local state: the selected space id for the title-deed modal.
 
 ## Known gaps
 
-- `GamePage` still exceeds the 120-line function warning.
-- The rail cannot dispatch yet: build/mortgage need a property picker to supply a `spaceId`.
 - No dedicated component tests for the board and panel components (covered indirectly).

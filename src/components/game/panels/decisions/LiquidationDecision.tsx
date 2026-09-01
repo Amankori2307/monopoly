@@ -18,6 +18,8 @@ interface LiquidationDecisionProps {
   onSellBuilding: (spaceId: SpaceId, isHotel: boolean) => void;
   onSettleDebt: () => void;
   playerName: string;
+  /** Debts from the same card still waiting behind this one. */
+  queuedDebtCount: number;
   reason: string;
 }
 
@@ -43,6 +45,7 @@ export function LiquidationDecision({
   onSellBuilding,
   onSettleDebt,
   playerName,
+  queuedDebtCount,
   reason,
   sellableBuildings,
 }: LiquidationDecisionProps) {
@@ -58,6 +61,14 @@ export function LiquidationDecision({
       <p className="liquidation-reason">
         {creditorName ? `Owed to ${creditorName}` : 'Owed to the Bank'} — {reason}.
       </p>
+      {/* One card can leave several players owing, so say so rather than
+          springing the next debt on them after this one is settled. */}
+      {queuedDebtCount > 0 ? (
+        <p className="liquidation-queued" data-testid={TEST_IDS.liquidationQueued}>
+          {queuedDebtCount} more debt{queuedDebtCount > 1 ? 's' : ''} from the same card
+          {queuedDebtCount > 1 ? ' are' : ' is'} waiting behind this one.
+        </p>
+      ) : null}
 
       {/* Buildings first: they block mortgaging their whole colour set, so a
           built-up player has to sell before anything else is available. */}

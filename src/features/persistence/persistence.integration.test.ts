@@ -193,6 +193,7 @@ describe('persistence round trip', () => {
         amountDue: debt,
         creditorPlayerId: creditorId,
         reason: 'rent',
+        queued: [],
       },
     };
     saveGame(owing);

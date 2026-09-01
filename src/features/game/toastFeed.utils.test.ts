@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GameEvent } from '../../domain/types/game.interfaces';
-import { classifyEventTone, selectNewEvents, toToasts } from './toastFeed.utils';
+import { classifyEventTone, toToasts } from './toastFeed.utils';
 
 const event = (id: string, message: string): GameEvent => ({
   id,
@@ -36,31 +36,6 @@ describe('classifyEventTone', () => {
     expect(classifyEventTone('Asha paid Vikram ₹35 and collected nothing.')).toBe(
       'debit'
     );
-  });
-});
-
-describe('selectNewEvents', () => {
-  // History is newest-first, so the delta is the leading slice.
-  it('returns only the events a command appended', () => {
-    const previous = [event('b', 'older')];
-    const next = [event('c', 'newest'), event('a', 'new'), event('b', 'older')];
-
-    expect(selectNewEvents(previous, next).map((e) => e.id)).toEqual(['c', 'a']);
-  });
-
-  it('returns nothing when the command appended nothing', () => {
-    const history = [event('a', 'same')];
-
-    expect(selectNewEvents(history, history)).toEqual([]);
-  });
-
-  // Late in a long game the cap is reached and length stops growing, so a
-  // length diff alone would silently stop producing feedback.
-  it('falls back to unseen ids once the history cap is reached', () => {
-    const previous = [event('b', 'old'), event('c', 'older')];
-    const next = [event('a', 'new'), event('b', 'old')];
-
-    expect(selectNewEvents(previous, next).map((e) => e.id)).toEqual(['a']);
   });
 });
 

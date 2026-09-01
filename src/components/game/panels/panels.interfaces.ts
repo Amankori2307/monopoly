@@ -97,6 +97,8 @@ export interface LiquidationDecisionViewModel {
    * is what makes them bankrupt rather than merely short.
    */
   isBankrupt: boolean;
+  /** Debts from the same card still waiting behind this one. */
+  queuedDebtCount: number;
 }
 
 export interface TradeResponseDecisionViewModel {

@@ -24,27 +24,6 @@ export const classifyEventTone = (message: string): ToastTone => {
   return 'neutral';
 };
 
-/**
- * The events a command just appended.
- *
- * History is newest-first and capped, so the delta is the leading slice. Do not
- * use GameCommandResult.events for this - it returns the whole history, not what
- * changed (see CLAUDE.md section 8).
- */
-export const selectNewEvents = (
-  previousHistory: GameEvent[],
-  nextHistory: GameEvent[]
-): GameEvent[] => {
-  const added = nextHistory.length - previousHistory.length;
-  if (added <= 0) {
-    // The cap was already reached, so length cannot grow. Fall back to the ids
-    // we have not seen, which keeps feedback working late in a long game.
-    const seen = new Set(previousHistory.map((event) => event.id));
-    return nextHistory.filter((event) => !seen.has(event.id));
-  }
-  return nextHistory.slice(0, added);
-};
-
 /** Oldest first, so a burst of events reads in the order it happened. */
 export const toToasts = (events: GameEvent[]): Toast[] =>
   [...events].reverse().map((event) => ({

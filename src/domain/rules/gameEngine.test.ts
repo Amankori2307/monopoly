@@ -1254,6 +1254,7 @@ describe('mortgage, redeem and settle', () => {
           amountDue: rentOwed,
           creditorPlayerId: null,
           reason: 'Income Tax',
+          queued: [],
         },
       };
 
@@ -1612,6 +1613,7 @@ describe('winning', () => {
         amountDue: 5000,
         creditorPlayerId: withThree.playerOrder[1],
         reason: 'rent',
+        queued: [],
       },
       turn: { ...withThree.turn, phase: TurnPhase.AwaitDecision },
     };
@@ -1799,6 +1801,7 @@ describe('building', () => {
         amountDue: 900,
         creditorPlayerId: state.playerOrder[1],
         reason: 'rent',
+        queued: [],
       },
       turn: { ...state.turn, phase: TurnPhase.AwaitDecision },
     };
@@ -2574,6 +2577,7 @@ describe('the Mr. Monopoly face', () => {
         amountDue: 10,
         creditorPlayerId: opponentId,
         reason: 'rent',
+        queued: [],
       },
     };
     const opponentCashBefore = state.players[opponentId].cash;
@@ -2660,5 +2664,349 @@ describe('the Mr. Monopoly face', () => {
       expect(afterSecond.players[playerId].position).toBe(landedOn);
     }
     expect(afterBuy.turn.pendingMonopolyAdvance).toBe(false);
+  });
+});
+
+/**
+ * The result contract. `events` used to return the entire capped history and
+ * `saveRequired` was hardcoded true, so neither could answer the question its
+ * name asks - the feedback layer had to diff the history itself.
+ */
+describe('the command result', () => {
+  it('returns only the events this command appended', () => {
+    const game = createBaseGame();
+    const before = game.history.length;
+
+    const result = executeGameCommand(
+      game,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(4)
+    );
+
+    expect(result.events.length).toBe(result.nextState.history.length - before);
+    expect(result.events.length).toBeGreaterThan(0);
+    // Newest first, and every one of them genuinely new.
+    const seen = new Set(game.history.map((event) => event.id));
+    result.events.forEach((event) => expect(seen.has(event.id)).toBe(false));
+  });
+
+  it('reports that a state-changing command needs saving', () => {
+    const result = executeGameCommand(
+      createBaseGame(),
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(4)
+    );
+
+    expect(result.saveRequired).toBe(true);
+  });
+
+  // Late in a long game the history cap stops the length growing, and a length
+  // diff alone would silently stop reporting anything.
+  it('still finds new events once the history cap is reached', () => {
+    const game = createBaseGame();
+    const capped: GameState = {
+      ...game,
+      history: Array.from({ length: 120 }, (_, index) => ({
+        id: `filler-${index}`,
+        turnNumber: 1,
+        createdAt: '2026-08-29T00:00:00.000Z',
+        message: `filler ${index}`,
+      })),
+    };
+
+    const result = executeGameCommand(
+      capped,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(4)
+    );
+
+    expect(result.nextState.history).toHaveLength(120);
+    expect(result.events.length).toBeGreaterThan(0);
+    expect(result.events.every((event) => !event.id.startsWith('filler-'))).toBe(true);
+  });
+});
+
+/**
+ * Two traps that were latent for as long as nothing could reach them.
+ */
+describe('moving backwards', () => {
+  // "Go back three spaces" from square 1 wraps to 38. The old wrap test was a
+  // bare `next < current`, which is true of every backward move - so the card
+  // would have paid the GO salary for going the wrong way.
+  it('pays no GO salary for a backward move that wraps', () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const backThree: DeckCard = {
+      id: 'chance-back-three',
+      deck: CardDeck.Chance,
+      title: 'Go back three spaces',
+      description: 'Move back three spaces.',
+      effect: { kind: CardEffectKind.MoveSteps, steps: -3 },
+    };
+
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: 1 },
+      },
+      decks: { ...game.decks, chance: [backThree] },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw,
+        playerId,
+        deck: DeckName.Chance,
+        card: backThree,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+    const cashBefore = state.players[playerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[playerId].position).toBe(38);
+    // Landed on Super Tax, so cash can fall - but never rise.
+    expect(next.players[playerId].cash).toBeLessThanOrEqual(cashBefore);
+    expect(next.history.some((event) => /passing GO/i.test(event.message))).toBe(false);
+  });
+});
+
+describe('utility rent after arriving without rolling', () => {
+  // The printed rule is that a player brought to a utility by a card throws the
+  // dice and pays on that throw, not on the roll that started their turn.
+  it('charges a fresh throw rather than the turn roll', () => {
+    const game = createBaseGame();
+    const [visitorId, ownerId] = game.playerOrder;
+    const utility = game.board.find((space) => space.kind === SpaceKind.Utility);
+    if (!utility || utility.kind !== SpaceKind.Utility) {
+      throw new Error('No utility on the board');
+    }
+    const utilityIndex = game.board.findIndex((space) => space.id === utility.id);
+    const card: DeckCard = {
+      id: 'chance-to-utility',
+      deck: CardDeck.Chance,
+      title: 'Advance to the Electric Company',
+      description: 'Advance to the utility.',
+      effect: { kind: CardEffectKind.MoveTo, index: utilityIndex, collectGo: false },
+    };
+
+    const state: GameState = {
+      ...game,
+      activePlayerIndex: game.playerOrder.indexOf(visitorId),
+      ownership: {
+        ...game.ownership,
+        [utility.id]: { ownerPlayerId: ownerId, mortgaged: false, buildLevel: 0 },
+      },
+      players: {
+        ...game.players,
+        [visitorId]: { ...game.players[visitorId], position: 2 },
+      },
+      decks: { ...game.decks, chance: [card] },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw,
+        playerId: visitorId,
+        deck: DeckName.Chance,
+        card,
+      },
+      // A turn roll of 12, which would be the wrong basis for this rent.
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision, lastRoll: [6, 6] },
+    };
+    const cashBefore = state.players[visitorId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    const paid = cashBefore - next.players[visitorId].cash;
+    const multiplier = utility.rentMultiplierOne;
+    expect(next.players[visitorId].position).toBe(utilityIndex);
+    expect(paid % multiplier).toBe(0);
+    // The turn's roll was 6 and 6. Charging on that would be the top of the
+    // range every time, so this is what tells the fresh throw apart from it.
+    expect(paid).not.toBe(12 * multiplier);
+    expect(paid).toBeGreaterThanOrEqual(2 * multiplier);
+    expect(paid).toBeLessThanOrEqual(12 * multiplier);
+  });
+});
+
+/**
+ * One card can leave several players unable to pay. Only one decision can be
+ * pending, so the rest queue behind the first - before this they were silently
+ * forgiven, and everyone after the first paid nothing at all.
+ */
+describe('several debts from one card', () => {
+  /** Three players, two of them too poor to pay the drawer. */
+  const threeWithTwoBroke = () => {
+    const game = createBaseGame();
+    const [collectorId, brokeOneId] = game.playerOrder;
+    const brokeTwoId = 'player-3';
+    const card: DeckCard = {
+      id: 'chest-collect-each',
+      deck: CardDeck.CommunityChest,
+      title: 'It is your birthday',
+      description: 'Collect from every player.',
+      effect: { kind: CardEffectKind.CollectFromEach, amount: 100 },
+    };
+
+    const state: GameState = {
+      ...game,
+      playerOrder: [...game.playerOrder, brokeTwoId],
+      players: {
+        ...game.players,
+        [brokeOneId]: { ...game.players[brokeOneId], cash: 10 },
+        [brokeTwoId]: {
+          ...game.players[game.playerOrder[1]],
+          id: brokeTwoId,
+          name: 'Meera',
+          cash: 5,
+        },
+      },
+      activePlayerIndex: game.playerOrder.indexOf(collectorId),
+      decks: { ...game.decks, communityChest: [card] },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw,
+        playerId: collectorId,
+        deck: DeckName.CommunityChest,
+        card,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    return { state, collectorId, brokeOneId, brokeTwoId };
+  };
+
+  const acknowledge = (state: GameState) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+  it('records the first debt and queues the second', () => {
+    const { state, brokeOneId, brokeTwoId } = threeWithTwoBroke();
+
+    const next = acknowledge(state);
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+    if (next.pendingDecision.type !== PendingDecisionType.AssetLiquidation) return;
+    expect(next.pendingDecision.playerId).toBe(brokeOneId);
+    // The second player's debt is not lost - it is waiting.
+    expect(next.pendingDecision.queued).toHaveLength(1);
+    expect(next.pendingDecision.queued[0].playerId).toBe(brokeTwoId);
+  });
+
+  it('promotes the queued debt once the first is settled', () => {
+    const { state, brokeOneId, brokeTwoId } = threeWithTwoBroke();
+    const withDebt = acknowledge(state);
+    // Give the first debtor the cash to settle.
+    const funded: GameState = {
+      ...withDebt,
+      players: {
+        ...withDebt.players,
+        [brokeOneId]: { ...withDebt.players[brokeOneId], cash: 500 },
+      },
+    };
+
+    const next = executeGameCommand(
+      funded,
+      { type: GameCommandType.SettleDebt },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+    if (next.pendingDecision.type !== PendingDecisionType.AssetLiquidation) return;
+    expect(next.pendingDecision.playerId).toBe(brokeTwoId);
+    expect(next.pendingDecision.queued).toHaveLength(0);
+  });
+
+  it('pays the collector for every debt in the queue', () => {
+    const { state, collectorId, brokeOneId, brokeTwoId } = threeWithTwoBroke();
+    const collectorCashBefore = state.players[collectorId].cash;
+
+    let next = acknowledge(state);
+    // Fund each debtor in turn and settle.
+    [brokeOneId, brokeTwoId].forEach((debtorId) => {
+      next = {
+        ...next,
+        players: {
+          ...next.players,
+          [debtorId]: { ...next.players[debtorId], cash: 500 },
+        },
+      };
+      next = executeGameCommand(
+        next,
+        { type: GameCommandType.SettleDebt },
+        new SeededRandomSource(3)
+      ).nextState;
+    });
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+    // Both debts reached the collector: 100 each.
+    expect(next.players[collectorId].cash).toBe(collectorCashBefore + 200);
+  });
+
+  // A player who goes bankrupt is out; the debt behind theirs still stands.
+  it('keeps the queue when the first debtor goes bankrupt instead', () => {
+    const { state, brokeTwoId } = threeWithTwoBroke();
+    const withDebt = acknowledge(state);
+
+    const next = executeGameCommand(
+      withDebt,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+    if (next.pendingDecision.type !== PendingDecisionType.AssetLiquidation) return;
+    expect(next.pendingDecision.playerId).toBe(brokeTwoId);
+  });
+
+  // PayEach runs the other way: one drawer, several payees, and their cash
+  // falls with each payment.
+  it('queues each payee the drawer cannot cover', () => {
+    const game = createBaseGame();
+    const [drawerId] = game.playerOrder;
+    const thirdId = 'player-3';
+    const card: DeckCard = {
+      id: 'chance-pay-each',
+      deck: CardDeck.Chance,
+      title: 'You have been elected chairman',
+      description: 'Pay every player.',
+      effect: { kind: CardEffectKind.PayEach, amount: 200 },
+    };
+    const state: GameState = {
+      ...game,
+      playerOrder: [...game.playerOrder, thirdId],
+      players: {
+        ...game.players,
+        [drawerId]: { ...game.players[drawerId], cash: 50 },
+        [thirdId]: {
+          ...game.players[game.playerOrder[1]],
+          id: thirdId,
+          name: 'Meera',
+        },
+      },
+      decks: { ...game.decks, chance: [card] },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw,
+        playerId: drawerId,
+        deck: DeckName.Chance,
+        card,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const next = acknowledge(state);
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+    if (next.pendingDecision.type !== PendingDecisionType.AssetLiquidation) return;
+    // Both payees are owed, not just the first.
+    expect(next.pendingDecision.playerId).toBe(drawerId);
+    expect(next.pendingDecision.queued).toHaveLength(1);
   });
 });

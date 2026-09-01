@@ -50,7 +50,6 @@ these alongside any shape change.
 
 ## Known gaps
 
-- Zero direct test coverage — the highest-value gap in the repo.
-- No storage-quota or private-mode handling; `localStorage` throwing would surface as an
-  uncaught error.
-- No migration mechanism exists yet, only the version field to hang one on.
+- Nothing outstanding. Migrations run on load and write the upgraded save back;
+  `StorageWriteError` turns a full quota or a private-mode refusal into something the UI can say,
+  and a failed save no longer costs the player the move they just made.

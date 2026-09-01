@@ -216,6 +216,7 @@ describe('a jailed player always has something to do', () => {
       amountDue: 50,
       creditorPlayerId: null,
       reason: 'Jail fine',
+      queued: [],
     };
 
     expect(selectCanRollDice(game)).toBe(false);

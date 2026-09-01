@@ -125,8 +125,14 @@ its phase rules, or the advance is silently dropped.
 [buildings.utils.ts](src/domain/rules/buildings.utils.ts) state it once, and both the engine's throw
 and the site panel's disabled button read from there - never restate the rule in a component.
 
-Money moves through exactly two choke points, and both log an event: `resolveBankPayment` (out) and
-`creditFromBank` (in). Add a third and feedback silently stops working for it.
+Money moves through exactly three choke points, and all of them log an event: `resolveBankPayment`
+(out), `creditFromBank` (in) and `resolvePlayerPayment` (between players). Buying and auctions used
+to move cash inline and log their own line; they go through the primitives now, so the invariant is
+total. Add a fourth and feedback silently stops working for it.
+
+**A utility's rent is charged on the dice that brought the player there.** `resolveCurrentSpace`
+takes the total: the turn's own roll when they rolled their way in, a fresh throw when a card or a
+Mr. Monopoly advance put them there.
 
 **`doublesCount`, not `canRollAgain`, is what survives a blocking decision** — `resolveCurrentSpace`
 sets `canRollAgain: false` while one is pending. Restore the phase with `resumeTurnAfterDecision`;
@@ -196,11 +202,10 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 
 ## 8. Known gaps and traps
 
-- **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:1149](src/domain/rules/gameEngine.ts:1149)). `saveRequired` is hardcoded `true`. Anything wanting "what just happened" must diff `history` instead — see `selectNewEvents` in [toastFeed.utils.ts](src/features/game/toastFeed.utils.ts).
-- **`asset-liquidation` is resolvable.** `settleDebt` clears it; mortgaging is how the cash is raised, and it deliberately leaves `pendingDecision` alone. What remains: only one liquidation can be pending, so several debts from one card still stop at the first — that needs a debt queue, with bankruptcy.
-- **Several debts from one card are not all recorded.** The loops read `nextState` correctly now, but only one `asset-liquidation` can be pending, so they stop at the first player who cannot pay.
+- **`GameCommandResult.events` is what this command appended**, and `saveRequired` is derived from whether the state changed. Both used to lie — `events` returned the whole capped history — so the toast feed diffed `history` itself. It no longer needs to.
+- **`asset-liquidation` is resolvable, and queues.** `settleDebt` clears it; selling buildings and mortgaging are how the cash is raised, and both deliberately leave `pendingDecision` alone. Several debts from one card all stand: the extras ride in the decision's own `queued` array, which survives a save because `pendingDecision` is the one part validated with `.passthrough()`. Read it as `queued ?? []` — a game saved before the queue existed comes back without it.
 - **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.
-- **`movePlayerTo`'s pass-GO test is `nextPosition < player.position`**, true for any backward move. Safe only because `MoveSteps` always passes `collectGo: false`.
+- **`movePlayerTo` takes an `isForward` flag**, because the wrap test (`next < current`) is also true of every backward move. A backward card move must pass `isForward: false` or it would pay the GO salary for going the wrong way.
 - `tsconfig.json` has `strict: false` and `target: es5` — a deliberate gradual-migration holdover, not an endorsement.
 
 ---

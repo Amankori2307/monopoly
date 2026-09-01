@@ -206,6 +206,7 @@ const liquidationDecision = (
     // merely when they would rather not pay.
     isBankrupt:
       debtor.cash + getLiquidationValue(game, decision.playerId) < decision.amountDue,
+    queuedDebtCount: decision.queued?.length ?? 0,
   };
 };
 

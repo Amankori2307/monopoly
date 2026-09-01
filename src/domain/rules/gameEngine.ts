@@ -38,9 +38,11 @@ import type {
   GameCommandResult,
   GameEvent,
   GameState,
+  DebtRecord,
   OwnableSpace,
   OwnershipState,
   PlayerId,
+  PendingDecision,
   PlayerState,
   RuntimeGameCommand,
   SpaceId,
@@ -212,12 +214,22 @@ const movePlayerTo = (
   state: GameState,
   playerId: PlayerId,
   nextPosition: number,
-  collectGo: boolean
+  collectGo: boolean,
+  /**
+   * Whether the token travelled forward to get here. Only a forward move can
+   * pass GO; the wrap test cannot tell the two apart on its own.
+   */
+  isForward = true
 ): GameState => {
   const player = getPlayerById(state, playerId);
   let nextState = state;
 
-  if (collectGo && nextPosition < player.position) {
+  // Deliberately `passesGo`, not a bare position comparison: `next < current`
+  // is also true of every backward move, so a card that moved a player back
+  // past GO with collectGo set would have paid them for it.
+  const passesGo = collectGo && isForward && nextPosition < player.position;
+
+  if (passesGo) {
     nextState = creditFromBank(nextState, playerId, PASS_GO_AMOUNT, 'passing GO');
     // The Speed Die stays out of play until everyone has been round once, so
     // the trip past GO is worth recording as well as paying.
@@ -243,6 +255,60 @@ const movePlayerTo = (
 const getRedemptionCost = (mortgageValue: number): number =>
   mortgageValue + Math.ceil((mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
 
+/**
+ * Records a debt nobody can currently pay.
+ *
+ * One card can leave several players insolvent, and only one decision can be
+ * pending - so the second and later debts queue behind the first instead of
+ * overwriting it. Before this, everyone after the first was silently forgiven.
+ */
+const enqueueDebt = (state: GameState, debt: DebtRecord): GameState => {
+  const pending = state.pendingDecision;
+
+  if (pending.type === PendingDecisionType.AssetLiquidation) {
+    return {
+      ...state,
+      // `?? []` is not defensive padding: pendingDecision is the one part of a
+      // save validated with .passthrough(), so a game saved before the queue
+      // existed comes back without it.
+      pendingDecision: { ...pending, queued: [...(pending.queued ?? []), debt] },
+    };
+  }
+
+  return {
+    ...state,
+    pendingDecision: {
+      type: PendingDecisionType.AssetLiquidation,
+      ...debt,
+      queued: [],
+    },
+    turn: { ...state.turn, phase: TurnPhase.AwaitDecision, reason: debt.reason },
+  };
+};
+
+/**
+ * What replaces a liquidation once it has been answered: the next debt in the
+ * queue, or nothing.
+ *
+ * Debts owed by a player who has since gone bankrupt are dropped - they have
+ * left the game, and their creditor was already paid out of what they held.
+ */
+const nextDecisionAfterDebt = (
+  state: GameState,
+  // Optional for the same reason enqueueDebt pads it: a save written before the
+  // queue existed has a liquidation with no queue on it.
+  queued: DebtRecord[] | undefined
+): PendingDecision => {
+  const stillOwed = (queued ?? []).filter(
+    (debt) => !state.players[debt.playerId]?.isBankrupt
+  );
+  const [next, ...rest] = stillOwed;
+
+  return next
+    ? { type: PendingDecisionType.AssetLiquidation, ...next, queued: rest }
+    : { type: PendingDecisionType.None };
+};
+
 const resolveBankPayment = (
   state: GameState,
   playerId: PlayerId,
@@ -263,21 +329,12 @@ const resolveBankPayment = (
     ]);
   }
 
-  return {
-    ...state,
-    pendingDecision: {
-      type: PendingDecisionType.AssetLiquidation,
-      playerId,
-      amountDue: amount,
-      creditorPlayerId: null,
-      reason,
-    },
-    turn: {
-      ...state.turn,
-      phase: TurnPhase.AwaitDecision,
-      reason,
-    },
-  };
+  return enqueueDebt(state, {
+    playerId,
+    amountDue: amount,
+    creditorPlayerId: null,
+    reason,
+  });
 };
 
 const resolvePlayerPayment = (
@@ -306,21 +363,12 @@ const resolvePlayerPayment = (
     ]);
   }
 
-  return {
-    ...state,
-    pendingDecision: {
-      type: PendingDecisionType.AssetLiquidation,
-      playerId: fromPlayerId,
-      amountDue: amount,
-      creditorPlayerId: toPlayerId,
-      reason,
-    },
-    turn: {
-      ...state.turn,
-      phase: TurnPhase.AwaitDecision,
-      reason,
-    },
-  };
+  return enqueueDebt(state, {
+    playerId: fromPlayerId,
+    amountDue: amount,
+    creditorPlayerId: toPlayerId,
+    reason,
+  });
 };
 
 const getStreetRent = (
@@ -453,12 +501,14 @@ const completeAuctionIfPossible = (
   }
 
   const winnerId = auction.highestBidderId;
-  const winner = getPlayerById(state, winnerId);
   const space = getSpaceById(state, auction.spaceId);
-  let nextState = updatePlayer(state, winnerId, (player) => ({
-    ...player,
-    cash: player.cash - auction.highestBid,
-  }));
+  // Same reason as buying: the primitive is what logs it.
+  let nextState = resolveBankPayment(
+    state,
+    winnerId,
+    auction.highestBid,
+    `won the auction for ${space.name}`
+  );
 
   nextState = updateSpaceOwnership(nextState, auction.spaceId, (ownership) => ({
     ...ownership,
@@ -474,12 +524,7 @@ const completeAuctionIfPossible = (
     randomSource
   );
 
-  return appendEvents(nextState, [
-    createEvent(
-      nextState.turnNumber,
-      `${winner.name} won the auction for ${space.name} at ${getThemeOrDefault(nextState.themeId).currencySymbol}${auction.highestBid}.`
-    ),
-  ]);
+  return nextState;
 };
 
 const startAuction = (state: GameState, spaceId: string): GameState => {
@@ -625,7 +670,11 @@ const drawCard = (state: GameState, deckName: DeckName): GameState => {
  * Applies an already-drawn card's effect. Split out of the draw so the UI can
  * interject; everything below this line is the original resolveCard body.
  */
-const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
+const applyCardEffect = (
+  state: GameState,
+  card: DeckCard,
+  randomSource: RandomSource
+): GameState => {
   const activePlayer = getActivePlayer(state);
   let nextState = state;
   const { effect } = card;
@@ -642,14 +691,34 @@ const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
         effect.index,
         effect.collectGo
       );
-      return resolveCurrentSpace(nextState, activePlayer.id, false);
+      // The player did not roll their way here, so a utility's rent is charged
+      // on a fresh throw - the printed rule for any card-driven arrival.
+      return resolveCurrentSpace(
+        nextState,
+        activePlayer.id,
+        false,
+        rollDie(randomSource) + rollDie(randomSource)
+      );
     }
     case CardEffectKind.MoveSteps: {
       const destination =
         (activePlayer.position + effect.steps + nextState.board.length) %
         nextState.board.length;
-      nextState = movePlayerTo(nextState, activePlayer.id, destination, false);
-      return resolveCurrentSpace(nextState, activePlayer.id, false);
+      // A MoveSteps card may go backwards ("go back three spaces"), which is
+      // the case the isForward flag exists for.
+      nextState = movePlayerTo(
+        nextState,
+        activePlayer.id,
+        destination,
+        effect.steps > 0,
+        effect.steps > 0
+      );
+      return resolveCurrentSpace(
+        nextState,
+        activePlayer.id,
+        false,
+        rollDie(randomSource) + rollDie(randomSource)
+      );
     }
     case CardEffectKind.GoToJail:
       return sendPlayerToJail(nextState, activePlayer.id, 'Card sent player to Jail');
@@ -673,13 +742,8 @@ const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
             playerId !== activePlayer.id && !nextState.players[playerId].isBankrupt
         )
         .forEach((playerId) => {
-          // Only one liquidation can be pending at a time, so stop at the first
-          // player who cannot pay rather than overwriting their debt with the
-          // next player's. The rest is deferred until bankruptcy lands - see
-          // docs/india-edition-rules.md section 14.
-          if (nextState.pendingDecision.type === PendingDecisionType.AssetLiquidation) {
-            return;
-          }
+          // Every player is asked, even after one of them could not pay: an
+          // unpayable debt queues behind the first rather than overwriting it.
           nextState = resolvePlayerPayment(
             nextState,
             playerId,
@@ -697,11 +761,8 @@ const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
             playerId !== activePlayer.id && !nextState.players[playerId].isBankrupt
         )
         .forEach((playerId) => {
-          // As above: the drawer's cash falls with each payment, so stop once
-          // they can no longer pay rather than paying money they do not have.
-          if (nextState.pendingDecision.type === PendingDecisionType.AssetLiquidation) {
-            return;
-          }
+          // One drawer, several payees: each debt they cannot cover queues, so
+          // every payee is owed rather than only the first.
           nextState = resolvePlayerPayment(
             nextState,
             activePlayer.id,
@@ -1161,6 +1222,23 @@ const ensureGameNotFinished = (state: GameState) => {
   }
 };
 
+/**
+ * The events one command appended.
+ *
+ * History is newest-first and capped, so normally the delta is the leading
+ * slice. Once the cap is reached the length stops growing, and the ids are the
+ * only way to tell what is new - which is exactly when a long game would
+ * otherwise stop reporting anything.
+ */
+const eventsSince = (before: GameEvent[], after: GameEvent[]): GameEvent[] => {
+  const added = after.length - before.length;
+  if (added > 0) {
+    return after.slice(0, added);
+  }
+  const seen = new Set(before.map((event) => event.id));
+  return after.filter((event) => !seen.has(event.id));
+};
+
 export const executeGameCommand = (
   state: GameState,
   command: RuntimeGameCommand,
@@ -1288,20 +1366,19 @@ export const executeGameCommand = (
         throw new Error('Player does not have enough money to buy this asset.');
       }
 
-      nextState = updatePlayer(nextState, buyer.id, (player) => ({
-        ...player,
-        cash: player.cash - space.price,
-      }));
+      // Through the money primitive, not inline: it is what logs the movement,
+      // and an amount that skips it is invisible to the feedback that reads the
+      // history. Affordability is guarded above, so no liquidation can arise.
+      nextState = resolveBankPayment(
+        nextState,
+        buyer.id,
+        space.price,
+        `bought ${space.name}`
+      );
       nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
         ...ownership,
         ownerPlayerId: buyer.id,
       }));
-      nextState = appendEvents(nextState, [
-        createEvent(
-          nextState.turnNumber,
-          `${buyer.name} bought ${space.name} for ${getThemeOrDefault(nextState.themeId).currencySymbol}${space.price}.`
-        ),
-      ]);
       // Through the shared resume rather than repeating its phase rules here:
       // this case used to restate them, which is why a Mr. Monopoly advance
       // owed across the buy decision was silently dropped.
@@ -1553,7 +1630,7 @@ export const executeGameCommand = (
         ...nextState,
         pendingDecision: { type: PendingDecisionType.None },
       };
-      nextState = applyCardEffect(nextState, decision.card);
+      nextState = applyCardEffect(nextState, decision.card, randomSource);
 
       // The effect may have raised its own decision - a MoveTo landing on an
       // unowned site, or a payment the player cannot afford. Only settle the
@@ -1662,13 +1739,19 @@ export const executeGameCommand = (
             decision.reason
           );
 
-      nextState = resumeTurnAfterDecision(
-        {
-          ...nextState,
-          pendingDecision: { type: PendingDecisionType.None },
-        },
-        randomSource
-      );
+      // The next debt from the same card, if the card left more than one.
+      const following = nextDecisionAfterDebt(nextState, decision.queued);
+      nextState =
+        following.type === PendingDecisionType.AssetLiquidation
+          ? {
+              ...nextState,
+              pendingDecision: following,
+              turn: { ...nextState.turn, phase: TurnPhase.AwaitDecision },
+            }
+          : resumeTurnAfterDecision(
+              { ...nextState, pendingDecision: following },
+              randomSource
+            );
       break;
     }
     case GameCommandType.ConfirmBankruptcy: {
@@ -1740,10 +1823,17 @@ export const executeGameCommand = (
         bankruptcyRank: alreadyOut + 1,
       }));
 
+      // Debts queued behind this one still stand, unless they were this
+      // player's - they have left the game and their creditor has already taken
+      // everything they held.
+      const remaining = nextDecisionAfterDebt(nextState, decision.queued);
       nextState = {
         ...nextState,
-        pendingDecision: { type: PendingDecisionType.None },
-        turn: { ...nextState.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+        pendingDecision: remaining,
+        turn:
+          remaining.type === PendingDecisionType.AssetLiquidation
+            ? { ...nextState.turn, phase: TurnPhase.AwaitDecision }
+            : { ...nextState.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
       };
       // A bankruptcy is the only way a player leaves, so it is the only place
       // the game can become won.
@@ -1992,8 +2082,12 @@ export const executeGameCommand = (
 
   return {
     nextState,
-    events: nextState.history,
-    saveRequired: true,
+    events: eventsSince(state.history, nextState.history),
+    // Derived rather than hardcoded true. Every helper returns a new state
+    // object, so identity is what "nothing happened" looks like. In practice
+    // every command either changes state or throws, so this is still always
+    // true today - but it is now a fact about the state, not an assertion.
+    saveRequired: nextState !== state,
     uiHints,
   };
 };

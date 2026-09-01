@@ -43,12 +43,25 @@ export interface PendingDecisionCardDraw {
   card: DeckCard;
 }
 
-export interface PendingDecisionAssetLiquidation {
-  type: PendingDecisionType.AssetLiquidation;
+/** One debt somebody owes and cannot currently pay. */
+export interface DebtRecord {
   playerId: PlayerId;
   amountDue: number;
   creditorPlayerId: PlayerId | null;
   reason: string;
+}
+
+export interface PendingDecisionAssetLiquidation extends DebtRecord {
+  type: PendingDecisionType.AssetLiquidation;
+  /**
+   * Debts waiting behind this one - one card can leave several players unable
+   * to pay, and only one decision can be pending at a time.
+   *
+   * It rides inside the decision rather than in a field of its own because
+   * `pendingDecision` is the one part of a save validated with `.passthrough()`;
+   * a new top-level GameState field would be silently stripped on load.
+   */
+  queued: DebtRecord[];
 }
 
 export interface PendingDecisionTrade {

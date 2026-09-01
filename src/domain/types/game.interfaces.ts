@@ -177,6 +177,7 @@ export interface TurnState {
 import type { PendingDecision } from './decisions.interfaces';
 
 export type {
+  DebtRecord,
   PendingDecision,
   PendingDecisionAssetLiquidation,
   PendingDecisionAuction,

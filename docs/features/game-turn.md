@@ -98,4 +98,4 @@ a roll from jail, and the dice roller contains and logs any throw.
 - Every engine command is implemented. `uiHints` is always empty and nothing renders it.
 - The game ends when a bankruptcy leaves one player: `winnerPlayerId` and `status: 'completed'`
   are written and every later command is refused.
-- Only 2 of 9 implemented commands have unit tests.
+- Every command has unit coverage; see the table in docs/coding-guidelines.md section 5.

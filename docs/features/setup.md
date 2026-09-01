@@ -56,5 +56,4 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 ## Known gaps
 
 - No test for duplicate-token or empty-name validation.
-- Player count is clamped silently (2-8) with no user feedback.
-- Deleting a saved game has no confirmation step.
+- Player count clamping now says what it did, and deleting a saved game asks first.
