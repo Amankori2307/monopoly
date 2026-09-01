@@ -97,13 +97,18 @@ applied by `acknowledgeCard`. A new decision type must also be added to `BLOCKIN
 
 ### Commands
 
-| Implemented                                                                                                                                                                                                                                         | Scaffolded (returns a `uiHints` placeholder, changes nothing)                                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`, `confirmBankruptcy`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `proposeTrade`, `acceptTrade`, `rejectTrade` |
+| Implemented                                                                                                                                                                                                                                                                                               | Scaffolded (returns a `uiHints` placeholder, changes nothing) |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `rollTurnDice`, `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`, `confirmBankruptcy`, `endTurn` | `proposeTrade`, `acceptTrade`, `rejectTrade`                  |
 
 ### Locked economics (`gameEngine.ts` constants)
 
-Starting cash `₹1500` · pass GO `₹200` · jail fine `₹50` · auction opens at `₹10`, min increment `1` · 40 spaces · 32 houses / 12 hotels · history capped at 120 events, newest first.
+Starting cash `₹1500` · pass GO `₹200` · jail fine `₹50` · auction opens at `₹10`, min increment `1` · 40 spaces · 32 houses / 12 hotels (now really decremented) · buildings refund `floor(cost/2)` · history capped at 120 events, newest first.
+
+**Both even rules are one comparison.** No two sites in a colour group may differ by more than one
+`buildLevel` (0-4 houses, 5 a hotel). `buildBlockedReason` / `sellBlockedReason` in
+[buildings.utils.ts](src/domain/rules/buildings.utils.ts) state it once, and both the engine's throw
+and the site panel's disabled button read from there - never restate the rule in a component.
 
 Money moves through exactly two choke points, and both log an event: `resolveBankPayment` (out) and
 `creditFromBank` (in). Add a third and feedback silently stops working for it.
@@ -177,7 +182,6 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 ## 8. Known gaps and traps
 
 - **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:1149](src/domain/rules/gameEngine.ts:1149)). `saveRequired` is hardcoded `true`. Anything wanting "what just happened" must diff `history` instead — see `selectNewEvents` in [toastFeed.utils.ts](src/features/game/toastFeed.utils.ts).
-- **Bank inventory is cosmetic**: `housesAvailable`/`hotelsAvailable` are never decremented (building isn't implemented).
 - **`asset-liquidation` is resolvable.** `settleDebt` clears it; mortgaging is how the cash is raised, and it deliberately leaves `pendingDecision` alone. What remains: only one liquidation can be pending, so several debts from one card still stop at the first — that needs a debt queue, with bankruptcy.
 - **Several debts from one card are not all recorded.** The loops read `nextState` correctly now, but only one `asset-liquidation` can be pending, so they stop at the first player who cannot pay.
 - **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.

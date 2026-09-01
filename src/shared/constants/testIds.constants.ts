@@ -10,7 +10,6 @@
 export const TEST_IDS = {
   // Layout
   gameLayout: 'game-layout',
-  actionRail: 'action-rail',
   boardGrid: 'board-grid',
   gameSidebar: 'game-sidebar',
 
@@ -18,6 +17,7 @@ export const TEST_IDS = {
   boardCenter: 'board-center',
   boardSpace: 'board-space',
   spaceColorBar: 'space-color-bar',
+  spaceBuildings: 'space-buildings',
   boardTokenLayer: 'board-token-layer',
   spacePlayerToken: 'space-player-token',
 
@@ -40,6 +40,7 @@ export const TEST_IDS = {
   toastStack: 'toast-stack',
   liquidationDecision: 'liquidation-decision',
   liquidationMortgage: 'liquidation-mortgage',
+  liquidationSell: 'liquidation-sell',
   liquidationSettle: 'liquidation-settle',
   liquidationDeadEnd: 'liquidation-dead-end',
   declareBankruptcy: 'declare-bankruptcy',
@@ -72,7 +73,6 @@ export const TEST_IDS = {
   dieFace: 'die-face',
   rollButton: 'roll-button',
   endTurnButton: 'end-turn-button',
-  propertyActionButton: 'property-action-button',
 
   // Space detail
   spaceDetailCard: 'space-detail-card',

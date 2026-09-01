@@ -27,11 +27,12 @@
   }
 }
 
-// Three columns: action rail | board | player sidebar.
+// Two columns: board | player sidebar. The property-action rail that used to
+// hold the first column is gone - every action it listed needs a spaceId, and
+// the site panel is where one exists.
 .game-layout {
   display: grid;
   grid-template-columns:
-    t.$action-rail-width
     minmax(0, 1fr)
     minmax(320px, 380px);
   gap: t.$gap-lg;

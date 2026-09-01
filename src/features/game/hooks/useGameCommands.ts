@@ -71,6 +71,15 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.AcknowledgeCard })),
         onMortgageSite: (spaceId: string) =>
           dispatch(runGameCommand({ type: GameCommandType.MortgageAsset, spaceId })),
+        // A hotel and a house are separate commands, and the panel knows which
+        // one is standing on the site.
+        onSellBuilding: (spaceId: string, isHotel: boolean) =>
+          dispatch(
+            runGameCommand({
+              type: isHotel ? GameCommandType.SellHotel : GameCommandType.SellHouse,
+              spaceId,
+            })
+          ),
         onSettleDebt: () =>
           dispatch(runGameCommand({ type: GameCommandType.SettleDebt })),
         onDeclareBankruptcy: () =>

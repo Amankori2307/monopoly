@@ -91,7 +91,9 @@ export function DecisionPanel({
           mortgageableSites={decision.mortgageableSites}
           onDeclareBankruptcy={handlers.onDeclareBankruptcy}
           onMortgageSite={handlers.onMortgageSite}
+          onSellBuilding={handlers.onSellBuilding}
           onSettleDebt={handlers.onSettleDebt}
+          sellableBuildings={decision.sellableBuildings}
           playerName={decision.playerName}
           reason={decision.reason}
         />

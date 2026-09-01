@@ -1,4 +1,7 @@
-import { CORNER_POSITIONS } from '../../../domain/constants/game.constants';
+import {
+  CORNER_POSITIONS,
+  HOTEL_BUILD_LEVEL,
+} from '../../../domain/constants/game.constants';
 import { SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.utils';
@@ -62,7 +65,14 @@ export function BoardSpaceCell({
         <div
           className={`space-color group-${space.colorGroup}`}
           data-testid={TEST_IDS.spaceColorBar}
-        />
+        >
+          {/* Buildings ride the colour ribbon, as on a printed board: up to
+              four house pips, or one wider mark for a hotel. */}
+          <BuildingPips
+            buildLevel={ownerMark?.buildLevel ?? 0}
+            spaceIndex={space.index}
+          />
+        </div>
       ) : null}
 
       {/* The owner's token colour, so control of a colour set reads off the
@@ -98,5 +108,36 @@ export function BoardSpaceCell({
         )}
       </div>
     </button>
+  );
+}
+
+interface BuildingPipsProps {
+  buildLevel: number;
+  spaceIndex: number;
+}
+
+/**
+ * Houses and hotels, drawn on the colour ribbon.
+ *
+ * A hotel is one wider mark rather than five pips - it is not "five houses",
+ * and the difference has to read at a glance across a 40-space board.
+ */
+function BuildingPips({ buildLevel, spaceIndex }: BuildingPipsProps) {
+  if (buildLevel === 0) {
+    return null;
+  }
+
+  const isHotel = buildLevel === HOTEL_BUILD_LEVEL;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`space-buildings ${isHotel ? 'has-hotel' : ''}`}
+      data-testid={scopedTestId(TEST_IDS.spaceBuildings, spaceIndex)}
+    >
+      {Array.from({ length: isHotel ? 1 : buildLevel }, (_, index) => (
+        <span className={isHotel ? 'building-hotel' : 'building-house'} key={index} />
+      ))}
+    </span>
   );
 }

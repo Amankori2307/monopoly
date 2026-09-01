@@ -279,11 +279,16 @@ never `mortgaged` — deliberately. ✅
 
 ---
 
-## 8. Building houses and hotels — ❌ not implemented
+## 8. Building houses and hotels — ✅ implemented
 
-Every rule below is documented and none of it runs yet. `buildLevel` exists on `OwnershipState`,
-is read by the rent table and net worth, and is never written. The rail's Build / Sell buttons are
-disabled with a reason, as is the site panel's.
+Building is done from a site's own panel — click any site you own on the board. `buildLevel` is
+0-5 on `OwnershipState`: 0-4 houses, 5 a hotel. One scale for both is what makes the even rules a
+single comparison, and it is what the rent table has always read.
+
+Both even rules are the same question asked in opposite directions: **no two sites in a colour
+group may ever differ by more than one level**. `buildBlockedReason` and `sellBlockedReason`
+(`domain/rules/buildings.utils.ts`) are the single statement of it, shared by the engine's throw and
+the panel's disabled button, so the two can never disagree about why something is refused.
 
 ### When you may build
 
@@ -323,10 +328,11 @@ Illegal — a two-house gap:
 
 ### Bank inventory
 
-| Rule                                                                            | Status                                                           |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| The bank holds 32 houses and 12 hotels (`HOUSES_AVAILABLE`, `HOTELS_AVAILABLE`) | ⚠️ tracked but **never decremented** — the inventory is cosmetic |
-| When the bank runs out, players wanting to build bid for what is available      | ❌                                                               |
+| Rule                                                                            | Status                                                                                                  |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| The bank holds 32 houses and 12 hotels (`HOUSES_AVAILABLE`, `HOTELS_AVAILABLE`) | ✅ decremented on every build and returned on every sale; a hotel takes its four houses back into stock |
+| When the bank runs out, building is refused                                     | ✅ the site panel says so and the engine throws                                                         |
+| When the bank runs out, players wanting to build bid for what is available      | ❌ see the divergence below                                                                             |
 
 ### Selling buildings
 
@@ -338,6 +344,20 @@ Illegal — a two-house gap:
 | A hotel may be sold outright, or broken back into houses if the bank has enough               |
 
 Legal sell-down from 3/3/3: → 2/3/3 → 2/2/3 → 2/2/2. Illegal: 3/3/3 → 0/3/3.
+
+**A hotel reverts to four houses**, refunding half the hotel cost, and needs four houses in the
+bank to do it. A hotel can therefore be temporarily unsellable during a house shortage — that is
+the printed rule, and the panel says so rather than failing silently.
+
+> **⚠️ Divergence — no building auction on a shortage.** The printed rule has players bid for the
+> last houses when the bank runs short. Here building is simply refused until a house is returned.
+> An auction needs a queue of pending sales and a new top-level `GameState` field, which the zod
+> schema would silently strip without a version bump — the same reason bankruptcy's property
+> auction is deferred. Deferred rather than done badly.
+
+**Rounding:** a building refund is `floor(cost / 2)`, so the bank keeps the odd rupee. Redemption
+rounds the other way, up, for the same reason — both favour the bank, deliberately and
+consistently.
 
 ---
 
@@ -388,15 +408,16 @@ commands have no UI entry point beyond a disabled "Offer a deal" button.
 
 The order of rescue when you cannot pay:
 
-| Step                                         | Status                         |
-| -------------------------------------------- | ------------------------------ |
-| 1. Sell buildings back to the bank           | ❌ building is not implemented |
-| 2. Mortgage properties                       | ✅                             |
-| 3. Sell or trade properties to other players | ❌ trading is not implemented  |
+| Step                                         | Status                        |
+| -------------------------------------------- | ----------------------------- |
+| 1. Sell buildings back to the bank           | ✅ listed first in the panel  |
+| 2. Mortgage properties                       | ✅                            |
+| 3. Sell or trade properties to other players | ❌ trading is not implemented |
 
 **Owing money you cannot pay works.** The debt raises an `asset-liquidation` decision naming the
-amount, the creditor and the reason. The panel lists every site you could mortgage and what each
-pays; a **Pay** button unlocks the moment your cash covers the debt, and settling transfers the money
+amount, the creditor and the reason. The panel lists every building you could sell and every site you
+could mortgage, and what each pays — buildings first, because a site whose colour set holds any
+cannot be mortgaged at all; a **Pay** button unlocks the moment your cash covers the debt, and settling transfers the money
 to the creditor — or to the bank when there is none — and hands the turn back, extra roll intact if a
 double had earned one.
 
@@ -592,11 +613,11 @@ economics, the two-dice turn, doubles including all three Jail interactions, pas
 Jail, the full card draw-then-apply flow with chained draws, every card effect, buy or decline, the
 complete auction loop, street/railway/utility rent with colour-set doubling, all three Jail exits and
 the three-turn limit, turn rotation, ₹ throughout, per-action feedback, and **mortgaging, redeeming
-and settling a debt you could not otherwise pay, bankruptcy when you cannot, and the win that ends
-the game**.
+and settling a debt you could not otherwise pay, bankruptcy when you cannot, the win that ends
+the game, and building and selling houses and hotels with both even rules and a real bank
+inventory**.
 
-**Type-level only, no runtime behaviour:** buildings and both even rules, bank building inventory,
-all trading, Speed Die.
+**Type-level only, no runtime behaviour:** all trading, Speed Die.
 
 ### Fixed so far
 
@@ -615,7 +636,6 @@ all trading, Speed Die.
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | A used Jail card never returns to its deck                   | `jailFreeCards` is a count with no record of provenance. Needs a `GameState` shape change                                                    |
 | Several debts from one card                                  | Only one liquidation can be pending, so the loop stops at the first player who cannot pay. Needs a debt queue, which belongs with bankruptcy |
-| Bank building inventory never decremented                    | 32 houses / 12 hotels are cosmetic until building lands                                                                                      |
 | Utility rent after a card-driven arrival                     | Uses the turn's original roll rather than a fresh throw. Not reachable with the current deck                                                 |
 | `movePlayerTo`'s pass-GO test is `nextPosition < position`   | True for _any_ backward move. Safe only because `MoveSteps` always passes `collectGo: false`                                                 |
 | `BuyLandedAsset` and the auction bypass the money primitives | They mutate cash inline and log their own event, so the "every amount goes through one of two choke points" invariant is not total           |

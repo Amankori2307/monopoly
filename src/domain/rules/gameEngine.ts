@@ -7,6 +7,7 @@ import {
   DOUBLES_BEFORE_JAIL,
   GAME_STATE_VERSION,
   HOTEL_BUILD_LEVEL,
+  MAX_HOUSES_PER_SITE,
   HOTELS_AVAILABLE,
   HOUSES_AVAILABLE,
   JAIL_FINE,
@@ -44,11 +45,17 @@ import type {
 } from '../types/game.interfaces';
 import {
   getPlayerOwnedSpaces,
-  getRaisableCash,
   groupHasBuildings,
   isOwnedBy,
   ownsEntireColorSet,
 } from './holdings.utils';
+import {
+  buildBlockedReason,
+  getBuildLevel,
+  getLiquidationValue,
+  getSaleRefund,
+  sellBlockedReason,
+} from './buildings.utils';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { DefaultRandomSource, rollDie, shuffle, type RandomSource } from './rng';
 
@@ -1341,7 +1348,7 @@ export const executeGameCommand = (
       const debtor = getPlayerById(nextState, decision.playerId);
       // You are bankrupt when you owe more than everything you have, not when
       // you would rather not pay - so refuse while the debt is still reachable.
-      if (debtor.cash + getRaisableCash(nextState, debtor.id) >= decision.amountDue) {
+      if (debtor.cash + getLiquidationValue(nextState, debtor.id) >= decision.amountDue) {
         throw new Error(
           `${debtor.name} can still raise ${money(nextState, decision.amountDue)}.`
         );
@@ -1412,10 +1419,92 @@ export const executeGameCommand = (
       nextState = concludeIfWon(nextState);
       break;
     }
+    // Building and selling share their guards with the UI: buildBlockedReason /
+    // sellBlockedReason are the single statement of the rules, so a disabled
+    // button and a thrown command can never disagree.
     case GameCommandType.BuildHouse:
-    case GameCommandType.BuildHotel:
+    case GameCommandType.BuildHotel: {
+      const activePlayer = getActivePlayer(nextState);
+      const space = getSpaceById(nextState, command.spaceId);
+      const blocked = buildBlockedReason(nextState, command.spaceId, activePlayer.id);
+      if (blocked) {
+        throw new Error(`Cannot build on ${space.name}: ${blocked}.`);
+      }
+      if (!isStreetSpace(space)) {
+        throw new Error(`${space.name} cannot be built on.`);
+      }
+
+      const level = getBuildLevel(nextState, space.id);
+      const isHotel = level === MAX_HOUSES_PER_SITE;
+      const cost = isHotel ? space.hotelCost : space.houseCost;
+
+      nextState = resolveBankPayment(
+        nextState,
+        activePlayer.id,
+        cost,
+        isHotel ? `built a hotel on ${space.name}` : `built a house on ${space.name}`
+      );
+      nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
+        ...ownership,
+        buildLevel: level + 1,
+      }));
+      // A hotel takes the site's four houses back into stock, which is what
+      // makes a house shortage a real constraint rather than a counter.
+      nextState = {
+        ...nextState,
+        bank: {
+          ...nextState.bank,
+          housesAvailable: isHotel
+            ? nextState.bank.housesAvailable + MAX_HOUSES_PER_SITE
+            : nextState.bank.housesAvailable - 1,
+          hotelsAvailable: isHotel
+            ? nextState.bank.hotelsAvailable - 1
+            : nextState.bank.hotelsAvailable,
+        },
+      };
+      break;
+    }
     case GameCommandType.SellHouse:
-    case GameCommandType.SellHotel:
+    case GameCommandType.SellHotel: {
+      const activePlayer = getActivePlayer(nextState);
+      const space = getSpaceById(nextState, command.spaceId);
+      const blocked = sellBlockedReason(nextState, command.spaceId, activePlayer.id);
+      if (blocked) {
+        throw new Error(`Cannot sell on ${space.name}: ${blocked}.`);
+      }
+      if (!isStreetSpace(space)) {
+        throw new Error(`${space.name} carries no buildings.`);
+      }
+
+      const level = getBuildLevel(nextState, space.id);
+      const isHotel = level === HOTEL_BUILD_LEVEL;
+
+      nextState = creditFromBank(
+        nextState,
+        activePlayer.id,
+        getSaleRefund(nextState, space),
+        isHotel ? `sold the hotel on ${space.name}` : `sold a house on ${space.name}`
+      );
+      nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
+        ...ownership,
+        buildLevel: level - 1,
+      }));
+      nextState = {
+        ...nextState,
+        bank: {
+          ...nextState.bank,
+          housesAvailable: isHotel
+            ? nextState.bank.housesAvailable - MAX_HOUSES_PER_SITE
+            : nextState.bank.housesAvailable + 1,
+          hotelsAvailable: isHotel
+            ? nextState.bank.hotelsAvailable + 1
+            : nextState.bank.hotelsAvailable,
+        },
+      };
+      // Like mortgaging, this deliberately leaves pendingDecision and turn
+      // alone: selling buildings is how a player raises cash mid-liquidation.
+      break;
+    }
     case GameCommandType.ProposeTrade:
     case GameCommandType.AcceptTrade:
     case GameCommandType.RejectTrade:

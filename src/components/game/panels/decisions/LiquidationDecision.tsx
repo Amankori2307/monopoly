@@ -1,3 +1,4 @@
+import type { SellableBuilding } from '../../../../domain/rules/buildings.utils';
 import type { MortgageableSite } from '../../../../domain/rules/holdings.utils';
 import type { SpaceId } from '../../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../../shared/constants/testIds.constants';
@@ -11,8 +12,10 @@ interface LiquidationDecisionProps {
   /** True when the debt is beyond the player's cash and everything they could raise. */
   isBankrupt: boolean;
   mortgageableSites: MortgageableSite[];
+  sellableBuildings: SellableBuilding[];
   onDeclareBankruptcy: () => void;
   onMortgageSite: (spaceId: SpaceId) => void;
+  onSellBuilding: (spaceId: SpaceId, isHotel: boolean) => void;
   onSettleDebt: () => void;
   playerName: string;
   reason: string;
@@ -37,11 +40,14 @@ export function LiquidationDecision({
   mortgageableSites,
   onDeclareBankruptcy,
   onMortgageSite,
+  onSellBuilding,
   onSettleDebt,
   playerName,
   reason,
+  sellableBuildings,
 }: LiquidationDecisionProps) {
   const hasSitesLeft = mortgageableSites.length > 0;
+  const hasBuildingsLeft = sellableBuildings.length > 0;
 
   return (
     <div className="liquidation" data-testid={TEST_IDS.liquidationDecision}>
@@ -52,6 +58,32 @@ export function LiquidationDecision({
       <p className="liquidation-reason">
         {creditorName ? `Owed to ${creditorName}` : 'Owed to the Bank'} — {reason}.
       </p>
+
+      {/* Buildings first: they block mortgaging their whole colour set, so a
+          built-up player has to sell before anything else is available. */}
+      {hasBuildingsLeft ? (
+        <>
+          <p className="deed-rent-title">Sell a building</p>
+          <ul className="liquidation-sites">
+            {sellableBuildings.map((building) => (
+              <li key={building.spaceId}>
+                <span>
+                  {building.name}
+                  {building.isHotel ? ' — hotel' : ` — ${building.buildLevel} houses`}
+                </span>
+                <button
+                  className="secondary-button"
+                  data-testid={scopedTestId(TEST_IDS.liquidationSell, building.spaceId)}
+                  onClick={() => onSellBuilding(building.spaceId, building.isHotel)}
+                  type="button"
+                >
+                  Sell for {formatMoney(building.refund, currencySymbol)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
 
       {hasSitesLeft ? (
         <>
@@ -72,9 +104,11 @@ export function LiquidationDecision({
             ))}
           </ul>
         </>
-      ) : (
-        /* Nothing left to mortgage and the debt still unmet: that is what
-           bankruptcy means, so offer it rather than stranding the player. */
+      ) : null}
+
+      {/* Nothing left to sell or mortgage and the debt still unmet: that is
+          what bankruptcy means, so offer it rather than stranding the player. */}
+      {hasSitesLeft || hasBuildingsLeft ? null : (
         <p className="liquidation-dead-end" data-testid={TEST_IDS.liquidationDeadEnd}>
           {playerName} has nothing left to mortgage and cannot cover this debt.
           {creditorName

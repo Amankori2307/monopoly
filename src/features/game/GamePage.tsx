@@ -2,14 +2,12 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BoardGrid } from '../../components/game/board/BoardGrid';
 import { useAnimatedTokenPositions } from '../../components/game/hooks/useAnimatedTokenPositions';
-import { ActionRail } from '../../components/game/panels/ActionRail';
 import { CommandErrorBanner } from '../../components/game/panels/CommandErrorBanner';
 import { HintsPanel } from '../../components/game/panels/HintsPanel';
 import { ToastStack } from '../../components/game/overlays/ToastStack';
 import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
-import { getPropertyActions } from '../../domain/rules/playerActions.utils';
 import { selectSpaceOwnerMarks } from './boardOwnership.utils';
 import { GameOverlayLayer } from './GameOverlayLayer';
 import { selectSitePanel } from './sitePanel.utils';
@@ -70,16 +68,6 @@ export function GamePage() {
     <div className="app-shell" data-theme={activeGame.themeId}>
       <div className="page">
         <div className="game-layout" data-testid={TEST_IDS.gameLayout}>
-          {/*
-            Every property action is disabled while its engine command is
-            scaffolded, so onAction cannot fire yet. Wiring it needs a property
-            picker to supply spaceId - see docs/features/game-turn.md.
-          */}
-          <ActionRail
-            actions={getPropertyActions(activeGame, activePlayer.id)}
-            onAction={noopUntilPropertyPickerExists}
-          />
-
           <BoardGrid
             board={activeGame.board}
             centerSubtitle={BOARD_CENTER_SUBTITLE}
@@ -156,12 +144,4 @@ export function GamePage() {
       </div>
     </div>
   );
-}
-
-/**
- * The rail still has no space to act on - the site panel is the picker, so
- * property actions are dispatched from there instead.
- */
-function noopUntilPropertyPickerExists() {
-  return undefined;
 }

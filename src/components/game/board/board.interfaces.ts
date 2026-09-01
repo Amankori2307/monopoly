@@ -12,6 +12,8 @@ export interface SpaceOwnerMark {
   color: string;
   mortgaged: boolean;
   ownerName: string;
+  /** 0-4 houses, or HOTEL_BUILD_LEVEL for a hotel. Drawn on the colour ribbon. */
+  buildLevel: number;
 }
 
 /** Where each token is drawn, by player. Lags the engine while a token walks. */

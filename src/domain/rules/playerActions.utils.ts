@@ -2,7 +2,11 @@ import type { PropertyActionDescriptor } from './playerActions.interfaces';
 
 export type { PropertyActionDescriptor } from './playerActions.interfaces';
 
-import { MORTGAGE_INTEREST_PERCENT } from '../constants/game.constants';
+import {
+  HOTEL_BUILD_LEVEL,
+  MAX_HOUSES_PER_SITE,
+  MORTGAGE_INTEREST_PERCENT,
+} from '../constants/game.constants';
 import { GameCommandType, PropertyAction } from '../types/game.enums';
 import type {
   GameState,
@@ -10,98 +14,73 @@ import type {
   PlayerId,
   SpaceId,
 } from '../types/game.interfaces';
-import { getPlayerOwnedSpaces, groupHasBuildings, isOwnedBy } from './holdings.utils';
+import { buildBlockedReason, getBuildLevel, sellBlockedReason } from './buildings.utils';
+import { groupHasBuildings, isOwnedBy } from './holdings.utils';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
-
-const ACTION_DEFINITIONS: ReadonlyArray<{
-  action: PropertyAction;
-  label: string;
-  command: GameCommandType;
-}> = [
-  { action: PropertyAction.Build, label: 'Build', command: GameCommandType.BuildHouse },
-  { action: PropertyAction.Sell, label: 'Sell', command: GameCommandType.SellHouse },
-  {
-    action: PropertyAction.Mortgage,
-    label: 'Mortgage',
-    command: GameCommandType.MortgageAsset,
-  },
-  {
-    action: PropertyAction.Redeem,
-    label: 'Redeem',
-    command: GameCommandType.UnmortgageAsset,
-  },
-];
-
-/**
- * Commands the engine accepts today. The others are declared in the command
- * union but scaffolded, so the rail must not offer them as if they worked.
- * Remove an entry from here as its engine case lands.
- */
-const SCAFFOLDED_COMMANDS: ReadonlySet<GameCommandType> = new Set([
-  GameCommandType.BuildHouse,
-  GameCommandType.BuildHotel,
-  GameCommandType.SellHouse,
-  GameCommandType.SellHotel,
-]);
-
-/**
- * Pure: what the action rail should show for a player. Keeping this out of the
- * component means the availability rules are unit-testable on their own.
- */
-export const getPropertyActions = (
-  state: GameState,
-  playerId: PlayerId
-): PropertyActionDescriptor[] => {
-  const ownsAnything = getPlayerOwnedSpaces(state, playerId).length > 0;
-
-  return ACTION_DEFINITIONS.map(({ action, label, command }) => {
-    if (SCAFFOLDED_COMMANDS.has(command)) {
-      return {
-        action,
-        label,
-        command,
-        isEnabled: false,
-        disabledReason: 'Not implemented yet',
-      };
-    }
-    if (!ownsAnything) {
-      return {
-        action,
-        label,
-        command,
-        isEnabled: false,
-        disabledReason: 'You do not own any property yet',
-      };
-    }
-    return { action, label, command, isEnabled: true, disabledReason: '' };
-  });
-};
 
 /**
  * What a player may do with one specific site.
  *
- * The rail's getPropertyActions answers "what could this player do at all"; this
- * answers it for a space the player has actually picked, which is what the
- * engine commands need - they all take a spaceId.
+ * The site panel is the only place these are offered, because every property
+ * command needs a spaceId and this is where one exists. The rules themselves
+ * live in buildings.utils, so a disabled button and a thrown command cannot
+ * disagree about why something is not allowed.
  */
+
+/** Build and Sell mean a hotel at the top of the ladder, a house below it. */
+const commandFor = (action: PropertyAction, buildLevel: number): GameCommandType => {
+  if (action === PropertyAction.Build) {
+    return buildLevel === MAX_HOUSES_PER_SITE
+      ? GameCommandType.BuildHotel
+      : GameCommandType.BuildHouse;
+  }
+  if (action === PropertyAction.Sell) {
+    return buildLevel === HOTEL_BUILD_LEVEL
+      ? GameCommandType.SellHotel
+      : GameCommandType.SellHouse;
+  }
+  return action === PropertyAction.Mortgage
+    ? GameCommandType.MortgageAsset
+    : GameCommandType.UnmortgageAsset;
+};
+
+const labelFor = (action: PropertyAction, buildLevel: number): string => {
+  if (action === PropertyAction.Build) {
+    return buildLevel === MAX_HOUSES_PER_SITE ? 'Build hotel' : 'Build house';
+  }
+  if (action === PropertyAction.Sell) {
+    return buildLevel === HOTEL_BUILD_LEVEL ? 'Sell hotel' : 'Sell house';
+  }
+  return action === PropertyAction.Mortgage ? 'Mortgage' : 'Redeem';
+};
+
 /**
  * Why one action is unavailable on one site, or '' when it is available.
  *
- * Extracted from getSiteActions so each rule reads as its own line rather than
- * as another branch in a map callback that had grown past the complexity limit.
+ * Each rule reads as its own line rather than as another branch in a map
+ * callback that had grown past the complexity limit.
  */
 const siteActionBlockedReason = (
   state: GameState,
   space: OwnableSpace,
   playerId: PlayerId,
-  action: PropertyAction,
-  command: GameCommandType
+  action: PropertyAction
 ): string => {
-  if (SCAFFOLDED_COMMANDS.has(command)) {
-    return 'Not implemented yet';
+  const isMortgaged = state.ownership[space.id].mortgaged;
+
+  if (action === PropertyAction.Build) {
+    // Only streets carry buildings, and saying so beats a generic refusal on a
+    // railway's panel.
+    return isStreetSpace(space)
+      ? buildBlockedReason(state, space.id, playerId)
+      : 'Only streets can be built on';
   }
 
-  const isMortgaged = state.ownership[space.id].mortgaged;
+  if (action === PropertyAction.Sell) {
+    return isStreetSpace(space)
+      ? sellBlockedReason(state, space.id, playerId)
+      : 'Only streets carry buildings';
+  }
 
   if (action === PropertyAction.Mortgage) {
     if (isMortgaged) {
@@ -114,20 +93,23 @@ const siteActionBlockedReason = (
     return '';
   }
 
-  if (action === PropertyAction.Redeem) {
-    if (!isMortgaged) {
-      return 'Not mortgaged';
-    }
-    const redemptionCost =
-      space.mortgageValue +
-      Math.ceil((space.mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
-    return state.players[playerId].cash < redemptionCost
-      ? 'Not enough cash to redeem it'
-      : '';
+  if (!isMortgaged) {
+    return 'Not mortgaged';
   }
-
-  return '';
+  const redemptionCost =
+    space.mortgageValue +
+    Math.ceil((space.mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
+  return state.players[playerId].cash < redemptionCost
+    ? 'Not enough cash to redeem it'
+    : '';
 };
+
+const SITE_ACTIONS: readonly PropertyAction[] = [
+  PropertyAction.Build,
+  PropertyAction.Sell,
+  PropertyAction.Mortgage,
+  PropertyAction.Redeem,
+];
 
 export const getSiteActions = (
   state: GameState,
@@ -139,14 +121,16 @@ export const getSiteActions = (
     return [];
   }
 
-  return ACTION_DEFINITIONS.map(({ action, label, command }) => {
-    const disabledReason = siteActionBlockedReason(
-      state,
-      space,
-      playerId,
+  const buildLevel = getBuildLevel(state, spaceId);
+
+  return SITE_ACTIONS.map((action) => {
+    const disabledReason = siteActionBlockedReason(state, space, playerId, action);
+    return {
       action,
-      command
-    );
-    return { action, label, command, isEnabled: disabledReason === '', disabledReason };
+      label: labelFor(action, buildLevel),
+      command: commandFor(action, buildLevel),
+      isEnabled: disabledReason === '',
+      disabledReason,
+    };
   });
 };

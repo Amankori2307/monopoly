@@ -68,8 +68,10 @@ UI supplied one.
 
 ## State and data
 
-Reads `GameState.ownership` and `GameState.players`. Writes nothing — every action it offers is
-still scaffolded. `isOwnedBy` was made public in `holdings.utils.ts`.
+Reads `GameState.ownership` and `GameState.players`. Its four actions dispatch real commands:
+mortgage, redeem, build and sell. Build and Sell each cover two commands — the button becomes
+`buildHotel` / `sellHotel` once the site is at four houses or holds a hotel, so one control follows
+the whole ladder. `isOwnedBy` was made public in `holdings.utils.ts`.
 
 ## Tests
 
@@ -79,10 +81,20 @@ still scaffolded. `isOwnedBy` was made public in `holdings.utils.ts`.
 | Unit  | [SpaceDetailCard.test.tsx](../../src/components/game/SpaceDetailCard.test.tsx)    | all three states, the mortgaged stamp, the picked space reaching the command             |
 | Unit  | [PlayerBadges.test.tsx](../../src/components/game/panels/PlayerBadges.test.tsx)   | the mortgaged badge and its pluralisation                                                |
 | E2E   | [feedback.spec.ts](../../tests/e2e/feedback.spec.ts)                              | owner dots in two colours, hollow when mortgaged, the three panel states, the deed stamp |
+| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                            | building and selling from the panel, the even rules, the board pips                      |
 
 ## Known gaps
 
-- **Mortgage and redeem work.** Build, sell and trade are still disabled with a reason.
-- Houses and hotels are not drawn on the board — `buildLevel` is never written yet.
-- The action rail remains dead. Once the commands land, the rail and this panel overlap and one of
-  them should probably go.
+- **Trade is the last disabled action.** Mortgage, redeem, build and sell all work.
+
+## Resolved
+
+- **The action rail is gone.** It offered the same four actions from the left column with no space to
+  act on — every property command needs a `spaceId`, and this panel is the only place one exists.
+  The board is a two-column layout now.
+- **Buildings are drawn on the board**, as pips along the site's colour ribbon: up to four house
+  marks, or one wider hotel mark. `BuildingPips` in `BoardSpaceCell.tsx`; the levels ride on
+  `SpaceOwnerMark` so the cell stays presentational.
+- **The deed marks the rent tier it is actually charging.** A bare site marks nothing: which of the
+  two unbuilt rents applies depends on whether the owner holds the rest of the set, which the deed
+  cannot see.

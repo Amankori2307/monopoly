@@ -3,68 +3,40 @@ import { PropertyAction } from '../../src/domain/types/game.enums';
 import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { startGame } from './helpers';
 
-test('lays out the action rail, board, and sidebar in three columns', async ({
-  page,
-}) => {
+test('lays out the board and sidebar in two columns', async ({ page }) => {
   await startGame(page);
 
-  const rail = page.getByTestId(TEST_IDS.actionRail);
   const board = page.getByTestId(TEST_IDS.boardGrid);
   const sidebar = page.getByTestId(TEST_IDS.gameSidebar);
 
-  await expect(rail).toBeVisible();
+  await expect(board).toBeVisible();
   await expect(sidebar).toBeVisible();
 
-  const [railBox, boardBox, sidebarBox] = await Promise.all([
-    rail.boundingBox(),
+  const [boardBox, sidebarBox] = await Promise.all([
     board.boundingBox(),
     sidebar.boundingBox(),
   ]);
-  if (!railBox || !boardBox || !sidebarBox) {
+  if (!boardBox || !sidebarBox) {
     throw new Error('Game layout regions have no layout box');
   }
 
-  expect(railBox.x + railBox.width).toBeLessThanOrEqual(boardBox.x + 1);
   expect(boardBox.x + boardBox.width).toBeLessThanOrEqual(sidebarBox.x + 1);
 });
 
-test('offers the four property actions, disabled while scaffolded', async ({ page }) => {
+// The property-action rail used to hold a third column of four buttons that
+// could never fire: every property command needs a spaceId, and the rail had
+// none. The site panel is the picker, so the rail is gone.
+test('offers the property actions from the site panel', async ({ page }) => {
   await startGame(page);
 
-  for (const action of Object.values(PropertyAction)) {
-    const button = page.getByTestId(scopedTestId(TEST_IDS.propertyActionButton, action));
-    await expect(button).toBeVisible();
-    await expect(button).toBeDisabled();
-  }
-});
+  await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, 1)).click();
+  const panel = page.getByTestId(TEST_IDS.spaceDetailCard);
+  await expect(panel).toBeVisible();
 
-// A theme token that is declared in SCSS but missing from the theme maps resolves
-// to nothing, and `background: var(--missing)` computes to transparent. That is
-// invisible to the type checker and to Sass, so assert the painted colour.
-test('paints every action-rail button with its theme colour', async ({ page }) => {
-  await startGame(page);
-
-  for (const action of Object.values(PropertyAction)) {
-    const button = page.getByTestId(scopedTestId(TEST_IDS.propertyActionButton, action));
-    const background = await button.evaluate(
-      (element) => getComputedStyle(element).backgroundColor
-    );
-
-    expect(background).not.toBe('rgba(0, 0, 0, 0)');
-    expect(background).not.toBe('transparent');
-  }
-});
-
-// Disabled buttons previously inherited the 0.45 reset opacity on top of a
-// grayscale filter, which erased the rail entirely.
-test('keeps disabled rail buttons legible', async ({ page }) => {
-  await startGame(page);
-
-  const opacity = await page
-    .getByTestId(scopedTestId(TEST_IDS.propertyActionButton, PropertyAction.Build))
-    .evaluate((element) => Number(getComputedStyle(element).opacity));
-
-  expect(opacity).toBeGreaterThanOrEqual(0.6);
+  // Nobody owns it yet, so the panel is the deed alone - no actions offered.
+  await expect(
+    page.getByTestId(scopedTestId(TEST_IDS.siteAction, PropertyAction.Build))
+  ).toHaveCount(0);
 });
 
 // The dice previously floated bottom-right on a white panel with a blur. They

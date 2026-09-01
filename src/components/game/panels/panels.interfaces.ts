@@ -1,3 +1,4 @@
+import type { SellableBuilding } from '../../../domain/rules/buildings.utils';
 import type {
   ColorGroupProgress,
   MortgageableSite,
@@ -83,6 +84,11 @@ export interface LiquidationDecisionViewModel {
    * decision modal covers the board, so the site panel is out of reach.
    */
   mortgageableSites: MortgageableSite[];
+  /**
+   * Buildings the debtor can sell right now. Buildings block mortgaging their
+   * whole colour set, so this is the first move available to a built-up player.
+   */
+  sellableBuildings: SellableBuilding[];
   /** True once the debtor's cash covers the debt. */
   canSettle: boolean;
   /**
@@ -115,6 +121,7 @@ export interface DecisionHandlers {
   onUseJailCard: () => void;
   onAcknowledgeCard: () => void;
   onMortgageSite: (spaceId: SpaceId) => void;
+  onSellBuilding: (spaceId: SpaceId, isHotel: boolean) => void;
   onSettleDebt: () => void;
   onDeclareBankruptcy: () => void;
 }

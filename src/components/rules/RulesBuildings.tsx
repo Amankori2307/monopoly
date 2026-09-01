@@ -1,9 +1,7 @@
 import {
-  AUCTION_START_PRICE,
   HOTELS_AVAILABLE,
   HOUSES_AVAILABLE,
 } from '../../domain/constants/game.constants';
-import { formatMoney } from '../../shared/utils/money.utils';
 
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesBuildings() {
@@ -26,9 +24,13 @@ export function RulesBuildings() {
         </li>
         <li>You cannot build in a color set while any city in that set is mortgaged.</li>
         <li>
-          There are {HOUSES_AVAILABLE} houses and {HOTELS_AVAILABLE} hotels. If supply is
-          contested, the Banker auctions the last available building from{' '}
-          {formatMoney(AUCTION_START_PRICE)}.
+          Sell buildings back to the Bank for half what you paid, and sell evenly too -
+          the same one-building rule in reverse. A hotel sells back into four houses.
+        </li>
+        <li>
+          There are {HOUSES_AVAILABLE} houses and {HOTELS_AVAILABLE} hotels. When the Bank
+          runs out, building waits until a building comes back - this edition does not
+          auction the last one.
         </li>
       </ul>
     </section>

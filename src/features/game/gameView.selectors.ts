@@ -5,8 +5,11 @@ import {
   getMortgagedCount,
   getNetWorth,
   getPlayerOwnedSpaces,
-  getRaisableCash,
 } from '../../domain/rules/holdings.utils';
+import {
+  getLiquidationValue,
+  getSellableBuildings,
+} from '../../domain/rules/buildings.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
 import {
   DeckName,
@@ -184,11 +187,14 @@ const liquidationDecision = (
       : null,
     reason: decision.reason,
     mortgageableSites: getMortgageableSites(game, decision.playerId),
+    // Buildings first: a site whose colour set holds any cannot be mortgaged,
+    // so without this the panel would offer a hotel owner nothing at all.
+    sellableBuildings: getSellableBuildings(game, decision.playerId),
     canSettle: debtor.cash >= decision.amountDue,
     // Bankrupt when the debt is beyond cash plus everything mortgageable - not
     // merely when they would rather not pay.
     isBankrupt:
-      debtor.cash + getRaisableCash(game, decision.playerId) < decision.amountDue,
+      debtor.cash + getLiquidationValue(game, decision.playerId) < decision.amountDue,
   };
 };
 

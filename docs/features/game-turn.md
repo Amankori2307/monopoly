@@ -95,8 +95,8 @@ a roll from jail, and the dice roller contains and logs any throw.
 
 ## Known gaps
 
-- Building and trading are scaffolded — they return a `uiHints` string and change nothing.
-  Mortgaging, redeeming, settling a debt and bankruptcy are implemented.
+- Trading is the only scaffolded command left — it returns a `uiHints` string and changes nothing.
+  Building, selling, mortgaging, redeeming, settling a debt and bankruptcy are implemented.
 - The game ends when a bankruptcy leaves one player: `winnerPlayerId` and `status: 'completed'`
   are written and every later command is refused.
 - Only 2 of 9 implemented commands have unit tests.

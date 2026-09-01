@@ -89,7 +89,11 @@ export function SpaceCard({
       </div>
 
       {space.kind === SpaceKind.Street ? (
-        <StreetDeed currencySymbol={currencySymbol} space={space} />
+        <StreetDeed
+          buildLevel={ownership?.buildLevel}
+          currencySymbol={currencySymbol}
+          space={space}
+        />
       ) : null}
       {space.kind === SpaceKind.Railway ? (
         <RailwayDeed currencySymbol={currencySymbol} space={space} />

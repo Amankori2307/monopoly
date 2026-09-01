@@ -108,7 +108,7 @@ describe('SpaceDetailCard', () => {
       overrides: Partial<SitePanelViewModel> = {}
     ): SitePanelViewModel => ({
       isOwnedByOpponent: false,
-      ownerMark: { color: '#1466ff', mortgaged: false, ownerName: 'Asha' },
+      ownerMark: { color: '#1466ff', mortgaged: false, ownerName: 'Asha', buildLevel: 0 },
       ownership: { ownerPlayerId: 'player-1', mortgaged: false, buildLevel: 0 },
       siteActions: [
         {
@@ -145,7 +145,12 @@ describe('SpaceDetailCard', () => {
       renderPanel(
         ownedPanel({
           isOwnedByOpponent: true,
-          ownerMark: { color: '#e01b1b', mortgaged: false, ownerName: 'Vikram' },
+          ownerMark: {
+            color: '#e01b1b',
+            mortgaged: false,
+            ownerName: 'Vikram',
+            buildLevel: 0,
+          },
           siteActions: [],
         })
       );

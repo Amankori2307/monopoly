@@ -28,6 +28,8 @@ export const CORNER_POSITIONS = [0, 10, 20, 30] as const;
 
 export const HOUSES_AVAILABLE = 32;
 export const HOTELS_AVAILABLE = 12;
+/** Houses a site can hold before the next build is a hotel. */
+export const MAX_HOUSES_PER_SITE = 4;
 /** Build level at which a property holds a hotel rather than houses. */
 export const HOTEL_BUILD_LEVEL = 5;
 

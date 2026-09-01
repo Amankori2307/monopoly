@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ColorGroup,
   GameCommandType,
   GameStatus,
   PendingDecisionType,
+  SpaceKind,
   TurnPhase,
 } from '../types/game.enums';
-import { CardDeck, CardEffectKind, DeckName, SpaceKind } from '../types/game.enums';
+import { CardDeck, CardEffectKind, DeckName } from '../types/game.enums';
 import type { DeckCard } from '../types/game.interfaces';
 import {
   AUCTION_START_PRICE,
@@ -13,8 +15,9 @@ import {
   JAIL_POSITION,
   MAX_JAIL_TURNS,
   MORTGAGE_INTEREST_PERCENT,
+  HOTEL_BUILD_LEVEL,
 } from '../constants/game.constants';
-import type { GameState } from '../types/game.interfaces';
+import type { GameState, StreetSpace } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { SeededRandomSource } from './rng';
@@ -1607,5 +1610,245 @@ describe('winning', () => {
 
     expect(next.status).toBe(GameStatus.InProgress);
     expect(next.winnerPlayerId).toBeNull();
+  });
+});
+
+/**
+ * Building is what finally activates the rent tiers that getStreetRent has
+ * always had, so these assert money, inventory and rent together.
+ */
+describe('building', () => {
+  /** The first player owning a whole colour group, with cash to build. */
+  const withCompleteSet = (levels: number[] = [0, 0]) => {
+    const game = createBaseGame();
+    const ownerId = game.playerOrder[0];
+    const sites = game.board.filter(
+      (space): space is StreetSpace =>
+        space.kind === SpaceKind.Street && space.colorGroup === ColorGroup.Brown
+    );
+    const ownership = { ...game.ownership };
+    sites.forEach((site, index) => {
+      ownership[site.id] = {
+        ownerPlayerId: ownerId,
+        mortgaged: false,
+        buildLevel: levels[index] ?? 0,
+      };
+    });
+
+    return {
+      sites,
+      ownerId,
+      state: {
+        ...game,
+        ownership,
+        players: { ...game.players, [ownerId]: { ...game.players[ownerId], cash: 5000 } },
+        turn: { ...game.turn, phase: TurnPhase.TurnComplete },
+      } as GameState,
+    };
+  };
+
+  it('charges the house cost and takes a house from the bank', () => {
+    const { state, sites, ownerId } = withCompleteSet();
+    const [first] = sites;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.BuildHouse, spaceId: first.id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.ownership[first.id].buildLevel).toBe(1);
+    expect(next.players[ownerId].cash).toBe(5000 - first.houseCost);
+    expect(next.bank.housesAvailable).toBe(state.bank.housesAvailable - 1);
+  });
+
+  it('logs the build, so the money movement is visible', () => {
+    const { state, sites } = withCompleteSet();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.BuildHouse, spaceId: sites[0].id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.history[0].message).toMatch(/built a house/i);
+  });
+
+  it('returns the four houses to the bank when a hotel goes up', () => {
+    const { state, sites, ownerId } = withCompleteSet([4, 4]);
+    const [first] = sites;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.BuildHotel, spaceId: first.id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.ownership[first.id].buildLevel).toBe(HOTEL_BUILD_LEVEL);
+    expect(next.bank.hotelsAvailable).toBe(state.bank.hotelsAvailable - 1);
+    expect(next.bank.housesAvailable).toBe(state.bank.housesAvailable + 4);
+    expect(next.players[ownerId].cash).toBe(5000 - first.hotelCost);
+  });
+
+  it('refuses an uneven build', () => {
+    const { state, sites } = withCompleteSet([1, 0]);
+
+    expect(() =>
+      executeGameCommand(
+        state,
+        { type: GameCommandType.BuildHouse, spaceId: sites[0].id },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/colour set up first/i);
+  });
+
+  it('refuses to build on a set the player does not fully own', () => {
+    const game = createBaseGame();
+    const street = game.board.find(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street
+    ) as StreetSpace;
+    const state: GameState = {
+      ...game,
+      ownership: {
+        ...game.ownership,
+        [street.id]: {
+          ownerPlayerId: game.playerOrder[0],
+          mortgaged: false,
+          buildLevel: 0,
+        },
+      },
+    };
+
+    expect(() =>
+      executeGameCommand(
+        state,
+        { type: GameCommandType.BuildHouse, spaceId: street.id },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/colour set/i);
+  });
+
+  it('pays back half and returns the house to the bank on a sale', () => {
+    const { state, sites, ownerId } = withCompleteSet([1, 1]);
+    const [first] = sites;
+    const cashBefore = state.players[ownerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.SellHouse, spaceId: first.id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.ownership[first.id].buildLevel).toBe(0);
+    expect(next.players[ownerId].cash).toBe(cashBefore + Math.floor(first.houseCost / 2));
+    expect(next.bank.housesAvailable).toBe(state.bank.housesAvailable + 1);
+  });
+
+  it('breaks a hotel back into four houses', () => {
+    const { state, sites, ownerId } = withCompleteSet([HOTEL_BUILD_LEVEL, 4]);
+    const [first] = sites;
+    const cashBefore = state.players[ownerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.SellHotel, spaceId: first.id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.ownership[first.id].buildLevel).toBe(4);
+    expect(next.players[ownerId].cash).toBe(cashBefore + Math.floor(first.hotelCost / 2));
+    expect(next.bank.hotelsAvailable).toBe(state.bank.hotelsAvailable + 1);
+    expect(next.bank.housesAvailable).toBe(state.bank.housesAvailable - 4);
+  });
+
+  it('refuses an uneven sale', () => {
+    const { state, sites } = withCompleteSet([1, 2]);
+
+    expect(() =>
+      executeGameCommand(
+        state,
+        { type: GameCommandType.SellHouse, spaceId: sites[0].id },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/down first/i);
+  });
+
+  // Selling buildings is how a player with a built colour set raises cash, so
+  // it must survive a pending liquidation rather than clearing it.
+  it('leaves a pending liquidation standing', () => {
+    const { state, sites, ownerId } = withCompleteSet([1, 1]);
+    const debt: GameState = {
+      ...state,
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation,
+        playerId: ownerId,
+        amountDue: 900,
+        creditorPlayerId: state.playerOrder[1],
+        reason: 'rent',
+      },
+      turn: { ...state.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const next = executeGameCommand(
+      debt,
+      { type: GameCommandType.SellHouse, spaceId: sites[0].id },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+    expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
+  });
+
+  // The whole point of buildings: the rent table already had these tiers and
+  // nothing could ever reach them.
+  it('raises the rent a visitor pays', () => {
+    const { state, sites } = withCompleteSet([1, 1]);
+    const [first] = sites;
+    const siteIndex = state.board.findIndex((space) => space.id === first.id);
+    const visitorId = state.playerOrder[1];
+
+    // Learn what this seed rolls, then start the visitor exactly that far back
+    // so the landing is certain rather than hoped for.
+    const probe = executeGameCommand(
+      {
+        ...state,
+        activePlayerIndex: state.playerOrder.indexOf(visitorId),
+        turn: { ...state.turn, phase: TurnPhase.AwaitRoll },
+      },
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(5)
+    ).nextState;
+    const rolled = probe.turn.lastRoll[0] + probe.turn.lastRoll[1];
+
+    const rentPaid = (source: GameState) => {
+      const visiting: GameState = {
+        ...source,
+        activePlayerIndex: source.playerOrder.indexOf(visitorId),
+        players: {
+          ...source.players,
+          [visitorId]: { ...source.players[visitorId], position: siteIndex - rolled },
+        },
+        turn: { ...source.turn, phase: TurnPhase.AwaitRoll },
+      };
+      const moved = executeGameCommand(
+        visiting,
+        { type: GameCommandType.RollTurnDice },
+        new SeededRandomSource(5)
+      ).nextState;
+      expect(moved.players[visitorId].position).toBe(siteIndex);
+      return visiting.players[visitorId].cash - moved.players[visitorId].cash;
+    };
+
+    const bare: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [first.id]: { ...state.ownership[first.id], buildLevel: 0 },
+      },
+    };
+
+    expect(rentPaid(state)).toBe(first.rents.with1House);
+    expect(rentPaid(bare)).toBe(first.rents.monopolyRent);
+    expect(first.rents.with1House).toBeGreaterThan(first.rents.monopolyRent);
   });
 });

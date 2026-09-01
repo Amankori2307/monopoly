@@ -44,12 +44,14 @@ File-naming rules are in [conventions.md](conventions.md).
 | [rules/gameEngine.ts](../src/domain/rules/gameEngine.ts)                             | **The rules engine.** `createGameState` + `executeGameCommand`: turn, rent, auction, jail, and card logic.            |
 | [rules/rng.ts](../src/domain/rules/rng.ts)                                           | Dice randomness: `RandomSource`, `DefaultRandomSource`, `SeededRandomSource`, `rollDie`, `shuffle`.                   |
 | [rules/space.utils.ts](../src/domain/rules/space.utils.ts)                           | Board-space type guards: `isOwnableSpace`, `isStreetSpace`.                                                           |
-| [rules/playerActions.utils.ts](../src/domain/rules/playerActions.utils.ts)           | Which property actions a player may take and why one is unavailable. Drives the action rail.                          |
+| [rules/playerActions.utils.ts](../src/domain/rules/playerActions.utils.ts)           | Which property actions a player may take and why one is unavailable. Drives the site panel.                           |
 | [rules/holdings.interfaces.ts](../src/domain/rules/holdings.interfaces.ts)           | Shapes returned by holdings.utils.                                                                                    |
 | [rules/playerActions.interfaces.ts](../src/domain/rules/playerActions.interfaces.ts) | The property-action descriptor.                                                                                       |
 | [rules/rng.interfaces.ts](../src/domain/rules/rng.interfaces.ts)                     | The randomness seam.                                                                                                  |
 | [board/boardLayout.interfaces.ts](../src/domain/board/boardLayout.interfaces.ts)     | Board grid geometry shapes.                                                                                           |
 | [rules/holdings.utils.ts](../src/domain/rules/holdings.utils.ts)                     | Net worth, mortgaged count, colour-set progress, grouped holdings, and `ownsEntireColorSet` (shared with the engine). |
+| [rules/buildings.utils.ts](../src/domain/rules/buildings.utils.ts)                   | Both even rules, bank inventory checks, and what a player could raise by selling buildings.                           |
+| [rules/buildings.interfaces.ts](../src/domain/rules/buildings.interfaces.ts)         | SellableBuilding: one building a player could sell, and what it pays.                                                 |
 
 ### Data
 
@@ -73,6 +75,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Forward steps, GO wrapping, walkable vs teleport, path contents.                         |
 | [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping.                         |
 | [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)           | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard. |
+| [rules/buildings.utils.test.ts](../src/domain/rules/buildings.utils.test.ts)         | Both even rules as a table of levels, bank shortages, and what buildings could raise.    |
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
@@ -137,7 +140,6 @@ File-naming rules are in [conventions.md](conventions.md).
 
 | File                                                                                                                    | What it does                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| [panels/ActionRail.tsx](../src/components/game/panels/ActionRail.tsx)                                                   | Left rail of property actions (Build/Sell/Mortgage/Redeem).                                                                             |
 | [panels/CommandErrorBanner.tsx](../src/components/game/panels/CommandErrorBanner.tsx)                                   | Shows a command the engine rejected, instead of failing silently.                                                                       |
 | [panels/PlayersPanel.tsx](../src/components/game/panels/PlayersPanel.tsx)                                               | Player cards: cash, property count, position, jail status.                                                                              |
 | [panels/HintsPanel.tsx](../src/components/game/panels/HintsPanel.tsx)                                                   | Surfaces engine `uiHints` (the "not implemented yet" notices).                                                                          |
@@ -227,7 +229,6 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [base/\_typography.scss](../src/styles/base/_typography.scss)                 | Headings, `.eyebrow`, helper and error text.                                                 |
 | [layout/\_shell.scss](../src/styles/layout/_shell.scss)                       | `.app-shell`, `.page`, shared grid/flex helpers.                                             |
 | [components/\_board.scss](../src/styles/components/_board.scss)               | Board grid, centre ribbon, deck markers, and **space row templates**.                        |
-| [components/\_action-rail.scss](../src/styles/components/_action-rail.scss)   | Property-action rail buttons and their responsive collapse.                                  |
 | [components/\_buttons.scss](../src/styles/components/_buttons.scss)           | Primary / secondary / danger buttons.                                                        |
 | [components/\_forms.scss](../src/styles/components/_forms.scss)               | Inputs, selects, labels, setup form grids.                                                   |
 | [components/\_panels.scss](../src/styles/components/_panels.scss)             | Panel/hero/summary/decision surfaces, headings, badges, empty states.                        |
@@ -249,10 +250,11 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                                   | Shared `startGame` / `advanceGame` helpers and corner reference data.                                             |
 | [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                             | Creating a game and landing on a resumable route.                                                                 |
 | [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                             | Corner geometry, title deed, ribbon placement, dividers, outlines, theming.                                       |
-| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                           | Three-column layout, action rail, dice placement, player stack.                                                   |
+| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                           | Two-column layout, site-panel actions, dice placement, player stack.                                              |
 | [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)                       | Decision modal, activity drawer, player detail drawer, dice roll.                                                 |
 | [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)                   | Eight-player layout: token cluster stays on the board, dice stay reachable.                                       |
 | [tests/e2e/mortgage.spec.ts](../tests/e2e/mortgage.spec.ts)                       | Mortgaging out of a debt, the dead end without assets, and the site panel.                                        |
+| [tests/e2e/buildings.spec.ts](../tests/e2e/buildings.spec.ts)                     | Building and selling from the site panel, the even rules, and selling buildings mid-liquidation.                  |
 | [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                             | Booklet nav resolves, the FAQ answers, and amounts render in ₹.                                                   |
 | [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)                       | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.                                        |
 
