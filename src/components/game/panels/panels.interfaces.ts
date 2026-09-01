@@ -92,12 +92,18 @@ export interface LiquidationDecisionViewModel {
   isBankrupt: boolean;
 }
 
+export interface GameOverDecisionViewModel {
+  type: PendingDecisionType.GameOver;
+  winnerName: string;
+}
+
 export type DecisionViewModel =
   | BuyDecisionViewModel
   | AuctionDecisionViewModel
   | JailDecisionViewModel
   | CardDrawDecisionViewModel
-  | LiquidationDecisionViewModel;
+  | LiquidationDecisionViewModel
+  | GameOverDecisionViewModel;
 
 export interface DecisionHandlers {
   onBuy: () => void;

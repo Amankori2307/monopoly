@@ -422,11 +422,15 @@ nobody could go bankrupt.
 > top-level `GameState` field for it, which the zod schema would silently strip without a version
 > bump. Deferred rather than done badly.
 
-### Still missing
+### Winning
 
-There is **no win detection**: `winnerPlayerId`, `GameStatus.Completed` and the `game-over` decision
-are never set. A game can now be played to one surviving player, but nothing declares them the
-winner.
+The moment a bankruptcy leaves exactly one player standing, the game is over: `winnerPlayerId` is
+written, `status` becomes `completed`, and a non-dismissible `game-over` decision announces the
+winner. Every later command is refused — `ensureGameNotFinished` throws — so a finished game stays
+finished, including after a reload. The only way on is back to the home page.
+
+A player's `bankruptcyRank` records the order they went out, so a finished game still shows who
+placed where.
 
 ## 12. Speed Die — ❌ not implemented
 
@@ -573,13 +577,13 @@ applied by `acknowledgeCard`. See [features/action-feedback.md](features/action-
 
 ## 16. Turn order
 
-| Rule                                                                                   | Status                                                                                                               |
-| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Play passes to the left; order is fixed at setup                                       | ✅                                                                                                                   |
-| A player in Jail still takes their turn — they choose a Jail action instead of rolling | ✅                                                                                                                   |
-| A player with an extra roll from a double keeps the turn rather than passing it on     | ✅                                                                                                                   |
-| **Bankrupt players are skipped**                                                       | ❌ `advanceToNextTurn` rotates by index and does not check `isBankrupt`. Latent only because bankruptcy is never set |
-| The game ends when one player remains                                                  | ❌ no win detection at all                                                                                           |
+| Rule                                                                                   | Status                                                                                    |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Play passes to the left; order is fixed at setup                                       | ✅                                                                                        |
+| A player in Jail still takes their turn — they choose a Jail action instead of rolling | ✅                                                                                        |
+| A player with an extra roll from a double keeps the turn rather than passing it on     | ✅                                                                                        |
+| **Bankrupt players are skipped**                                                       | ✅ `nextActivePlayerIndex` walks past anyone who is bankrupt                              |
+| The game ends when one player remains                                                  | ✅ the last bankruptcy writes the winner, completes the game and refuses further commands |
 
 ## 17. Implementation summary
 
@@ -588,10 +592,11 @@ economics, the two-dice turn, doubles including all three Jail interactions, pas
 Jail, the full card draw-then-apply flow with chained draws, every card effect, buy or decline, the
 complete auction loop, street/railway/utility rent with colour-set doubling, all three Jail exits and
 the three-turn limit, turn rotation, ₹ throughout, per-action feedback, and **mortgaging, redeeming
-and settling a debt you could not otherwise pay, and bankruptcy when you cannot**.
+and settling a debt you could not otherwise pay, bankruptcy when you cannot, and the win that ends
+the game**.
 
 **Type-level only, no runtime behaviour:** buildings and both even rules, bank building inventory,
-all trading, win detection, Speed Die.
+all trading, Speed Die.
 
 ### Fixed so far
 
@@ -602,17 +607,15 @@ all trading, win detection, Speed Die.
 | **`asset-liquidation` was a dead end**         | A player who could not pay was stuck for the rest of the game. `settleDebt` is the exit; mortgaging raises the cash. The insolvent branches also moved no money at all |
 | **The Jail fine released an insolvent player** | Both paths — the voluntary fine and the mandatory third-turn one — overwrote the liquidation decision and let a player with under ₹50 walk out                         |
 | `CollectFromEach` / `PayEach` stale reads      | Both loops decided who pays from a snapshot taken before any payment happened                                                                                          |
+| **A game could never end**                     | The last player standing is now declared the winner; before this a two-player game carried on with one bankrupt player who could do nothing                            |
 
 ### Known divergences and bugs, still open
 
 | Issue                                                        | Notes                                                                                                                                        |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| No bankruptcy                                                | A player who cannot pay and has nothing left to mortgage reaches an honest dead end. Next step                                               |
-| No win detection                                             | `winnerPlayerId`, `GameStatus.Completed`, `isBankrupt` and `bankruptcyRank` are never written                                                |
 | A used Jail card never returns to its deck                   | `jailFreeCards` is a count with no record of provenance. Needs a `GameState` shape change                                                    |
 | Several debts from one card                                  | Only one liquidation can be pending, so the loop stops at the first player who cannot pay. Needs a debt queue, which belongs with bankruptcy |
 | Bank building inventory never decremented                    | 32 houses / 12 hotels are cosmetic until building lands                                                                                      |
-| Bankrupt players are not skipped in turn order               | Latent: bankruptcy is never set                                                                                                              |
 | Utility rent after a card-driven arrival                     | Uses the turn's original roll rather than a fresh throw. Not reachable with the current deck                                                 |
 | `movePlayerTo`'s pass-GO test is `nextPosition < position`   | True for _any_ backward move. Safe only because `MoveSteps` always passes `collectGo: false`                                                 |
 | `BuyLandedAsset` and the auction bypass the money primitives | They mutate cash inline and log their own event, so the "every amount goes through one of two choke points" invariant is not total           |

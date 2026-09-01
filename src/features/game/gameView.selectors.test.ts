@@ -3,6 +3,7 @@ import { createGameState, executeGameCommand } from '../../domain/rules/gameEngi
 import { SeededRandomSource } from '../../domain/rules/rng';
 import {
   GameCommandType,
+  GameStatus,
   PendingDecisionType,
   SpaceKind,
   TurnPhase,
@@ -292,5 +293,39 @@ describe('selectGroupedHoldings', () => {
     // ...and railways sort after every street group, never among them.
     expect(sections[sections.length - 1].spaces).toEqual([railway]);
     expect(flattened).toHaveLength(4);
+  });
+});
+
+describe('a finished game', () => {
+  const finishedGame = (): GameState => {
+    const game = createGame();
+    return {
+      ...game,
+      status: GameStatus.Completed,
+      winnerPlayerId: game.playerOrder[1],
+      pendingDecision: { type: PendingDecisionType.GameOver },
+      turn: { ...game.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+    };
+  };
+
+  // The phase sits at TurnComplete when a game ends, which used to read as
+  // "you may end your turn" - and the engine throws on every command once the
+  // game is complete, so that button was a crash waiting to be clicked.
+  it('offers no way to end the turn', () => {
+    expect(selectCanEndTurn(finishedGame())).toBe(false);
+  });
+
+  it('offers no roll', () => {
+    expect(selectCanRollDice(finishedGame())).toBe(false);
+  });
+
+  it('shows the winner', () => {
+    const game = finishedGame();
+    const decision = selectDecisionViewModel(game);
+
+    expect(decision).toEqual({
+      type: PendingDecisionType.GameOver,
+      winnerName: game.players[game.playerOrder[1]].name,
+    });
   });
 });

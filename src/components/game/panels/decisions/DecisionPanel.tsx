@@ -4,6 +4,7 @@ import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { AuctionDecision } from './AuctionDecision';
 import { BuyOrAuctionDecision } from './BuyOrAuctionDecision';
 import { CardDrawDecision } from './CardDrawDecision';
+import { GameOverDecision } from './GameOverDecision';
 import { JailDecision } from './JailDecision';
 import { LiquidationDecision } from './LiquidationDecision';
 
@@ -74,6 +75,10 @@ export function DecisionPanel({
           onAcknowledge={handlers.onAcknowledgeCard}
           playerName={decision.playerName}
         />
+      ) : null}
+
+      {decision.type === PendingDecisionType.GameOver ? (
+        <GameOverDecision winnerName={decision.winnerName} />
       ) : null}
 
       {decision.type === PendingDecisionType.AssetLiquidation ? (

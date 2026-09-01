@@ -43,6 +43,8 @@ export const TEST_IDS = {
   liquidationSettle: 'liquidation-settle',
   liquidationDeadEnd: 'liquidation-dead-end',
   declareBankruptcy: 'declare-bankruptcy',
+  gameOverDecision: 'game-over-decision',
+  gameOverHome: 'game-over-home',
   cardDrawDecision: 'card-draw-decision',
   acknowledgeCardButton: 'acknowledge-card-button',
   decisionPanel: 'decision-panel',

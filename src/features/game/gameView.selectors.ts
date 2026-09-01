@@ -8,7 +8,12 @@ import {
   getRaisableCash,
 } from '../../domain/rules/holdings.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
-import { DeckName, PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
+import {
+  DeckName,
+  GameStatus,
+  PendingDecisionType,
+  TurnPhase,
+} from '../../domain/types/game.enums';
 import type {
   GameState,
   PendingDecisionAssetLiquidation,
@@ -71,8 +76,12 @@ export const selectPlayerSummaries = (
 };
 
 export const selectCanEndTurn = (game: GameState) =>
-  game.turn.phase === TurnPhase.TurnComplete ||
-  game.turn.phase === TurnPhase.AwaitExtraRollOrEnd;
+  // A finished game leaves the phase at TurnComplete, which would otherwise
+  // read as "you may end your turn" - and the engine throws on every command
+  // once the game is complete, so the control has to go.
+  game.status === GameStatus.InProgress &&
+  (game.turn.phase === TurnPhase.TurnComplete ||
+    game.turn.phase === TurnPhase.AwaitExtraRollOrEnd);
 
 /**
  * Decisions that must be answered before anything else can happen.
@@ -219,6 +228,13 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
       return cardDrawDecision(game, decision, activePlayer);
     case PendingDecisionType.AssetLiquidation:
       return liquidationDecision(game, decision, activePlayer);
+    case PendingDecisionType.GameOver:
+      return {
+        type: PendingDecisionType.GameOver,
+        winnerName: game.winnerPlayerId
+          ? (game.players[game.winnerPlayerId]?.name ?? '')
+          : '',
+      };
     default:
       // Falls through to the jail check below, so a jailed player always has
       // actions even if `pendingDecision` drifted away from `jail-choice`.

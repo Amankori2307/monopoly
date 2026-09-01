@@ -95,9 +95,8 @@ a roll from jail, and the dice roller contains and logs any throw.
 
 ## Known gaps
 
-- **Jail-fine bug**: `payJailFine` overwrites the `asset-liquidation` decision that
-  `resolveBankPayment` raises, letting a broke player leave jail free. See CLAUDE.md section 8.
-- Building, mortgaging, trading, and bankruptcy are scaffolded — they return a `uiHints` string
-  and change nothing.
-- No end condition: `winnerPlayerId` and `status: 'completed'` are never set.
+- Building and trading are scaffolded — they return a `uiHints` string and change nothing.
+  Mortgaging, redeeming, settling a debt and bankruptcy are implemented.
+- The game ends when a bankruptcy leaves one player: `winnerPlayerId` and `status: 'completed'`
+  are written and every later command is refused.
 - Only 2 of 9 implemented commands have unit tests.

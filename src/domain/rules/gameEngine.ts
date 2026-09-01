@@ -847,6 +847,34 @@ export const createGameState = (
   };
 };
 
+/**
+ * Ends the game when only one player is left standing.
+ *
+ * Called after a bankruptcy, the only way a player leaves. Setting the status
+ * is what stops further commands - ensureGameNotFinished already rejects
+ * everything once the game is no longer in progress.
+ */
+const concludeIfWon = (state: GameState): GameState => {
+  const survivors = state.playerOrder.filter(
+    (playerId) => !state.players[playerId].isBankrupt
+  );
+  if (survivors.length !== 1) {
+    return state;
+  }
+
+  const winner = getPlayerById(state, survivors[0]);
+  return appendEvents(
+    {
+      ...state,
+      status: GameStatus.Completed,
+      winnerPlayerId: winner.id,
+      pendingDecision: { type: PendingDecisionType.GameOver },
+      turn: { ...state.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+    },
+    [createEvent(state.turnNumber, `${winner.name} won the game.`)]
+  );
+};
+
 const ensureGameNotFinished = (state: GameState) => {
   if (state.status !== GameStatus.InProgress) {
     throw new Error('This game is already complete.');
@@ -1379,6 +1407,9 @@ export const executeGameCommand = (
         pendingDecision: { type: PendingDecisionType.None },
         turn: { ...nextState.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
       };
+      // A bankruptcy is the only way a player leaves, so it is the only place
+      // the game can become won.
+      nextState = concludeIfWon(nextState);
       break;
     }
     case GameCommandType.BuildHouse:

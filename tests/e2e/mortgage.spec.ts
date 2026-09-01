@@ -151,7 +151,8 @@ test('offers bankruptcy when there is nothing left to mortgage', async ({ page }
       rank: game.players[game.playerOrder[0]].bankruptcyRank as number,
     };
   });
-  expect(outcome.pending).toBe('none');
+  // Two players, so this bankruptcy also ends the game - see the win test below.
+  expect(outcome.pending).toBe('game-over');
   expect(outcome.debtorOut).toBe(true);
   expect(outcome.rank).toBe(1);
 });
@@ -208,4 +209,42 @@ test('a full table can still play after a debt is settled', async ({ page }) => 
   await expect(
     page.locator(`[data-testid^="${TEST_IDS.liquidationMortgage}-"]`).first()
   ).toBeVisible();
+});
+
+/**
+ * A game can now be played to its end. Bankruptcy is the only way a player
+ * leaves, so it is the only way a game is won.
+ */
+test('declares a winner when the last opponent goes bankrupt', async ({ page }) => {
+  await startGame(page);
+  await seedUnpayableDebt(page, { siteCount: 0, cash: 10, amountDue: 200 });
+
+  await page.getByTestId(TEST_IDS.declareBankruptcy).click();
+
+  const gameOver = page.getByTestId(TEST_IDS.gameOverDecision);
+  await expect(gameOver).toBeVisible();
+  await expect(gameOver).toContainText(/wins/i);
+
+  const finished = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    return {
+      status: game.status as string,
+      winner: game.winnerPlayerId as string | null,
+      survivor: game.playerOrder[1] as string,
+    };
+  });
+  expect(finished.status).toBe('completed');
+  expect(finished.winner).toBe(finished.survivor);
+
+  // Every turn control has to go: the engine throws on any command once the
+  // game is complete, so an enabled button is a crash waiting to be clicked.
+  await expect(page.getByTestId(TEST_IDS.rollButton)).toBeDisabled();
+  await expect(page.getByTestId(TEST_IDS.endTurnButton)).toHaveCount(0);
+
+  // The modal cannot be dismissed, so it offers the way back itself.
+  await page.getByTestId(TEST_IDS.gameOverHome).click();
+  await expect(page).toHaveURL(/\/$/);
 });

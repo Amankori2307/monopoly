@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { GameCommandType, PendingDecisionType, TurnPhase } from '../types/game.enums';
+import {
+  GameCommandType,
+  GameStatus,
+  PendingDecisionType,
+  TurnPhase,
+} from '../types/game.enums';
 import { CardDeck, CardEffectKind, DeckName, SpaceKind } from '../types/game.enums';
 import type { DeckCard } from '../types/game.interfaces';
 import {
@@ -1330,7 +1335,9 @@ describe('bankruptcy', () => {
     expect(next.ownership[street.id].ownerPlayerId).toBe(creditorId);
     expect(next.players[debtorId].isBankrupt).toBe(true);
     expect(next.players[debtorId].cash).toBe(0);
-    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+    // The base game has two players, so this bankruptcy also ends the game -
+    // see the 'winning' suite below.
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.GameOver);
   });
 
   it('keeps a mortgaged site mortgaged when it changes hands', () => {
@@ -1477,5 +1484,128 @@ describe('bankruptcy', () => {
 
     // Two players, one out - so the turn comes back to the same player.
     expect(next.playerOrder[next.activePlayerIndex]).toBe(first);
+  });
+});
+
+/**
+ * The end of the game. Bankruptcy is the only way a player leaves, so it is the
+ * only place a game can become won.
+ */
+describe('winning', () => {
+  const twoPlayersOneDoomed = () => {
+    const game = createBaseGame();
+    const [debtorId, survivorId] = game.playerOrder;
+
+    return {
+      debtorId,
+      survivorId,
+      state: {
+        ...game,
+        players: {
+          ...game.players,
+          [debtorId]: { ...game.players[debtorId], cash: 5 },
+        },
+        activePlayerIndex: game.playerOrder.indexOf(debtorId),
+        pendingDecision: {
+          type: PendingDecisionType.AssetLiquidation as const,
+          playerId: debtorId,
+          amountDue: 5000,
+          creditorPlayerId: survivorId,
+          reason: 'rent',
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      } as GameState,
+    };
+  };
+
+  it('declares the last player standing the winner', () => {
+    const { state, survivorId } = twoPlayersOneDoomed();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.winnerPlayerId).toBe(survivorId);
+    expect(next.status).toBe(GameStatus.Completed);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.GameOver);
+  });
+
+  it('records the win in the history', () => {
+    const { state, survivorId } = twoPlayersOneDoomed();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.history[0].message).toContain(next.players[survivorId].name);
+    expect(next.history[0].message).toMatch(/won the game/i);
+  });
+
+  // ensureGameNotFinished already guards this; the point is that setting the
+  // status is what switches it on.
+  it('takes no further commands once complete', () => {
+    const { state } = twoPlayersOneDoomed();
+    const finished = executeGameCommand(
+      state,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(() =>
+      executeGameCommand(
+        finished,
+        { type: GameCommandType.RollTurnDice },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/already complete/i);
+  });
+
+  it('does not end the game while two players remain', () => {
+    const game = createBaseGame();
+    const withThree: GameState = {
+      ...game,
+      // A third seat, so one bankruptcy still leaves two in the game.
+      playerOrder: [...game.playerOrder, 'player-3'],
+      players: {
+        ...game.players,
+        'player-3': {
+          ...game.players[game.playerOrder[0]],
+          id: 'player-3',
+          name: 'Meera',
+        },
+      },
+    };
+    const doomed: GameState = {
+      ...withThree,
+      players: {
+        ...withThree.players,
+        [withThree.playerOrder[0]]: {
+          ...withThree.players[withThree.playerOrder[0]],
+          cash: 5,
+        },
+      },
+      activePlayerIndex: 0,
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation,
+        playerId: withThree.playerOrder[0],
+        amountDue: 5000,
+        creditorPlayerId: withThree.playerOrder[1],
+        reason: 'rent',
+      },
+      turn: { ...withThree.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const next = executeGameCommand(
+      doomed,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.status).toBe(GameStatus.InProgress);
+    expect(next.winnerPlayerId).toBeNull();
   });
 });
