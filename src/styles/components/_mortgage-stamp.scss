@@ -1,4 +1,5 @@
 @use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
 
 /**
  * The mortgage watermark.
@@ -34,28 +35,49 @@
 }
 
 /**
- * On a board square: the frame alone, and smaller relative to the cell.
+ * On a board square.
  *
- * z-index 7 puts it over the cell's ::after divider (5) and the owner dot (6) -
- * the dot stays, because it is the one mortgage signal that still reads when the
- * squares shrink on a phone.
+ * z-index 7 puts it over the cell's ::after divider (5) and the owner dot (6).
+ * The dot stays, because it is the one mortgage signal that still reads once the
+ * squares shrink on a phone - which is also where the wording comes off.
  */
 .mortgage-stamp.is-space {
   z-index: 7;
-  opacity: 0.34;
   overflow: hidden;
+  // Low enough that the space name wins: at 0.4 the word swamped it, which is
+  // the opposite of a watermark.
+  opacity: 0.28;
 
   // Deliberately larger than the cell, and clipped by it: a stamp struck across
-  // a square runs off the edges. Fitted inside, the frame shrank to a small
-  // badge in the middle of a tall cell instead of reading as a strike.
+  // a square runs off the edges.
   svg {
-    width: 116%;
-    height: 116%;
-    aspect-ratio: 1;
-    // The cell is portrait on the top and bottom rows and landscape on the
-    // sides, so cover the longer axis either way.
-    min-width: 116%;
-    min-height: 116%;
+    width: 128%;
+    height: auto;
+  }
+}
+
+/**
+ * A portrait square sizes the stamp off its height, not its width.
+ *
+ * The rotation is inside the SVG, so the element's long side is its own height
+ * here - and `width: 128%` of a 52px-wide cell gave the word half the length it
+ * had room for down an 89px one.
+ */
+.board-space.side-bottom .mortgage-stamp.is-space,
+.board-space.side-top .mortgage-stamp.is-space {
+  svg {
+    width: auto;
+    height: 128%;
+  }
+}
+
+/**
+ * A phone's squares are about 29x49px, where the word cannot be read at any
+ * weight. The frame carries it there, with the hollow owner dot.
+ */
+@include m.below(t.$breakpoint-tablet) {
+  .mortgage-stamp.is-space .mortgage-stamp-word {
+    display: none;
   }
 }
 

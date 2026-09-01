@@ -24,21 +24,61 @@ describe('MortgageStamp', () => {
   });
 
   /**
-   * A board square is about 52x89px and already carries the space name; the word
-   * across it would be a seven-pixel font over existing text. The frame alone
-   * reads as "stamped" at that size, and there is nothing there for a screen
-   * reader, so it is hidden from one.
+   * It said nothing at first, on the argument that a ~52x89px square could not
+   * hold the word. That was measured against the cell's short axis with a bad
+   * character advance, and the frame alone read as a stray rectangle. Along the
+   * long axis the word fits.
    */
-  it('carries no wording on a board square, and announces nothing', () => {
-    const { container } = render(
-      <MortgageStamp testId="space-mortgaged-1" variant="space" />
-    );
+  it('says it on a board square too', () => {
+    render(<MortgageStamp testId="space-mortgaged-1" variant="space-wide" />);
+
+    expect(screen.getByTestId('space-mortgaged-1')).toHaveTextContent('MORTGAGED');
+  });
+
+  // Nothing for a screen reader: the deed's stamp is the notice, and a board
+  // square would just repeat it forty times.
+  it('announces nothing from a board square', () => {
+    render(<MortgageStamp testId="space-mortgaged-1" variant="space-wide" />);
 
     const stamp = screen.getByTestId('space-mortgaged-1');
     expect(stamp).toHaveAttribute('aria-hidden', 'true');
     expect(stamp).not.toHaveAttribute('role');
-    expect(stamp.textContent).toBe('');
-    expect(container.querySelector('text')).toBeNull();
+  });
+
+  /**
+   * The word has to run along the cell's long axis to have room, and that axis is
+   * a quarter turn apart on the two pairs of board sides. The rotation is baked
+   * into each viewBox rather than applied in CSS, because a CSS rotation happens
+   * after layout: the size would still resolve against the short side.
+   */
+  it('draws the two board orientations from transposed boxes', () => {
+    const wide = render(<MortgageStamp variant="space-wide" />);
+    const wideBox = wide.container.querySelector('svg')?.getAttribute('viewBox');
+    wide.unmount();
+
+    const tall = render(<MortgageStamp variant="space-tall" />);
+    const tallBox = tall.container.querySelector('svg')?.getAttribute('viewBox');
+
+    const [, , wideW, wideH] = (wideBox ?? '').split(' ').map(Number);
+    const [, , tallW, tallH] = (tallBox ?? '').split(' ').map(Number);
+    expect(wideW).toBeGreaterThan(wideH);
+    expect(tallH).toBeGreaterThan(tallW);
+  });
+
+  /**
+   * Both square variants must share every rule - opacity, clipping, z-index -
+   * and interpolating the variant into the class silently produced
+   * `is-space-tall`, which matched none of them. The stamp then rendered fully
+   * opaque and swamped the space name.
+   */
+  it('gives both board orientations the same class', () => {
+    const wide = render(<MortgageStamp variant="space-wide" />);
+    expect(wide.container.firstElementChild).toHaveClass('is-space');
+    wide.unmount();
+
+    const tall = render(<MortgageStamp variant="space-tall" />);
+    expect(tall.container.firstElementChild).toHaveClass('is-space');
+    expect(tall.container.firstElementChild).not.toHaveClass('is-space-tall');
   });
 
   it('takes its colour from the theme rather than baking one in', () => {
@@ -60,7 +100,7 @@ describe('MortgageStamp', () => {
 
     // Forty filtered SVGs on the board would be a cost for nothing: the bitten
     // edge does not read at that size.
-    const space = render(<MortgageStamp variant="space" />);
+    const space = render(<MortgageStamp variant="space-wide" />);
     expect(filterIdsIn(space.container)).toHaveLength(0);
   });
 
@@ -88,11 +128,22 @@ describe('MortgageStamp', () => {
   });
 
   it('never intercepts a click, because it covers a button', () => {
-    const { container } = render(<MortgageStamp variant="space" />);
+    const { container } = render(<MortgageStamp variant="space-wide" />);
 
     // The rule lives in CSS, which jsdom does not apply - so assert the class
     // that carries it is present, and let the e2e suite prove the behaviour.
     expect(container.firstElementChild).toHaveClass('mortgage-stamp');
     expect(container.firstElementChild).toHaveClass('is-space');
+  });
+
+  /**
+   * The word comes off on a phone, where the squares are about 29x49px and it
+   * cannot be read at any weight. The stylesheet hides this group; jsdom does not
+   * apply it, so the hook it needs is what gets asserted here.
+   */
+  it('puts the word in a group the stylesheet can hide on a phone', () => {
+    const { container } = render(<MortgageStamp variant="space-wide" />);
+
+    expect(container.querySelector('.mortgage-stamp-word')).not.toBeNull();
   });
 });

@@ -2,7 +2,7 @@ import {
   CORNER_POSITIONS,
   HOTEL_BUILD_LEVEL,
 } from '../../../domain/constants/game.constants';
-import { SpaceKind } from '../../../domain/types/game.enums';
+import { BoardSide, SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.utils';
 import { getBoardSide } from '../../../domain/board/boardSide.utils';
@@ -10,6 +10,15 @@ import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.consta
 import { MortgageStamp } from '../deed/MortgageStamp';
 import { getCornerIcon, getSpaceIcon } from '../spaceIcons.constants';
 import type { SpaceOwnerMark } from './board.interfaces';
+
+/**
+ * Whether a square is taller than it is wide, which the two long rows are.
+ *
+ * Only the mortgage stamp needs to know, so it lives here rather than beside
+ * getBoardSide - the sides themselves are about which edge the ribbon hugs.
+ */
+const isPortraitSide = (side: BoardSide): boolean =>
+  side === BoardSide.Bottom || side === BoardSide.Top;
 
 interface BoardSpaceCellProps {
   /** Whether any token currently sits here - tokens themselves are drawn by
@@ -34,6 +43,7 @@ export function BoardSpaceCell({
   ownerMark,
   space,
 }: BoardSpaceCellProps) {
+  const side = getBoardSide(space.index);
   const position = boardIndexToGridPosition(space.index);
   const cornerIcon = getCornerIcon(space);
   const spaceIcon = getSpaceIcon(space);
@@ -42,7 +52,7 @@ export function BoardSpaceCell({
   const className = [
     'board-space',
     `space-${space.kind}`,
-    `side-${getBoardSide(space.index)}`,
+    `side-${side}`,
     isOccupied ? 'active-space' : '',
     isCorner ? 'corner-space' : '',
   ]
@@ -98,7 +108,9 @@ export function BoardSpaceCell({
       {ownerMark?.mortgaged ? (
         <MortgageStamp
           testId={scopedTestId(TEST_IDS.spaceMortgaged, space.index)}
-          variant="space"
+          // The top and bottom rows are portrait squares, so the word runs down
+          // them - the same way their space names already do.
+          variant={isPortraitSide(side) ? 'space-tall' : 'space-wide'}
         />
       ) : null}
 

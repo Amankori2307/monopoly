@@ -14,4 +14,14 @@ Build a better UI and theme
 - Mail the jail / visiting only proper
 
 
-Improve trade UI
+Actual Houses and Hotel
+
+
+I have made the game working, now I have to make the game playable, so that it is actually usable
+
+
+- I have 
+
+when we do roll for a double while in jail, we don't get dice sound [BUG]
+
+

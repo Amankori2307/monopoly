@@ -74,13 +74,25 @@ UI supplied one.
   neither of which anyone notices. The pill is gone; the stamp says it once, and the accessible name
   rides on the stamp.
 
-- **The board stamp carries no wording.** A square is around 52x89px and already holds the space
-  name and the colour ribbon, so the word across it would be a seven-pixel font over existing text.
-  A rotated double rule reads as "stamped" at that size and cannot be mistaken for the ribbon or a
-  building pip. Its viewBox is square and it is sized _past_ the cell and clipped by it - fitted
-  inside, the deed's 2.5:1 frame shrank to a small badge in the middle of a tall cell. The hollow dot
-  stays alongside it, because it is the one signal that still reads when the squares drop to 29px on
-  a phone.
+- **The board stamp carries the word too, along the square's long axis.** It did not at first, on the
+  argument that a ~52x89px square could not hold it - an argument made against the cell's _short_
+  axis and with a bad character advance. DM Mono advances about 0.6em, so the word at 9px is roughly
+  54px inside a ~70px axis: it fits, and the frame alone read as a stray rectangle rather than as
+  "mortgaged".
+
+- **The two board orientations are two viewBoxes, not one plus a CSS rotation.** A square is portrait
+  on the top and bottom rows and landscape on the sides, and the word has to follow the long axis. A
+  CSS rotation happens after layout, so `width: 128%` still resolved against the short side and the
+  word came out at half the length it had room for. The rotation is baked into each viewBox instead,
+  and the portrait sides size off `height`.
+
+- **Both square variants share one class.** The class was interpolated from the variant, which
+  silently produced `is-space-tall` and matched none of the `.is-space` rules - so the stamp rendered
+  fully opaque and swamped the space name. Only a measurement caught that; the screenshot merely
+  looked "a bit heavy". A test pins the class now.
+
+- **The word comes off below the tablet breakpoint.** At about 29x49px it cannot be read at any
+  weight, and the hollow owner dot carries the state there - which is why the dot stays.
 
 - **The stamp takes `--action-mortgage`**, the token the mortgage button already uses, so it needs no
   new theme token and reads in both themes. Colour comes through `currentColor` and opacity from CSS,

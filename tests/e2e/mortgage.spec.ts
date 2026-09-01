@@ -220,6 +220,26 @@ test('the site panel can mortgage and redeem a site directly', async ({ page }) 
   ).toBeVisible();
   await expect(square.locator('.space-name')).toBeVisible();
 
+  /**
+   * The word is the whole point of the board stamp - the frame alone read as a
+   * stray rectangle rather than as "mortgaged" - and it has to run along the
+   * square's long axis to have room for it.
+   */
+  const stamp = square.getByTestId(scopedTestId(TEST_IDS.spaceMortgaged, streetIndex));
+  await expect(stamp).toContainText('MORTGAGED');
+  const wordFillsLongAxis = await stamp.evaluate((node) => {
+    const cell = node.closest('.board-space') as HTMLElement;
+    const word = node.querySelector('text') as SVGTextElement;
+    const cellBox = cell.getBoundingClientRect();
+    const wordBox = word.getBoundingClientRect();
+    return (
+      Math.max(wordBox.width, wordBox.height) / Math.max(cellBox.width, cellBox.height)
+    );
+  });
+  // Well over half the axis: the bug this replaced left it at a third.
+  expect(wordFillsLongAxis).toBeGreaterThan(0.55);
+  expect(wordFillsLongAxis).toBeLessThan(1.4);
+
   // And it covers the whole square without swallowing the click that opens it.
   const stampBlocksClick = await square.evaluate((node) => {
     const box = node.getBoundingClientRect();

@@ -3,10 +3,17 @@ import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 
 interface MortgageStampProps {
   /**
-   * `deed` is the full stamp with its wording, for a title-deed card. `space` is
-   * the frame alone, for a board square - see below for why it carries no text.
+   * `deed` is the full stamp for a title-deed card. The two `space` variants are
+   * the same stamp at board scale, and they differ only in which way the word
+   * runs: a board square is portrait on the top and bottom rows and landscape on
+   * the sides, and the word has to follow the long axis to have room.
+   *
+   * The rotation is baked into each viewBox rather than applied in CSS, because
+   * a CSS rotation happens after layout: `width: 128%` would still resolve
+   * against the cell's short side and the word came out half the length it had
+   * room for.
    */
-  variant: 'deed' | 'space';
+  variant: 'deed' | 'space-wide' | 'space-tall';
   /** Overrides the test id, so a board square can scope its own by index. */
   testId?: string;
 }
@@ -44,11 +51,19 @@ export function MortgageStamp({ variant, testId }: MortgageStampProps) {
       // is the mortgage notice itself, so it keeps the name and the role.
       aria-hidden={isDeed ? undefined : true}
       aria-label={isDeed ? 'Mortgaged' : undefined}
-      className={`mortgage-stamp is-${variant}`}
+      // Keyed on deed-or-square, not on the variant: the two square variants
+      // differ only in geometry and must share every rule. Interpolating the
+      // variant here silently produced `is-space-tall`, and every `.is-space`
+      // rule - opacity, clipping, z-index - stopped matching.
+      className={`mortgage-stamp ${isDeed ? 'is-deed' : 'is-space'}`}
       data-testid={testId ?? TEST_IDS.deedMortgaged}
       role={isDeed ? 'img' : undefined}
     >
-      {isDeed ? <DeedStamp filterId={filterId} /> : <SpaceStamp />}
+      {isDeed ? (
+        <DeedStamp filterId={filterId} />
+      ) : (
+        <SpaceStamp alongHeight={variant === 'space-tall'} />
+      )}
     </span>
   );
 }
@@ -135,41 +150,73 @@ function DeedStamp({ filterId }: DeedStampProps) {
 }
 
 /**
- * The frame alone, on a square viewBox.
+ * The board square's stamp: the frame with the word inside it.
  *
- * Square because a board cell is portrait or landscape depending on which side
- * it is on, and the deed's 2.5:1 frame shrank to a small band across the middle
- * of a tall one - a badge rather than a strike. Sized past the cell in CSS and
- * clipped by it, which is how a stamp struck across a square actually looks.
+ * It carried no wording at first, on my own argument that a ~52x89px square
+ * could not hold it. That was wrong twice: the sum was made against the cell's
+ * *short* axis, and with a bad character advance. Along the long axis DM Mono
+ * advances about 0.6em, so the word at 9px is roughly 54px inside a ~70px axis -
+ * and the frame alone read as a stray rectangle rather than as "mortgaged".
+ *
+ * Below the tablet breakpoint the squares are about 29x49px and the word
+ * genuinely cannot be read, so the stylesheet hides it there and the frame plus
+ * the hollow owner dot carry the state.
  */
-function SpaceStamp() {
+interface SpaceStampProps {
+  /** True on the portrait squares, where the word runs down the cell. */
+  alongHeight: boolean;
+}
+
+function SpaceStamp({ alongHeight }: SpaceStampProps) {
+  // One frame, drawn along whichever axis is the long one. The numbers are the
+  // same measurements transposed; the angle is the stamp's, either way.
+  const box = alongHeight ? { width: 104, height: 200 } : { width: 200, height: 96 };
+  const centre = { x: box.width / 2, y: box.height / 2 };
+  const angle = alongHeight ? 73 : -17;
+
   return (
     <svg
       fill="none"
       focusable="false"
       preserveAspectRatio="xMidYMid meet"
-      viewBox="0 0 100 100"
+      viewBox={`0 0 ${box.width} ${box.height}`}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g transform="rotate(-24 50 50)">
+      <g transform={`rotate(${angle} ${centre.x} ${centre.y})`}>
         <rect
-          height="60"
+          height="48"
           rx="3"
           stroke="currentColor"
-          strokeWidth="7"
-          width="92"
-          x="4"
-          y="20"
+          strokeWidth="6"
+          width="176"
+          x={centre.x - 88}
+          y={centre.y - 24}
         />
         <rect
-          height="44"
+          height="32"
           rx="1.5"
           stroke="currentColor"
-          strokeWidth="3"
-          width="76"
-          x="12"
-          y="28"
+          strokeWidth="2.5"
+          width="158"
+          x={centre.x - 79}
+          y={centre.y - 16}
         />
+        {/* Hidden on a phone by the stylesheet, where it cannot be read. */}
+        <g className="mortgage-stamp-word">
+          <text
+            dominantBaseline="central"
+            fill="currentColor"
+            fontFamily="'DM Mono', monospace"
+            fontSize="25"
+            fontWeight="700"
+            letterSpacing="0.5"
+            textAnchor="middle"
+            x={centre.x}
+            y={centre.y + 1}
+          >
+            MORTGAGED
+          </text>
+        </g>
       </g>
     </svg>
   );
