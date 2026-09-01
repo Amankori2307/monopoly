@@ -10,6 +10,7 @@ import type {
   CardEffectKind,
   ColorGroup,
   DeckName,
+  MortgageChoice,
   SpeedDieFace,
   GameCommandType,
   GameStatus,
@@ -323,7 +324,15 @@ export type GameCommand =
   | { type: GameCommandType.ProposeTrade; payload: TradeState }
   | { type: GameCommandType.ChooseBusMove; steps: number }
   | { type: GameCommandType.ChooseSpeedDieDestination; spaceId: SpaceId }
-  | { type: GameCommandType.AcceptTrade }
+  | {
+      type: GameCommandType.AcceptTrade;
+      /**
+       * What the receiver does about each mortgaged site coming to them:
+       * `redeem` clears the mortgage now, `keep` pays the 10% and leaves it
+       * mortgaged. Sites left out default to `keep`.
+       */
+      mortgageChoices?: Record<SpaceId, MortgageChoice>;
+    }
   | { type: GameCommandType.RejectTrade }
   | { type: GameCommandType.ConfirmBankruptcy };
 

@@ -1,12 +1,20 @@
-import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
+import { useState } from 'react';
+import { MortgageChoice } from '../../../../domain/types/game.enums';
+import type { SpaceId } from '../../../../domain/types/game.interfaces';
+import { scopedTestId, TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { formatMoney } from '../../../../shared/utils/money.utils';
-import type { TradeSideSummary } from '../../trade/trade.interfaces';
+import type {
+  IncomingMortgagedSite,
+  TradeSideSummary,
+} from '../../trade/trade.interfaces';
 
 interface TradeResponseDecisionProps {
   currencySymbol: string;
   /** What the recipient is being given. */
   incoming: TradeSideSummary;
-  onAccept: () => void;
+  /** Mortgaged sites among that, each needing a decision of its own. */
+  incomingMortgaged: IncomingMortgagedSite[];
+  onAccept: (choices: Record<SpaceId, MortgageChoice>) => void;
   onReject: () => void;
   /** What the recipient is being asked for. */
   outgoing: TradeSideSummary;
@@ -22,11 +30,26 @@ interface TradeResponseDecisionProps {
 export function TradeResponseDecision({
   currencySymbol,
   incoming,
+  incomingMortgaged,
   onAccept,
   onReject,
   outgoing,
   recipientName,
 }: TradeResponseDecisionProps) {
+  // Keeping it mortgaged is the cheaper option, so it is the default - the
+  // player has to ask to spend more.
+  const [choices, setChoices] = useState<Record<SpaceId, MortgageChoice>>({});
+  const choiceFor = (spaceId: SpaceId) => choices[spaceId] ?? MortgageChoice.Keep;
+
+  const mortgageTotal = incomingMortgaged.reduce(
+    (total, site) =>
+      total +
+      (choiceFor(site.spaceId) === MortgageChoice.Redeem
+        ? site.redeemCost
+        : site.keepCost),
+    0
+  );
+
   return (
     <div className="trade-response" data-testid={TEST_IDS.tradeResponse}>
       <p className="eyebrow">Trade offer</p>
@@ -45,11 +68,57 @@ export function TradeResponseDecision({
         />
       </div>
 
-      {incoming.transferFee > 0 ? (
-        <p className="trade-fee">
-          Plus {formatMoney(incoming.transferFee, currencySymbol)} to the Bank in mortgage
-          interest on what you receive.
-        </p>
+      {/* The printed rule gives the receiver the choice on each mortgaged site:
+          clear it now, or pay the interest and take it as it stands. */}
+      {incomingMortgaged.length > 0 ? (
+        <div className="trade-mortgages" data-testid={TEST_IDS.tradeMortgageChoices}>
+          <p className="deed-rent-title">Mortgaged sites coming to you</p>
+          <ul>
+            {incomingMortgaged.map((site) => (
+              <li key={site.spaceId}>
+                <span>{site.name}</span>
+                <div className="trade-mortgage-options">
+                  <label>
+                    <input
+                      checked={choiceFor(site.spaceId) === MortgageChoice.Keep}
+                      data-testid={scopedTestId(TEST_IDS.tradeMortgageKeep, site.spaceId)}
+                      name={`mortgage-${site.spaceId}`}
+                      onChange={() =>
+                        setChoices((current) => ({
+                          ...current,
+                          [site.spaceId]: MortgageChoice.Keep,
+                        }))
+                      }
+                      type="radio"
+                    />
+                    Keep mortgaged — {formatMoney(site.keepCost, currencySymbol)}
+                  </label>
+                  <label>
+                    <input
+                      checked={choiceFor(site.spaceId) === MortgageChoice.Redeem}
+                      data-testid={scopedTestId(
+                        TEST_IDS.tradeMortgageRedeem,
+                        site.spaceId
+                      )}
+                      name={`mortgage-${site.spaceId}`}
+                      onChange={() =>
+                        setChoices((current) => ({
+                          ...current,
+                          [site.spaceId]: MortgageChoice.Redeem,
+                        }))
+                      }
+                      type="radio"
+                    />
+                    Pay it off — {formatMoney(site.redeemCost, currencySymbol)}
+                  </label>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="trade-fee" data-testid={TEST_IDS.tradeMortgageTotal}>
+            {formatMoney(mortgageTotal, currencySymbol)} to the Bank on top of the deal.
+          </p>
+        </div>
       ) : null}
 
       <div className="button-row">
@@ -64,7 +133,7 @@ export function TradeResponseDecision({
         <button
           className="primary-button"
           data-testid={TEST_IDS.tradeAccept}
-          onClick={onAccept}
+          onClick={() => onAccept(choices)}
           type="button"
         >
           Accept

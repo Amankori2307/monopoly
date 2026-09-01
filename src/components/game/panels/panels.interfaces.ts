@@ -1,10 +1,13 @@
 import type { SellableBuilding } from '../../../domain/rules/buildings.utils';
-import type { TradeSideSummary } from '../trade/trade.interfaces';
+import type { IncomingMortgagedSite, TradeSideSummary } from '../trade/trade.interfaces';
 import type {
   ColorGroupProgress,
   MortgageableSite,
 } from '../../../domain/rules/holdings.utils';
-import type { PendingDecisionType } from '../../../domain/types/game.enums';
+import type {
+  MortgageChoice,
+  PendingDecisionType,
+} from '../../../domain/types/game.enums';
 import type {
   AuctionState,
   BoardSpace,
@@ -104,6 +107,11 @@ export interface LiquidationDecisionViewModel {
 export interface TradeResponseDecisionViewModel {
   type: PendingDecisionType.TradeResponse;
   recipientName: string;
+  /**
+   * Mortgaged sites coming to the recipient. The printed rule lets them either
+   * clear the mortgage now or pay the 10% and keep it, so the panel asks.
+   */
+  incomingMortgaged: IncomingMortgagedSite[];
   /** What the recipient receives, and what they hand over. */
   incoming: TradeSideSummary;
   outgoing: TradeSideSummary;
@@ -151,7 +159,7 @@ export interface DecisionHandlers {
   onSellBuilding: (spaceId: SpaceId, isHotel: boolean) => void;
   onSettleDebt: () => void;
   onDeclareBankruptcy: () => void;
-  onAcceptTrade: () => void;
+  onAcceptTrade: (choices: Record<SpaceId, MortgageChoice>) => void;
   onRejectTrade: () => void;
   onChooseBusMove: (steps: number) => void;
   onChooseDestination: (spaceId: SpaceId) => void;

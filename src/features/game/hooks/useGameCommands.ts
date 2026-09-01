@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import type { Toast } from '../../../components/game/overlays/overlays.interfaces';
 import type { DecisionHandlers } from '../../../components/game/panels/panels.interfaces';
+import type { MortgageChoice } from '../../../domain/types/game.enums';
 import type { TradeState } from '../../../domain/types/game.interfaces';
 import { GameCommandType } from '../../../domain/types/game.enums';
 import { runGameCommand, setCommandError } from '../gameSlice';
@@ -89,8 +90,10 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.SettleDebt })),
         onDeclareBankruptcy: () =>
           dispatch(runGameCommand({ type: GameCommandType.ConfirmBankruptcy })),
-        onAcceptTrade: () =>
-          dispatch(runGameCommand({ type: GameCommandType.AcceptTrade })),
+        onAcceptTrade: (mortgageChoices: Record<string, MortgageChoice>) =>
+          dispatch(
+            runGameCommand({ type: GameCommandType.AcceptTrade, mortgageChoices })
+          ),
         onRejectTrade: () =>
           dispatch(runGameCommand({ type: GameCommandType.RejectTrade })),
         onChooseBusMove: (steps: number) =>

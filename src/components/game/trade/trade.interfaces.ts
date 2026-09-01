@@ -1,5 +1,5 @@
 import type { TradableSite } from '../../../domain/rules/trade.utils';
-import type { PlayerId } from '../../../domain/types/game.interfaces';
+import type { PlayerId, SpaceId } from '../../../domain/types/game.interfaces';
 
 /** One player as the offer builder sees them: what they hold and could give. */
 export interface TradePartyViewModel {
@@ -26,4 +26,14 @@ export interface TradeSideSummary {
   jailCards: number;
   /** Mortgage interest this side owes the bank on what it receives. */
   transferFee: number;
+}
+
+/** A mortgaged site coming to the recipient, and what each option costs. */
+export interface IncomingMortgagedSite {
+  spaceId: SpaceId;
+  name: string;
+  /** Interest only: the site stays mortgaged. */
+  keepCost: number;
+  /** Mortgage value plus interest: the site comes free. */
+  redeemCost: number;
 }

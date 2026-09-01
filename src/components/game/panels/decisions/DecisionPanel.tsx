@@ -84,6 +84,7 @@ export function DecisionPanel({
         <TradeResponseDecision
           currencySymbol={currencySymbol}
           incoming={decision.incoming}
+          incomingMortgaged={decision.incomingMortgaged}
           onAccept={handlers.onAcceptTrade}
           onReject={handlers.onRejectTrade}
           outgoing={decision.outgoing}

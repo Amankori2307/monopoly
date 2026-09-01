@@ -10,7 +10,11 @@ import {
   getLiquidationValue,
   getSellableBuildings,
 } from '../../domain/rules/buildings.utils';
-import { getTradableSites, getTransferFees } from '../../domain/rules/trade.utils';
+import {
+  getMortgageTransferFee,
+  getTradableSites,
+  getTransferFees,
+} from '../../domain/rules/trade.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
 import {
   DeckName,
@@ -232,6 +236,21 @@ const tradeResponseDecision = (
   return {
     type: PendingDecisionType.TradeResponse,
     recipientName: game.players[decision.recipientPlayerId]?.name ?? 'They',
+    incomingMortgaged: trade.offeredSpaceIds
+      .filter((spaceId) => game.ownership[spaceId]?.mortgaged)
+      .flatMap((spaceId) => {
+        const space = game.board.find((candidate) => candidate.id === spaceId);
+        if (!space || !('mortgageValue' in space)) return [];
+        const interest = getMortgageTransferFee(space.mortgageValue);
+        return [
+          {
+            spaceId,
+            name: space.name,
+            keepCost: interest,
+            redeemCost: space.mortgageValue + interest,
+          },
+        ];
+      }),
     incoming: {
       playerName: game.players[decision.proposerPlayerId]?.name ?? 'They',
       cash: trade.offeredCash,

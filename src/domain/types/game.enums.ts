@@ -141,3 +141,11 @@ export enum PropertyAction {
   Mortgage = 'mortgage',
   Redeem = 'redeem',
 }
+
+/** What a player receiving a mortgaged site in a trade elects to do about it. */
+export enum MortgageChoice {
+  /** Clear the mortgage now: mortgage value plus interest, and it comes free. */
+  Redeem = 'redeem',
+  /** Pay the interest only, and take it still mortgaged. */
+  Keep = 'keep',
+}

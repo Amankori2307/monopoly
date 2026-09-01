@@ -3,6 +3,7 @@ import type { TradableSite } from './trade.interfaces';
 export type { TradableSite, TradeSide } from './trade.interfaces';
 
 import { MORTGAGE_INTEREST_PERCENT } from '../constants/game.constants';
+import { MortgageChoice } from '../types/game.enums';
 import type { GameState, PlayerId, SpaceId, TradeState } from '../types/game.interfaces';
 import { groupHasBuildings, getPlayerOwnedSpaces } from './holdings.utils';
 import { isStreetSpace } from './space.utils';
@@ -47,14 +48,31 @@ export const getTradableSites = (state: GameState, playerId: PlayerId): Tradable
     blockedReason: tradeBlockedReason(state, space.id, playerId),
   }));
 
-/** What the receiver of these sites owes the bank in mortgage interest. */
-export const getTransferFees = (state: GameState, spaceIds: SpaceId[]): number =>
+/**
+ * What the receiver of these sites owes the bank, given what they chose to do
+ * about each mortgage.
+ *
+ * `keep` is the 10% interest; `redeem` clears the mortgage outright, which is
+ * the mortgage value plus the same 10%. Anything unstated is `keep`, so an
+ * omitted choice costs the less of the two.
+ */
+export const getTransferFees = (
+  state: GameState,
+  spaceIds: SpaceId[],
+  choices: Partial<Record<SpaceId, MortgageChoice>> = {}
+): number =>
   spaceIds.reduce((total, spaceId) => {
     if (!state.ownership[spaceId]?.mortgaged) return total;
     const space = state.board.find((candidate) => candidate.id === spaceId);
-    return space && 'mortgageValue' in space
-      ? total + getMortgageTransferFee(space.mortgageValue)
-      : total;
+    if (!space || !('mortgageValue' in space)) return total;
+
+    const interest = getMortgageTransferFee(space.mortgageValue);
+    return (
+      total +
+      (choices[spaceId] === MortgageChoice.Redeem
+        ? space.mortgageValue + interest
+        : interest)
+    );
   }, 0);
 
 const sideBlockedReason = (
@@ -132,16 +150,21 @@ export const proposalBlockedReason = (state: GameState, trade: TradeState): stri
  * turn, but mortgage fees were never part of the proposal's checks and the
  * recipient has to be able to pay them.
  */
-export const acceptanceBlockedReason = (state: GameState, trade: TradeState): string => {
+export const acceptanceBlockedReason = (
+  state: GameState,
+  trade: TradeState,
+  choices: Partial<Record<SpaceId, MortgageChoice>> = {}
+): string => {
   const proposal = proposalBlockedReason(state, trade);
   if (proposal) return proposal;
 
-  // Each side pays interest on the mortgaged sites it receives, and its own
-  // cash out, from the same pocket.
+  // Each side pays for the mortgaged sites it receives, and its own cash out,
+  // from the same pocket. Only the recipient gets a choice - the proposer
+  // agreed to the deal without knowing what the other side would elect.
   const proposerOwes =
     trade.offeredCash + getTransferFees(state, trade.requestedSpaceIds);
   const recipientOwes =
-    trade.requestedCash + getTransferFees(state, trade.offeredSpaceIds);
+    trade.requestedCash + getTransferFees(state, trade.offeredSpaceIds, choices);
 
   if (state.players[trade.proposerPlayerId].cash < proposerOwes) {
     return 'The proposer cannot cover the mortgage interest on this trade';

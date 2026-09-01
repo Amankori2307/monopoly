@@ -402,15 +402,17 @@ is one that moves nothing at all.
 | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Any price both players agree on is legal — ₹20 for a ₹180 site, or ₹500, both fine                                                                  |
 | A property with buildings anywhere in its colour group cannot be traded until they are sold                                                         |
-| Mortgaged properties may be traded; the receiver pays 10% to the Bank and the site stays mortgaged                                                  |
+| Mortgaged properties may be traded; the receiver either clears the mortgage or pays 10% to keep it                                                  |
 | **You cannot auction property you own.** An auction is only ever the bank's forced sale of an _unowned_ property a player declined — see section 7a |
 | **You cannot sell property back to the bank** at any price. Selling to another player is the only route                                             |
 
-> **⚠️ Divergence — the receiver of a mortgaged site does not get a choice.** The printed rule lets
-> them either pay the mortgage off there and then or pay 10% to keep it mortgaged. Here they always
-> pay the 10% and keep it mortgaged; redeeming it afterwards costs the usual mortgage value plus
-> 10%, so nothing is lost but a step. Offering the choice mid-trade needs another decision type,
-> and acceptance already has to check the receiver can cover the fee at all.
+**The receiver of a mortgaged site chooses what to do about it.** The accept panel asks, per site:
+keep it mortgaged for the 10% interest, or clear the mortgage outright for the mortgage value plus
+the same 10%. Keeping is the default because it costs less. Acceptance is refused if they cannot
+cover what they chose.
+
+Only the receiving side chooses. A mortgaged site going the other way is always taken as it stands:
+the proposer agreed to the deal without knowing what the other player would elect.
 
 ---
 
@@ -666,12 +668,11 @@ Nothing in the ruleset is type-level only any more.
 Every bug in this section has been fixed. What is left are deliberate divergences, each stated at
 the rule it belongs to:
 
-| Divergence                                               | Where it is explained                                   |
-| -------------------------------------------------------- | ------------------------------------------------------- |
-| No auction when the bank runs out of houses              | Section 8 — building waits until a building is returned |
-| A bankrupt's properties return unowned, not auctioned    | Section 11                                              |
-| The receiver of a mortgaged site pays 10% with no choice | Section 10                                              |
-| A mortgaged site still counts toward colour sets         | Section 9 — this one matches the printed rule           |
+| Divergence                                            | Where it is explained                                   |
+| ----------------------------------------------------- | ------------------------------------------------------- |
+| No auction when the bank runs out of houses           | Section 8 — building waits until a building is returned |
+| A bankrupt's properties return unowned, not auctioned | Section 11                                              |
+| A mortgaged site still counts toward colour sets      | Section 9 — this one matches the printed rule           |
 
 Fixed in the pass that closed them: the debt queue (several debts from one card), utility rent
 after a card-driven arrival, `movePlayerTo`'s pass-GO direction, and buying and auctions bypassing

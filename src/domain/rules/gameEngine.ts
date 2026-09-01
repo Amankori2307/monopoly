@@ -25,6 +25,7 @@ import {
   DeckName,
   GameCommandType,
   GameStatus,
+  MortgageChoice,
   PendingDecisionType,
   SpeedDieFace,
   SpaceKind,
@@ -813,7 +814,13 @@ const getRentForSpace = (
  * they want to. Affordability is checked before this runs, so the payments here
  * cannot raise a liquidation.
  */
-const settleTrade = (state: GameState, trade: TradeState): GameState => {
+const settleTrade = (
+  state: GameState,
+  trade: TradeState,
+  // Only the recipient chooses: the proposer agreed to the deal without
+  // knowing what the other side would elect to do about a mortgage.
+  choices: Partial<Record<SpaceId, MortgageChoice>>
+): GameState => {
   const proposer = getPlayerById(state, trade.proposerPlayerId);
   const recipient = getPlayerById(state, trade.recipientPlayerId);
   let nextState = state;
@@ -837,12 +844,22 @@ const settleTrade = (state: GameState, trade: TradeState): GameState => {
     );
   }
 
-  const moveSites = (spaceIds: SpaceId[], toPlayerId: PlayerId) => {
-    const fees = getTransferFees(nextState, spaceIds);
+  const moveSites = (
+    spaceIds: SpaceId[],
+    toPlayerId: PlayerId,
+    sideChoices: Partial<Record<SpaceId, MortgageChoice>>
+  ) => {
+    const fees = getTransferFees(nextState, spaceIds, sideChoices);
     spaceIds.forEach((spaceId) => {
+      const redeemed =
+        nextState.ownership[spaceId]?.mortgaged &&
+        sideChoices[spaceId] === MortgageChoice.Redeem;
       nextState = updateSpaceOwnership(nextState, spaceId, (ownership) => ({
         ...ownership,
         ownerPlayerId: toPlayerId,
+        // Redeeming clears it as part of the transfer; keeping leaves it
+        // mortgaged for the new owner to lift later at the usual cost.
+        mortgaged: redeemed ? false : ownership.mortgaged,
       }));
     });
     if (fees > 0) {
@@ -850,13 +867,14 @@ const settleTrade = (state: GameState, trade: TradeState): GameState => {
         nextState,
         toPlayerId,
         fees,
-        'mortgage interest on traded sites'
+        'mortgages on traded sites'
       );
     }
   };
 
-  moveSites(trade.offeredSpaceIds, trade.recipientPlayerId);
-  moveSites(trade.requestedSpaceIds, trade.proposerPlayerId);
+  moveSites(trade.offeredSpaceIds, trade.recipientPlayerId, choices);
+  // The proposer never gets the choice, so their side is always kept mortgaged.
+  moveSites(trade.requestedSpaceIds, trade.proposerPlayerId, {});
 
   // The cards themselves change hands, so each keeps the deck it must return to.
   const offeredCards = nextState.players[trade.proposerPlayerId].jailFreeCards.slice(
@@ -2040,12 +2058,13 @@ export const executeGameCommand = (
       ) {
         throw new Error('There is no trade to answer.');
       }
-      const blocked = acceptanceBlockedReason(nextState, trade);
+      const choices = command.mortgageChoices ?? {};
+      const blocked = acceptanceBlockedReason(nextState, trade, choices);
       if (blocked) {
         throw new Error(`${blocked}.`);
       }
 
-      nextState = settleTrade(nextState, trade);
+      nextState = settleTrade(nextState, trade, choices);
       nextState = resumeTurnAfterDecision(
         {
           ...nextState,

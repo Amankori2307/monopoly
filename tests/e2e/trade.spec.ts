@@ -139,3 +139,58 @@ test('will not send an empty offer', async ({ page }) => {
   await expect(send).toBeDisabled();
   await expect(send).toHaveAttribute('title', /move something/i);
 });
+
+// The printed rule lets the receiver of a mortgaged site either clear the
+// mortgage now or pay the 10% and take it as it stands.
+test('lets the receiver choose what to do about a mortgaged site', async ({ page }) => {
+  await startGame(page);
+  const seeded = await seedOneSiteEach(page);
+
+  const mortgaged = await page.evaluate((mineId) => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    game.ownership[mineId].mortgaged = true;
+    localStorage.setItem(key, JSON.stringify(game));
+    const site = game.board.find((space: { id: string }) => space.id === mineId);
+    return {
+      mortgageValue: site.mortgageValue as number,
+      recipientCash: game.players[game.playerOrder[1]].cash as number,
+    };
+  }, seeded.mineId);
+  await page.reload();
+
+  await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, seeded.theirsIndex)).click();
+  await page.getByTestId(TEST_IDS.proposeTradeButton).click();
+  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.mineId)).check();
+  await page.getByTestId(TEST_IDS.tradePropose).click();
+
+  // Keeping it mortgaged is the default, because it costs less.
+  await expect(
+    page.getByTestId(scopedTestId(TEST_IDS.tradeMortgageKeep, seeded.mineId))
+  ).toBeChecked();
+
+  await page
+    .getByTestId(scopedTestId(TEST_IDS.tradeMortgageRedeem, seeded.mineId))
+    .check();
+  await page.getByTestId(TEST_IDS.tradeAccept).click();
+
+  const after = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    return {
+      ownership: game.ownership as Record<string, { mortgaged: boolean }>,
+      recipientCash: game.players[game.playerOrder[1]].cash as number,
+    };
+  });
+
+  // Cleared as part of the transfer, paid for with value plus 10%.
+  expect(after.ownership[seeded.mineId].mortgaged).toBe(false);
+  const interest = Math.ceil(mortgaged.mortgageValue * 0.1);
+  expect(after.recipientCash).toBe(
+    mortgaged.recipientCash - mortgaged.mortgageValue - interest
+  );
+});

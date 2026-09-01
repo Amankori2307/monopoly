@@ -3,6 +3,7 @@ import {
   ColorGroup,
   GameCommandType,
   GameStatus,
+  MortgageChoice,
   PendingDecisionType,
   SpaceKind,
   TurnPhase,
@@ -1980,6 +1981,90 @@ describe('trading', () => {
     expect(settled.players[proposerId].jailFreeCards).toHaveLength(0);
     // The card itself moved, so it still knows the deck it has to go back to.
     expect(settled.players[recipientId].jailFreeCards).toEqual([JAIL_CARD]);
+  });
+
+  // The receiver chooses: pay the interest and take it mortgaged, or clear it
+  // outright. Keeping is the default, because it is the cheaper option.
+  it('lets the receiver clear a mortgage as part of the trade', () => {
+    const { state, offered, recipientId } = withOneSiteEach();
+    const mortgaged: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [offered.id]: { ...state.ownership[offered.id], mortgaged: true },
+      },
+    };
+    const recipientCash = mortgaged.players[recipientId].cash;
+
+    const settled = executeGameCommand(
+      propose(mortgaged, { offeredSpaceIds: [offered.id], requestedCash: 1 }),
+      {
+        type: GameCommandType.AcceptTrade,
+        mortgageChoices: { [offered.id]: MortgageChoice.Redeem },
+      },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    const interest = Math.ceil((offered.mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
+    expect(settled.ownership[offered.id].mortgaged).toBe(false);
+    expect(settled.players[recipientId].cash).toBe(
+      recipientCash - 1 - offered.mortgageValue - interest
+    );
+  });
+
+  it('refuses acceptance when the receiver cannot afford to clear it', () => {
+    const { state, offered, recipientId } = withOneSiteEach();
+    const mortgaged: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [offered.id]: { ...state.ownership[offered.id], mortgaged: true },
+      },
+    };
+    const proposed = propose(mortgaged, { offeredSpaceIds: [offered.id] });
+    const broke: GameState = {
+      ...proposed,
+      players: {
+        ...proposed.players,
+        [recipientId]: { ...proposed.players[recipientId], cash: 5 },
+      },
+    };
+
+    expect(() =>
+      executeGameCommand(
+        broke,
+        {
+          type: GameCommandType.AcceptTrade,
+          mortgageChoices: { [offered.id]: MortgageChoice.Redeem },
+        },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/mortgage/i);
+  });
+
+  // The proposer agreed without knowing what the other side would elect, so
+  // their own side is always taken as it stands.
+  it('never clears a mortgage on the proposer side', () => {
+    const { state, requested, proposerId } = withOneSiteEach();
+    const mortgaged: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [requested.id]: { ...state.ownership[requested.id], mortgaged: true },
+      },
+    };
+
+    const settled = executeGameCommand(
+      propose(mortgaged, { requestedSpaceIds: [requested.id], offeredCash: 1 }),
+      {
+        type: GameCommandType.AcceptTrade,
+        mortgageChoices: { [requested.id]: MortgageChoice.Redeem },
+      },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(settled.ownership[requested.id].mortgaged).toBe(true);
+    expect(settled.ownership[requested.id].ownerPlayerId).toBe(proposerId);
   });
 
   // A mortgaged site travels as it is, and the receiver pays the bank 10% for
