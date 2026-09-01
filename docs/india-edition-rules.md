@@ -115,7 +115,7 @@ Deliberate departures from the printed game, not omissions:
 | All tokens start on GO                                                    | ✅     |
 | Both decks shuffled once at creation                                      | ✅     |
 | Turn order decided by a simulated opening roll (`chooseFirstPlayerOrder`) | ✅     |
-| Speed Die game: every player gets an extra ₹1000 (`SPEED_DIE_BONUS_CASH`) | ❌     |
+| Speed Die game: every player gets an extra ₹1000 (`SPEED_DIE_BONUS_CASH`) | ✅     |
 
 ---
 
@@ -159,7 +159,7 @@ This is the area with the most edge cases, so each is listed separately.
 | 8   | Doubles rolled **while in Jail**                                                    | Releases the player, who moves by that roll — but the turn **ends**. No extra roll for the double         | ✅                       |
 | 9   | Doubles rolled in Jail                                                              | Do **not** count toward the three-doubles rule; the counter resets                                        | ✅ `doublesCount: 0`     |
 | 10  | Doubles after leaving Jail by paying the fine or using a card                       | A normal roll: doubles grant an extra roll as usual                                                       | ✅                       |
-| 11  | Player goes bankrupt part-way through a doubles turn                                | No extra roll — they are out                                                                              | ❌ no bankruptcy at all  |
+| 11  | Player goes bankrupt part-way through a doubles turn                                | No extra roll — they are out                                                                              | ✅                       |
 
 **Why case 7 is subtle.** `resolveCurrentSpace` sets `canRollAgain: false` whenever a decision
 blocks the turn, so any code reading it back afterwards concludes the turn is over. `doublesCount`
@@ -182,7 +182,7 @@ covered by a regression test, and `acknowledgeCard` repeats the guard for case 5
 three rolls in one turn — and a double that frees you ends the turn rather than earning another roll.
 
 A player in Jail is **not** out of the game: they still collect rent, bid in auctions, build,
-mortgage and trade. ⚠️ — collecting rent works; the rest is unimplemented for everyone.
+mortgage and trade. All of it works.
 
 ### Getting in
 
@@ -196,11 +196,11 @@ mortgage and trade. ⚠️ — collecting rent works; the rest is unimplemented 
 
 ### Getting out — three options, chosen at the start of your next turn
 
-| Option                          | Rule                                                                 | Status           |
-| ------------------------------- | -------------------------------------------------------------------- | ---------------- |
-| Pay the fine                    | Pay ₹50 (`JAIL_FINE`), then roll and move normally                   | ⚠️ see bug below |
-| Use a Get Out of Jail Free card | Card returns to the bottom of its deck; then roll and move           | ✅               |
-| Try for doubles                 | Roll; on doubles you leave and move by that roll, **turn then ends** | ✅               |
+| Option                          | Rule                                                                 | Status |
+| ------------------------------- | -------------------------------------------------------------------- | ------ |
+| Pay the fine                    | Pay ₹50 (`JAIL_FINE`), then roll and move normally                   | ✅     |
+| Use a Get Out of Jail Free card | Card returns to the bottom of its deck; then roll and move           | ✅     |
+| Try for doubles                 | Roll; on doubles you leave and move by that roll, **turn then ends** | ✅     |
 
 ### The three-turn limit
 
@@ -211,11 +211,10 @@ mortgage and trade. ⚠️ — collecting rent works; the rest is unimplemented 
 | The forced third-turn move grants **no** extra roll even if it was doubles        | ✅     |
 | A failed attempt on turns one and two ends the turn with the player still in Jail | ✅     |
 
-> **⚠️ Known bug — the broke player escapes.** `payJailFine` calls `resolveBankPayment`, which sets
-> an `asset-liquidation` decision when the player cannot afford ₹50. The lines straight after
-> overwrite `pendingDecision` back to `none`, so a player with less than ₹50 leaves Jail without
-> paying. Its real fix is bound up with resolving liquidation at all, which needs mortgages. See
-> `gameEngine.ts` `PayJailFine` and CLAUDE.md section 8.
+> **A player who cannot afford the fine stays in Jail.** Both paths that charge it — the voluntary
+> fine and the mandatory third-turn one — used to overwrite the `asset-liquidation` decision that
+> `resolveBankPayment` raises, so a player with under ₹50 walked out without paying. Both now leave
+> the decision standing and leave the player where they are.
 
 ---
 
@@ -260,15 +259,15 @@ unowned.** Every detail below is verified by a test.
 
 ### Rent
 
-| Rule                                                                           | Status                                                       |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| Street base rent from the title deed                                           | ✅                                                           |
-| Rent **doubles** when one player owns the whole colour group and it is unbuilt | ✅ `ownsEntireColorSet`                                      |
-| Street rent by build level (1–4 houses, hotel)                                 | ⚠️ the rent table is read, but `buildLevel` is never written |
-| Railway rent by stations owned: ₹25 / ₹50 / ₹100 / ₹200                        | ✅ `RAILWAY_RENT_BY_COUNT`                                   |
-| Utility rent: 4× the dice roll with one owned, 10× with both                   | ✅                                                           |
-| **Mortgaged** property collects no rent                                        | ✅                                                           |
-| Rent must be asked for — in this app it is automatic                           | ✅ (adaptation)                                              |
+| Rule                                                                           | Status                     |
+| ------------------------------------------------------------------------------ | -------------------------- |
+| Street base rent from the title deed                                           | ✅                         |
+| Rent **doubles** when one player owns the whole colour group and it is unbuilt | ✅ `ownsEntireColorSet`    |
+| Street rent by build level (1–4 houses, hotel)                                 | ✅                         |
+| Railway rent by stations owned: ₹25 / ₹50 / ₹100 / ₹200                        | ✅ `RAILWAY_RENT_BY_COUNT` |
+| Utility rent: 4× the dice roll with one owned, 10× with both                   | ✅                         |
+| **Mortgaged** property collects no rent                                        | ✅                         |
+| Rent must be asked for — in this app it is automatic                           | ✅ (adaptation)            |
 
 **Mortgaged properties still count as owned.** Mortgaging is a loan, not a sale, so a mortgaged
 street still counts toward its colour set, and a mortgaged railway or utility still counts toward
@@ -415,7 +414,7 @@ is one that moves nothing at all.
 
 ---
 
-## 11. Insolvency and bankruptcy — ⚠️ mostly implemented
+## 11. Insolvency and bankruptcy — ✅ implemented
 
 The order of rescue when you cannot pay:
 
@@ -566,63 +565,63 @@ increment ₹1 · starting cash ₹1500.
 
 `CardEffectKind` covers every effect the two decks use:
 
-| Effect            | Meaning                                                                   | Status                              |
-| ----------------- | ------------------------------------------------------------------------- | ----------------------------------- |
-| `Collect`         | Bank pays the player                                                      | ✅                                  |
-| `Pay`             | Player pays the bank                                                      | ✅                                  |
-| `MoveTo`          | Advance to a board index, collecting GO if `collectGo` and the move wraps | ✅                                  |
-| `MoveSteps`       | Move relative to the current position; never collects GO                  | ✅                                  |
-| `GoToJail`        | Straight to Jail, no GO salary                                            | ✅                                  |
-| `JailFree`        | Player keeps the card; it leaves the deck until used                      | ✅                                  |
-| `CollectFromEach` | Every other solvent player pays the drawer                                | ⚠️ see below                        |
-| `PayEach`         | The drawer pays every other solvent player                                | ⚠️ implemented, **no card uses it** |
+| Effect            | Meaning                                                                   | Status                                       |
+| ----------------- | ------------------------------------------------------------------------- | -------------------------------------------- |
+| `Collect`         | Bank pays the player                                                      | ✅                                           |
+| `Pay`             | Player pays the bank                                                      | ✅                                           |
+| `MoveTo`          | Advance to a board index, collecting GO if `collectGo` and the move wraps | ✅                                           |
+| `MoveSteps`       | Move relative to the current position; a forward move that wraps pays GO  | ✅                                           |
+| `GoToJail`        | Straight to Jail, no GO salary                                            | ✅                                           |
+| `JailFree`        | Player keeps the card; it leaves the deck until used                      | ✅                                           |
+| `CollectFromEach` | Every other solvent player pays the drawer                                | ✅ debts queue if more than one cannot pay   |
+| `PayEach`         | The drawer pays every other solvent player                                | ✅ implemented; no card in this deck uses it |
 
 ### Card edge cases
 
-| Case                                                                                                           | Rule                                                                                           | Status                       |
-| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------- |
-| **A card that leads to another card.** Chance at 36 with "go back three spaces" lands on Community Chest at 33 | The second card is drawn and must be acknowledged in turn; the turn does not settle in between | ✅ verified by test          |
-| A card moves the player **backwards** past GO                                                                  | No salary — you only collect going forwards                                                    | ✅ `MoveSteps` never pays GO |
-| A card moves the player forwards past GO                                                                       | Salary is paid when `collectGo` is set on the card                                             | ✅                           |
-| A card sends the player to Jail                                                                                | Turn ends; any extra roll from a double is forfeited                                           | ✅                           |
-| A card lands the player on an unowned property                                                                 | Buy or auction, exactly as if they had rolled there                                            | ✅                           |
-| A card lands the player on another player's property                                                           | Rent is owed, exactly as if they had rolled there                                              | ✅                           |
-| A Get Out of Jail Free card is drawn                                                                           | It leaves the deck and is held by the player, not recycled                                     | ✅                           |
-| A player may hold **more than one** Get Out of Jail Free card                                                  | The cards themselves are held, so both can be                                                  | ✅                           |
+| Case                                                                                                           | Rule                                                                                           | Status                              |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------- |
+| **A card that leads to another card.** Chance at 36 with "go back three spaces" lands on Community Chest at 33 | The second card is drawn and must be acknowledged in turn; the turn does not settle in between | ✅ verified by test                 |
+| A card moves the player **backwards** past GO                                                                  | No salary — you only collect going forwards                                                    | ✅ `movePlayerTo` takes `isForward` |
+| A card moves the player forwards past GO                                                                       | Salary is paid when `collectGo` is set on the card                                             | ✅                                  |
+| A card sends the player to Jail                                                                                | Turn ends; any extra roll from a double is forfeited                                           | ✅                                  |
+| A card lands the player on an unowned property                                                                 | Buy or auction, exactly as if they had rolled there                                            | ✅                                  |
+| A card lands the player on another player's property                                                           | Rent is owed, exactly as if they had rolled there                                              | ✅                                  |
+| A Get Out of Jail Free card is drawn                                                                           | It leaves the deck and is held by the player, not recycled                                     | ✅                                  |
+| A player may hold **more than one** Get Out of Jail Free card                                                  | The cards themselves are held, so both can be                                                  | ✅                                  |
 
 **A used jail card goes back to the bottom of its own deck.** `jailFreeCards` holds the cards
 themselves rather than a count, so each one knows the deck it came from. Before that it was a bare
 number, and both cards could leave circulation permanently over a long game. The change was a
-`GameState` shape change: `GAME_STATE_VERSION` is 2, and a v1 save's count migrates to that many
+`GameState` shape change: `GAME_STATE_VERSION` is 3, and a v1 save's count migrates to that many
 Chance cards — the deck a v1 card came from is genuinely unrecoverable, and Chance is the likelier
 of the two.
 
-> **Latent, not reachable today — utility rent after a card-driven arrival.** `getUtilityRent`
-> multiplies by `turn.lastRoll`, the roll that started the turn. The printed rule is that a player
-> sent to a utility _by a card_ throws again for rent. No card in either deck can land on a utility
-> — the three "go back three" destinations are Income Tax (4), Kochi (19) and Community Chest (33) —
-> so this cannot happen now. Add an "advance to the nearest utility" card and it becomes a live bug.
+**A player who did not roll their way to a utility is charged on a fresh throw.** That is the
+printed rule for any card-driven arrival, and it is what `resolveCurrentSpace` now takes: the turn's
+own roll when they rolled there, a new throw when a card or a Mr. Monopoly advance put them there.
+It used to multiply by the roll that started the turn, which no card in this deck could reach — but
+the Speed Die can.
 
 A drawn card is **shown before it acts**: the draw sets a `card-draw` decision and the effect is
 applied by `acknowledgeCard`. See [features/action-feedback.md](features/action-feedback.md).
 
-> **⚠️ Partly fixed — multi-player insolvency on one card.** Both loops now read `nextState`, so who
-> pays and how much cash they have is current rather than a snapshot taken before any of it happened.
-> But only one `asset-liquidation` decision can be pending at a time, so the loop **stops** at the
-> first player who cannot pay rather than overwriting their debt with the next player's. Resolving
-> several debts from one card needs a debt queue, which belongs with bankruptcy.
+**Several players unable to pay the same card all still owe it.** Both loops read `nextState`, so
+who pays and what they hold is current rather than a snapshot; and a debt nobody can cover queues
+behind the first rather than overwriting it. The queue rides inside the liquidation decision, which
+is why it survives a save — `pendingDecision` is the one part validated with `.passthrough()`. Each
+debt is answered in turn, and one owed by a player who goes bankrupt in the meantime is dropped.
 
 ---
 
 ## 15. The bank
 
-| Rule                                                                                   | Status                                  |
-| -------------------------------------------------------------------------------------- | --------------------------------------- |
-| The bank never runs out of money and can never go bankrupt (`bank.cash: 'unlimited'`)  | ✅                                      |
-| The bank holds the 32 houses and 12 hotels, and property nobody has bought             | ⚠️ inventory never decremented          |
-| The bank collects taxes and fines, and pays salaries and card collections              | ✅                                      |
-| The bank **never buys a property back**. Mortgage it, trade it, or sell it to a player | ✅ by omission — no such command exists |
-| The bank buys buildings back at half price                                             | ❌ selling buildings is unimplemented   |
+| Rule                                                                                   | Status                                              |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| The bank never runs out of money and can never go bankrupt (`bank.cash: 'unlimited'`)  | ✅                                                  |
+| The bank holds the 32 houses and 12 hotels, and property nobody has bought             | ✅ decremented and returned on every build and sale |
+| The bank collects taxes and fines, and pays salaries and card collections              | ✅                                                  |
+| The bank **never buys a property back**. Mortgage it, trade it, or sell it to a player | ✅ by omission — no such command exists             |
+| The bank buys buildings back at half price                                             | ✅ `floor(cost / 2)`                                |
 
 ## 16. Turn order
 
