@@ -216,6 +216,110 @@ describe('useAnimatedTokenPositions', () => {
     expect(intervalFor(39)).toBeGreaterThanOrEqual(TOKEN_MIN_STEP_INTERVAL_MS);
   });
 
+  /**
+   * The burst this replaced. Every step timer used to be queued at once, so the
+   * main-thread stall right after a command - engine, validated save, whole board
+   * re-render - left six of them overdue and they all fired in the same
+   * millisecond: the token jumped six spaces and six taks stacked into one noise.
+   * A chained timer cannot compress, because the next one does not exist until
+   * the previous has run.
+   */
+  it('does not fire a burst of steps after a stall', () => {
+    const play = vi.spyOn(window.HTMLMediaElement.prototype, 'play');
+    const { rerender, result } = renderHook(
+      ({ players }) => useAnimatedTokenPositions(players),
+      { initialProps: { players: [player('a', 0)] } }
+    );
+
+    rerender({ players: [player('a', 8, MoveDirection.Forward)] });
+
+    // Two pending timers - the walk's next tick and the watchdog - not one per
+    // step. That is the property, and it is what fake timers can actually see:
+    // they run due timers in order, so they cannot simulate the stall itself. A
+    // walk that is not queued up front cannot come due all at once, however long
+    // the main thread blocks.
+    expect(vi.getTimerCount()).toBeLessThanOrEqual(2);
+
+    act(() => vi.advanceTimersByTime(TOKEN_STEP_INTERVAL_MS * 6));
+
+    expect(result.current.positions.a).toBe(6);
+    expect(play).toHaveBeenCalledTimes(6);
+    expect(vi.getTimerCount()).toBeLessThanOrEqual(2);
+  });
+
+  /**
+   * A backgrounded tab throttles timers to about one a second. Chaining a step
+   * off each callback turned a thirty-nine step walk into a thirty-nine second
+   * one, with the Roll button disabled and every decision withheld throughout -
+   * which reads as the game being stuck. Position comes off the clock, so a late
+   * tick catches up instead.
+   */
+  it('catches up in one tick when timers are throttled', () => {
+    const play = vi.spyOn(window.HTMLMediaElement.prototype, 'play');
+    const { rerender, result } = renderHook(
+      ({ players }) => useAnimatedTokenPositions(players),
+      { initialProps: { players: [player('a', 0)] } }
+    );
+
+    rerender({ players: [player('a', 10, MoveDirection.Forward)] });
+
+    // A whole second passes with only one tick's worth of callbacks running,
+    // which is what throttling looks like.
+    act(() => vi.advanceTimersByTime(TOKEN_STEP_INTERVAL_MS * 5.5));
+
+    // Five spaces covered, and one tak per tick rather than five at once.
+    expect(result.current.positions.a).toBe(5);
+    expect(play.mock.calls.length).toBeLessThanOrEqual(5);
+    expect(result.current.isMoving).toBe(true);
+  });
+
+  /**
+   * The last resort, because a walk that never ends is a game that cannot be
+   * played: isMoving gates the Roll button and withholds every decision modal,
+   * so a token stuck mid-walk leaves the player with nothing to click and
+   * nothing on screen saying why.
+   */
+  it('always settles, and puts the token where the engine says it is', () => {
+    const { rerender, result } = renderHook(
+      ({ players }) => useAnimatedTokenPositions(players),
+      { initialProps: { players: [player('a', 1)] } }
+    );
+
+    rerender({ players: [player('a', 0, MoveDirection.Forward)] });
+
+    // Well past anything a thirty-nine step walk plus the watchdog's slack can
+    // take, whatever happened to the timers in between.
+    act(() => vi.advanceTimersByTime(TOKEN_WALK_BUDGET_MS + 30_000));
+
+    expect(result.current.isMoving).toBe(false);
+    expect(result.current.positions.a).toBe(0);
+  });
+
+  it('never leaves isMoving true after any move, in either direction', () => {
+    const moves: Array<[number, number, MoveDirection]> = [
+      [0, 7, MoveDirection.Forward],
+      [1, 0, MoveDirection.Forward],
+      [10, 7, MoveDirection.Backward],
+      [7, 10, MoveDirection.Backward],
+      [2, 38, MoveDirection.Backward],
+      [38, 2, MoveDirection.Forward],
+    ];
+
+    moves.forEach(([from, to, direction]) => {
+      const { rerender, result, unmount } = renderHook(
+        ({ players }) => useAnimatedTokenPositions(players),
+        { initialProps: { players: [player('a', from)] } }
+      );
+
+      rerender({ players: [player('a', to, direction)] });
+      act(() => vi.advanceTimersByTime(TOKEN_WALK_BUDGET_MS + 30_000));
+
+      expect(result.current.isMoving, `${from} -> ${to} ${direction}`).toBe(false);
+      expect(result.current.positions.a, `${from} -> ${to} ${direction}`).toBe(to);
+      unmount();
+    });
+  });
+
   it('ticks on every step of a long walk, not just the short ones', () => {
     const play = vi.spyOn(window.HTMLMediaElement.prototype, 'play');
     const { rerender } = renderHook(({ players }) => useAnimatedTokenPositions(players), {

@@ -349,55 +349,90 @@ test('opens the buy decision only after the token finishes moving', async ({ pag
   const declineButton = page.getByTestId(TEST_IDS.declineButton);
   const rollButton = page.getByTestId(TEST_IDS.rollButton);
 
-  const tokenSnapshot = () =>
-    page.evaluate(() =>
-      Array.from(document.querySelectorAll('.board-token-layer .token-chip'))
-        .map((token) => {
-          const element = token as HTMLElement;
-          return `${element.style.left},${element.style.top}`;
-        })
-        .join('|')
-    );
+  /**
+   * Every token's drawn space, and the space the engine has it on.
+   *
+   * The invariant is exactly that these agree whenever a decision is on screen:
+   * a token drawn anywhere other than its engine position is a token still
+   * walking. Checked as position rather than by comparing sample timestamps -
+   * that is what this used to do, and a 40ms sampler under load could see the
+   * modal in an earlier bucket than the final step and fail a contract that was
+   * never broken.
+   */
+  const drawnVersusEngine = () =>
+    page.evaluate(() => {
+      const key = Object.keys(localStorage).find((k) =>
+        k.startsWith('monopoly.game.')
+      ) as string;
+      const game = JSON.parse(localStorage.getItem(key) as string);
+      const spaceCentres = Array.from(
+        document.querySelectorAll('[data-testid^="board-space-"]')
+      ).map((space) => {
+        const box = space.getBoundingClientRect();
+        return {
+          index: Number(
+            (space as HTMLElement).dataset.testid?.replace('board-space-', '')
+          ),
+          x: box.left + box.width / 2,
+          y: box.top + box.height / 2,
+        };
+      });
 
-  /** Rolls once, returning when the token last moved and when the modal appeared. */
-  const rollAndWatch = async () => {
-    let previous = await tokenSnapshot();
-    let lastMoveAt: number | null = null;
-    let firstModalAt: number | null = null;
+      // Each chip resolved to the space it is drawn on, from its inline style
+      // rather than its box: the chip has a CSS transition, so a measured box is
+      // the tween's current value while the style is the space React committed
+      // to. Comparing the tween would fail on the animation, not the contract.
+      const layer = document.querySelector('.board-token-layer')?.getBoundingClientRect();
+      const drawn = Array.from(
+        document.querySelectorAll('.board-token-layer .token-chip')
+      ).map((chip) => {
+        const element = chip as HTMLElement;
+        const box = chip.getBoundingClientRect();
+        const centre = layer
+          ? {
+              x: layer.left + (parseFloat(element.style.left) / 100) * layer.width,
+              y: layer.top + (parseFloat(element.style.top) / 100) * layer.height,
+            }
+          : { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+        const nearest = spaceCentres.reduce((best, space) => {
+          const distance = (space.x - centre.x) ** 2 + (space.y - centre.y) ** 2;
+          const bestDistance = (best.x - centre.x) ** 2 + (best.y - centre.y) ** 2;
+          return distance < bestDistance ? space : best;
+        });
+        return nearest.index;
+      });
 
-    await rollButton.click();
-    for (let sample = 0; sample < 100; sample += 1) {
-      await page.waitForTimeout(40);
-      const now = await tokenSnapshot();
-      if (now !== previous) {
-        previous = now;
-        lastMoveAt = sample * 40;
-      }
-      if (firstModalAt === null && (await declineButton.isVisible())) {
-        firstModalAt = sample * 40;
-      }
-    }
-    return { lastMoveAt, firstModalAt };
-  };
+      return {
+        drawn: [...drawn].sort((a, b) => a - b),
+        engine: Object.values(game.players)
+          .map((player) => (player as { position: number }).position)
+          .sort((a, b) => a - b),
+      };
+    });
 
-  for (let attempt = 0; attempt < 10; attempt += 1) {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
     if (!(await rollButton.isEnabled())) {
       if ((await advanceGame(page)) === 'none') break;
       continue;
     }
 
-    const { lastMoveAt, firstModalAt } = await rollAndWatch();
+    await rollButton.click();
 
-    // Only meaningful when the token actually walked and a decision followed.
-    if (lastMoveAt !== null && firstModalAt !== null) {
+    // Sample until the decision shows, then check it the instant it does.
+    for (let sample = 0; sample < 90; sample += 1) {
+      await page.waitForTimeout(40);
+      if (!(await declineButton.isVisible())) {
+        continue;
+      }
+      const { drawn, engine } = await drawnVersusEngine();
       expect(
-        firstModalAt,
-        `modal at ${firstModalAt}ms, last token move at ${lastMoveAt}ms`
-      ).toBeGreaterThan(lastMoveAt);
+        drawn,
+        'the buy decision appeared while a token was still between spaces'
+      ).toEqual(engine);
       return;
     }
 
-    await advanceGame(page);
+    if ((await advanceGame(page)) === 'none') break;
   }
 });
 

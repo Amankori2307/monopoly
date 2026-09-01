@@ -20,6 +20,16 @@ export const TOKEN_STEP_INTERVAL_MS = 180;
  */
 export const TOKEN_WALK_BUDGET_MS = 2200;
 
+/**
+ * How long past a walk's own length to wait before forcing it to settle.
+ *
+ * `isMoving` gates the Roll button and withholds every decision modal, so a
+ * token stuck mid-walk is a game that cannot be played. Generous enough never to
+ * cut a healthy walk short, short enough that a broken one is a hiccup rather
+ * than a dead game.
+ */
+export const TOKEN_WALK_WATCHDOG_SLACK_MS = 1500;
+
 /** However long the walk, a step is never quicker than this to follow. */
 export const TOKEN_MIN_STEP_INTERVAL_MS = 70;
 export const TOKEN_STEP_VOLUME = 0.35;

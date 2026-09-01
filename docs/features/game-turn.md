@@ -58,6 +58,21 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   interval shrinks with distance so a full round is about two and a half seconds rather than seven,
   and every step ticks.
 
+- **The tak is short on purpose.** `token-step.wav` is one pop trimmed out of a source pack by
+  [tools/trim-token-step.py](../../tools/trim-token-step.py): the walk retriggers the step sound
+  every 70-180ms, and the 1373ms recording it replaced had its first audible sample 177ms in, so it
+  was cut off before making any sound at all. The clip is audible from 1.8ms and done inside 48ms,
+  which a test measures.
+
+- **The walk is driven by the clock, with a watchdog behind it.** Queueing every step timer up front
+  means they all come due together after a stall - which fired six steps and six taks in the same
+  millisecond at the start of every long walk. Chaining each step off the previous one fixes that but
+  hangs instead: a background tab throttles timers to roughly one a second, so a 39-step walk took
+  39 seconds with Roll disabled the whole time. Reading position off elapsed time survives both. And
+  because `isMoving` gates Roll _and_ withholds decision modals, a stuck walk is an unplayable game -
+  so a watchdog snaps every token to its true position and clears the flag no matter what the timers
+  did. Both guarantees are tested with the walk deliberately broken.
+
 - **Rolling is blocked while a token walks.** A double leaves the turn in `AwaitExtraRollOrEnd` the
   moment the engine resolves, so Roll came back live mid-walk and the second roll restarted the walk
   from the token's display position — cutting both legs short. `GamePage` gates `canRoll` on

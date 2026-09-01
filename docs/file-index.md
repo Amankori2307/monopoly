@@ -210,8 +210,10 @@ File-naming rules are in [conventions.md](conventions.md).
 | [trade/trade.interfaces.ts](../src/components/game/trade/trade.interfaces.ts)                                               | View models for the builder and the offer summary.                                                                                      |
 | [hooks/useDiceRoller.ts](../src/components/game/hooks/useDiceRoller.ts)                                                     | Dice animation state: tumbling faces, roll sound, timers, committing the roll.                                                          |
 | [hooks/useDiceRoller.test.ts](../src/components/game/hooks/useDiceRoller.test.ts)                                           | Roll lifecycle, and that a throwing handler never strands the dock.                                                                     |
-| [hooks/useAnimatedTokenPositions.ts](../src/components/game/hooks/useAnimatedTokenPositions.ts)                             | Walks tokens one space at a time with a tick per step; snaps teleports.                                                                 |
-| [hooks/useAnimatedTokenPositions.test.ts](../src/components/game/hooks/useAnimatedTokenPositions.test.ts)                   | Step-by-step walk, wrapping past GO, per-step tick, teleport snap.                                                                      |
+| [hooks/useAnimatedTokenPositions.ts](../src/components/game/hooks/useAnimatedTokenPositions.ts)                             | Walks tokens a space at a time off the clock, with a tak per step and a watchdog behind it.                                             |
+| [hooks/useAnimatedTokenPositions.test.ts](../src/components/game/hooks/useAnimatedTokenPositions.test.ts)                   | Walks both ways, a full round, the no-burst guard, and a tak per step.                                                                  |
+| [hooks/tokenStepSound.test.ts](../src/components/game/hooks/tokenStepSound.test.ts)                                         | The step clip measured: short enough for the fastest step, and audible from sample zero.                                                |
+| [hooks/tokenStepSound.test.ts](../src/components/game/hooks/tokenStepSound.test.ts)                                         | The step clip measured: short enough for the fastest step, and audible from sample zero.                                                |
 | [panels/TurnControls.tsx](../src/components/game/panels/TurnControls.tsx)                                                   | Bottom-right cluster: end-turn button plus the dice, level with the board.                                                              |
 | [panels/TurnControls.test.tsx](../src/components/game/panels/TurnControls.test.tsx)                                         | End-turn vs take-extra-roll, the roll label, and the Speed Die.                                                                         |
 | [panels/PlayersPanel.test.tsx](../src/components/game/panels/PlayersPanel.test.tsx)                                         | Stack collapse/expand, click target, token colours, full-table support.                                                                 |
@@ -345,6 +347,15 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                      |
 | [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                  |
 | [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                      |
+
+## Assets and tools
+
+| File                                                              | What it does                                                                                           |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [assets/audio/token-step.wav](../src/assets/audio/token-step.wav) | The token step pop. Trimmed from the source pack - 48ms mono, audible from 1.8ms.                      |
+| [assets/audio/dice-roll.wav](../src/assets/audio/dice-roll.wav)   | The dice throw. CC0, sourced - see ATTRIBUTION.md.                                                     |
+| [assets/audio/ATTRIBUTION.md](../src/assets/audio/ATTRIBUTION.md) | Where each clip came from, and the licence position on each.                                           |
+| [tools/generate-token-step.py](../tools/generate-token-step.py)   | Rebuilds token-step.wav: a wooden knock from a noise transient and four non-harmonic damped sinusoids. |
 
 ## Other
 

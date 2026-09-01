@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import tokenStepSound from '../../../assets/audio/playermove.wav';
+import tokenStepSound from '../../../assets/audio/token-step.wav';
 import {
   getMovementPath,
   getMovementSteps,
@@ -15,6 +15,7 @@ import {
   TOKEN_STEP_POOL_SIZE,
   TOKEN_STEP_VOLUME,
   TOKEN_WALK_BUDGET_MS,
+  TOKEN_WALK_WATCHDOG_SLACK_MS,
 } from '../diceDock.constants';
 
 /** The hook's result, named and placed per docs/conventions.md section 5. */
@@ -78,9 +79,11 @@ export const useAnimatedTokenPositions = (
   const [displayPositions, setDisplayPositions] = useState<TokenPositions>(
     displayRef.current
   );
-  const [isMoving, setIsMoving] = useState(false);
   const poolRef = useRef<ReturnType<typeof createSoundPool> | null>(null);
-  const timersRef = useRef<number[]>([]);
+  /** One pending timer per walking token, so cancelling one is exact. */
+  const timersRef = useRef<Map<PlayerId, number>>(new Map());
+  /** Forces every walk to settle, however the timers above have behaved. */
+  const watchdogRef = useRef<number | null>(null);
   const positionsKey = positionsKeyOf(players);
 
   useEffect(() => {
@@ -92,7 +95,10 @@ export const useAnimatedTokenPositions = (
 
     return () => {
       timersRef.current.forEach((timer) => window.clearTimeout(timer));
-      timersRef.current = [];
+      timersRef.current.clear();
+      if (watchdogRef.current !== null) {
+        window.clearTimeout(watchdogRef.current);
+      }
       poolRef.current?.stop();
     };
   }, []);
@@ -102,11 +108,15 @@ export const useAnimatedTokenPositions = (
     // from where the token is *now*, so a superseded one resumes rather than
     // skipping the ground it had not covered yet.
     timersRef.current.forEach((timer) => window.clearTimeout(timer));
-    timersRef.current = [];
+    timersRef.current.clear();
+    if (watchdogRef.current !== null) {
+      window.clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
 
     const current = displayRef.current;
     const settled: TokenPositions = { ...current };
-    const steps: Array<{ playerId: PlayerId; space: number; delayMs: number }> = [];
+    const walks: Array<{ playerId: PlayerId; path: number[]; interval: number }> = [];
 
     for (const player of players) {
       const from = current[player.id];
@@ -121,45 +131,105 @@ export const useAnimatedTokenPositions = (
       // A save written before the engine recorded direction, and a player who
       // has not moved yet, both read as forward - which is every ordinary move.
       const direction = player.lastMove ?? MoveDirection.Forward;
-      const distance = getMovementSteps(from, to, direction);
-      const interval = stepIntervalFor(distance);
-
-      getMovementPath(from, to, direction).forEach((space, stepIndex) => {
-        steps.push({
+      const path = getMovementPath(from, to, direction);
+      if (path.length > 0) {
+        walks.push({
           playerId: player.id,
-          space,
-          delayMs: (stepIndex + 1) * interval,
+          path,
+          interval: stepIntervalFor(getMovementSteps(from, to, direction)),
         });
-      });
+      }
     }
 
     displayRef.current = settled;
     setDisplayPositions(settled);
-    setIsMoving(steps.length > 0);
 
-    for (const step of steps) {
-      const timer = window.setTimeout(() => {
-        displayRef.current = { ...displayRef.current, [step.playerId]: step.space };
+    /**
+     * The last resort, because a walk that never ends is a game that cannot be
+     * played: `isMoving` gates the Roll button and withholds every decision
+     * modal, so a token stuck mid-walk leaves the player with nothing to click
+     * and nothing on screen saying why. Whatever happens to the timers above,
+     * this puts every token where the engine says it is and lets go.
+     */
+    if (walks.length > 0) {
+      const longest = Math.max(...walks.map((walk) => walk.path.length * walk.interval));
+      watchdogRef.current = window.setTimeout(() => {
+        timersRef.current.forEach((timer) => window.clearTimeout(timer));
+        timersRef.current.clear();
+        // Snapping the positions is the whole rescue: isMoving is derived from
+        // them, so it clears by itself once they agree with the engine.
+        displayRef.current = positionsOf(players);
         setDisplayPositions(displayRef.current);
-        // Every step ticks, however fast the walk - the pool is what lets
-        // consecutive taks overlap instead of cutting each other off.
-        playSound(poolRef.current?.next());
-      }, step.delayMs);
-      timersRef.current.push(timer);
+      }, longest + TOKEN_WALK_WATCHDOG_SLACK_MS);
     }
 
-    if (steps.length > 0) {
-      // Settled once the last token finishes its final hop.
-      const lastStepAt = Math.max(...steps.map((step) => step.delayMs));
-      const settle = window.setTimeout(
-        () => setIsMoving(false),
-        lastStepAt + TOKEN_MIN_STEP_INTERVAL_MS
-      );
-      timersRef.current.push(settle);
+    /**
+     * Steps are driven by the clock, not by counting timer callbacks.
+     *
+     * Two failure modes rule out the obvious approaches. Queueing every step up
+     * front means they all come due together after a stall - and the main thread
+     * is always busy right after a command (engine, validated save, whole board
+     * re-render), which fired six steps in the same millisecond at the start of
+     * every long walk. Chaining each step off the previous one fixes that but
+     * hangs instead: a background tab throttles timers to about one a second, so
+     * a thirty-nine step walk took thirty-nine seconds with the Roll button
+     * disabled throughout, which reads as the game being stuck.
+     *
+     * Reading the position off elapsed time survives both. A tick that arrives
+     * late advances the token as far as it should have got, and plays one tak
+     * rather than a pile of them.
+     */
+    for (const walk of walks) {
+      const startedAt = Date.now();
+      let taken = 0;
+
+      const tick = () => {
+        const due = Math.min(
+          walk.path.length,
+          Math.floor((Date.now() - startedAt) / walk.interval)
+        );
+
+        if (due > taken) {
+          taken = due;
+          displayRef.current = {
+            ...displayRef.current,
+            [walk.playerId]: walk.path[taken - 1],
+          };
+          setDisplayPositions(displayRef.current);
+          // One tak per tick, however many spaces this tick covered - the pool
+          // is what lets consecutive taks overlap rather than cut each other off.
+          playSound(poolRef.current?.next());
+        }
+
+        if (taken < walk.path.length) {
+          timersRef.current.set(walk.playerId, window.setTimeout(tick, walk.interval));
+          return;
+        }
+        timersRef.current.delete(walk.playerId);
+      };
+
+      timersRef.current.set(walk.playerId, window.setTimeout(tick, walk.interval));
     }
+
     // players is intentionally excluded: positionsKey is its meaningful identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positionsKey]);
+
+  /**
+   * Derived, not stored.
+   *
+   * A token drawn anywhere other than its engine position is a token still
+   * walking - that *is* the definition, so there is nothing to keep in sync. It
+   * used to be state set from the effect, and an effect runs after the paint: for
+   * one frame the board had the new position while the flag still said settled,
+   * so the decision modal flashed on screen before the walk started. It also
+   * means the watchdog needs only to snap the positions; this follows.
+   */
+  const isMoving = players.some(
+    (player) =>
+      displayPositions[player.id] !== undefined &&
+      displayPositions[player.id] !== player.position
+  );
 
   return { positions: displayPositions, isMoving };
 };
