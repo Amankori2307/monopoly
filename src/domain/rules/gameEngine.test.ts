@@ -1835,7 +1835,8 @@ describe('building', () => {
       { type: GameCommandType.RollTurnDice },
       new SeededRandomSource(5)
     ).nextState;
-    const rolled = probe.turn.lastRoll[0] + probe.turn.lastRoll[1];
+    const probeRoll = probe.turn.lastRoll ?? [];
+    const rolled = probeRoll[0] + probeRoll[1];
 
     const rentPaid = (source: GameState) => {
       const visiting: GameState = {

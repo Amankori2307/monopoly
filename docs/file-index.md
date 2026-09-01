@@ -282,16 +282,16 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Config
 
-| File                                            | What it does                                                                              |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| [vite.config.mjs](../vite.config.mjs)           | Vite build/dev config **and** the Vitest config (jsdom, globals, setup file).             |
-| [project.json](../project.json)                 | NX targets wrapping Vite: serve, build, test, lint, preview.                              |
-| [nx.json](../nx.json)                           | NX workspace config: caching, target defaults.                                            |
-| [tsconfig.json](../tsconfig.json)               | TypeScript config. `strict: false` (gradual migration); path aliases declared but unused. |
-| [.eslintrc.json](../.eslintrc.json)             | Lint rules: layer boundaries, naming conventions, file naming, size limits.               |
-| [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                              |
-| [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                          |
-| [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                              |
+| File                                            | What it does                                                                                                          |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [vite.config.mjs](../vite.config.mjs)           | Vite build/dev config **and** the Vitest config (jsdom, globals, setup file).                                         |
+| [project.json](../project.json)                 | NX targets wrapping Vite: serve, build, test, lint, preview.                                                          |
+| [nx.json](../nx.json)                           | NX workspace config: caching, target defaults.                                                                        |
+| [tsconfig.json](../tsconfig.json)               | TypeScript config. `strict: true`; the legacy island is excluded from typechecking; path aliases declared but unused. |
+| [.eslintrc.json](../.eslintrc.json)             | Lint rules: layer boundaries, naming conventions, file naming, size limits.                                           |
+| [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                                                          |
+| [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                                                      |
+| [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                                                          |
 
 ## Other
 

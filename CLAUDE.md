@@ -206,7 +206,7 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 - **`asset-liquidation` is resolvable, and queues.** `settleDebt` clears it; selling buildings and mortgaging are how the cash is raised, and both deliberately leave `pendingDecision` alone. Several debts from one card all stand: the extras ride in the decision's own `queued` array, which survives a save because `pendingDecision` is the one part validated with `.passthrough()`. Read it as `queued ?? []` — a game saved before the queue existed comes back without it.
 - **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.
 - **`movePlayerTo` takes an `isForward` flag**, because the wrap test (`next < current`) is also true of every backward move. A backward card move must pass `isForward: false` or it would pay the GO salary for going the wrong way.
-- `tsconfig.json` has `strict: false` and `target: es5` — a deliberate gradual-migration holdover, not an endorsement.
+- **`tsconfig.json` is `strict: true`, target `es2020`.** It was `strict: false` / `es5`; the active tree needed two fixes to satisfy it. The legacy island did not, so it is in `exclude` — the files are untouched on disk, they are simply no longer typechecked. Deleting them is still a separate, consented decision (§2).
 
 ---
 
