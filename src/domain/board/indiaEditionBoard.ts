@@ -1,7 +1,9 @@
 import {
+  INCOME_TAX_AMOUNT,
   RAILWAY_MORTGAGE_VALUE,
   RAILWAY_PRICE,
   RAILWAY_RENT_BY_COUNT,
+  SUPER_TAX_AMOUNT,
   UTILITY_MORTGAGE_VALUE,
   UTILITY_PRICE,
   UTILITY_RENT_MULTIPLIER_BOTH,
@@ -85,7 +87,7 @@ export const indiaEditionBoard: BoardSpace[] = [
   street(1, 'Guwahati', ColorGroup.Brown, 60, 30, 50, [2, 4, 10, 30, 90, 160, 250]),
   action(2, 'Community Chest', SpaceKind.CommunityChest),
   street(3, 'Bhubaneshwar', ColorGroup.Brown, 60, 30, 50, [4, 8, 20, 60, 180, 320, 450]),
-  tax(4, 'Income Tax', 200),
+  tax(4, 'Income Tax', INCOME_TAX_AMOUNT),
   railway(5, 'Chennai Central Railway Station'),
   street(
     6,
@@ -207,7 +209,7 @@ export const indiaEditionBoard: BoardSpace[] = [
     200,
     [35, 70, 175, 500, 1100, 1300, 1500]
   ),
-  tax(38, 'Super Tax', 100),
+  tax(38, 'Super Tax', SUPER_TAX_AMOUNT),
   street(
     39,
     'Mumbai',

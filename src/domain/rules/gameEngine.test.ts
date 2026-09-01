@@ -19,6 +19,8 @@ import {
   MAX_JAIL_TURNS,
   MORTGAGE_INTEREST_PERCENT,
   HOTEL_BUILD_LEVEL,
+  GO_POSITION,
+  PASS_GO_AMOUNT,
   SPEED_DIE_BONUS_CASH,
   STARTING_CASH,
 } from '../constants/game.constants';
@@ -26,6 +28,9 @@ import type { GameState, StreetSpace, TradeState } from '../types/game.interface
 import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { speedDieSteps } from './speedDie.utils';
+import { RAILWAY_RENT_BY_COUNT } from '../constants/board.constants';
+import { chanceCards, communityChestCards } from '../cards/indiaEditionCards';
+import { indiaEditionTheme } from '../themes/indiaEditionTheme';
 import { getPlacementSites } from './buildings.utils';
 import { SeededRandomSource } from './rng';
 
@@ -3535,5 +3540,788 @@ describe("a run on the bank's buildings", () => {
         new SeededRandomSource(3)
       )
     ).toThrow(/cannot take this building/i);
+  });
+});
+
+/**
+ * Jail, and the way doubles behave around it.
+ *
+ * Section 6 of the ruleset, plus the doubles cases that only arise in Jail.
+ * These are the edge cases players hit most and the ones easiest to get wrong -
+ * a double that frees you does NOT also earn you another roll.
+ *
+ * Seed 11 rolls 2 and 2 (a double); seed 1 rolls 2 and 3 (not).
+ */
+describe('Jail', () => {
+  const DOUBLE = () => new SeededRandomSource(11);
+  const NOT_DOUBLE = () => new SeededRandomSource(1);
+
+  /** The active player, in Jail, at the start of their turn. */
+  const jailed = (overrides: Partial<GameState['players'][string]> = {}) => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      playerId,
+      state: {
+        ...game,
+        players: {
+          ...game.players,
+          [playerId]: {
+            ...game.players[playerId],
+            inJail: true,
+            position: JAIL_POSITION,
+            jailTurnsServed: 0,
+            ...overrides,
+          },
+        },
+        pendingDecision: { type: PendingDecisionType.JailChoice, playerId },
+        turn: { ...game.turn, phase: TurnPhase.AwaitRoll },
+      } as GameState,
+    };
+  };
+
+  // 6.8 / 5.8: rolling a double frees you and moves you by it - and the turn
+  // ends there. The double earns no extra roll, which is the trap.
+  it('frees a player who rolls doubles, and ends their turn', () => {
+    const { state, playerId } = jailed();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      DOUBLE()
+    ).nextState;
+
+    expect(next.players[playerId].inJail).toBe(false);
+    expect(next.players[playerId].position).toBe(JAIL_POSITION + 4);
+    // No extra roll for the double, and no doubles credit to restore one from
+    // later - which is what "the turn ends" means here. The phase itself may be
+    // await_decision, because square 14 is an unowned street and asks to be
+    // bought; that decision is the turn's last act, not another roll.
+    expect(next.turn.canRollAgain).toBe(false);
+    expect(next.turn.doublesCount).toBe(0);
+  });
+
+  // 5.9: a double rolled in Jail is not one of the three that jails you.
+  it('does not count a Jail double toward the three-doubles rule', () => {
+    const { state } = jailed();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      DOUBLE()
+    ).nextState;
+
+    expect(next.turn.doublesCount).toBe(0);
+  });
+
+  // 6.12: turns one and two end with the player still inside.
+  it('keeps a player in Jail when the roll is not doubles', () => {
+    const { state, playerId } = jailed();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(next.players[playerId].inJail).toBe(true);
+    expect(next.players[playerId].jailTurnsServed).toBe(1);
+    expect(next.players[playerId].position).toBe(JAIL_POSITION);
+    expect(next.turn.phase).toBe(TurnPhase.TurnComplete);
+  });
+
+  // 6.10 / 6.11: the third failure is not another wasted turn - the fine is
+  // charged, the player moves by that same roll, and gets no extra roll for it.
+  it('charges the fine on the third failed attempt and moves by that roll', () => {
+    const { state, playerId } = jailed({ jailTurnsServed: MAX_JAIL_TURNS - 1 });
+    const cashBefore = state.players[playerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(next.players[playerId].inJail).toBe(false);
+    expect(next.players[playerId].cash).toBeLessThanOrEqual(cashBefore - JAIL_FINE);
+    // 2 and 3 from the seed, moving them off square 10.
+    expect(next.players[playerId].position).toBe(JAIL_POSITION + 5);
+  });
+
+  it('grants no extra roll on the forced third-turn move, even on doubles', () => {
+    const { state } = jailed({ jailTurnsServed: MAX_JAIL_TURNS - 1 });
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.AttemptJailRoll },
+      DOUBLE()
+    ).nextState;
+
+    expect(next.turn.canRollAgain).toBe(false);
+  });
+
+  // 6.6: paying up front is not a wasted turn either - you roll and move as
+  // normal afterwards.
+  it('lets a player who pays the fine roll and move normally', () => {
+    const { state, playerId } = jailed();
+    const cashBefore = state.players[playerId].cash;
+
+    const paid = executeGameCommand(
+      state,
+      { type: GameCommandType.PayJailFine },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(paid.players[playerId].inJail).toBe(false);
+    expect(paid.players[playerId].cash).toBe(cashBefore - JAIL_FINE);
+    expect(paid.turn.phase).toBe(TurnPhase.AwaitRoll);
+
+    const rolled = executeGameCommand(
+      paid,
+      { type: GameCommandType.RollTurnDice },
+      NOT_DOUBLE()
+    ).nextState;
+    expect(rolled.players[playerId].position).toBe(JAIL_POSITION + 5);
+  });
+
+  // 5.10: once out, a double is an ordinary double again.
+  it('grants an extra roll for doubles rolled after paying the fine', () => {
+    const { state } = jailed();
+    const paid = executeGameCommand(
+      state,
+      { type: GameCommandType.PayJailFine },
+      NOT_DOUBLE()
+    ).nextState;
+
+    const rolled = executeGameCommand(
+      paid,
+      { type: GameCommandType.RollTurnDice },
+      DOUBLE()
+    ).nextState;
+
+    // The double counted, unlike one rolled from inside Jail.
+    expect(rolled.turn.doublesCount).toBe(1);
+
+    // Square 14 is an unowned street, so the roll is held behind the buy
+    // decision rather than granted immediately - rule 5.7. Answering it is what
+    // hands the roll over, restored from doublesCount.
+    expect(rolled.pendingDecision.type).toBe(PendingDecisionType.LandedUnownedProperty);
+    const answered = executeGameCommand(
+      rolled,
+      { type: GameCommandType.DeclineLandedAsset },
+      NOT_DOUBLE()
+    ).nextState;
+    const settled = answered.playerOrder.reduce(
+      (state) =>
+        state.pendingDecision.type === PendingDecisionType.AuctionBid
+          ? executeGameCommand(state, { type: GameCommandType.PassAuction }, NOT_DOUBLE())
+              .nextState
+          : state,
+      answered
+    );
+    expect(settled.turn.canRollAgain).toBe(true);
+  });
+
+  // 6.1 / 6.4 / 7.11: the space sends you there, and crossing GO on the way
+  // pays nothing.
+  it('sends a player who lands on Go To Jail there, with no GO salary', () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const goToJailIndex = game.board.findIndex(
+      (space) => space.kind === SpaceKind.GoToJail
+    );
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: goToJailIndex - 5 },
+      },
+    };
+    const cashBefore = state.players[playerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(next.players[playerId].position).toBe(JAIL_POSITION);
+    expect(next.players[playerId].inJail).toBe(true);
+    expect(next.players[playerId].cash).toBe(cashBefore);
+    expect(next.turn.phase).toBe(TurnPhase.TurnComplete);
+  });
+
+  // 6.5 / 7.10: the corner opposite is not Jail.
+  it('does nothing at all when a player lands on Just Visiting', () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: JAIL_POSITION - 5 },
+      },
+    };
+    const cashBefore = state.players[playerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(next.players[playerId].position).toBe(JAIL_POSITION);
+    expect(next.players[playerId].inJail).toBe(false);
+    expect(next.players[playerId].cash).toBe(cashBefore);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+
+  // 5.11: they are out of the game, so there is nothing to take another roll
+  // with, whatever the dice said.
+  it('leaves a bankrupt player no extra roll, even after doubles', () => {
+    const game = createBaseGame();
+    const [debtorId, creditorId] = game.playerOrder;
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [debtorId]: { ...game.players[debtorId], cash: 0 },
+      },
+      activePlayerIndex: 0,
+      // A double already rolled, then a debt they cannot pay.
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation,
+        playerId: debtorId,
+        amountDue: 99_999,
+        creditorPlayerId: creditorId,
+        reason: 'rent',
+        queued: [],
+      },
+      turn: { ...game.turn, doublesCount: 1, phase: TurnPhase.AwaitDecision },
+    };
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ConfirmBankruptcy },
+      DOUBLE()
+    ).nextState;
+
+    expect(next.players[debtorId].isBankrupt).toBe(true);
+    expect(next.turn.canRollAgain).toBe(false);
+  });
+});
+
+/**
+ * What each kind of space does when you land on it, and what rent it asks for.
+ *
+ * Sections 7 and its Rent subsection. The two tax squares and the three spaces
+ * that do nothing had never been asserted - "nothing happens" is exactly the
+ * kind of rule that quietly stops being true.
+ */
+describe('landing on a space', () => {
+  const NOT_DOUBLE = () => new SeededRandomSource(1);
+
+  /**
+   * Puts the active player `steps` back from `index` and rolls exactly that far.
+   *
+   * `steps` matters: Income Tax sits at 4, so a five-step approach would have to
+   * start at 39 and wrap past GO - and the ₹200 salary would exactly cancel the
+   * ₹200 tax, making the assertion pass for the wrong reason. Seed 1 rolls 2 and
+   * 3 (five); seed 8 rolls 2 and 1 (three).
+   */
+  const landOn = (
+    index: number,
+    steps = 5,
+    seed = () => new SeededRandomSource(steps === 3 ? 8 : 1)
+  ) => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const state: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: {
+          ...game.players[playerId],
+          position: (index - steps + game.board.length) % game.board.length,
+        },
+      },
+    };
+    return {
+      playerId,
+      cashBefore: state.players[playerId].cash,
+      state,
+      next: executeGameCommand(state, { type: GameCommandType.RollTurnDice }, seed())
+        .nextState,
+    };
+  };
+
+  const indexOfKind = (kind: SpaceKind, skip = 0) => {
+    const board = createBaseGame().board;
+    return board.filter((space) => space.kind === kind)[skip].index;
+  };
+
+  // 7.5 / 2.5: a flat ₹200, not the printed game's 10%-of-worth option.
+  it('charges a flat Income Tax', () => {
+    const incomeTaxIndex = createBaseGame().board.findIndex(
+      (space) => space.kind === SpaceKind.Tax && space.name.includes('Income')
+    );
+    // Three steps from index 1, so the approach never crosses GO.
+    const { next, playerId, cashBefore, state } = landOn(incomeTaxIndex, 3);
+    const space = state.board[incomeTaxIndex];
+    if (space.kind !== SpaceKind.Tax) throw new Error('Expected a tax square');
+
+    expect(next.players[playerId].position).toBe(incomeTaxIndex);
+    expect(space.amount).toBe(200);
+    expect(next.players[playerId].cash).toBe(cashBefore - 200);
+  });
+
+  // 7.6
+  it('charges Super Tax', () => {
+    const superTaxIndex = createBaseGame().board.findIndex(
+      (space) => space.kind === SpaceKind.Tax && space.name.includes('Super')
+    );
+    const { next, playerId, cashBefore, state } = landOn(superTaxIndex);
+    const space = state.board[superTaxIndex];
+    if (space.kind !== SpaceKind.Tax) throw new Error('Expected a tax square');
+
+    expect(space.amount).toBe(100);
+    expect(next.players[playerId].cash).toBe(cashBefore - 100);
+  });
+
+  // 7.9 / 2.4: the jackpot is a house rule, and this is not it.
+  it('pays nothing at all for Free Parking', () => {
+    const { next, playerId, cashBefore } = landOn(indexOfKind(SpaceKind.FreeParking));
+
+    expect(next.players[playerId].position).toBe(indexOfKind(SpaceKind.FreeParking));
+    expect(next.players[playerId].cash).toBe(cashBefore);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+
+  // 7.4: your own site asks nothing of you.
+  it('does nothing when a player lands on their own site', () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const street = game.board.find(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street && space.index > 5
+    ) as StreetSpace;
+    const state: GameState = {
+      ...game,
+      ownership: {
+        ...game.ownership,
+        [street.id]: { ownerPlayerId: playerId, mortgaged: false, buildLevel: 0 },
+      },
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: street.index - 5 },
+      },
+    };
+    const cashBefore = state.players[playerId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(next.players[playerId].position).toBe(street.index);
+    expect(next.players[playerId].cash).toBe(cashBefore);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+});
+
+/**
+ * Rent, by the kind of thing being landed on.
+ *
+ * Only street rent was covered. A railway's rent comes off how many the owner
+ * holds and a utility's off the dice, so neither is exercised by a street test.
+ */
+describe('rent', () => {
+  /** Sends the visitor onto `space`, owned by the opponent, and returns the rent. */
+  const rentPaidOn = (
+    ownedIndices: number[],
+    landingIndex: number,
+    seed = () => new SeededRandomSource(1)
+  ) => {
+    const game = createBaseGame();
+    const [visitorId, ownerId] = game.playerOrder;
+    const ownership = { ...game.ownership };
+    ownedIndices.forEach((index) => {
+      ownership[game.board[index].id] = {
+        ownerPlayerId: ownerId,
+        mortgaged: false,
+        buildLevel: 0,
+      };
+    });
+    const state: GameState = {
+      ...game,
+      ownership,
+      activePlayerIndex: game.playerOrder.indexOf(visitorId),
+      players: {
+        ...game.players,
+        [visitorId]: { ...game.players[visitorId], position: landingIndex - 5 },
+      },
+    };
+    const cashBefore = state.players[visitorId].cash;
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      seed()
+    ).nextState;
+
+    expect(next.players[visitorId].position).toBe(landingIndex);
+    return { paid: cashBefore - next.players[visitorId].cash, next, visitorId };
+  };
+
+  const railwayIndices = () =>
+    createBaseGame()
+      .board.filter((space) => space.kind === SpaceKind.Railway)
+      .map((space) => space.index);
+
+  // 7r.4: ₹25 / ₹50 / ₹100 / ₹200 by how many the owner holds.
+  it.each([
+    [1, RAILWAY_RENT_BY_COUNT[0]],
+    [2, RAILWAY_RENT_BY_COUNT[1]],
+    [3, RAILWAY_RENT_BY_COUNT[2]],
+    [4, RAILWAY_RENT_BY_COUNT[3]],
+  ])('charges railway rent for %i stations owned', (owned, expected) => {
+    const stations = railwayIndices();
+    const { paid } = rentPaidOn(stations.slice(0, owned), stations[0]);
+
+    expect(paid).toBe(expected);
+  });
+
+  // 7r.5: 4x the dice with one, 10x with both.
+  it('charges four times the dice for one utility', () => {
+    const utilities = createBaseGame()
+      .board.filter((space) => space.kind === SpaceKind.Utility)
+      .map((space) => space.index);
+
+    const { paid } = rentPaidOn([utilities[0]], utilities[0]);
+
+    // Seed 1 rolls 2 and 3.
+    expect(paid).toBe(5 * 4);
+  });
+
+  it('charges ten times the dice for both utilities', () => {
+    const utilities = createBaseGame()
+      .board.filter((space) => space.kind === SpaceKind.Utility)
+      .map((space) => space.index);
+
+    const { paid } = rentPaidOn(utilities, utilities[0]);
+
+    expect(paid).toBe(5 * 10);
+  });
+
+  // 7r.6: the whole point of mortgaging is that it stops earning.
+  it('charges nothing on a mortgaged property', () => {
+    const game = createBaseGame();
+    const [visitorId, ownerId] = game.playerOrder;
+    const street = game.board.find(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street && space.index > 5
+    ) as StreetSpace;
+    const state: GameState = {
+      ...game,
+      ownership: {
+        ...game.ownership,
+        [street.id]: { ownerPlayerId: ownerId, mortgaged: true, buildLevel: 0 },
+      },
+      activePlayerIndex: game.playerOrder.indexOf(visitorId),
+      players: {
+        ...game.players,
+        [visitorId]: { ...game.players[visitorId], position: street.index - 5 },
+      },
+    };
+    const cashBefore = state.players[visitorId].cash;
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(1)
+    ).nextState;
+
+    expect(next.players[visitorId].position).toBe(street.index);
+    expect(next.players[visitorId].cash).toBe(cashBefore);
+  });
+});
+
+/**
+ * The card effects that had no test of their own.
+ *
+ * Section 14. Collect, GoToJail, JailFree and both *Each effects were covered;
+ * Pay and MoveTo were not, and nor was a forward card move crossing GO.
+ */
+describe('card effects', () => {
+  /** Puts a made-up card on top of Chance and stops at its decision. */
+  const drawn = (effect: DeckCard['effect'], position = 0) => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const card: DeckCard = {
+      id: 'test-card',
+      deck: CardDeck.Chance,
+      title: 'Test card',
+      description: 'For the test.',
+      effect,
+    };
+    return {
+      playerId,
+      card,
+      state: {
+        ...game,
+        players: {
+          ...game.players,
+          [playerId]: { ...game.players[playerId], position },
+        },
+        decks: { ...game.decks, chance: [card] },
+        pendingDecision: {
+          type: PendingDecisionType.CardDraw as const,
+          playerId,
+          deck: DeckName.Chance,
+          card,
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      } as GameState,
+    };
+  };
+
+  const acknowledge = (state: GameState) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+  // 14.2
+  it('applies a Pay effect, charging the bank', () => {
+    const { state, playerId } = drawn({ kind: CardEffectKind.Pay, amount: 150 });
+    const cashBefore = state.players[playerId].cash;
+
+    const next = acknowledge(state);
+
+    expect(next.players[playerId].cash).toBe(cashBefore - 150);
+    expect(next.history[0].message).toMatch(/paid/i);
+  });
+
+  // 14.3: an absolute move, and the card says whether GO pays.
+  it('applies a MoveTo effect, advancing to the named index', () => {
+    const { state, playerId } = drawn(
+      { kind: CardEffectKind.MoveTo, index: 24, collectGo: false },
+      5
+    );
+
+    const next = acknowledge(state);
+
+    expect(next.players[playerId].position).toBe(24);
+  });
+
+  // 14.11: forwards past GO pays, when the card says so.
+  it('pays the GO salary when a card moves the player forwards past GO', () => {
+    const { state, playerId } = drawn(
+      { kind: CardEffectKind.MoveTo, index: 1, collectGo: true },
+      35
+    );
+    const cashBefore = state.players[playerId].cash;
+
+    const next = acknowledge(state);
+
+    expect(next.players[playerId].position).toBe(1);
+    expect(next.players[playerId].cash).toBe(cashBefore + PASS_GO_AMOUNT);
+    expect(next.history.some((event) => /passing GO/i.test(event.message))).toBe(true);
+  });
+
+  // 14.13: exactly as if they had rolled there.
+  it('offers an unowned property a card landed the player on', () => {
+    const game = createBaseGame();
+    const street = game.board.find(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street && space.index > 5
+    ) as StreetSpace;
+    const { state } = drawn(
+      { kind: CardEffectKind.MoveTo, index: street.index, collectGo: false },
+      1
+    );
+
+    const next = acknowledge(state);
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.LandedUnownedProperty);
+  });
+});
+
+/**
+ * The bank, and the things the game deliberately does not let you do.
+ *
+ * Sections 15 and 16, plus the "you cannot" rules from sections 9 and 10. Some
+ * of these are proved by the absence of a command rather than by behaviour,
+ * which is worth asserting explicitly: an absence is easy to fill in by
+ * accident.
+ */
+describe('the bank', () => {
+  // 15.1
+  it('never runs out of money', () => {
+    const game = createBaseGame();
+
+    expect(game.bank.cash).toBe('unlimited');
+
+    // Paying the bank does not reduce anything on the bank, because there is
+    // nothing there to reduce.
+    const taxIndex = game.board.findIndex((space) => space.kind === SpaceKind.Tax);
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const next = executeGameCommand(
+      {
+        ...game,
+        players: {
+          ...game.players,
+          [playerId]: { ...game.players[playerId], position: taxIndex - 3 },
+        },
+      },
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(8)
+    ).nextState;
+
+    expect(next.bank.cash).toBe('unlimited');
+  });
+
+  // Q3.1 / 9.6 / 10.5 / 15.4: there is no command that sells a property to the
+  // bank, and that is the rule. Asserted against the command enum so adding one
+  // has to be a deliberate decision that breaks this test.
+  it('never buys a property back, at any price', () => {
+    const commands = Object.values(GameCommandType);
+
+    expect(commands.filter((command) => /sell/i.test(command))).toEqual([
+      GameCommandType.SellHouse,
+      GameCommandType.SellHotel,
+    ]);
+  });
+
+  // Q3.2 / 10.4: an auction is only ever the bank's forced sale of a declined
+  // property, so there is no command a player can use to auction their own.
+  it('offers no way to auction a property you own', () => {
+    const commands = Object.values(GameCommandType);
+
+    expect(commands.filter((command) => /auction/i.test(command))).toEqual([
+      GameCommandType.SubmitAuctionBid,
+      GameCommandType.PassAuction,
+    ]);
+  });
+
+  // 8.12: the only sell commands take a spaceId and pay the bank, so a building
+  // cannot move to another player. Trading moves sites, never what is on them.
+  it('buys buildings back, but only from their owner', () => {
+    const game = createBaseGame();
+    const trade = {
+      proposerPlayerId: game.playerOrder[0],
+      recipientPlayerId: game.playerOrder[1],
+      offeredCash: 0,
+      requestedCash: 0,
+      offeredSpaceIds: [],
+      requestedSpaceIds: [],
+      offeredJailCards: 0,
+      requestedJailCards: 0,
+    };
+
+    // A trade has no field for buildings at all - they are not tradeable.
+    expect(Object.keys(trade)).not.toContain('offeredBuildings');
+    expect(Object.keys(trade)).not.toContain('requestedBuildings');
+  });
+});
+
+describe('turn order', () => {
+  // 16.1: fixed at setup, and play passes along it.
+  it('passes play along the order fixed at setup', () => {
+    const game = createBaseGame();
+    const order = [...game.playerOrder];
+
+    const ended = executeGameCommand(
+      {
+        ...game,
+        turn: { ...game.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+      },
+      { type: GameCommandType.EndTurn },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(ended.playerOrder).toEqual(order);
+    expect(ended.activePlayerIndex).toBe(1);
+  });
+});
+
+/**
+ * Setup, beyond the defaults already covered.
+ *
+ * Section 3: where tokens come from, where everyone starts, that the decks are
+ * shuffled, and that the turn order is rolled for rather than taken as given.
+ */
+describe('setting up a game', () => {
+  // 3.3
+  it('gives every player a token from the theme catalogue', () => {
+    const game = createBaseGame();
+    const catalogue = indiaEditionTheme.tokenCatalog.map((token) => token.id);
+
+    game.playerOrder.forEach((playerId) => {
+      expect(catalogue).toContain(game.players[playerId].tokenId);
+    });
+  });
+
+  // 3.4
+  it('starts every token on GO', () => {
+    const game = createBaseGame();
+
+    game.playerOrder.forEach((playerId) => {
+      expect(game.players[playerId].position).toBe(GO_POSITION);
+    });
+  });
+
+  // 3.5: shuffled once, at creation - not re-shuffled per draw.
+  it('shuffles both decks at creation', () => {
+    const shuffled = createGameState(
+      {
+        name: 'Shuffle',
+        playerConfigs: [
+          { name: 'Asha', tokenId: 'elephant' },
+          { name: 'Vikram', tokenId: 'train' },
+        ],
+        themeId: 'india-edition',
+        createdAt: '2026-08-29T00:00:00.000Z',
+      },
+      new SeededRandomSource(4)
+    );
+
+    expect(shuffled.decks.chance).toHaveLength(chanceCards.length);
+    expect(shuffled.decks.communityChest).toHaveLength(communityChestCards.length);
+    // Same cards, and for this seed not in the order they were declared.
+    expect([...shuffled.decks.chance].map((card) => card.id).sort()).toEqual(
+      chanceCards.map((card) => card.id).sort()
+    );
+    expect(shuffled.decks.chance.map((card) => card.id)).not.toEqual(
+      chanceCards.map((card) => card.id)
+    );
+  });
+
+  // 3.6: the order comes from a simulated opening roll, so it varies by seed
+  // rather than being the order the players were entered in.
+  it('decides the turn order by a simulated opening roll', () => {
+    const configs = [
+      { name: 'Asha', tokenId: 'elephant' },
+      { name: 'Vikram', tokenId: 'train' },
+      { name: 'Meera', tokenId: 'rickshaw' },
+    ];
+    const orderFor = (seed: number) =>
+      createGameState(
+        {
+          name: 'Order',
+          playerConfigs: configs,
+          themeId: 'india-edition',
+          createdAt: '2026-08-29T00:00:00.000Z',
+        },
+        new SeededRandomSource(seed)
+      );
+
+    const first = orderFor(2);
+    // Every player is in the order, exactly once, whatever the roll said.
+    expect([...first.playerOrder].sort()).toEqual(Object.keys(first.players).sort());
+    // And the order is the roll's, not the order they were entered in: at least
+    // one seed disagrees with the entry order.
+    const names = (game: GameState) =>
+      game.playerOrder.map((id) => game.players[id].name);
+    const seeds = [1, 2, 3, 5, 7, 11, 13].map((seed) => names(orderFor(seed)).join(','));
+    expect(new Set(seeds).size).toBeGreaterThan(1);
   });
 });

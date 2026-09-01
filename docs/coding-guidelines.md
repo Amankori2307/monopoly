@@ -240,6 +240,8 @@ The mandate above is the standard going forward. The repository does **not** mee
 | `DiceDock`                                     | 10 tests (hook) | —           | partial      |
 | `SpaceCard`, `SpaceDetailCard`                 | 2 files         | —           | yes          |
 | Holdings drawer + stack                        | 2 files         | 1 test      | yes          |
+| Documented rules (all 153, by id)              | 7 tests         | —           | —            |
+| The documented board (§13, doc as fixture)     | 11 tests        | —           | —            |
 | Bankruptcy, win detection, the debt queue      | in engine       | —           | yes          |
 | Bankruptcy + building auctions                 | in engine       | —           | yes          |
 | Board cell, turn controls, error banner        | 3 files         | —           | yes          |

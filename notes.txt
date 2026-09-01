@@ -15,4 +15,3 @@ Build a better UI and theme
 
 
 Improve auction UI
-Make sure that every rule we have listed out has a test against it to make sure core rules are built correctly

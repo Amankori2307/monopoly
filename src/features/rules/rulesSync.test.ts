@@ -2,7 +2,11 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { RULES_SECTIONS } from '../../components/rules/rulesSections.constants';
-import { RAILWAY_RENT_BY_COUNT } from '../../domain/constants/board.constants';
+import {
+  INCOME_TAX_AMOUNT,
+  RAILWAY_RENT_BY_COUNT,
+  SUPER_TAX_AMOUNT,
+} from '../../domain/constants/board.constants';
 import {
   AUCTION_MIN_INCREMENT,
   AUCTION_START_PRICE,
@@ -50,6 +54,10 @@ const QUOTED_VALUES: ReadonlyArray<{ name: string; text: string }> = [
   { name: 'HOUSES_AVAILABLE', text: String(HOUSES_AVAILABLE) },
   { name: 'HOTELS_AVAILABLE', text: String(HOTELS_AVAILABLE) },
   { name: 'MORTGAGE_INTEREST_PERCENT', text: `${MORTGAGE_INTEREST_PERCENT}%` },
+  // Board data rather than a game constant, but the doc quotes both in its
+  // section 13 "Values:" line and neither was checked.
+  { name: 'INCOME_TAX_AMOUNT', text: formatMoney(INCOME_TAX_AMOUNT) },
+  { name: 'SUPER_TAX_AMOUNT', text: formatMoney(SUPER_TAX_AMOUNT) },
   ...RAILWAY_RENT_BY_COUNT.map((rent, index) => ({
     name: `RAILWAY_RENT_BY_COUNT[${index}]`,
     text: formatMoney(rent),

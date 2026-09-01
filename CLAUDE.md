@@ -220,21 +220,37 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 
 Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a stale line actively misleads. **Update docs in the same change as the code**, not afterwards.
 
-| If you change…                                  | Update                                                                                             |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Engine commands, phases, or constants           | §4 above                                                                                           |
-| `GameState` shape or storage keys               | §5 + bump `GAME_STATE_VERSION` + zod schema                                                        |
-| Layer boundaries, new directory                 | §3 + `docs/architecture.md`                                                                        |
-| Ruleset behaviour or values                     | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below       |
-| Scripts in `package.json`                       | §6                                                                                                 |
-| Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                               |
-| Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5     |
-| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                             |
-| An ESLint rule                                  | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                         |
-| **Adding or removing any file**                 | [docs/file-index.md](docs/file-index.md) — one line saying what it does                            |
-| **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index |
-| Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                             |
-| Adding a theme, or changing theme tokens        | [docs/theming.md](docs/theming.md)                                                                 |
+| If you change…                                  | Update                                                                                                     |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Engine commands, phases, or constants           | §4 above                                                                                                   |
+| `GameState` shape or storage keys               | §5 + bump `GAME_STATE_VERSION` + zod schema                                                                |
+| Layer boundaries, new directory                 | §3 + `docs/architecture.md`                                                                                |
+| Ruleset behaviour or values                     | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below               |
+| **Adding or changing a rule**                   | give the row an id, and name a test for it in `RULE_COVERAGE` — `rulesCoverage.test.ts` fails until you do |
+| Scripts in `package.json`                       | §6                                                                                                         |
+| Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                                       |
+| Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5             |
+| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                                     |
+| An ESLint rule                                  | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                                 |
+| **Adding or removing any file**                 | [docs/file-index.md](docs/file-index.md) — one line saying what it does                                    |
+| **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index         |
+| Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                                     |
+| Adding a theme, or changing theme tokens        | [docs/theming.md](docs/theming.md)                                                                         |
+
+### Every documented rule has a test
+
+`docs/india-edition-rules.md` is the ruleset's source of truth, and every rule row in it carries a
+stable id (`5.9`, `7a.4`, `Q1.2`). [ruleCoverage.constants.ts](src/features/rules/ruleCoverage.constants.ts)
+maps each id to the test titles that prove it, and
+[rulesCoverage.test.ts](src/features/rules/rulesCoverage.test.ts) fails three ways: a documented rule
+with no entry, an entry naming a test that no longer exists, and an entry for an id the doc dropped.
+
+So a rule cannot be documented without being tested, and a test cannot be renamed out from under a
+rule. 153 rules, all claimed.
+
+The board is checked the same way but harder: [board.rules.test.ts](src/domain/board/board.rules.test.ts)
+**reads section 13 of the doc as its fixture** and compares all 40 spaces against
+`indiaEditionBoard`, so the two cannot drift at all.
 
 ### The rules booklet and the ruleset doc are one thing in two places
 

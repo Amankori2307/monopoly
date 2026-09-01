@@ -81,6 +81,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | File                                                                       | What it does                                                                        |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)     | The 40 board spaces with prices, rents, and colour groups.                          |
+| [board/board.rules.test.ts](../src/domain/board/board.rules.test.ts)       | The board checked against section 13 of the ruleset doc, read as the fixture.       |
 | [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)     | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                        |
 | [board/tokenMovement.utils.ts](../src/domain/board/tokenMovement.utils.ts) | Forward step count, whether a move is walkable, and the path it passes through.     |
 | [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)     | Chance and Community Chest deck contents and effects.                               |
@@ -133,6 +134,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [persistence/persistence.errors.ts](../src/features/persistence/persistence.errors.ts)                     | StorageWriteError: a write the browser refused, told apart from a bug.                                        |
 | [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                         |
 | [rules/rulesSync.test.ts](../src/features/rules/rulesSync.test.ts)                                         | Enforces that the booklet and docs/india-edition-rules.md cover the same topics and quote the same numbers.   |
+| [rules/ruleCoverage.constants.ts](../src/features/rules/ruleCoverage.constants.ts)                         | Which test proves which documented rule, by rule id.                                                          |
+| [rules/rulesCoverage.test.ts](../src/features/rules/rulesCoverage.test.ts)                                 | Fails if a documented rule has no test, or a claimed test has gone.                                           |
 | [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                                       | Integration tests: every nav link resolves to a rendered section.                                             |
 | [game/GameUnavailable.tsx](../src/features/game/GameUnavailable.tsx)                                       | Shown when the routed game is missing or fails schema validation.                                             |
 | [game/hooks/useActiveGame.ts](../src/features/game/hooks/useActiveGame.ts)                                 | Loads the routed game and resolves its theme and currency symbol.                                             |
