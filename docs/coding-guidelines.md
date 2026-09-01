@@ -192,7 +192,7 @@ Every interactive element needs an accessible name. Board spaces, dialogs, and d
 
 ### Styling
 
-The active app uses one plain stylesheet, `src/app/app.css`, imported once in `App.tsx`. The `.scss` modules under `src/assets/css/` belong to the dead legacy island — do not add to them.
+Styling is SCSS under `src/styles/`, entry `main.scss`, imported once in `App.tsx`. See [theming.md](theming.md).
 
 ### Naming
 

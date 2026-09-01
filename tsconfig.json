@@ -24,12 +24,5 @@
       "@test/*": ["src/test/*"]
     }
   },
-  "include": ["src"],
-  "exclude": [
-    "src/redux",
-    "src/utility",
-    "src/components/monopoly",
-    "src/components/home",
-    "src/components/not_found"
-  ]
+  "include": ["src"]
 }

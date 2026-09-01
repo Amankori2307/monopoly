@@ -263,8 +263,12 @@ test('always leaves the player at least one action', async ({ page }) => {
   await startGame(page);
 
   const anyActionAvailable = async () => {
+    // `:not(.toast)` matters more than it looks: a toast is a button, and its
+    // message is the engine's own sentence - so "Player 1 bought Delhi." would
+    // have satisfied this check and masked exactly the deadlock it exists to
+    // catch.
     const enabled = await page
-      .locator('button:not([disabled])')
+      .locator('button:not([disabled]):not(.toast)')
       .filter({
         hasText:
           /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^OK$/,
@@ -287,8 +291,12 @@ test('always leaves the player at least one action', async ({ page }) => {
     const rollButton = page.getByTestId(TEST_IDS.rollButton);
     const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
     const declineButton = page.getByTestId(TEST_IDS.declineButton);
-    const payFine = page.getByRole('button', { name: /^Pay \u20b9/ });
-    const passAuction = page.getByRole('button', { name: 'Pass' });
+    // Scoped to the decision panel, and exact. Toasts are buttons too, so an
+    // unscoped substring match on "Pass" also matched the "collected ₹200 -
+    // passing GO." toast the moment both were on screen.
+    const decisionPanel = page.getByTestId(TEST_IDS.decisionPanel);
+    const payFine = decisionPanel.getByRole('button', { name: /^Pay \u20b9/ });
+    const passAuction = decisionPanel.getByRole('button', { name: 'Pass', exact: true });
 
     const acknowledgeCard = page.getByTestId(TEST_IDS.acknowledgeCardButton);
 

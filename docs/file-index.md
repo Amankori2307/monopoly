@@ -282,16 +282,16 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Config
 
-| File                                            | What it does                                                                                                          |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| [vite.config.mjs](../vite.config.mjs)           | Vite build/dev config **and** the Vitest config (jsdom, globals, setup file).                                         |
-| [project.json](../project.json)                 | NX targets wrapping Vite: serve, build, test, lint, preview.                                                          |
-| [nx.json](../nx.json)                           | NX workspace config: caching, target defaults.                                                                        |
-| [tsconfig.json](../tsconfig.json)               | TypeScript config. `strict: true`; the legacy island is excluded from typechecking; path aliases declared but unused. |
-| [.eslintrc.json](../.eslintrc.json)             | Lint rules: layer boundaries, naming conventions, file naming, size limits.                                           |
-| [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                                                          |
-| [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                                                      |
-| [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                                                          |
+| File                                            | What it does                                                                                       |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [vite.config.mjs](../vite.config.mjs)           | Vite build/dev config **and** the Vitest config (jsdom, globals, setup file).                      |
+| [project.json](../project.json)                 | NX targets wrapping Vite: serve, build, test, lint, preview.                                       |
+| [nx.json](../nx.json)                           | NX workspace config: caching, target defaults.                                                     |
+| [tsconfig.json](../tsconfig.json)               | TypeScript config. `strict: true`, target es2020, no exclusions; path aliases declared but unused. |
+| [.eslintrc.json](../.eslintrc.json)             | Lint rules: layer boundaries, naming conventions, file naming, size limits.                        |
+| [.prettierrc.json](../.prettierrc.json)         | Prettier formatting options.                                                                       |
+| [playwright.config.ts](../playwright.config.ts) | E2E config; auto-starts the dev server on :3000.                                                   |
+| [.claude/launch.json](../.claude/launch.json)   | Dev-server definition used by the in-editor browser preview.                                       |
 
 ## Other
 
@@ -302,17 +302,3 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [src/types/css-modules.d.ts](../src/types/css-modules.d.ts) | Module declarations for CSS/SCSS module imports.           |
 
 ---
-
-## Legacy island — NOT part of the running app
-
-Unreachable from `App.tsx`; kept only as history. ESLint bans importing from these paths and
-skips linting them. Do not add to or "fix" them. See [CLAUDE.md](../CLAUDE.md) section 2.
-
-| Path                                                | What it was                                                                                           |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `src/redux/`                                        | Old hand-rolled actions/reducers (player, dice, board, site, modal, card, action).                    |
-| `src/utility/`                                      | Old game logic helpers (`playerUtility`, `boardUtility`, `siteUtility`, `cardUtilities`, `player/*`). |
-| `src/components/monopoly/`                          | Old game UI (Board, Row, Card, Dice, Modals, Player containers, Actions).                             |
-| `src/components/home/`, `src/components/not_found/` | Old marketing/home and 404 components.                                                                |
-| `src/assets/css/`                                   | SCSS modules for the old UI.                                                                          |
-| `src/assets/data/`                                  | Zelda-era `boardData.json`, `chanceData.json`, `chestData.json`.                                      |

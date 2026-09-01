@@ -110,8 +110,7 @@ single-class rules win over equal-specificity component rules.
 - Prefer nesting that mirrors the component's markup over long `:not()` selector chains.
 - **Grid row templates must match the number of children actually rendered.** The corner-space bug
   came from a 3-row template on a 2-child element. A conditional child needs a modifier class.
-- Adding a theme: [theming.md](theming.md). The `.scss` under `src/assets/css/` is the dead legacy
-  island — do not add to it.
+- Adding a theme: [theming.md](theming.md).
 
 ## 4. Keep logic out of components
 

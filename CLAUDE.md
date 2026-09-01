@@ -18,23 +18,18 @@ The defining architectural decision: **the rules engine is a pure module that kn
 
 ---
 
-## 2. ⚠️ Two code trees — only one is alive
+## 2. One code tree
 
-The app was rewritten. `src/` currently holds the new app **and** a fully disconnected legacy island.
+`src/` is the app and nothing else. The Zelda-themed legacy island that used to sit beside it —
+`src/redux/`, `src/utility/`, `src/components/monopoly/`, `src/components/home/`,
+`src/components/not_found/`, and the `.scss`/`.json` under `src/assets/` that only it used — was
+deleted once the ruleset was complete. It had zero import edges into the active tree and shipped
+nothing.
 
-|                               | Active (~3.1k LOC)                                                              | Legacy island (~2.9k LOC)                                                                                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Paths                         | `src/domain/`, `src/features/`, `src/app/`, `src/components/game/`, `src/test/` | `src/redux/`, `src/utility/`, `src/components/monopoly/`, `src/components/home/`, `src/components/not_found/`, `src/assets/css/*.scss`, `src/assets/data/*.json` |
-| Reachable from `src/App.tsx`? | Yes                                                                             | **No** — verified zero import edges                                                                                                                              |
-| Theme                         | India Edition                                                                   | Zelda-themed (old)                                                                                                                                               |
-| State                         | RTK slices + pure engine                                                        | hand-rolled actions/reducers                                                                                                                                     |
-
-**Rules of engagement:**
-
-- Build all new work in the active tree.
-- Never import from the legacy island into active code, and never "fix" legacy files — they ship nothing.
-- Treat any older doc describing Zelda spaces, `boardData.json`, `playerAppropriateActionUtils`, or `Monopoly.tsx` as **historical, not current**.
-- Deleting the island is a deliberate, separate decision — confirm with the user first.
+`jquery`, `redux`, `redux-thunk` and `redux-mock-store` went with it; state is RTK slices over the
+pure engine. Anything in an older doc describing Zelda spaces, `boardData.json`,
+`playerAppropriateActionUtils` or `Monopoly.tsx` is **historical** — it is in git history, not on
+disk.
 
 ---
 
@@ -192,7 +187,6 @@ When you touch one of these, extract it (colors/icons → a shared board-present
 
 - **Never hardcode a colour.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. The one sanctioned exception is a **player token colour**, applied inline from `ThemeToken.color` — it is theme _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
 - Themes are token maps in `themes/_themes.scss`, emitted as `[data-theme="<id>"]` blocks. A compile-time guard fails the build if a theme misses a contract token. See [docs/theming.md](docs/theming.md).
-- The `.scss` modules under `src/assets/css/` belong to the legacy island — do not add to them.
 
 **Testing — mandatory, all three levels.** Every feature, entity, and behaviour ships with **unit + integration + e2e** coverage in the same change. Unit: pure logic, `SeededRandomSource` for dice, cover every `throw` branch. Integration: thunk → engine → persistence → store, and pages via `src/test/renderWithProviders.tsx`. E2E: the user journey in Playwright, queried by accessible role and name.
 
@@ -206,7 +200,7 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 - **`asset-liquidation` is resolvable, and queues.** `settleDebt` clears it; selling buildings and mortgaging are how the cash is raised, and both deliberately leave `pendingDecision` alone. Several debts from one card all stand: the extras ride in the decision's own `queued` array, which survives a save because `pendingDecision` is the one part validated with `.passthrough()`. Read it as `queued ?? []` — a game saved before the queue existed comes back without it.
 - **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.
 - **`movePlayerTo` takes an `isForward` flag**, because the wrap test (`next < current`) is also true of every backward move. A backward card move must pass `isForward: false` or it would pay the GO salary for going the wrong way.
-- **`tsconfig.json` is `strict: true`, target `es2020`.** It was `strict: false` / `es5`; the active tree needed two fixes to satisfy it. The legacy island did not, so it is in `exclude` — the files are untouched on disk, they are simply no longer typechecked. Deleting them is still a separate, consented decision (§2).
+- **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---
 
@@ -222,7 +216,6 @@ Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a
 | Ruleset behaviour or values                     | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below       |
 | Scripts in `package.json`                       | §6                                                                                                 |
 | Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                               |
-| Deleting part of the legacy island              | §2                                                                                                 |
 | Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5     |
 | Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                             |
 | An ESLint rule                                  | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                         |
