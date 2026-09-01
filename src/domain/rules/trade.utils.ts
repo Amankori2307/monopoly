@@ -43,8 +43,8 @@ export const tradeBlockedReason = (
 export const getTradableSites = (state: GameState, playerId: PlayerId): TradableSite[] =>
   getPlayerOwnedSpaces(state, playerId).map((space) => ({
     spaceId: space.id,
-    name: space.name,
-    mortgaged: state.ownership[space.id]?.mortgaged ?? false,
+    space,
+    ownership: state.ownership[space.id],
     blockedReason: tradeBlockedReason(state, space.id, playerId),
   }));
 

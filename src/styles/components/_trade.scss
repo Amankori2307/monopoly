@@ -20,7 +20,9 @@
 }
 
 .trade-modal {
-  width: min(760px, 100%);
+  // Two full deed columns plus the gap and the modal's own padding: a trade is
+  // picked from real title deeds now, and a deed is a fixed width.
+  width: min(calc(2 * #{t.$deed-card-width} + 3 * #{t.$gap-lg}), 100%);
   max-height: 90vh;
   overflow-y: auto;
   padding: t.$gap-lg;
@@ -191,5 +193,190 @@
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Picking from real title deeds
+// ---------------------------------------------------------------------------
+/**
+ * One player's holdings as a stack of deeds, clipped to a peek and tucked under
+ * one another - the same idea as the holdings drawer, and the same tokens, so
+ * the two stay recognisably one pattern.
+ *
+ * A deed is 340x380 and a player can hold 28 of them, so the stack is what makes
+ * the whole hand visible at once. The column scrolls; the deed does not shrink,
+ * because it is the same object it is everywhere else in the game.
+ */
+.trade-deed-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-height: 46vh;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+
+.trade-deed {
+  position: relative;
+  // The column has a bounded height and scrolls, and a flex item shrinks by
+  // default - so every deed collapsed towards its peek and a picked one never
+  // reached its full size.
+  flex: 0 0 auto;
+  width: t.$deed-card-width;
+  max-height: t.$holdings-peek;
+  overflow: hidden;
+  box-shadow: 0 -6px 14px rgba(24, 30, 23, 0.12);
+  transition:
+    max-height 0.18s ease,
+    box-shadow 0.18s ease;
+
+  & + & {
+    margin-top: -1 * t.$holdings-tuck;
+  }
+
+  // Selecting expands it: the deal you are assembling *is* a set of title
+  // deeds, and everything you are not trading stays a peek.
+  &.is-selected {
+    max-height: t.$deed-card-height;
+    z-index: 2;
+    box-shadow:
+      0 0 0 3px var(--accent),
+      0 -6px 14px rgba(24, 30, 23, 0.18);
+  }
+
+  &.is-blocked {
+    opacity: 0.62;
+  }
+}
+
+// The picker covers the whole card, so the deed's own heading is not nested
+// inside a control - the same arrangement HoldingsStack uses.
+.trade-deed-pick {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: -3px;
+  }
+}
+
+// Why it cannot go in, on the card - it used to be a title attribute nobody
+// hovers.
+.trade-deed-blocked,
+.trade-deed-mark {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 4;
+  margin: 0;
+  padding: 4px 8px;
+  font: 700 0.7rem t.$font-mono;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trade-deed-blocked {
+  background: var(--surface-muted);
+  color: var(--error-text);
+}
+
+.trade-deed-mark {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+// Read-only on the accept screen: nothing to pick, so nothing is tucked.
+.trade-deed-stack.is-readonly .trade-deed {
+  max-height: t.$deed-card-height;
+}
+
+// Written out rather than nested: `& + &` inside a descendant selector expands
+// to the whole prefix twice, which matches nothing.
+.trade-deed-stack.is-readonly .trade-deed + .trade-deed {
+  margin-top: t.$gap-md;
+}
+
+// ---------------------------------------------------------------------------
+// Jail cards, as cards
+// ---------------------------------------------------------------------------
+.trade-jail-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/**
+ * Each card wears its deck's colour, because that is the one way two jail cards
+ * differ - a Chance card has to go back to Chance.
+ */
+.trade-jail-card {
+  display: grid;
+  gap: 1px;
+  padding: 7px 10px;
+  border: 2px solid var(--border-input);
+  border-radius: t.$radius-sharp;
+  text-align: left;
+  cursor: pointer;
+
+  &.is-chance {
+    background: var(--deck-chance-bg);
+  }
+
+  &.is-chest {
+    background: var(--deck-community-bg);
+  }
+
+  &.is-going {
+    border-color: var(--accent);
+  }
+}
+
+.trade-jail-card-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.trade-jail-card-state {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trade-jail-count,
+.trade-field-label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.trade-summary-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.83rem;
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  // The deed goes full width below the tablet breakpoint, so the stack follows.
+  .trade-deed {
+    width: 100%;
   }
 }

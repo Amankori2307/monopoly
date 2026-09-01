@@ -83,8 +83,8 @@ test('proposes a two-sided deal and carries it out on acceptance', async ({ page
   const builder = page.getByTestId(TEST_IDS.tradeBuilder);
   await expect(builder).toBeVisible();
 
-  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.mineId)).check();
-  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.theirsId)).check();
+  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.mineId)).click();
+  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.theirsId)).click();
   await page.getByTestId(scopedTestId(TEST_IDS.tradeCash, 'offer')).fill('100');
   await page.getByTestId(TEST_IDS.tradePropose).click();
 
@@ -113,7 +113,7 @@ test('leaves everything alone when the offer is rejected', async ({ page }) => {
 
   await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, seeded.theirsIndex)).click();
   await page.getByTestId(TEST_IDS.proposeTradeButton).click();
-  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.mineId)).check();
+  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.mineId)).click();
   await page.getByTestId(TEST_IDS.tradePropose).click();
 
   await page.getByTestId(TEST_IDS.tradeReject).click();
@@ -163,7 +163,7 @@ test('lets the receiver choose what to do about a mortgaged site', async ({ page
 
   await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, seeded.theirsIndex)).click();
   await page.getByTestId(TEST_IDS.proposeTradeButton).click();
-  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.mineId)).check();
+  await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.mineId)).click();
   await page.getByTestId(TEST_IDS.tradePropose).click();
 
   // Keeping it mortgaged is the default, because it costs less.
@@ -173,7 +173,7 @@ test('lets the receiver choose what to do about a mortgaged site', async ({ page
 
   await page
     .getByTestId(scopedTestId(TEST_IDS.tradeMortgageRedeem, seeded.mineId))
-    .check();
+    .click();
   await page.getByTestId(TEST_IDS.tradeAccept).click();
 
   const after = await page.evaluate(() => {
@@ -193,4 +193,132 @@ test('lets the receiver choose what to do about a mortgaged site', async ({ page
   expect(after.recipientCash).toBe(
     mortgaged.recipientCash - mortgaged.mortgageValue - interest
   );
+});
+
+/**
+ * What you are trading, as title deeds.
+ *
+ * Both screens used to be lists of bare names - the builder with `(mortgaged)`
+ * appended, and the accept screen, where a player actually commits, with nothing
+ * at all. A deal could be agreed with no sight of the colour group, the price,
+ * the rent, the buildings, or the mortgage.
+ */
+test.describe('a trade is made of real deeds', () => {
+  /** One mortgaged site each side, and one blocked by buildings. */
+  const seedDeeds = async (page: Page) => {
+    const seeded = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((k) =>
+        k.startsWith('monopoly.game.')
+      ) as string;
+      const game = JSON.parse(localStorage.getItem(key) as string);
+      const [proposer, recipient] = game.playerOrder;
+      const streets = game.board.filter(
+        (space: { kind: string }) => space.kind === 'street'
+      );
+      // A whole colour group for the proposer, with houses on one of them, so
+      // the other is blocked from trading.
+      const group = streets[0].colorGroup;
+      const set = streets.filter(
+        (space: { colorGroup: string }) => space.colorGroup === group
+      );
+      set.forEach((space: { id: string }, index: number) => {
+        game.ownership[space.id] = {
+          ownerPlayerId: proposer,
+          mortgaged: false,
+          buildLevel: index === 0 ? 2 : 0,
+        };
+      });
+      const theirs = streets[streets.length - 1];
+      game.ownership[theirs.id] = {
+        ownerPlayerId: recipient,
+        mortgaged: true,
+        buildLevel: 0,
+      };
+      game.activePlayerIndex = 0;
+      game.turn = {
+        phase: 'turn_complete',
+        doublesCount: 0,
+        lastRoll: [3, 4],
+        canRollAgain: false,
+        reason: 'done',
+        speedDieFace: null,
+        pendingMonopolyAdvance: false,
+      };
+      localStorage.setItem(key, JSON.stringify(game));
+
+      return {
+        blockedId: set[1].id as string,
+        theirsId: theirs.id as string,
+        theirsIndex: theirs.index as number,
+        theirsName: theirs.name as string,
+      };
+    });
+
+    await page.reload();
+    await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
+    await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, seeded.theirsIndex)).click();
+    await page.getByTestId(TEST_IDS.proposeTradeButton).click();
+    await expect(page.getByTestId(TEST_IDS.tradeBuilder)).toBeVisible();
+    return seeded;
+  };
+
+  test('shows a real title deed for every holding', async ({ page }) => {
+    await startGame(page);
+    const seeded = await seedDeeds(page);
+
+    const deed = page.getByTestId(scopedTestId(TEST_IDS.tradeDeed, seeded.theirsId));
+    await expect(deed).toContainText(seeded.theirsName);
+    // The peek shows the name; the mortgage stamp is pulled into it.
+    await expect(deed.getByTestId(TEST_IDS.deedMortgaged)).toBeVisible();
+  });
+
+  test('expands a picked deed to the full card and leaves the rest as peeks', async ({
+    page,
+  }) => {
+    await startGame(page);
+    const seeded = await seedDeeds(page);
+    const deed = page.getByTestId(scopedTestId(TEST_IDS.tradeDeed, seeded.theirsId));
+
+    const peekHeight = (await deed.boundingBox())?.height ?? 0;
+    expect(peekHeight).toBeLessThan(120);
+
+    await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.theirsId)).click();
+
+    // Polled, because the expansion is a max-height transition: measured on the
+    // click itself this reads the tween rather than the card.
+    await expect
+      .poll(async () => (await deed.boundingBox())?.height ?? 0)
+      .toBeGreaterThan(300);
+    // And the rent ladder is on screen, which is what a trade is judged on.
+    await expect(deed).toContainText(/Rent schedule/i);
+  });
+
+  test('will not let a blocked site into the deal, and says why', async ({ page }) => {
+    await startGame(page);
+    const seeded = await seedDeeds(page);
+
+    await expect(
+      page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.blockedId))
+    ).toBeDisabled();
+    await expect(
+      page.getByTestId(scopedTestId(TEST_IDS.tradeDeedBlocked, seeded.blockedId))
+    ).toContainText(/buildings/i);
+  });
+
+  // The screen where a player commits, which showed only names.
+  test('shows the deeds again on the accept screen', async ({ page }) => {
+    await startGame(page);
+    const seeded = await seedDeeds(page);
+
+    await page.getByTestId(scopedTestId(TEST_IDS.tradeSite, seeded.theirsId)).click();
+    await page.getByTestId(TEST_IDS.tradePropose).click();
+
+    const response = page.getByTestId(TEST_IDS.tradeResponse);
+    await expect(response).toBeVisible();
+    await expect(response.getByTestId(TEST_IDS.spaceCard).first()).toBeVisible();
+    await expect(response).toContainText(seeded.theirsName);
+    await expect(response).toContainText(/Rent schedule/i);
+    // And it is visibly mortgaged, which is what the keep-or-redeem choice is about.
+    await expect(response.getByTestId(TEST_IDS.deedMortgaged).first()).toBeVisible();
+  });
 });

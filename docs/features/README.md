@@ -16,6 +16,7 @@ which the code itself cannot tell them.
 | Action feedback            | [action-feedback.md](action-feedback.md) | Shipped                            |
 | Site ownership             | [site-ownership.md](site-ownership.md)   | Shipped (owner actions pending)    |
 | Auctions                   | [auctions.md](auctions.md)               | Shipped                            |
+| Trading                    | [trading.md](trading.md)                 | Shipped                            |
 | Persistence and resume     | [persistence.md](persistence.md)         | Shipped                            |
 | Theming                    | [../theming.md](../theming.md)           | Shipped                            |
 | Rules booklet              | [rules-page.md](rules-page.md)           | Shipped                            |

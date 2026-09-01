@@ -213,7 +213,11 @@ describe('mortgaged sites in a trade', () => {
 });
 
 describe('getTradableSites', () => {
-  it('lists what a player holds and why anything is blocked', () => {
+  /**
+   * The whole space and its ownership, not a name and a flag: the builder renders
+   * the real title deed from this, so everything the deed shows has to be here.
+   */
+  it('lists what a player holds, as deeds, and why anything is blocked', () => {
     const { state, ashaSite } = withOneSiteEach(createGame());
 
     const sites = getTradableSites(state, state.playerOrder[0]);
@@ -221,10 +225,14 @@ describe('getTradableSites', () => {
     expect(sites).toEqual([
       {
         spaceId: ashaSite.id,
-        name: ashaSite.name,
-        mortgaged: false,
+        space: ashaSite,
+        ownership: state.ownership[ashaSite.id],
         blockedReason: '',
       },
     ]);
+    // Enough to draw the deed: the price and the mortgage state.
+    expect(sites[0].space).toHaveProperty('price');
+    expect(sites[0].space).toHaveProperty('mortgageValue');
+    expect(sites[0].ownership?.mortgaged).toBe(false);
   });
 });

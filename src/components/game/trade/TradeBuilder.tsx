@@ -3,6 +3,8 @@ import type { SpaceId, TradeState } from '../../../domain/types/game.interfaces'
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { formatMoney } from '../../../shared/utils/money.utils';
 import type { TradeBuilderViewModel, TradePartyViewModel } from './trade.interfaces';
+import { TradeDeedStack } from './TradeDeedStack';
+import { TradeJailCards } from './TradeJailCards';
 
 interface TradeBuilderProps {
   builder: TradeBuilderViewModel;
@@ -139,7 +141,6 @@ function TradeColumn({
   side,
 }: TradeColumnProps) {
   const cashId = `trade-cash-${side}`;
-  const jailId = `trade-jail-${side}`;
 
   return (
     <section
@@ -154,29 +155,13 @@ function TradeColumn({
       </p>
       <p className="trade-column-cash">Has {formatMoney(party.cash, currencySymbol)}</p>
 
-      <ul className="trade-sites">
-        {party.sites.map((site) => (
-          <li key={site.spaceId}>
-            <label
-              className={site.blockedReason ? 'is-blocked' : ''}
-              title={site.blockedReason}
-            >
-              <input
-                checked={selectedSpaceIds.includes(site.spaceId)}
-                data-testid={scopedTestId(TEST_IDS.tradeSite, site.spaceId)}
-                disabled={site.blockedReason !== ''}
-                onChange={() => onToggleSite(site.spaceId)}
-                type="checkbox"
-              />
-              <span>
-                {site.name}
-                {site.mortgaged ? ' (mortgaged)' : ''}
-              </span>
-            </label>
-          </li>
-        ))}
-        {party.sites.length === 0 ? <li className="trade-empty">No sites</li> : null}
-      </ul>
+      <TradeDeedStack
+        currencySymbol={currencySymbol}
+        onToggle={onToggleSite}
+        selectedSpaceIds={selectedSpaceIds}
+        side={side}
+        sites={party.sites}
+      />
 
       <label className="trade-field" htmlFor={cashId}>
         Cash
@@ -191,23 +176,13 @@ function TradeColumn({
         />
       </label>
 
-      {party.jailCards > 0 ? (
-        <label className="trade-field" htmlFor={jailId}>
-          Jail cards
-          <input
-            data-testid={scopedTestId(TEST_IDS.tradeJailCards, side)}
-            id={jailId}
-            max={party.jailCards}
-            min={0}
-            onChange={(event) =>
-              onJailCardsChange(
-                Math.min(party.jailCards, Math.max(0, Number(event.target.value) || 0))
-              )
-            }
-            type="number"
-            value={jailCards}
-          />
-        </label>
+      {party.jailFreeCards.length > 0 ? (
+        <TradeJailCards
+          cards={party.jailFreeCards}
+          onChange={onJailCardsChange}
+          selectedCount={jailCards}
+          side={side}
+        />
       ) : null}
     </section>
   );

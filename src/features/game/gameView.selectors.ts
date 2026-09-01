@@ -155,7 +155,7 @@ export const selectTradeBuilder = (
     name: player.name,
     color: findToken(player.tokenId)?.color ?? '',
     cash: player.cash,
-    jailCards: player.jailFreeCards.length,
+    jailFreeCards: player.jailFreeCards,
     sites: getTradableSites(game, player.id),
   });
 

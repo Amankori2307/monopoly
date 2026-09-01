@@ -1,8 +1,30 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
+import { CardDeck, CardEffectKind, SpaceKind } from '../../../domain/types/game.enums';
+import type { DeckCard, StreetSpace } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { TradeBuilder } from './TradeBuilder';
 import type { TradeBuilderViewModel } from './trade.interfaces';
+
+/** Real board spaces, because the builder renders real title deeds now. */
+const streets = indiaEditionBoard.filter(
+  (space): space is StreetSpace => space.kind === SpaceKind.Street
+);
+
+const owned = (mortgaged = false) => ({
+  ownerPlayerId: 'player-1',
+  mortgaged,
+  buildLevel: 0,
+});
+
+const jailCard = (deck: CardDeck, id: string): DeckCard => ({
+  id,
+  deck,
+  title: 'Get Out of Jail Free',
+  description: 'Keep this card until needed.',
+  effect: { kind: CardEffectKind.JailFree },
+});
 
 const builder: TradeBuilderViewModel = {
   proposer: {
@@ -10,13 +32,21 @@ const builder: TradeBuilderViewModel = {
     name: 'Asha',
     color: '#1466ff',
     cash: 1500,
-    jailCards: 1,
+    jailFreeCards: [
+      jailCard(CardDeck.Chance, 'chance-jail'),
+      jailCard(CardDeck.CommunityChest, 'chest-jail'),
+    ],
     sites: [
-      { spaceId: 'delhi', name: 'Delhi', mortgaged: false, blockedReason: '' },
       {
-        spaceId: 'mumbai',
-        name: 'Mumbai',
-        mortgaged: false,
+        spaceId: streets[0].id,
+        space: streets[0],
+        ownership: owned(),
+        blockedReason: '',
+      },
+      {
+        spaceId: streets[1].id,
+        space: streets[1],
+        ownership: owned(),
         blockedReason: 'Sell the buildings in this colour set first',
       },
     ],
@@ -26,8 +56,15 @@ const builder: TradeBuilderViewModel = {
     name: 'Vikram',
     color: '#e01b1b',
     cash: 900,
-    jailCards: 0,
-    sites: [{ spaceId: 'agra', name: 'Agra', mortgaged: true, blockedReason: '' }],
+    jailFreeCards: [],
+    sites: [
+      {
+        spaceId: streets[2].id,
+        space: streets[2],
+        ownership: owned(true),
+        blockedReason: '',
+      },
+    ],
   },
 };
 
@@ -66,8 +103,8 @@ describe('TradeBuilder', () => {
   it('sends what was picked on both sides', () => {
     const onPropose = renderBuilder();
 
-    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, 'delhi')));
-    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, 'agra')));
+    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, streets[0].id)));
+    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, streets[2].id)));
     fireEvent.change(screen.getByTestId(scopedTestId(TEST_IDS.tradeCash, 'request')), {
       target: { value: '250' },
     });
@@ -77,8 +114,8 @@ describe('TradeBuilder', () => {
       expect.objectContaining({
         proposerPlayerId: 'player-1',
         recipientPlayerId: 'player-2',
-        offeredSpaceIds: ['delhi'],
-        requestedSpaceIds: ['agra'],
+        offeredSpaceIds: [streets[0].id],
+        requestedSpaceIds: [streets[2].id],
         requestedCash: 250,
       })
     );
@@ -86,11 +123,11 @@ describe('TradeBuilder', () => {
 
   it('unpicks a site that is picked twice', () => {
     const onPropose = renderBuilder();
-    const delhi = screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, 'delhi'));
+    const first = screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, streets[0].id));
 
-    fireEvent.click(delhi);
-    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, 'agra')));
-    fireEvent.click(delhi);
+    fireEvent.click(first);
+    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, streets[2].id)));
+    fireEvent.click(first);
     fireEvent.click(screen.getByTestId(TEST_IDS.tradePropose));
 
     expect(onPropose).toHaveBeenCalledWith(
@@ -100,23 +137,50 @@ describe('TradeBuilder', () => {
 
   // A site whose colour set holds buildings cannot be traded, and the reason
   // belongs on the control rather than in an error after the fact.
-  it('disables a site that cannot be traded, with its reason', () => {
-    renderBuilder();
-    const mumbai = screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, 'mumbai'));
-
-    expect(mumbai).toBeDisabled();
-    expect(mumbai.closest('label')).toHaveAttribute(
-      'title',
-      'Sell the buildings in this colour set first'
-    );
-  });
-
-  it('marks a mortgaged site so the receiver knows what they are taking', () => {
+  // A site whose colour set holds buildings cannot be traded, and the reason is
+  // printed on the card - it used to be a title attribute nobody hovers.
+  it('disables a site that cannot be traded, with its reason on the card', () => {
     renderBuilder();
 
     expect(
-      screen.getByTestId(scopedTestId(TEST_IDS.tradeColumn, 'request'))
-    ).toHaveTextContent(/Agra \(mortgaged\)/);
+      screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, streets[1].id))
+    ).toBeDisabled();
+    expect(
+      screen.getByTestId(scopedTestId(TEST_IDS.tradeDeedBlocked, streets[1].id))
+    ).toHaveTextContent('Sell the buildings in this colour set first');
+  });
+
+  /**
+   * The whole point of the rewrite: you can see what you are taking. A mortgaged
+   * site is struck with the stamp on its own deed, not annotated in a list.
+   */
+  it('shows a mortgaged site as a stamped deed', () => {
+    renderBuilder();
+
+    const deed = screen.getByTestId(scopedTestId(TEST_IDS.tradeDeed, streets[2].id));
+    expect(deed).toHaveTextContent(streets[2].name);
+    expect(
+      deed.querySelector(`[data-testid="${TEST_IDS.deedMortgaged}"]`)
+    ).not.toBeNull();
+  });
+
+  it('shows a real title deed for every holding, not a name', () => {
+    renderBuilder();
+
+    // The rent ladder is on the card, which is what a trade is judged on.
+    const deed = screen.getByTestId(scopedTestId(TEST_IDS.tradeDeed, streets[0].id));
+    expect(deed).toHaveTextContent(/Rent schedule/i);
+    expect(deed).toHaveTextContent(/Mortgage value/i);
+  });
+
+  it('expands a picked deed and leaves the rest as peeks', () => {
+    renderBuilder();
+    const deed = screen.getByTestId(scopedTestId(TEST_IDS.tradeDeed, streets[0].id));
+
+    expect(deed.className).not.toContain('is-selected');
+    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeSite, streets[0].id)));
+
+    expect(deed.className).toContain('is-selected');
   });
 
   // Only a player who holds one can offer one, so the field is not shown at all
@@ -132,16 +196,47 @@ describe('TradeBuilder', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('never offers more jail cards than the player holds', () => {
+  /**
+   * The engine moves `jailFreeCards.slice(0, N)`, so clicking a card means "these
+   * N go" - not "this one goes". The UI must not imply a per-card choice it
+   * cannot honour.
+   */
+  it('sends the cards up to the one clicked', () => {
     const onPropose = renderBuilder();
 
-    fireEvent.change(screen.getByTestId(scopedTestId(TEST_IDS.tradeJailCards, 'offer')), {
-      target: { value: '9' },
+    // The second card: both it and the first are in the deal.
+    fireEvent.click(screen.getByTestId(scopedTestId(TEST_IDS.tradeJailCard, 'offer-1')));
+    fireEvent.click(screen.getByTestId(TEST_IDS.tradePropose));
+
+    expect(onPropose).toHaveBeenCalledWith(
+      expect.objectContaining({ offeredJailCards: 2 })
+    );
+  });
+
+  it('takes a card back out when it is clicked again', () => {
+    const onPropose = renderBuilder();
+    const first = screen.getByTestId(scopedTestId(TEST_IDS.tradeJailCard, 'offer-0'));
+
+    fireEvent.click(first);
+    fireEvent.click(first);
+    fireEvent.change(screen.getByTestId(scopedTestId(TEST_IDS.tradeCash, 'offer')), {
+      target: { value: '10' },
     });
     fireEvent.click(screen.getByTestId(TEST_IDS.tradePropose));
 
     expect(onPropose).toHaveBeenCalledWith(
-      expect.objectContaining({ offeredJailCards: 1 })
+      expect.objectContaining({ offeredJailCards: 0 })
     );
+  });
+
+  it('shows each jail card with the deck it must return to', () => {
+    renderBuilder();
+
+    expect(
+      screen.getByTestId(scopedTestId(TEST_IDS.tradeJailCard, 'offer-0'))
+    ).toHaveTextContent('Chance');
+    expect(
+      screen.getByTestId(scopedTestId(TEST_IDS.tradeJailCard, 'offer-1'))
+    ).toHaveTextContent('Community Chest');
   });
 });

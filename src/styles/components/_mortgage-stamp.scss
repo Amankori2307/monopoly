@@ -82,11 +82,18 @@
 }
 
 /**
- * A stacked holding is clipped to a peek of its full height, so a stamp centred
- * on the card would sit entirely below the fold. Pulled up into what is actually
- * visible - the same SVG, repositioned rather than a second component.
+ * A deed clipped to a peek of its full height would hide a centred stamp
+ * entirely below the fold. Pulled up into what is actually visible - the same
+ * SVG, repositioned rather than a second component.
+ *
+ * Two places clip a deed that way: the holdings drawer's stack, and a trade's
+ * unpicked deeds. A picked one expands to its full height, so it is excluded and
+ * gets the ordinary centred stamp.
  */
-.holdings-stack-card .mortgage-stamp.is-deed {
+.holdings-stack-card .mortgage-stamp.is-deed,
+.trade-deed-stack:not(.is-readonly)
+  .trade-deed:not(.is-selected)
+  .mortgage-stamp.is-deed {
   inset: 0 0 auto;
   height: t.$holdings-peek;
   opacity: 0.2;

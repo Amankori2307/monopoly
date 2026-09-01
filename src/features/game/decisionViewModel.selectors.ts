@@ -11,6 +11,7 @@ import type {
 } from '../../domain/types/game.interfaces';
 import type {
   BuildingPlacementDecisionViewModel,
+  HoldingEntry,
   BuyDecisionViewModel,
   SpeedDieBusDecisionViewModel,
   CardDrawDecisionViewModel,
@@ -123,11 +124,12 @@ const tradeResponseDecision = (
   const trade = game.tradeState;
   if (!trade) return null;
 
-  const nameOf = (spaceIds: string[]) =>
-    spaceIds.map(
-      (spaceId) =>
-        game.board.find((space) => space.id === spaceId)?.name ?? 'Unknown site'
-    );
+  /** The deeds moving, so the accept screen can show real title deeds. */
+  const deedsOf = (spaceIds: string[]): HoldingEntry[] =>
+    spaceIds.flatMap((spaceId) => {
+      const space = game.board.find((candidate) => candidate.id === spaceId);
+      return space ? [{ space, ownership: game.ownership[spaceId] }] : [];
+    });
 
   return {
     type: PendingDecisionType.TradeResponse,
@@ -150,14 +152,14 @@ const tradeResponseDecision = (
     incoming: {
       playerName: game.players[decision.proposerPlayerId]?.name ?? 'They',
       cash: trade.offeredCash,
-      siteNames: nameOf(trade.offeredSpaceIds),
+      sites: deedsOf(trade.offeredSpaceIds),
       jailCards: trade.offeredJailCards,
       transferFee: getTransferFees(game, trade.offeredSpaceIds),
     },
     outgoing: {
       playerName: game.players[decision.recipientPlayerId]?.name ?? 'You',
       cash: trade.requestedCash,
-      siteNames: nameOf(trade.requestedSpaceIds),
+      sites: deedsOf(trade.requestedSpaceIds),
       jailCards: trade.requestedJailCards,
       transferFee: getTransferFees(game, trade.requestedSpaceIds),
     },

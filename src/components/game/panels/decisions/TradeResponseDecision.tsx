@@ -3,6 +3,7 @@ import { MortgageChoice } from '../../../../domain/types/game.enums';
 import type { SpaceId } from '../../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { formatMoney } from '../../../../shared/utils/money.utils';
+import { SpaceCard } from '../../deed/SpaceCard';
 import type {
   IncomingMortgagedSite,
   TradeSideSummary,
@@ -149,17 +150,23 @@ interface TradeSummaryColumnProps {
   side: TradeSideSummary;
 }
 
+/**
+ * One side of the deal, as real title deeds.
+ *
+ * This is where a player commits, and it used to be a list of bare names - so
+ * you could agree to take a mortgaged site with houses' worth of rent you would
+ * never collect, and nothing on screen said so. Read-only, so the deeds are
+ * simply stacked rather than pickable.
+ */
 function TradeSummaryColumn({ currencySymbol, heading, side }: TradeSummaryColumnProps) {
-  const isEmpty = side.cash === 0 && side.siteNames.length === 0 && side.jailCards === 0;
+  const isEmpty = side.cash === 0 && side.sites.length === 0 && side.jailCards === 0;
 
   return (
     <section className="trade-column">
       <p className="trade-column-head">{heading}</p>
-      <ul className="trade-sites">
+
+      <ul className="trade-summary-lines">
         {side.cash > 0 ? <li>{formatMoney(side.cash, currencySymbol)}</li> : null}
-        {side.siteNames.map((name) => (
-          <li key={name}>{name}</li>
-        ))}
         {side.jailCards > 0 ? (
           <li>
             {side.jailCards} Get Out of Jail Free card{side.jailCards > 1 ? 's' : ''}
@@ -167,6 +174,24 @@ function TradeSummaryColumn({ currencySymbol, heading, side }: TradeSummaryColum
         ) : null}
         {isEmpty ? <li className="trade-empty">Nothing</li> : null}
       </ul>
+
+      {side.sites.length > 0 ? (
+        <div
+          className="trade-deed-stack is-readonly"
+          data-testid={scopedTestId(TEST_IDS.tradeDeedStack, heading)}
+        >
+          {side.sites.map((entry) => (
+            <article className="trade-deed" key={entry.space.id}>
+              <SpaceCard
+                currencySymbol={currencySymbol}
+                headingId={`trade-response-${entry.space.id}`}
+                ownership={entry.ownership}
+                space={entry.space}
+              />
+            </article>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
