@@ -14,4 +14,4 @@ Build a better UI and theme
 - Mail the jail / visiting only proper
 
 
-Improve auction UI
+Improve trade UI

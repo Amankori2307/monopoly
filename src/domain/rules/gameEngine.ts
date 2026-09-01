@@ -71,18 +71,60 @@ const createOwnershipMap = (board: BoardSpace[]): Record<string, OwnershipState>
     return accumulator;
   }, {});
 
+/**
+ * A bound on re-rolling a tie, so an unlucky run of identical throws cannot
+ * hang setup. Ten rounds of every contender throwing the same total is beyond
+ * astronomically unlikely; the fallback exists because "beyond unlikely" is not
+ * "impossible".
+ */
+const MAX_OPENING_ROLL_ROUNDS = 10;
+
+/**
+ * Who takes the first turn: the highest opening throw, ties re-rolled.
+ *
+ * Only the players who tied throw again, which is the printed rule - not
+ * everyone, and not a silent tie-break.
+ */
+const rollForStarter = (playerIds: PlayerId[], randomSource: RandomSource): PlayerId => {
+  let contenders = playerIds;
+
+  for (let round = 0; round < MAX_OPENING_ROLL_ROUNDS; round += 1) {
+    if (contenders.length === 1) {
+      return contenders[0];
+    }
+    const scores = contenders.map((playerId) => ({
+      playerId,
+      score: rollDie(randomSource) + rollDie(randomSource),
+    }));
+    const best = Math.max(...scores.map((entry) => entry.score));
+    contenders = scores
+      .filter((entry) => entry.score === best)
+      .map((entry) => entry.playerId);
+  }
+
+  return contenders[0];
+};
+
+/**
+ * The turn order, from the opening throw.
+ *
+ * The dice decide only who *starts*. Play then passes to the left, so everyone
+ * else keeps their seating order relative to the starter - which, with no
+ * physical table, is the order they were entered in. So this is a rotation of
+ * that order onto the winner, not a ranking.
+ *
+ * It used to sort every player by their throw, which invented a ranking the
+ * rules do not have and broke ties by `Array.prototype.sort` being stable - so
+ * the player entered first quietly won every tie.
+ */
 const chooseFirstPlayerOrder = (
   playerIds: PlayerId[],
   randomSource: RandomSource
 ): PlayerId[] => {
-  const scores = playerIds.map((playerId) => ({
-    playerId,
-    score: rollDie(randomSource) + rollDie(randomSource),
-  }));
+  const starter = rollForStarter(playerIds, randomSource);
+  const startIndex = playerIds.indexOf(starter);
 
-  return scores
-    .sort((left, right) => right.score - left.score)
-    .map((entry) => entry.playerId);
+  return [...playerIds.slice(startIndex), ...playerIds.slice(0, startIndex)];
 };
 
 const createPlayers = (input: CreateGameInput): Record<PlayerId, PlayerState> =>

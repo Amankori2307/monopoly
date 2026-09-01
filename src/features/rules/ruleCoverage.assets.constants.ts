@@ -154,7 +154,10 @@ export const ASSET_RULE_COVERAGE: RuleCoverageMap = {
   '15.3': ['logs a tax payment to the bank'],
   '15.4': ['never buys a property back, at any price'],
   '15.5': ['pays back half and returns the house to the bank on a sale'],
-  '16.1': ['passes play along the order fixed at setup'],
+  '16.1': [
+    'passes play along the order fixed at setup',
+    'passes play to the left of the winner, rather than ranking by throw',
+  ],
   '16.2': ['rejects a plain roll while the player is in jail'],
   '16.3': ['keeps the extra roll after buying'],
   '16.4': [

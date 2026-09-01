@@ -27,7 +27,11 @@ export const TURN_RULE_COVERAGE: RuleCoverageMap = {
   '3.3': ['gives every player a token from the theme catalogue'],
   '3.4': ['starts every token on GO'],
   '3.5': ['shuffles both decks at creation'],
-  '3.6': ['decides the turn order by a simulated opening roll'],
+  '3.6': [
+    'gives the first turn to the highest throw',
+    're-rolls a tie for the lead, and does not just take the first entered',
+    'still produces a starter when a tie never breaks',
+  ],
   '3.7': [
     'starts every player with the bonus when it is on',
     'starts a Speed Die game with the bonus, and an ordinary one without',

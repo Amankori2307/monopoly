@@ -4426,34 +4426,196 @@ describe('setting up a game', () => {
     );
   });
 
-  // 3.6: the order comes from a simulated opening roll, so it varies by seed
-  // rather than being the order the players were entered in.
-  it('decides the turn order by a simulated opening roll', () => {
-    const configs = [
+  /**
+   * 3.6 / 16.1: the dice decide only who *starts*.
+   *
+   * Play then passes to the left, so everyone else keeps their entry order
+   * relative to the winner - a rotation, not a ranking by throw. The opening
+   * throws are the first randomness a game consumes, so they can be scripted
+   * exactly; the deck shuffles that follow fall through to the seeded source.
+   */
+  describe('the opening roll', () => {
+    const FOUR = [
       { name: 'Asha', tokenId: 'elephant' },
       { name: 'Vikram', tokenId: 'train' },
       { name: 'Meera', tokenId: 'rickshaw' },
+      { name: 'Ravi', tokenId: 'tiger' },
     ];
-    const orderFor = (seed: number) =>
+
+    /** Builds a game whose opening throws are exactly `rolls`, in entry order. */
+    const openWith = (rolls: [number, number][], configs = FOUR): GameState =>
       createGameState(
         {
-          name: 'Order',
+          name: 'Opening',
           playerConfigs: configs,
           themeId: 'india-edition',
           createdAt: '2026-08-29T00:00:00.000Z',
         },
-        new SeededRandomSource(seed)
+        scriptedRolls(rolls.map((white) => ({ white })))
       );
 
-    const first = orderFor(2);
-    // Every player is in the order, exactly once, whatever the roll said.
-    expect([...first.playerOrder].sort()).toEqual(Object.keys(first.players).sort());
-    // And the order is the roll's, not the order they were entered in: at least
-    // one seed disagrees with the entry order.
-    const names = (game: GameState) =>
-      game.playerOrder.map((id) => game.players[id].name);
-    const seeds = [1, 2, 3, 5, 7, 11, 13].map((seed) => names(orderFor(seed)).join(','));
-    expect(new Set(seeds).size).toBeGreaterThan(1);
+    it('gives the first turn to the highest throw', () => {
+      // Asha 4, Vikram 12, Meera 6, Ravi 2.
+      const game = openWith([
+        [2, 2],
+        [6, 6],
+        [3, 3],
+        [1, 1],
+      ]);
+
+      expect(game.players[game.playerOrder[0]].name).toBe('Vikram');
+    });
+
+    it('passes play to the left of the winner, rather than ranking by throw', () => {
+      const game = openWith([
+        [2, 2],
+        [6, 6],
+        [3, 3],
+        [1, 1],
+      ]);
+
+      // Entry order rotated onto Vikram. A ranking by throw would have put
+      // Meera second, since she threw six to Ravi's two.
+      expect(game.playerOrder.map((id) => game.players[id].name)).toEqual([
+        'Vikram',
+        'Meera',
+        'Ravi',
+        'Asha',
+      ]);
+    });
+
+    it('keeps every player, exactly once', () => {
+      const game = openWith([
+        [3, 4],
+        [2, 5],
+        [1, 6],
+        [4, 4],
+      ]);
+
+      expect([...game.playerOrder].sort()).toEqual(Object.keys(game.players).sort());
+    });
+
+    /**
+     * The bug this replaced: ties were broken by `Array.prototype.sort` being
+     * stable, so the player entered first won them silently. The printed rule
+     * re-rolls, among only the players who tied.
+     */
+    it('re-rolls a tie for the lead, and does not just take the first entered', () => {
+      const game = openWith([
+        // Round one: Asha and Vikram tie on twelve, the others are nowhere.
+        [6, 6],
+        [6, 6],
+        [1, 2],
+        [1, 2],
+        // Round two, the tied pair only: Asha two, Vikram twelve.
+        [1, 1],
+        [6, 6],
+      ]);
+
+      // Entry order would have given this to Asha.
+      expect(game.players[game.playerOrder[0]].name).toBe('Vikram');
+    });
+
+    it('can hand the lead to either of the tied players', () => {
+      const game = openWith([
+        [6, 6],
+        [6, 6],
+        [1, 2],
+        [1, 2],
+        // Round two the other way about: Asha twelve, Vikram two.
+        [6, 6],
+        [1, 1],
+      ]);
+
+      expect(game.players[game.playerOrder[0]].name).toBe('Asha');
+    });
+
+    // A tie behind the leader is not a tie for the lead, so nobody re-rolls.
+    it('ignores a tie that is not for the lead', () => {
+      const game = openWith([
+        [1, 1],
+        [1, 1],
+        [6, 6],
+        [1, 2],
+      ]);
+
+      expect(game.players[game.playerOrder[0]].name).toBe('Meera');
+    });
+
+    it('re-rolls again while the tie persists', () => {
+      const game = openWith([
+        [6, 6],
+        [6, 6],
+        [1, 2],
+        [1, 2],
+        // Still tied.
+        [6, 6],
+        [6, 6],
+        // Broken at last.
+        [1, 1],
+        [5, 5],
+      ]);
+
+      expect(game.players[game.playerOrder[0]].name).toBe('Vikram');
+    });
+
+    /**
+     * Ten rounds of everyone throwing the same total is beyond astronomically
+     * unlikely, but "beyond unlikely" is not "impossible" - so setup gives up
+     * and picks rather than looping for ever.
+     */
+    it('still produces a starter when a tie never breaks', () => {
+      // Exactly what ten rounds of two contenders consumes, so the script is
+      // spent by the time the decks shuffle and those draws fall through to the
+      // seeded source. Over-supply it and the scripted source rightly complains
+      // that the shuffle is asking for a range no die has.
+      const endlessTie: [number, number][] = Array.from({ length: 2 * 10 }, () => [6, 6]);
+
+      const game = openWith(endlessTie, FOUR.slice(0, 2));
+
+      expect(game.playerOrder).toHaveLength(2);
+      expect([...game.playerOrder].sort()).toEqual(Object.keys(game.players).sort());
+    });
+
+    it('works for the smallest and largest tables', () => {
+      const two = openWith(
+        [
+          [1, 1],
+          [6, 6],
+        ],
+        FOUR.slice(0, 2)
+      );
+      expect(two.players[two.playerOrder[0]].name).toBe('Vikram');
+
+      const eight = openWith(
+        [
+          [1, 1],
+          [1, 2],
+          [1, 3],
+          [1, 4],
+          [1, 5],
+          [6, 6],
+          [2, 2],
+          [2, 3],
+        ],
+        Array.from({ length: 8 }, (_, index) => ({
+          name: `P${index + 1}`,
+          tokenId: `token-${index + 1}`,
+        }))
+      );
+      expect(eight.players[eight.playerOrder[0]].name).toBe('P6');
+      // Rotated onto P6, so P7 follows and P5 comes last.
+      expect(eight.playerOrder.map((id) => eight.players[id].name)).toEqual([
+        'P6',
+        'P7',
+        'P8',
+        'P1',
+        'P2',
+        'P3',
+        'P4',
+        'P5',
+      ]);
+    });
   });
 });
 

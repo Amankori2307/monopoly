@@ -107,15 +107,15 @@ Deliberate departures from the printed game, not omissions:
 
 ## 3. Setup
 
-| ID  | Rule                                                                      | Status |
-| --- | ------------------------------------------------------------------------- | ------ |
-| 3.1 | 2–8 players (`MIN_PLAYERS`, `MAX_PLAYERS`)                                | ✅     |
-| 3.2 | Each player starts with ₹1500 (`STARTING_CASH`)                           | ✅     |
-| 3.3 | Each player picks a token from the theme's catalogue                      | ✅     |
-| 3.4 | All tokens start on GO                                                    | ✅     |
-| 3.5 | Both decks shuffled once at creation                                      | ✅     |
-| 3.6 | Turn order decided by a simulated opening roll (`chooseFirstPlayerOrder`) | ✅     |
-| 3.7 | Speed Die game: every player gets an extra ₹1000 (`SPEED_DIE_BONUS_CASH`) | ✅     |
+| ID  | Rule                                                                                                                                                                                                           | Status |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 3.1 | 2–8 players (`MIN_PLAYERS`, `MAX_PLAYERS`)                                                                                                                                                                     | ✅     |
+| 3.2 | Each player starts with ₹1500 (`STARTING_CASH`)                                                                                                                                                                | ✅     |
+| 3.3 | Each player picks a token from the theme's catalogue                                                                                                                                                           | ✅     |
+| 3.4 | All tokens start on GO                                                                                                                                                                                         | ✅     |
+| 3.5 | Both decks shuffled once at creation                                                                                                                                                                           | ✅     |
+| 3.6 | The highest opening throw takes the first turn, a tie re-rolled among only the tied players; play then passes to the left, so the order is the entry order rotated onto the starter (`chooseFirstPlayerOrder`) | ✅     |
+| 3.7 | Speed Die game: every player gets an extra ₹1000 (`SPEED_DIE_BONUS_CASH`)                                                                                                                                      | ✅     |
 
 ---
 
