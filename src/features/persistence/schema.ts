@@ -55,6 +55,8 @@ export const gameStateSchema = z.object({
     lastRoll: z.array(z.number()).nullable(),
     canRollAgain: z.boolean(),
     reason: z.string().nullable(),
+    // A new key in this object would be stripped on load without a line here.
+    speedDieFace: z.string().nullable(),
   }),
   // Deliberately loose plus one targeted check. `.passthrough()` is what lets a
   // decision carry its own payload - notably the drawn Chance / Community Chest
@@ -72,6 +74,7 @@ export const gameStateSchema = z.object({
         typeof (decision as { card?: unknown }).card === 'object',
       { message: 'A card-draw decision must carry the drawn card' }
     ),
+  useSpeedDie: z.boolean(),
   tradeState: z.any().nullable(),
   auctionState: z.any().nullable(),
   history: z.array(

@@ -10,6 +10,7 @@ import type {
   CardEffectKind,
   ColorGroup,
   DeckName,
+  SpeedDieFace,
   GameCommandType,
   GameStatus,
   PendingDecisionType,
@@ -105,9 +106,16 @@ export interface PlayerState {
   position: number;
   inJail: boolean;
   jailTurnsServed: number;
-  jailFreeCards: number;
+  /**
+   * The Get Out of Jail Free cards this player is holding, as cards rather than
+   * a count. A count could not say which deck one came from, so a used card
+   * could never go back and both left circulation permanently.
+   */
+  jailFreeCards: DeckCard[];
   isBankrupt: boolean;
   bankruptcyRank: number | null;
+  /** The Speed Die stays out of play until every player has been round once. */
+  hasPassedGo: boolean;
 }
 
 export interface OwnershipState {
@@ -149,9 +157,16 @@ export type DeckState = Record<DeckName, DeckCard[]>;
 export interface TurnState {
   phase: TurnPhase;
   doublesCount: number;
+  /** The two white dice. The Speed Die is kept separate - see speedDieFace. */
   lastRoll: number[] | null;
   canRollAgain: boolean;
   reason: string | null;
+  /**
+   * The Speed Die's face this turn, or null when it was not rolled. Separate
+   * from lastRoll on purpose: only the white dice decide doubles and Jail, and
+   * a third entry in that array would have to be excluded at every reader.
+   */
+  speedDieFace: SpeedDieFace | null;
 }
 
 export interface PendingDecisionNone {
@@ -293,6 +308,11 @@ export interface GameState {
   auctionState: AuctionState | null;
   history: GameEvent[];
   winnerPlayerId: PlayerId | null;
+  /**
+   * Whether this game plays with the Speed Die. Fixed at setup - the printed
+   * rule has it agreed before play starts, not switched on mid-game.
+   */
+  useSpeedDie: boolean;
 }
 
 export interface StoredGameIndexEntry {
@@ -322,6 +342,8 @@ export interface CreateGameInput {
   playerConfigs: CreatePlayerInput[];
   themeId: ThemeId;
   createdAt: string;
+  /** Agreed before the game starts, and fixed for its lifetime. */
+  useSpeedDie?: boolean;
 }
 
 export type GameCommand =

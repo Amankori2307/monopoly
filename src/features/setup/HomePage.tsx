@@ -3,17 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { PlayerConfigRow } from '../../components/setup/PlayerConfigRow';
 import { RecentGamesList } from '../../components/setup/RecentGamesList';
+import { GameIdentityFields } from '../../components/setup/GameIdentityFields';
+import { RulesetSummary } from '../../components/setup/RulesetSummary';
 import { SetupHero } from '../../components/setup/SetupHero';
-import {
-  JAIL_FINE,
-  MAX_PLAYERS,
-  MIN_PLAYERS,
-  PASS_GO_AMOUNT,
-  STARTING_CASH,
-} from '../../domain/constants/game.constants';
-import { availableThemes } from '../../domain/themes/indiaEditionTheme';
+import { SpeedDieToggle } from '../../components/setup/SpeedDieToggle';
+import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
-import { formatMoney } from '../../shared/utils/money.utils';
 import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
 import { useGameSetupForm } from './hooks/useGameSetupForm';
 
@@ -42,6 +37,7 @@ export function HomePage() {
         playerConfigs,
         themeId: form.themeId,
         createdAt: new Date().toISOString(),
+        useSpeedDie: form.useSpeedDie,
       })
     );
     navigate(`/game/${nextGame.id}`);
@@ -64,31 +60,12 @@ export function HomePage() {
               data-testid={TEST_IDS.setupForm}
               onSubmit={onSubmit}
             >
-              <div className="field-grid two">
-                <label>
-                  Game name
-                  <input
-                    className="text-input"
-                    onChange={(event) => form.setGameName(event.target.value)}
-                    placeholder="Optional"
-                    value={form.gameName}
-                  />
-                </label>
-                <label>
-                  Theme
-                  <select
-                    className="select-input"
-                    onChange={(event) => form.setThemeId(event.target.value)}
-                    value={form.themeId}
-                  >
-                    {availableThemes.map((theme) => (
-                      <option key={theme.id} value={theme.id}>
-                        {theme.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              <GameIdentityFields
+                gameName={form.gameName}
+                onGameNameChange={form.setGameName}
+                onThemeChange={form.setThemeId}
+                themeId={form.themeId}
+              />
 
               <div className="field-grid two">
                 <label>
@@ -103,15 +80,17 @@ export function HomePage() {
                     value={form.playerCount}
                   />
                 </label>
-                <div className="summary-card">
-                  <h3>{form.selectedTheme.name}</h3>
-                  <p className="helper-text">
-                    Starting cash {formatMoney(STARTING_CASH, currencySymbol)}, GO salary{' '}
-                    {formatMoney(PASS_GO_AMOUNT, currencySymbol)}, Jail fine{' '}
-                    {formatMoney(JAIL_FINE, currencySymbol)}.
-                  </p>
-                </div>
+                <RulesetSummary
+                  currencySymbol={currencySymbol}
+                  themeName={form.selectedTheme.name}
+                />
               </div>
+
+              <SpeedDieToggle
+                currencySymbol={currencySymbol}
+                isEnabled={form.useSpeedDie}
+                onChange={form.setUseSpeedDie}
+              />
 
               <div className="player-config-grid">
                 {form.playerNames.map((name, index) => (

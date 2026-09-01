@@ -43,11 +43,13 @@ const badgesFor = (player: PlayerState, mortgagedCount: number): Badge[] => {
     });
   }
 
-  if (player.jailFreeCards > 0) {
+  if (player.jailFreeCards.length > 0) {
     badges.push({
       id: 'jail-free',
       label:
-        player.jailFreeCards > 1 ? `Jail card x${player.jailFreeCards}` : 'Jail card',
+        player.jailFreeCards.length > 1
+          ? `Jail card x${player.jailFreeCards.length}`
+          : 'Jail card',
       title: 'Get Out of Jail Free card held',
       tone: 'card',
     });

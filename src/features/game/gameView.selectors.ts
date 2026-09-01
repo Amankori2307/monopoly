@@ -153,7 +153,7 @@ export const selectHasAvailableAction = (game: GameState) =>
 const jailDecision = (activePlayer: PlayerState): DecisionViewModel => ({
   type: PendingDecisionType.JailChoice,
   playerName: activePlayer.name,
-  canUseJailCard: activePlayer.jailFreeCards > 0,
+  canUseJailCard: activePlayer.jailFreeCards.length > 0,
 });
 
 const auctionDecision = (game: GameState): AuctionDecisionViewModel | null => {
@@ -333,7 +333,7 @@ export const selectTradeBuilder = (
     name: player.name,
     color: findToken(player.tokenId)?.color ?? '',
     cash: player.cash,
-    jailCards: player.jailFreeCards,
+    jailCards: player.jailFreeCards.length,
     sites: getTradableSites(game, player.id),
   });
 

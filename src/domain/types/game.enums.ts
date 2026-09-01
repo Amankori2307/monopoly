@@ -64,6 +64,18 @@ export enum DeckName {
   CommunityChest = 'communityChest',
 }
 
+/**
+ * The six faces of the Speed Die. Three are numbers added to the white dice;
+ * the other three are the rules that make it a different game.
+ */
+export enum SpeedDieFace {
+  One = '1',
+  Two = '2',
+  Three = '3',
+  Bus = 'bus',
+  MrMonopoly = 'mr-monopoly',
+}
+
 export enum CardDeck {
   Chance = 'chance',
   CommunityChest = 'community-chest',

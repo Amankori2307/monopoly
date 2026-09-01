@@ -1,4 +1,5 @@
 import type { GameState, StoredGameIndexEntry } from '../../domain/types/game.interfaces';
+import { migrateSavedGame } from './migrations';
 import { gameStateSchema, storedGameIndexSchema } from './schema';
 
 export const STORAGE_INDEX_KEY = 'monopoly.games.index.v1';
@@ -49,7 +50,9 @@ export const loadGame = (gameId: string): GameState | null => {
     return null;
   }
 
-  return gameStateSchema.parse(JSON.parse(rawValue)) as GameState;
+  // Migrate before validating: the schema describes the current shape, so an
+  // older save has to be brought up to it or it fails to parse and is lost.
+  return gameStateSchema.parse(migrateSavedGame(JSON.parse(rawValue))) as GameState;
 };
 
 export const deleteSavedGame = (gameId: string) => {

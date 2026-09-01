@@ -23,7 +23,10 @@ export interface UseGameSetupFormResult {
   setPlayerName: (index: number, value: string) => void;
   setPlayerToken: (index: number, value: string) => void;
   setThemeId: (value: string) => void;
+  setUseSpeedDie: (value: boolean) => void;
   themeId: string;
+  /** Agreed before the game starts; it cannot be switched on mid-game. */
+  useSpeedDie: boolean;
   /** Validates and returns the player configs, or null when invalid. */
   validate: () => CreatePlayerInput[] | null;
 }
@@ -51,6 +54,7 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
   const [playerNames, setPlayerNames] = useState(() => defaultNames(MIN_PLAYERS));
   const [playerTokens, setPlayerTokens] = useState(() => defaultTokens(MIN_PLAYERS));
   const [formError, setFormError] = useState<string | null>(null);
+  const [useSpeedDie, setUseSpeedDie] = useState(false);
 
   useEffect(() => {
     setPlayerNames((current) => defaultNames(playerCount, current));
@@ -96,7 +100,9 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
     setPlayerName,
     setPlayerToken,
     setThemeId,
+    setUseSpeedDie,
     themeId,
+    useSpeedDie,
     validate,
   };
 };

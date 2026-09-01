@@ -129,7 +129,7 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 ## 5. Persistence
 
 - Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
-- `GAME_STATE_VERSION = 1`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load.
+- `GAME_STATE_VERSION = 2`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`). The schema is deliberately loose in places (`z.any()` for players/board/ownership) — tighten it alongside any shape change.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. `pendingDecision` is `.passthrough()`, so a decision's own payload survives — which is why the drawn Chance / Community Chest card rides inside the decision rather than in a field of its own. Add the field to the schema, or put it where it will survive.
 - Every command save is a full-state write, then the index is rewritten sorted by `updatedAt`.
@@ -190,7 +190,6 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 - **`asset-liquidation` is resolvable.** `settleDebt` clears it; mortgaging is how the cash is raised, and it deliberately leaves `pendingDecision` alone. What remains: only one liquidation can be pending, so several debts from one card still stop at the first — that needs a debt queue, with bankruptcy.
 - **Several debts from one card are not all recorded.** The loops read `nextState` correctly now, but only one `asset-liquidation` can be pending, so they stop at the first player who cannot pay.
 - **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.
-- **A used Get Out of Jail Free card never returns to its deck.** `jailFreeCards` is a count with no record of which deck the card came from, so both can leave circulation permanently. Fixing it is a `GameState` shape change.
 - **`movePlayerTo`'s pass-GO test is `nextPosition < player.position`**, true for any backward move. Safe only because `MoveSteps` always passes `collectGo: false`.
 - `tsconfig.json` has `strict: false` and `target: es5` — a deliberate gradual-migration holdover, not an endorsement.
 

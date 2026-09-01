@@ -52,6 +52,7 @@ const seedUnpayableDebt = async (
       lastRoll: [3, 4],
       canRollAgain: false,
       reason: 'rent',
+      speedDieFace: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 

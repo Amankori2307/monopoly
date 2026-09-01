@@ -70,7 +70,7 @@ const sideBlockedReason = (
   if (player.isBankrupt) return `${who} has left the game`;
   if (cash < 0 || jailCards < 0) return 'A trade cannot ask for a negative amount';
   if (player.cash < cash) return `${who} does not have that much cash`;
-  if (player.jailFreeCards < jailCards) {
+  if (player.jailFreeCards.length < jailCards) {
     return `${who} does not have that many Get Out of Jail Free cards`;
   }
 

@@ -16,11 +16,22 @@ import {
   MAX_JAIL_TURNS,
   MORTGAGE_INTEREST_PERCENT,
   HOTEL_BUILD_LEVEL,
+  SPEED_DIE_BONUS_CASH,
+  STARTING_CASH,
 } from '../constants/game.constants';
 import type { GameState, StreetSpace, TradeState } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { SeededRandomSource } from './rng';
+
+/** A stand-in Get Out of Jail Free card, for tests that only need to hold one. */
+const JAIL_CARD: DeckCard = {
+  id: 'chance-jail-free',
+  deck: CardDeck.Chance,
+  title: 'Get Out of Jail Free',
+  description: 'Keep this card until needed.',
+  effect: { kind: CardEffectKind.JailFree },
+};
 
 const createBaseGame = () =>
   createGameState(
@@ -413,6 +424,7 @@ describe('the extra roll survives a decision', () => {
         canRollAgain: false,
         lastRoll: [3, 3],
         reason: 'Decide whether to buy.',
+        speedDieFace: null,
       },
     };
   };
@@ -1302,7 +1314,7 @@ describe('bankruptcy', () => {
         ...game,
         players: {
           ...game.players,
-          [debtorId]: { ...game.players[debtorId], cash: 20, jailFreeCards: 1 },
+          [debtorId]: { ...game.players[debtorId], cash: 20, jailFreeCards: [JAIL_CARD] },
         },
         ownership: {
           ...game.ownership,
@@ -1324,7 +1336,7 @@ describe('bankruptcy', () => {
   it('hands everything to the creditor', () => {
     const { state, debtorId, creditorId, street } = hopelesslyInDebt();
     const creditorCashBefore = state.players[creditorId].cash;
-    const creditorCardsBefore = state.players[creditorId].jailFreeCards;
+    const creditorCardsBefore = state.players[creditorId].jailFreeCards.length;
 
     const result = executeGameCommand(
       state,
@@ -1334,7 +1346,7 @@ describe('bankruptcy', () => {
     const next = result.nextState;
 
     expect(next.players[creditorId].cash).toBe(creditorCashBefore + 20);
-    expect(next.players[creditorId].jailFreeCards).toBe(creditorCardsBefore + 1);
+    expect(next.players[creditorId].jailFreeCards).toHaveLength(creditorCardsBefore + 1);
     expect(next.ownership[street.id].ownerPlayerId).toBe(creditorId);
     expect(next.players[debtorId].isBankrupt).toBe(true);
     expect(next.players[debtorId].cash).toBe(0);
@@ -1949,7 +1961,7 @@ describe('trading', () => {
       ...state,
       players: {
         ...state.players,
-        [proposerId]: { ...state.players[proposerId], jailFreeCards: 1 },
+        [proposerId]: { ...state.players[proposerId], jailFreeCards: [JAIL_CARD] },
       },
     };
 
@@ -1959,8 +1971,9 @@ describe('trading', () => {
       new SeededRandomSource(3)
     ).nextState;
 
-    expect(settled.players[proposerId].jailFreeCards).toBe(0);
-    expect(settled.players[recipientId].jailFreeCards).toBe(1);
+    expect(settled.players[proposerId].jailFreeCards).toHaveLength(0);
+    // The card itself moved, so it still knows the deck it has to go back to.
+    expect(settled.players[recipientId].jailFreeCards).toEqual([JAIL_CARD]);
   });
 
   // A mortgaged site travels as it is, and the receiver pays the bank 10% for
@@ -2055,5 +2068,166 @@ describe('trading', () => {
         new SeededRandomSource(3)
       )
     ).toThrow(/no trade to answer/i);
+  });
+});
+
+/**
+ * A Get Out of Jail Free card used to leave circulation for good: the player
+ * held a count, so nothing knew which deck to put it back in.
+ */
+describe('Get Out of Jail Free cards', () => {
+  const jailedWithCard = () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const chanceCard: DeckCard = {
+      ...JAIL_CARD,
+      id: 'chance-jail-free-held',
+    };
+
+    return {
+      playerId,
+      chanceCard,
+      state: {
+        ...game,
+        players: {
+          ...game.players,
+          [playerId]: {
+            ...game.players[playerId],
+            inJail: true,
+            jailFreeCards: [chanceCard],
+          },
+        },
+        decks: { ...game.decks, chance: [] },
+        pendingDecision: { type: PendingDecisionType.JailChoice, playerId },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      } as GameState,
+    };
+  };
+
+  it('returns a used card to the deck it came from', () => {
+    const { state, playerId, chanceCard } = jailedWithCard();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.UseJailFreeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[playerId].jailFreeCards).toHaveLength(0);
+    expect(next.decks.chance).toContainEqual(chanceCard);
+    expect(next.decks.communityChest).not.toContainEqual(chanceCard);
+    expect(next.players[playerId].inJail).toBe(false);
+  });
+
+  // The two decks use different string values for the same idea, which is
+  // exactly the kind of thing that puts a card back in the wrong pile.
+  it('returns a Community Chest card to the Community Chest deck', () => {
+    const { state, playerId } = jailedWithCard();
+    const chestCard: DeckCard = {
+      ...JAIL_CARD,
+      id: 'chest-jail-free-held',
+      deck: CardDeck.CommunityChest,
+    };
+    const holding: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        [playerId]: { ...state.players[playerId], jailFreeCards: [chestCard] },
+      },
+      decks: { chance: [], communityChest: [] },
+    };
+
+    const next = executeGameCommand(
+      holding,
+      { type: GameCommandType.UseJailFreeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.decks.communityChest).toContainEqual(chestCard);
+    expect(next.decks.chance).toHaveLength(0);
+  });
+
+  it('keeps the other cards a player is holding', () => {
+    const { state, playerId } = jailedWithCard();
+    const second: DeckCard = { ...JAIL_CARD, id: 'second-card' };
+    const holdingTwo: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        [playerId]: {
+          ...state.players[playerId],
+          jailFreeCards: [state.players[playerId].jailFreeCards[0], second],
+        },
+      },
+    };
+
+    const next = executeGameCommand(
+      holdingTwo,
+      { type: GameCommandType.UseJailFreeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[playerId].jailFreeCards).toEqual([second]);
+  });
+});
+
+/**
+ * The Speed Die is optional, agreed at setup, and inert until everyone has
+ * been round the board once.
+ */
+describe('Speed Die setup', () => {
+  it('is off unless the game asked for it', () => {
+    expect(createBaseGame().useSpeedDie).toBe(false);
+  });
+
+  it('starts every player with the bonus when it is on', () => {
+    const speedGame = createGameState(
+      {
+        name: 'Speed',
+        playerConfigs: [
+          { name: 'Asha', tokenId: 'elephant' },
+          { name: 'Vikram', tokenId: 'train' },
+        ],
+        themeId: 'india-edition',
+        createdAt: '2026-08-29T00:00:00.000Z',
+        useSpeedDie: true,
+      },
+      new SeededRandomSource(7)
+    );
+
+    expect(speedGame.useSpeedDie).toBe(true);
+    speedGame.playerOrder.forEach((playerId) => {
+      expect(speedGame.players[playerId].cash).toBe(STARTING_CASH + SPEED_DIE_BONUS_CASH);
+    });
+  });
+
+  it('starts nobody as having passed GO', () => {
+    const game = createBaseGame();
+
+    game.playerOrder.forEach((playerId) => {
+      expect(game.players[playerId].hasPassedGo).toBe(false);
+    });
+  });
+
+  // Passing GO is what arms the die, so the trip has to be recorded and not
+  // just paid for.
+  it('records the trip past GO, not just the salary', () => {
+    const game = createBaseGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const nearlyRound: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], position: 38 },
+      },
+    };
+
+    const next = executeGameCommand(
+      nearlyRound,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(5)
+    ).nextState;
+
+    expect(next.players[playerId].hasPassedGo).toBe(true);
   });
 });

@@ -9,6 +9,7 @@ import {
   HOTEL_BUILD_LEVEL,
   MAX_HOUSES_PER_SITE,
   HOTELS_AVAILABLE,
+  SPEED_DIE_BONUS_CASH,
   HOUSES_AVAILABLE,
   JAIL_FINE,
   MORTGAGE_INTEREST_PERCENT,
@@ -20,6 +21,7 @@ import {
 } from '../constants/game.constants';
 import {
   CardEffectKind,
+  CardDeck,
   DeckName,
   GameCommandType,
   GameStatus,
@@ -118,11 +120,12 @@ const createPlayers = (input: CreateGameInput): Record<PlayerId, PlayerState> =>
         id: playerId,
         name: playerConfig.name,
         tokenId: playerConfig.tokenId,
-        cash: STARTING_CASH,
+        cash: STARTING_CASH + (input.useSpeedDie ? SPEED_DIE_BONUS_CASH : 0),
         position: 0,
         inJail: false,
         jailTurnsServed: 0,
-        jailFreeCards: 0,
+        jailFreeCards: [],
+        hasPassedGo: false,
         isBankrupt: false,
         bankruptcyRank: null,
       };
@@ -209,6 +212,12 @@ const movePlayerTo = (
 
   if (collectGo && nextPosition < player.position) {
     nextState = creditFromBank(nextState, playerId, PASS_GO_AMOUNT, 'passing GO');
+    // The Speed Die stays out of play until everyone has been round once, so
+    // the trip past GO is worth recording as well as paying.
+    nextState = updatePlayer(nextState, playerId, (currentPlayer) => ({
+      ...currentPlayer,
+      hasPassedGo: true,
+    }));
   }
 
   return updatePlayer(nextState, playerId, (currentPlayer) => ({
@@ -530,6 +539,7 @@ const advanceToNextTurn = (state: GameState): GameState => {
       doublesCount: 0,
       lastRoll: null,
       canRollAgain: false,
+      speedDieFace: null,
       reason: nextPlayer.inJail
         ? `${nextPlayer.name} must choose how to leave Jail.`
         : null,
@@ -545,6 +555,24 @@ const advanceToNextTurn = (state: GameState): GameState => {
  * The deck is recycled here rather than at apply time: the card has left the
  * deck the moment it is drawn, whether or not the player has clicked yet.
  */
+/** Which deck a card belongs to. The two enums use different string values. */
+const deckNameOf = (deck: CardDeck): DeckName =>
+  deck === CardDeck.Chance ? DeckName.Chance : DeckName.CommunityChest;
+
+/**
+ * Puts a used Get Out of Jail Free card back at the bottom of its own deck.
+ *
+ * drawCard removes these from their deck rather than recycling them, because a
+ * held card is genuinely out of play. This is what returns one.
+ */
+const returnJailCardToDeck = (state: GameState, card: DeckCard): GameState => {
+  const deckName = deckNameOf(card.deck);
+  return {
+    ...state,
+    decks: { ...state.decks, [deckName]: [...state.decks[deckName], card] },
+  };
+};
+
 const drawCard = (state: GameState, deckName: DeckName): GameState => {
   const card = state.decks[deckName][0];
   const remainingCards = state.decks[deckName].slice(1);
@@ -609,9 +637,10 @@ const applyCardEffect = (state: GameState, card: DeckCard): GameState => {
     case CardEffectKind.GoToJail:
       return sendPlayerToJail(nextState, activePlayer.id, 'Card sent player to Jail');
     case CardEffectKind.JailFree: {
+      // The card itself is kept, so it knows the deck it has to go back to.
       const withCard = updatePlayer(nextState, activePlayer.id, (player) => ({
         ...player,
-        jailFreeCards: player.jailFreeCards + 1,
+        jailFreeCards: [...player.jailFreeCards, card],
       }));
       return appendEvents(withCard, [
         createEvent(withCard.turnNumber, `${activePlayer.name} kept ${card.title}.`),
@@ -751,15 +780,29 @@ const settleTrade = (state: GameState, trade: TradeState): GameState => {
   moveSites(trade.offeredSpaceIds, trade.recipientPlayerId);
   moveSites(trade.requestedSpaceIds, trade.proposerPlayerId);
 
-  const netJailCards = trade.requestedJailCards - trade.offeredJailCards;
-  if (netJailCards !== 0) {
+  // The cards themselves change hands, so each keeps the deck it must return to.
+  const offeredCards = nextState.players[trade.proposerPlayerId].jailFreeCards.slice(
+    0,
+    trade.offeredJailCards
+  );
+  const requestedCards = nextState.players[trade.recipientPlayerId].jailFreeCards.slice(
+    0,
+    trade.requestedJailCards
+  );
+  if (offeredCards.length > 0 || requestedCards.length > 0) {
     nextState = updatePlayer(nextState, trade.proposerPlayerId, (player) => ({
       ...player,
-      jailFreeCards: player.jailFreeCards + netJailCards,
+      jailFreeCards: [
+        ...player.jailFreeCards.slice(offeredCards.length),
+        ...requestedCards,
+      ],
     }));
     nextState = updatePlayer(nextState, trade.recipientPlayerId, (player) => ({
       ...player,
-      jailFreeCards: player.jailFreeCards - netJailCards,
+      jailFreeCards: [
+        ...player.jailFreeCards.slice(requestedCards.length),
+        ...offeredCards,
+      ],
     }));
   }
 
@@ -919,6 +962,7 @@ export const createGameState = (
       lastRoll: null,
       canRollAgain: false,
       reason: null,
+      speedDieFace: null,
     },
     pendingDecision: { type: PendingDecisionType.None },
     tradeState: null,
@@ -931,6 +975,7 @@ export const createGameState = (
       ),
     ],
     winnerPlayerId: null,
+    useSpeedDie: input.useSpeedDie ?? false,
   };
 };
 
@@ -1003,6 +1048,7 @@ export const executeGameCommand = (
           doublesCount: nextDoublesCount,
           lastRoll: [dieOne, dieTwo],
           canRollAgain: false,
+          speedDieFace: null,
           reason: null,
         },
       };
@@ -1171,15 +1217,20 @@ export const executeGameCommand = (
     }
     case GameCommandType.UseJailFreeCard: {
       const activePlayer = getActivePlayer(nextState);
-      if (!activePlayer.inJail || activePlayer.jailFreeCards < 1) {
+      if (!activePlayer.inJail || activePlayer.jailFreeCards.length < 1) {
         throw new Error('Get Out of Jail Free card is not available.');
       }
+      const [usedCard, ...keptCards] = activePlayer.jailFreeCards;
       nextState = updatePlayer(nextState, activePlayer.id, (player) => ({
         ...player,
         inJail: false,
         jailTurnsServed: 0,
-        jailFreeCards: player.jailFreeCards - 1,
+        jailFreeCards: keptCards,
       }));
+      // Back to the bottom of its own deck. drawCard deliberately does not
+      // recycle a jail card - a held card is out of play - so this is the only
+      // thing that puts one back, and without it both left for good.
+      nextState = returnJailCardToDeck(nextState, usedCard);
       nextState = {
         ...nextState,
         pendingDecision: { type: PendingDecisionType.None },
@@ -1206,6 +1257,8 @@ export const executeGameCommand = (
           lastRoll: [dieOne, dieTwo],
           canRollAgain: false,
           reason: null,
+          // Only the white dice get a player out of Jail, so no Speed Die here.
+          speedDieFace: null,
         },
       };
       nextState = appendEvents(nextState, [
@@ -1443,7 +1496,7 @@ export const executeGameCommand = (
         nextState = updatePlayer(nextState, creditorId, (player) => ({
           ...player,
           cash: player.cash + debtor.cash,
-          jailFreeCards: player.jailFreeCards + debtor.jailFreeCards,
+          jailFreeCards: [...player.jailFreeCards, ...debtor.jailFreeCards],
         }));
         owned.forEach((space) => {
           nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
@@ -1483,7 +1536,7 @@ export const executeGameCommand = (
       nextState = updatePlayer(nextState, debtor.id, (player) => ({
         ...player,
         cash: 0,
-        jailFreeCards: 0,
+        jailFreeCards: [],
         inJail: false,
         isBankrupt: true,
         bankruptcyRank: alreadyOut + 1,

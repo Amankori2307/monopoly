@@ -6,7 +6,14 @@
  */
 
 /** Bumped whenever the persisted GameState shape changes. Requires a migration. */
-export const GAME_STATE_VERSION = 1;
+/**
+ * Bump this and add a migration in features/persistence/migrations.ts whenever
+ * GameState changes shape, or saved games break on load.
+ *
+ * 2: the Speed Die (useSpeedDie, turn.speedDieFace, player.hasPassedGo) and
+ *    jailFreeCards as held cards rather than a count.
+ */
+export const GAME_STATE_VERSION = 2;
 
 export const STARTING_CASH = 1500;
 export const PASS_GO_AMOUNT = 200;

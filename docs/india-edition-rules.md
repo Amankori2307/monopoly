@@ -571,14 +571,14 @@ increment ₹1 · starting cash ₹1500.
 | A card lands the player on an unowned property                                                                 | Buy or auction, exactly as if they had rolled there                                            | ✅                           |
 | A card lands the player on another player's property                                                           | Rent is owed, exactly as if they had rolled there                                              | ✅                           |
 | A Get Out of Jail Free card is drawn                                                                           | It leaves the deck and is held by the player, not recycled                                     | ✅                           |
-| A player may hold **more than one** Get Out of Jail Free card                                                  | `jailFreeCards` is a count, so both can be held                                                | ✅                           |
+| A player may hold **more than one** Get Out of Jail Free card                                                  | The cards themselves are held, so both can be                                                  | ✅                           |
 
-> **⚠️ Divergence — a used jail card never returns to its deck.** The printed rule is that the card
-> goes to the bottom of its deck once used. `jailFreeCards` is only a _count_, so the engine has no
-> record of which deck a held card came from and cannot put it back. Both cards can therefore leave
-> circulation permanently over a long game. Fixing it means tracking provenance — `jailFreeCards`
-> becoming a list of deck names — which is a `GameState` shape change, so a `GAME_STATE_VERSION`
-> bump and a migration.
+**A used jail card goes back to the bottom of its own deck.** `jailFreeCards` holds the cards
+themselves rather than a count, so each one knows the deck it came from. Before that it was a bare
+number, and both cards could leave circulation permanently over a long game. The change was a
+`GameState` shape change: `GAME_STATE_VERSION` is 2, and a v1 save's count migrates to that many
+Chance cards — the deck a v1 card came from is genuinely unrecoverable, and Chance is the likelier
+of the two.
 
 > **Latent, not reachable today — utility rent after a card-driven arrival.** `getUtilityRent`
 > multiplies by `turn.lastRoll`, the roll that started the turn. The printed rule is that a player
@@ -645,7 +645,6 @@ inventory, and trading between players**.
 
 | Issue                                                        | Notes                                                                                                                                        |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| A used Jail card never returns to its deck                   | `jailFreeCards` is a count with no record of provenance. Needs a `GameState` shape change                                                    |
 | Several debts from one card                                  | Only one liquidation can be pending, so the loop stops at the first player who cannot pay. Needs a debt queue, which belongs with bankruptcy |
 | Utility rent after a card-driven arrival                     | Uses the turn's original roll rather than a fresh throw. Not reachable with the current deck                                                 |
 | `movePlayerTo`'s pass-GO test is `nextPosition < position`   | True for _any_ backward move. Safe only because `MoveSteps` always passes `collectGo: false`                                                 |

@@ -99,7 +99,9 @@ File-naming rules are in [conventions.md](conventions.md).
 | [game/uiSlice.ts](../src/features/game/uiSlice.ts)                                                         | Ephemeral UI state not part of the saved game (auction bid input).                                          |
 | [persistence/persistence.ts](../src/features/persistence/persistence.ts)                                   | localStorage read/write: save, load, delete, and the saved-game index.                                      |
 | [persistence/persistence.integration.test.ts](../src/features/persistence/persistence.integration.test.ts) | Save/load round trip, and that a drawn card survives it.                                                    |
+| [persistence/migrations.test.ts](../src/features/persistence/migrations.test.ts)                           | v1 saves upgrading, and future versions passing through untouched.                                          |
 | [persistence/schema.ts](../src/features/persistence/schema.ts)                                             | Zod schemas validating anything read back out of storage.                                                   |
+| [persistence/migrations.ts](../src/features/persistence/migrations.ts)                                     | Brings an older save up to the current GAME_STATE_VERSION, before validation.                               |
 | [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                       |
 | [rules/rulesSync.test.ts](../src/features/rules/rulesSync.test.ts)                                         | Enforces that the booklet and docs/india-edition-rules.md cover the same topics and quote the same numbers. |
 | [rules/RulesPage.test.tsx](../src/features/rules/RulesPage.test.tsx)                                       | Integration tests: every nav link resolves to a rendered section.                                           |
@@ -183,11 +185,14 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/components/setup/` — presentational setup components
 
-| File                                                               | What it does                                              |
-| ------------------------------------------------------------------ | --------------------------------------------------------- |
-| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)             | Intro card: what the app is and the locked v1 scope.      |
-| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx) | One player's name and token inputs.                       |
-| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx) | Saved games with continue and delete, or the empty state. |
+| File                                                                           | What it does                                                    |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)                         | Intro card: what the app is and the locked v1 scope.            |
+| [setup/SpeedDieToggle.tsx](../src/components/setup/SpeedDieToggle.tsx)         | The one optional ruleset choice, agreed before the game starts. |
+| [setup/RulesetSummary.tsx](../src/components/setup/RulesetSummary.tsx)         | Headline economics, quoted from the constants.                  |
+| [setup/GameIdentityFields.tsx](../src/components/setup/GameIdentityFields.tsx) | Game name and theme.                                            |
+| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx)             | One player's name and token inputs.                             |
+| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx)             | Saved games with continue and delete, or the empty state.       |
 
 ## `src/components/rules/` — rules booklet sections
 

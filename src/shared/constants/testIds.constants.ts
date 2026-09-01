@@ -94,6 +94,7 @@ export const TEST_IDS = {
 
   // Setup
   playerCountInput: 'player-count-input',
+  speedDieToggle: 'speed-die-toggle',
   setupForm: 'setup-form',
   recentGamesList: 'recent-games-list',
   recentGameItem: 'recent-game-item',

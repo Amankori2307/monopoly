@@ -38,6 +38,7 @@ const seedOneSiteEach = async (page: Page) => {
       lastRoll: [3, 4],
       canRollAgain: false,
       reason: 'done',
+      speedDieFace: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 
