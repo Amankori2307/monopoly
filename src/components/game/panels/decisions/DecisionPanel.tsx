@@ -82,7 +82,9 @@ export function DecisionPanel({
           canSettle={decision.canSettle}
           creditorName={decision.creditorName}
           currencySymbol={currencySymbol}
+          isBankrupt={decision.isBankrupt}
           mortgageableSites={decision.mortgageableSites}
+          onDeclareBankruptcy={handlers.onDeclareBankruptcy}
           onMortgageSite={handlers.onMortgageSite}
           onSettleDebt={handlers.onSettleDebt}
           playerName={decision.playerName}

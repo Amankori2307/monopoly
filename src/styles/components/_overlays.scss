@@ -394,3 +394,15 @@
   font-size: 0.88rem;
   line-height: 1.5;
 }
+
+// Leaving the game is not the same kind of act as paying a debt, so it does not
+// wear the primary button's colour.
+.primary-button.is-bankruptcy {
+  background: var(--danger-bg);
+  color: var(--text-inverse);
+
+  &:hover {
+    background: var(--danger-bg);
+    filter: brightness(1.08);
+  }
+}

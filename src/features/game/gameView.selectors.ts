@@ -5,6 +5,7 @@ import {
   getMortgagedCount,
   getNetWorth,
   getPlayerOwnedSpaces,
+  getRaisableCash,
 } from '../../domain/rules/holdings.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
 import { DeckName, PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
@@ -175,6 +176,10 @@ const liquidationDecision = (
     reason: decision.reason,
     mortgageableSites: getMortgageableSites(game, decision.playerId),
     canSettle: debtor.cash >= decision.amountDue,
+    // Bankrupt when the debt is beyond cash plus everything mortgageable - not
+    // merely when they would rather not pay.
+    isBankrupt:
+      debtor.cash + getRaisableCash(game, decision.playerId) < decision.amountDue,
   };
 };
 

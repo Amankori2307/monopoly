@@ -384,7 +384,7 @@ commands have no UI entry point beyond a disabled "Offer a deal" button.
 
 ---
 
-## 11. Insolvency and bankruptcy — ⚠️ partly implemented
+## 11. Insolvency and bankruptcy — ⚠️ mostly implemented
 
 The order of rescue when you cannot pay:
 
@@ -394,35 +394,39 @@ The order of rescue when you cannot pay:
 | 2. Mortgage properties                       | ✅                             |
 | 3. Sell or trade properties to other players | ❌ trading is not implemented  |
 
-**Owing money you cannot pay now works.** The debt raises an `asset-liquidation` decision naming the
+**Owing money you cannot pay works.** The debt raises an `asset-liquidation` decision naming the
 amount, the creditor and the reason. The panel lists every site you could mortgage and what each
 pays; a **Pay** button unlocks the moment your cash covers the debt, and settling transfers the money
-to the creditor — or to the bank when there is no creditor — and hands the turn back, extra roll
-intact if a double had earned one.
+to the creditor — or to the bank when there is none — and hands the turn back, extra roll intact if a
+double had earned one.
 
-> **Fixed.** This was a dead end. The insolvent branches of both payment primitives recorded
-> `amountDue` and moved **no money at all**, and nothing in the codebase could clear the decision, so
-> the player was stuck for the rest of the game. `settleDebt` is the exit, and mortgaging is how the
-> cash gets raised. Mortgaging deliberately leaves `pendingDecision` untouched — clearing it there
-> would have recreated the same bug in a new place.
+### Bankruptcy — ✅ implemented
 
-> **Fixed.** Both jail-fine paths released an insolvent player anyway. `payJailFine` and
-> `attemptJailRoll`'s mandatory third-turn fine each called `resolveBankPayment`, which raises the
-> liquidation, and then overwrote the decision back to `none`. A player with under ₹50 walked out of
-> Jail without paying. Both now leave the decision standing and leave the player in Jail.
+You are bankrupt when the debt exceeds **cash plus everything you could raise**, not merely when you
+are short right now. The panel offers **Declare bankruptcy** only at that point, and the engine
+refuses the command while the debt is still reachable — so you cannot walk away from a debt you could
+have paid.
+
+| Creditor       | Outcome                                                                                           | Status       |
+| -------------- | ------------------------------------------------------------------------------------------------- | ------------ |
+| Another player | They receive your cash, every property including mortgaged ones, and your jail cards. You are out | ✅           |
+| The bank       | Your properties return to the bank unowned, with their mortgages cancelled. You are out           | ⚠️ see below |
+
+Players go out in order: `bankruptcyRank` counts up from 1 for the first player eliminated. Turn
+rotation steps over anyone who is out — `nextActivePlayerIndex` — which it did not do before, since
+nobody could go bankrupt.
+
+> **⚠️ Divergence — properties are not auctioned on bankruptcy to the bank.** The printed rule has
+> the bank auction each returned property immediately. Here they simply return unowned and re-enter
+> play when someone lands on them. Chaining auctions needs a queue of pending sales, and a new
+> top-level `GameState` field for it, which the zod schema would silently strip without a version
+> bump. Deferred rather than done badly.
 
 ### Still missing
 
-If you cannot pay and have nothing left to mortgage, the panel says so plainly and the game cannot
-continue from there. Bankruptcy is the real answer:
-
-| Creditor       | Outcome                                                                              | Status |
-| -------------- | ------------------------------------------------------------------------------------ | ------ |
-| Another player | They receive your cash, properties, mortgaged properties and jail cards. You are out | ❌     |
-| The bank       | Everything goes to the bank, which auctions the properties. You are out              | ❌     |
-
-There is also **no win detection**: `winnerPlayerId`, `GameStatus.Completed` and the `game-over`
-decision are never set, and `isBankrupt` / `bankruptcyRank` are never written. Games run forever.
+There is **no win detection**: `winnerPlayerId`, `GameStatus.Completed` and the `game-over` decision
+are never set. A game can now be played to one surviving player, but nothing declares them the
+winner.
 
 ## 12. Speed Die — ❌ not implemented
 
@@ -584,10 +588,10 @@ economics, the two-dice turn, doubles including all three Jail interactions, pas
 Jail, the full card draw-then-apply flow with chained draws, every card effect, buy or decline, the
 complete auction loop, street/railway/utility rent with colour-set doubling, all three Jail exits and
 the three-turn limit, turn rotation, ₹ throughout, per-action feedback, and **mortgaging, redeeming
-and settling a debt you could not otherwise pay**.
+and settling a debt you could not otherwise pay, and bankruptcy when you cannot**.
 
 **Type-level only, no runtime behaviour:** buildings and both even rules, bank building inventory,
-all trading, bankruptcy, win detection, Speed Die.
+all trading, win detection, Speed Die.
 
 ### Fixed so far
 

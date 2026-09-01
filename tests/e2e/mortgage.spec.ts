@@ -123,19 +123,46 @@ test('a player who cannot pay can mortgage their way out', async ({ page }) => {
   expect(paid.pending).toBe('none');
 });
 
-// Until bankruptcy lands, a player with nothing left is told so plainly rather
-// than left staring at a modal with no way forward.
-test('says so plainly when there is nothing left to mortgage', async ({ page }) => {
+// A debt beyond everything you hold is what bankruptcy means, so the panel
+// offers it rather than stranding the player.
+test('offers bankruptcy when there is nothing left to mortgage', async ({ page }) => {
   await startGame(page);
   await seedUnpayableDebt(page, { siteCount: 0, cash: 10, amountDue: 200 });
 
   await expect(page.getByTestId(TEST_IDS.liquidationDeadEnd)).toContainText(
     /nothing left to mortgage/i
   );
-  await expect(page.getByTestId(TEST_IDS.liquidationSettle)).toBeDisabled();
   await expect(
     page.locator(`[data-testid^="${TEST_IDS.liquidationMortgage}-"]`)
   ).toHaveCount(0);
+
+  await page.getByTestId(TEST_IDS.declareBankruptcy).click();
+
+  // The decision clears and the creditor has taken what there was.
+  await expect(page.getByTestId(TEST_IDS.liquidationDecision)).toHaveCount(0);
+  const outcome = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    return {
+      pending: game.pendingDecision.type as string,
+      debtorOut: game.players[game.playerOrder[0]].isBankrupt as boolean,
+      rank: game.players[game.playerOrder[0]].bankruptcyRank as number,
+    };
+  });
+  expect(outcome.pending).toBe('none');
+  expect(outcome.debtorOut).toBe(true);
+  expect(outcome.rank).toBe(1);
+});
+
+// Bankruptcy is for a debt you cannot meet, not one you would rather not.
+test('does not offer bankruptcy while the debt is still reachable', async ({ page }) => {
+  await startGame(page);
+  await seedUnpayableDebt(page, { siteCount: 3, cash: 150, amountDue: 200 });
+
+  await expect(page.getByTestId(TEST_IDS.liquidationSettle)).toBeVisible();
+  await expect(page.getByTestId(TEST_IDS.declareBankruptcy)).toHaveCount(0);
 });
 
 test('the site panel can mortgage and redeem a site directly', async ({ page }) => {

@@ -42,7 +42,13 @@ import type {
   StreetSpace,
   ThemeConfig,
 } from '../types/game.interfaces';
-import { groupHasBuildings, isOwnedBy, ownsEntireColorSet } from './holdings.utils';
+import {
+  getPlayerOwnedSpaces,
+  getRaisableCash,
+  groupHasBuildings,
+  isOwnedBy,
+  ownsEntireColorSet,
+} from './holdings.utils';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { DefaultRandomSource, rollDie, shuffle, type RandomSource } from './rng';
 
@@ -476,8 +482,25 @@ const startAuction = (state: GameState, spaceId: string): GameState => {
   );
 };
 
+/**
+ * The next seat that is still in the game.
+ *
+ * Rotation used to advance by one and wrap, which was harmless only because
+ * nobody could go bankrupt. Falls back to the current seat when everyone else is
+ * out - the caller is then looking at a finished game.
+ */
+const nextActivePlayerIndex = (state: GameState): number => {
+  for (let step = 1; step <= state.playerOrder.length; step += 1) {
+    const candidate = (state.activePlayerIndex + step) % state.playerOrder.length;
+    if (!state.players[state.playerOrder[candidate]].isBankrupt) {
+      return candidate;
+    }
+  }
+  return state.activePlayerIndex;
+};
+
 const advanceToNextTurn = (state: GameState): GameState => {
-  const nextIndex = (state.activePlayerIndex + 1) % state.playerOrder.length;
+  const nextIndex = nextActivePlayerIndex(state);
   const nextPlayerId = state.playerOrder[nextIndex];
   const nextPlayer = getPlayerById(state, nextPlayerId);
 
@@ -1282,6 +1305,82 @@ export const executeGameCommand = (
       };
       break;
     }
+    case GameCommandType.ConfirmBankruptcy: {
+      const decision = nextState.pendingDecision;
+      if (decision.type !== PendingDecisionType.AssetLiquidation) {
+        throw new Error('Bankruptcy is only declared against a debt.');
+      }
+      const debtor = getPlayerById(nextState, decision.playerId);
+      // You are bankrupt when you owe more than everything you have, not when
+      // you would rather not pay - so refuse while the debt is still reachable.
+      if (debtor.cash + getRaisableCash(nextState, debtor.id) >= decision.amountDue) {
+        throw new Error(
+          `${debtor.name} can still raise ${money(nextState, decision.amountDue)}.`
+        );
+      }
+
+      const creditorId = decision.creditorPlayerId;
+      const owned = getPlayerOwnedSpaces(nextState, debtor.id);
+
+      if (creditorId) {
+        // Everything the debtor has passes to the creditor, mortgages and all.
+        const creditor = getPlayerById(nextState, creditorId);
+        nextState = updatePlayer(nextState, creditorId, (player) => ({
+          ...player,
+          cash: player.cash + debtor.cash,
+          jailFreeCards: player.jailFreeCards + debtor.jailFreeCards,
+        }));
+        owned.forEach((space) => {
+          nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
+            ...ownership,
+            ownerPlayerId: creditorId,
+          }));
+        });
+        nextState = appendEvents(nextState, [
+          createEvent(
+            nextState.turnNumber,
+            `${debtor.name} went bankrupt. ${creditor.name} took ${money(nextState, debtor.cash)} and ${owned.length} site(s).`
+          ),
+        ]);
+      } else {
+        // Debt to the bank: the properties return unowned and their mortgages
+        // are cancelled. The printed rule auctions them there and then; see
+        // docs/india-edition-rules.md section 11 for why that is not done yet.
+        owned.forEach((space) => {
+          nextState = updateSpaceOwnership(nextState, space.id, () => ({
+            ownerPlayerId: null,
+            mortgaged: false,
+            buildLevel: 0,
+          }));
+        });
+        nextState = appendEvents(nextState, [
+          createEvent(
+            nextState.turnNumber,
+            `${debtor.name} went bankrupt. ${owned.length} site(s) returned to the bank.`
+          ),
+        ]);
+      }
+
+      // Rank counts up from one, so the first player out ranks 1.
+      const alreadyOut = nextState.playerOrder.filter(
+        (playerId) => nextState.players[playerId].isBankrupt
+      ).length;
+      nextState = updatePlayer(nextState, debtor.id, (player) => ({
+        ...player,
+        cash: 0,
+        jailFreeCards: 0,
+        inJail: false,
+        isBankrupt: true,
+        bankruptcyRank: alreadyOut + 1,
+      }));
+
+      nextState = {
+        ...nextState,
+        pendingDecision: { type: PendingDecisionType.None },
+        turn: { ...nextState.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+      };
+      break;
+    }
     case GameCommandType.BuildHouse:
     case GameCommandType.BuildHotel:
     case GameCommandType.SellHouse:
@@ -1289,7 +1388,6 @@ export const executeGameCommand = (
     case GameCommandType.ProposeTrade:
     case GameCommandType.AcceptTrade:
     case GameCommandType.RejectTrade:
-    case GameCommandType.ConfirmBankruptcy:
       uiHints.push(
         `${command.type} is scaffolded in the engine contract and will be implemented in the next phase.`
       );

@@ -8,7 +8,10 @@ interface LiquidationDecisionProps {
   canSettle: boolean;
   creditorName: string | null;
   currencySymbol: string;
+  /** True when the debt is beyond the player's cash and everything they could raise. */
+  isBankrupt: boolean;
   mortgageableSites: MortgageableSite[];
+  onDeclareBankruptcy: () => void;
   onMortgageSite: (spaceId: SpaceId) => void;
   onSettleDebt: () => void;
   playerName: string;
@@ -30,7 +33,9 @@ export function LiquidationDecision({
   canSettle,
   creditorName,
   currencySymbol,
+  isBankrupt,
   mortgageableSites,
+  onDeclareBankruptcy,
   onMortgageSite,
   onSettleDebt,
   playerName,
@@ -68,25 +73,39 @@ export function LiquidationDecision({
           </ul>
         </>
       ) : (
-        /* Nothing left to mortgage and the debt still unmet. Bankruptcy is the
-           real answer and is not built yet, so say so rather than leaving the
-           player staring at a modal with no way forward. */
+        /* Nothing left to mortgage and the debt still unmet: that is what
+           bankruptcy means, so offer it rather than stranding the player. */
         <p className="liquidation-dead-end" data-testid={TEST_IDS.liquidationDeadEnd}>
-          {playerName} has nothing left to mortgage and cannot cover this debt. Bankruptcy
-          is not implemented yet, so this game cannot continue from here.
+          {playerName} has nothing left to mortgage and cannot cover this debt.
+          {creditorName
+            ? ` Everything they hold passes to ${creditorName}.`
+            : ' Their sites return to the Bank.'}
         </p>
       )}
 
-      <button
-        className="primary-button"
-        data-testid={TEST_IDS.liquidationSettle}
-        disabled={!canSettle}
-        onClick={onSettleDebt}
-        title={canSettle ? '' : 'Raise the cash first'}
-        type="button"
-      >
-        Pay {formatMoney(amountDue, currencySymbol)}
-      </button>
+      {/* Owing more than you hold is what bankruptcy means, so the only button
+          offered then is the one that acts on it. */}
+      {isBankrupt ? (
+        <button
+          className="primary-button is-bankruptcy"
+          data-testid={TEST_IDS.declareBankruptcy}
+          onClick={onDeclareBankruptcy}
+          type="button"
+        >
+          Declare bankruptcy
+        </button>
+      ) : (
+        <button
+          className="primary-button"
+          data-testid={TEST_IDS.liquidationSettle}
+          disabled={!canSettle}
+          onClick={onSettleDebt}
+          title={canSettle ? '' : 'Raise the cash first'}
+          type="button"
+        >
+          Pay {formatMoney(amountDue, currencySymbol)}
+        </button>
+      )}
     </div>
   );
 }

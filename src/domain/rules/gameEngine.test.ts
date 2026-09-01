@@ -1267,3 +1267,215 @@ describe('mortgage, redeem and settle', () => {
     });
   });
 });
+
+/**
+ * Bankruptcy — the answer when a debt is beyond everything a player has.
+ *
+ * Only reachable from a liquidation, which is why there is no separate decision
+ * type: you go bankrupt because you owe, never on a whim.
+ */
+describe('bankruptcy', () => {
+  /** A debtor owing more than they hold, with one site and a named creditor. */
+  const hopelesslyInDebt = (options: { toBank?: boolean } = {}) => {
+    const game = createBaseGame();
+    const [debtorId, creditorId] = game.playerOrder;
+    const street = game.board.find(isStreetSpace);
+    if (!street) {
+      throw new Error('No street on the board');
+    }
+    const amountDue = 5000;
+
+    return {
+      debtorId,
+      creditorId,
+      street,
+      amountDue,
+      state: {
+        ...game,
+        players: {
+          ...game.players,
+          [debtorId]: { ...game.players[debtorId], cash: 20, jailFreeCards: 1 },
+        },
+        ownership: {
+          ...game.ownership,
+          [street.id]: { ownerPlayerId: debtorId, mortgaged: false, buildLevel: 0 },
+        },
+        activePlayerIndex: game.playerOrder.indexOf(debtorId),
+        pendingDecision: {
+          type: PendingDecisionType.AssetLiquidation as const,
+          playerId: debtorId,
+          amountDue,
+          creditorPlayerId: options.toBank ? null : creditorId,
+          reason: 'rent',
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      } as GameState,
+    };
+  };
+
+  it('hands everything to the creditor', () => {
+    const { state, debtorId, creditorId, street } = hopelesslyInDebt();
+    const creditorCashBefore = state.players[creditorId].cash;
+    const creditorCardsBefore = state.players[creditorId].jailFreeCards;
+
+    const result = executeGameCommand(
+      state,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    );
+    const next = result.nextState;
+
+    expect(next.players[creditorId].cash).toBe(creditorCashBefore + 20);
+    expect(next.players[creditorId].jailFreeCards).toBe(creditorCardsBefore + 1);
+    expect(next.ownership[street.id].ownerPlayerId).toBe(creditorId);
+    expect(next.players[debtorId].isBankrupt).toBe(true);
+    expect(next.players[debtorId].cash).toBe(0);
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+
+  it('keeps a mortgaged site mortgaged when it changes hands', () => {
+    const { state, creditorId, street, debtorId } = hopelesslyInDebt();
+    const mortgaged: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [street.id]: { ownerPlayerId: debtorId, mortgaged: true, buildLevel: 0 },
+      },
+    };
+
+    const next = executeGameCommand(
+      mortgaged,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.ownership[street.id].ownerPlayerId).toBe(creditorId);
+    expect(next.ownership[street.id].mortgaged).toBe(true);
+  });
+
+  it('returns sites to the bank, unmortgaged, when the debt was the bank’s', () => {
+    const { state, street, debtorId } = hopelesslyInDebt({ toBank: true });
+    const mortgaged: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [street.id]: { ownerPlayerId: debtorId, mortgaged: true, buildLevel: 0 },
+      },
+    };
+
+    const next = executeGameCommand(
+      mortgaged,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.ownership[street.id].ownerPlayerId).toBeNull();
+    // The bank cancels the mortgage before the site returns to play.
+    expect(next.ownership[street.id].mortgaged).toBe(false);
+  });
+
+  // You are bankrupt when you cannot pay, not when you would rather not.
+  it('refuses while the debt is still within reach', () => {
+    const { state, debtorId } = hopelesslyInDebt();
+    const affordable: GameState = {
+      ...state,
+      pendingDecision: { ...state.pendingDecision, amountDue: 10 } as never,
+      players: {
+        ...state.players,
+        [debtorId]: { ...state.players[debtorId], cash: 500 },
+      },
+    };
+
+    expect(() =>
+      executeGameCommand(
+        affordable,
+        { type: GameCommandType.ConfirmBankruptcy },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/can still raise/i);
+  });
+
+  it('counts the debt against what could be raised, not just cash', () => {
+    const { state, debtorId, street } = hopelesslyInDebt();
+    // Cash alone is short, but mortgaging the site would cover it.
+    const reachable: GameState = {
+      ...state,
+      pendingDecision: {
+        ...state.pendingDecision,
+        amountDue: street.mortgageValue + 10,
+      } as never,
+      players: {
+        ...state.players,
+        [debtorId]: { ...state.players[debtorId], cash: 10 },
+      },
+    };
+
+    expect(() =>
+      executeGameCommand(
+        reachable,
+        { type: GameCommandType.ConfirmBankruptcy },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/can still raise/i);
+  });
+
+  it('throws when there is no debt at all', () => {
+    expect(() =>
+      executeGameCommand(
+        createBaseGame(),
+        { type: GameCommandType.ConfirmBankruptcy },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/only declared against a debt/i);
+  });
+
+  it('ranks players in the order they go out', () => {
+    const { state, debtorId } = hopelesslyInDebt();
+    const someoneAlreadyOut: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        [state.playerOrder[1]]: {
+          ...state.players[state.playerOrder[1]],
+          isBankrupt: true,
+          bankruptcyRank: 1,
+        },
+      },
+      pendingDecision: {
+        ...state.pendingDecision,
+        creditorPlayerId: null,
+      } as never,
+    };
+
+    const next = executeGameCommand(
+      someoneAlreadyOut,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[debtorId].bankruptcyRank).toBe(2);
+  });
+
+  it('skips a bankrupt player when the turn passes', () => {
+    const game = createBaseGame();
+    const [first, second] = game.playerOrder;
+    const withOneOut: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [second]: { ...game.players[second], isBankrupt: true, bankruptcyRank: 1 },
+      },
+      activePlayerIndex: game.playerOrder.indexOf(first),
+      turn: { ...game.turn, phase: TurnPhase.TurnComplete },
+    };
+
+    const next = executeGameCommand(
+      withOneOut,
+      { type: GameCommandType.EndTurn },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    // Two players, one out - so the turn comes back to the same player.
+    expect(next.playerOrder[next.activePlayerIndex]).toBe(first);
+  });
+});

@@ -42,6 +42,7 @@ export const TEST_IDS = {
   liquidationMortgage: 'liquidation-mortgage',
   liquidationSettle: 'liquidation-settle',
   liquidationDeadEnd: 'liquidation-dead-end',
+  declareBankruptcy: 'declare-bankruptcy',
   cardDrawDecision: 'card-draw-decision',
   acknowledgeCardButton: 'acknowledge-card-button',
   decisionPanel: 'decision-panel',

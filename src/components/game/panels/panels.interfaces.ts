@@ -85,6 +85,11 @@ export interface LiquidationDecisionViewModel {
   mortgageableSites: MortgageableSite[];
   /** True once the debtor's cash covers the debt. */
   canSettle: boolean;
+  /**
+   * True when the debt exceeds everything the debtor has and could raise. This
+   * is what makes them bankrupt rather than merely short.
+   */
+  isBankrupt: boolean;
 }
 
 export type DecisionViewModel =
@@ -105,4 +110,5 @@ export interface DecisionHandlers {
   onAcknowledgeCard: () => void;
   onMortgageSite: (spaceId: SpaceId) => void;
   onSettleDebt: () => void;
+  onDeclareBankruptcy: () => void;
 }

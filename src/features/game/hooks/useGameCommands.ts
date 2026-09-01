@@ -73,6 +73,8 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.MortgageAsset, spaceId })),
         onSettleDebt: () =>
           dispatch(runGameCommand({ type: GameCommandType.SettleDebt })),
+        onDeclareBankruptcy: () =>
+          dispatch(runGameCommand({ type: GameCommandType.ConfirmBankruptcy })),
       },
     }),
     [auctionBidInput, dispatch, toasts]
