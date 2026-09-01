@@ -225,7 +225,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | `RulesJail.tsx`              | Going to and leaving Jail.                                                                             |
 | `RulesBuildings.tsx`         | Houses and hotels.                                                                                     |
 | `RulesMoney.tsx`             | Money, rent, and mortgages.                                                                            |
-| `RulesSpeedDie.tsx`          | Speed Die, deferred in this ruleset.                                                                   |
+| `RulesSpeedDie.tsx`          | Speed Die: the optional variant, its faces, and the doubles interactions.                              |
 | `RulesClosing.tsx`           | Closing notes.                                                                                         |
 
 ## `src/shared/` — cross-cutting helpers
