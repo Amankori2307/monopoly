@@ -143,9 +143,7 @@ function SiteActions({
           <button
             className="secondary-button"
             data-testid={TEST_IDS.proposeTradeButton}
-            disabled
             onClick={onProposeTrade}
-            title="Not implemented yet"
             type="button"
           >
             Offer a deal

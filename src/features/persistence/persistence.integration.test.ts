@@ -130,4 +130,98 @@ describe('persistence round trip', () => {
     expect(applied.nextState.players[playerId].cash).toBe(cashBefore + 250);
     expect(applied.nextState.pendingDecision.type).toBe(PendingDecisionType.None);
   });
+
+  // Mortgaging flips a flag inside `ownership`, which schema.ts validates as
+  // z.record(z.any()) - so it needs no version bump, but it does need proving.
+  it('keeps a mortgaged site mortgaged across a save and load', () => {
+    const game = createGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    const street = game.board.find((space) => space.kind === SpaceKind.Street);
+    if (!street) {
+      throw new Error('No street on the board');
+    }
+    const owned: GameState = {
+      ...game,
+      ownership: {
+        ...game.ownership,
+        [street.id]: { ownerPlayerId: playerId, mortgaged: false, buildLevel: 0 },
+      },
+      activePlayerIndex: game.playerOrder.indexOf(playerId),
+    };
+
+    const mortgaged = executeGameCommand(
+      owned,
+      { type: GameCommandType.MortgageAsset, spaceId: street.id },
+      new SeededRandomSource(3)
+    ).nextState;
+    saveGame(mortgaged);
+
+    const loaded = loadGame(game.id) as GameState;
+
+    expect(loaded.ownership[street.id].mortgaged).toBe(true);
+    expect(loaded.players[playerId].cash).toBe(
+      game.players[playerId].cash + street.mortgageValue
+    );
+    expect(loaded.version).toBe(mortgaged.version);
+  });
+
+  /**
+   * The whole point of the step, end to end through the engine and storage: a
+   * player who cannot pay raises the cash and settles, and the game continues.
+   * Before this, the pending decision could never be cleared.
+   */
+  it('survives a debt the player cannot pay: mortgage, settle, continue', () => {
+    const game = createGame();
+    const [debtorId, creditorId] = game.playerOrder;
+    const streets = game.board.filter((space) => space.kind === SpaceKind.Street);
+    const debt = 200;
+
+    const owing: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [debtorId]: { ...game.players[debtorId], cash: debt - 1 },
+      },
+      ownership: {
+        ...game.ownership,
+        [streets[0].id]: { ownerPlayerId: debtorId, mortgaged: false, buildLevel: 0 },
+      },
+      activePlayerIndex: game.playerOrder.indexOf(debtorId),
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation,
+        playerId: debtorId,
+        amountDue: debt,
+        creditorPlayerId: creditorId,
+        reason: 'rent',
+        queued: [],
+      },
+    };
+    saveGame(owing);
+
+    // Reload first, so the debt is proven to survive persistence.
+    let state = loadGame(game.id) as GameState;
+    expect(state.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.MortgageAsset, spaceId: streets[0].id },
+      new SeededRandomSource(3)
+    ).nextState;
+    saveGame(state);
+
+    // Mortgaging must not have cleared the debt.
+    state = loadGame(game.id) as GameState;
+    expect(state.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+
+    state = executeGameCommand(
+      state,
+      { type: GameCommandType.SettleDebt },
+      new SeededRandomSource(3)
+    ).nextState;
+    saveGame(state);
+
+    const settled = loadGame(game.id) as GameState;
+    expect(settled.pendingDecision.type).toBe(PendingDecisionType.None);
+    expect(settled.players[creditorId].cash).toBe(game.players[creditorId].cash + debt);
+  });
 });

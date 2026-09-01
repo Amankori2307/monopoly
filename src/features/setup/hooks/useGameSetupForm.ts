@@ -20,10 +20,15 @@ export interface UseGameSetupFormResult {
   selectedTheme: ThemeConfig;
   setGameName: (value: string) => void;
   setPlayerCount: (value: number) => void;
+  /** Set when a typed player count was outside 2-8 and had to be pulled back. */
+  playerCountNotice: string | null;
   setPlayerName: (index: number, value: string) => void;
   setPlayerToken: (index: number, value: string) => void;
   setThemeId: (value: string) => void;
+  setUseSpeedDie: (value: boolean) => void;
   themeId: string;
+  /** Agreed before the game starts; it cannot be switched on mid-game. */
+  useSpeedDie: boolean;
   /** Validates and returns the player configs, or null when invalid. */
   validate: () => CreatePlayerInput[] | null;
 }
@@ -51,6 +56,8 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
   const [playerNames, setPlayerNames] = useState(() => defaultNames(MIN_PLAYERS));
   const [playerTokens, setPlayerTokens] = useState(() => defaultTokens(MIN_PLAYERS));
   const [formError, setFormError] = useState<string | null>(null);
+  const [useSpeedDie, setUseSpeedDie] = useState(false);
+  const [playerCountNotice, setPlayerCountNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setPlayerNames((current) => defaultNames(playerCount, current));
@@ -88,15 +95,28 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
     formError,
     gameName,
     playerCount,
+    playerCountNotice,
     playerNames,
     playerTokens,
     selectedTheme,
     setGameName,
-    setPlayerCount: (value: number) => setPlayerCountState(clampPlayerCount(value)),
+    // Clamping in silence looked like the input ignoring the keyboard, so it
+    // says what it did instead.
+    setPlayerCount: (value: number) => {
+      const clamped = clampPlayerCount(value);
+      setPlayerCountState(clamped);
+      setPlayerCountNotice(
+        Number.isFinite(value) && value !== clamped
+          ? `This game takes ${MIN_PLAYERS} to ${MAX_PLAYERS} players, so that is now ${clamped}.`
+          : null
+      );
+    },
     setPlayerName,
     setPlayerToken,
     setThemeId,
+    setUseSpeedDie,
     themeId,
+    useSpeedDie,
     validate,
   };
 };

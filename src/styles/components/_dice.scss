@@ -133,3 +133,20 @@
     transform: rotate(-8deg) translateY(1px);
   }
 }
+
+/**
+ * The Speed Die sits beside the white dice but must not read as one of them:
+ * only the white dice decide doubles and Jail.
+ */
+.die-face.is-speed-die {
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.speed-die-label {
+  font: 800 0.72rem/1 t.$font-mono;
+  letter-spacing: 0.02em;
+  text-align: center;
+}

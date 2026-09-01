@@ -1,101 +1,100 @@
-# **MONOPLY BOARD GAME**
+# Monopoly — India Edition
 
-[Monopoly](https://amankori2307.github.io/Monopoly/) is a multi-player economics-themed board game. In the game, players roll two dice to move around the game board, buying and trading properties, and developing them with houses and hotels. Players collect rent from their opponents, aiming to drive them to bankruptcy.
-<br/><br/>
+A browser Monopoly with the full printed ruleset, built as a **pure rules engine with a React
+shell**. Games have stable ids, save to `localStorage`, and resume from `/game/:gameId`.
 
-## **Home page on PC Screen**
-
----
-
-![Home-Desktop](progres_with_time/home-pc.png?raw=true 'Home Screen')
-
-## **Home page on Mobile Screen**
+**[Play it](https://amankori2307.github.io/monopoly/)** · [Ruleset](docs/india-edition-rules.md) ·
+[Architecture](docs/architecture.md) · [File index](docs/file-index.md)
 
 ---
 
-![Home-Mobile](progres_with_time/home-mobile.png?raw=true 'Home Screen')
+## Getting started
 
-## **Monopoly Board**
+```bash
+pnpm install
+pnpm dev          # Vite dev server on :3000
+```
 
----
+| Command         | What it does                                             |
+| --------------- | -------------------------------------------------------- |
+| `pnpm dev`      | dev server on :3000                                      |
+| `pnpm build`    | production build into `build/`                           |
+| `pnpm test`     | unit and integration tests (vitest)                      |
+| `pnpm test:e2e` | end-to-end tests (playwright, starts its own dev server) |
+| `pnpm lint`     | eslint over `src/` and `tests/`                          |
+| `pnpm fix-all`  | eslint --fix, then prettier                              |
+| `pnpm deploy`   | build and publish to gh-pages                            |
 
-![Board](progres_with_time/board-with-players.png?raw=true 'Monopoly Board')
+Typecheck with `npx tsc --noEmit`.
 
-## **Buy Card Modal**
+## The one architectural idea
 
----
+**The rules engine knows nothing about React or Redux.** It is a pure module: give it a state and a
+command, it hands back a new state.
 
-![Buy Card Modal Image](progres_with_time/buy-card-modal.png?raw=true 'Buy Card Modal')
+```
+UI event  →  dispatch(runGameCommand({ type: 'rollTurnDice' }))
+          →  executeGameCommand(state, command, randomSource)   ← pure, deterministic
+          →  { nextState, events, saveRequired }
+          →  saveGame(nextState)  →  setActiveGame(nextState)  →  React re-renders
+```
 
-## **Auction Modal**
+Everything follows from that. The engine is exhaustively unit-testable without a DOM; the UI holds
+no rules; and a bug is either in a rule or in a component, never smeared across both. Twenty-four
+commands go through one function, and every rupee moves through one of three logged choke points.
 
----
+```
+src/
+  domain/      the engine. no React, no Redux, no DOM
+  features/    pages, redux slices, persistence
+  components/  presentational — props in, callbacks out
+  styles/      SCSS; every colour is a theme token
+```
 
-![Auction Modal Image](progres_with_time/auction-modal.png?raw=true 'Auction Modal')
+`domain/` importing from anywhere else is a bug, and eslint enforces it.
 
-## **My Cards Modal**
+## What is implemented
 
-![My Cards Modal Image](progres_with_time/my-cards-modal.png?raw=true 'My Cards Modal')
+The whole printed ruleset. Dice and doubles including all three Jail interactions, rent with
+colour-set doubling, the full Chance and Community Chest decks with chained draws, buying,
+declining and the auction that follows, building and selling houses and hotels under both even
+rules with a real bank inventory, mortgaging and redeeming, trading between players, insolvency and
+bankruptcy with the bank auctioning what it takes back, win detection, and the optional Speed Die.
 
-## **ACTIONS**
+Every rule, every edge case and the handful of interpretation calls are written down in
+[docs/india-edition-rules.md](docs/india-edition-rules.md), which is kept in sync with the in-app
+rules booklet by a test.
 
----
+## Testing
 
-- ### **BUILD**
+Every change ships with unit, integration and e2e coverage — see
+[docs/coding-guidelines.md](docs/coding-guidelines.md) for the definition of done.
 
-  ![Build Image 1](progres_with_time/build1.png?raw=true 'Build Image 1')
-  ![Build Image 2](progres_with_time/build2.png?raw=true 'Build Image 2')
-  ![Build Image 3](progres_with_time/build3.png?raw=true 'Build Image 3')
-  ![Build Image 4](progres_with_time/build4.png?raw=true 'Build Image 4')
-  ![Build Image 5](progres_with_time/build5.png?raw=true 'Build Image 5')
-  ![Build Image 6](progres_with_time/build6.png?raw=true 'Build Image 6')
+- **Unit**: pure logic, with a seeded RNG so dice are deterministic.
+- **Integration**: thunk → engine → persistence → store, asserting on the store _and_ on what
+  landed in `localStorage`.
+- **E2E**: the user journey in Playwright, queried by accessible role and name.
 
-- ### **SELL**
+## Documentation
 
-  ![Sell Image 1](progres_with_time/sell1.png?raw=true 'Sell Image 1')
-  ![Sell Image 2](progres_with_time/sell2.png?raw=true 'Sell Image 2')
-  ![Sell Image 3](progres_with_time/sell3.png?raw=true 'Sell Image 3')
-  ![Sell Image 4](progres_with_time/sell4.png?raw=true 'Sell Image 4')
+| Document                                              | What it covers                              |
+| ----------------------------------------------------- | ------------------------------------------- |
+| [india-edition-rules.md](docs/india-edition-rules.md) | every rule and edge case, with a status key |
+| [architecture.md](docs/architecture.md)               | layers, data flow, state shape              |
+| [coding-guidelines.md](docs/coding-guidelines.md)     | definition of done, testing policy          |
+| [conventions.md](docs/conventions.md)                 | naming, file layout, enforced lint rules    |
+| [theming.md](docs/theming.md)                         | the token system and adding a theme         |
+| [features/](docs/features/README.md)                  | one document per feature                    |
+| [file-index.md](docs/file-index.md)                   | one line per file, what each one does       |
 
-- ### **MORTGAGE**
+## Credits
 
-  ![Mortgage Image 1](progres_with_time/mortgage1.png?raw=true 'Mortgage Image 1')
-  ![Mortgage Image 2](progres_with_time/mortgage2.png?raw=true 'Mortgage Image 2')
+Board icons are Font Awesome Free (CC BY 4.0); the dice sound is from OpenGameArt (CC0). Each is
+attributed in an `ATTRIBUTION.md` beside the files.
 
-- ### **REDEEM**
-  ![Redeem Image 2](progres_with_time/redeem1.png?raw=true 'Redeem Image 2')
-  ![Redeem Image 2](progres_with_time/redeem2.png?raw=true 'Redeem Image 2')
+Monopoly is a trademark of Hasbro. This is a personal project for learning, not affiliated with or
+endorsed by them.
 
-## **Special Card UI**
+## Licence
 
----
-
-![Special Card UI](progres_with_time/special-card-ui.png?raw=true 'Special Card UI(Start/Jail/Resort/Go to Jail)')
-
-## **References:**
-
----
-
-- **Testing**
-  - [React Testing Guide](https://www.freecodecamp.org/news/testing-react-hooks/)
-  - [What all things needs to be tested in a static website](https://www.softwaretestinghelp.com/web-application-testing/)
-  - [Unit Testing Redux Connected Components](https://hackernoon.com/unit-testing-redux-connected-components-692fa3c4441c)
-  - [Integration Testing In React](https://medium.com/expedia-group-tech/integration-testing-in-react-21f92a55a894)
-  - [Test Redux Connected Components](https://www.robinwieruch.de/react-connected-component-test)
-  - [Youtube video 1(For Testing Redux Connected Components)](https://www.youtube.com/watch?v=o71kkw9Kjik&t=0s)
-  - [Youtube video 2(For Testing Redux Connected Components)](https://www.youtube.com/watch?v=vbvQzWDCuXU)
-  - [Integration Testing](https://www.youtube.com/watch?v=is83bEK3n5A)
-  - [Kent C. Dodds - Why not to test implementation deatils](https://kentcdodds.com/blog/testing-implementation-details)
-  - [React Testing Library FAQs](https://testing-library.com/docs/dom-testing-library/faq)
-  - [Querying in react testing library](https://testing-library.com/docs/queries/about/#priority)
-- **README**
-  - [Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
-- **Deploy**
-  - [Deploy React Site On Github](https://www.freecodecamp.org/news/deploy-a-react-app-to-github-pages/)
-  - [Configure github action to push code to gh-pages on push to master](https://dev.to/pierresaid/deploy-node-projects-to-github-pages-with-github-actions-4jco)
-
----
-
-## Copyright
-
-Licensed under **MIT License**
+MIT.

@@ -56,12 +56,30 @@ export enum PendingDecisionType {
   AssetLiquidation = 'asset-liquidation',
   TradeResponse = 'trade-response',
   BankruptcyResolution = 'bankruptcy-resolution',
+  /** A Bus face: pick one white die, or both, and move that many. */
+  SpeedDieBus = 'speed-die-bus',
+  /** All three dice matched: pick any space on the board. */
+  SpeedDieDestination = 'speed-die-destination',
+  /** Won a building at auction: pick which of your sites it goes on. */
+  BuildingPlacement = 'building-placement',
   GameOver = 'game-over',
 }
 
 export enum DeckName {
   Chance = 'chance',
   CommunityChest = 'communityChest',
+}
+
+/**
+ * The six faces of the Speed Die. Three are numbers added to the white dice;
+ * the other three are the rules that make it a different game.
+ */
+export enum SpeedDieFace {
+  One = '1',
+  Two = '2',
+  Three = '3',
+  Bus = 'bus',
+  MrMonopoly = 'mr-monopoly',
 }
 
 export enum CardDeck {
@@ -91,14 +109,18 @@ export enum GameCommandType {
   UseJailFreeCard = 'useJailFreeCard',
   AttemptJailRoll = 'attemptJailRoll',
   AcknowledgeCard = 'acknowledgeCard',
+  SettleDebt = 'settleDebt',
   EndTurn = 'endTurn',
   BuildHouse = 'buildHouse',
   BuildHotel = 'buildHotel',
   SellHouse = 'sellHouse',
   SellHotel = 'sellHotel',
+  ChooseBuildingSite = 'chooseBuildingSite',
   MortgageAsset = 'mortgageAsset',
   UnmortgageAsset = 'unmortgageAsset',
   ProposeTrade = 'proposeTrade',
+  ChooseBusMove = 'chooseBusMove',
+  ChooseSpeedDieDestination = 'chooseSpeedDieDestination',
   AcceptTrade = 'acceptTrade',
   RejectTrade = 'rejectTrade',
   ConfirmBankruptcy = 'confirmBankruptcy',
@@ -121,4 +143,30 @@ export enum PropertyAction {
   Sell = 'sell',
   Mortgage = 'mortgage',
   Redeem = 'redeem',
+}
+
+/** What a player receiving a mortgaged site in a trade elects to do about it. */
+export enum MortgageChoice {
+  /** Clear the mortgage now: mortgage value plus interest, and it comes free. */
+  Redeem = 'redeem',
+  /** Pay the interest only, and take it still mortgaged. */
+  Keep = 'keep',
+}
+
+/** What is being auctioned when the bank runs short of buildings. */
+export enum BuildingKind {
+  House = 'house',
+  Hotel = 'hotel',
+}
+
+/**
+ * Which way money moved in an event, if it moved at all.
+ *
+ * Set by the engine at the three money choke points rather than guessed from
+ * the wording afterwards - the sentence is for players, not for parsing.
+ */
+export enum GameEventTone {
+  Debit = 'debit',
+  Credit = 'credit',
+  Neutral = 'neutral',
 }

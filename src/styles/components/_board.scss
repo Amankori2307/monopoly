@@ -223,6 +223,10 @@
 .space-color {
   flex: 0 0 t.$board-color-bar;
   border-radius: t.$radius-sharp;
+  // Positioning context for the building pips that ride on the ribbon.
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   .side-bottom &,
   .side-top & {
@@ -494,4 +498,64 @@
 .board-space.side-left .space-owner-dot,
 .board-space.side-right .space-owner-dot {
   top: 3px;
+}
+
+/**
+ * Houses and hotels, drawn on the colour ribbon the way a printed board does.
+ *
+ * The pips run along the ribbon, so they follow its axis: across on the top and
+ * bottom rows, down the left and right columns.
+ */
+.space-buildings {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+
+  .side-left &,
+  .side-right & {
+    flex-direction: column;
+  }
+}
+
+.building-house {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  // Physical pieces are rounded; these are pieces, not UI, so they carry the
+  // same treatment as the tokens and dice.
+  background: var(--building-house);
+  box-shadow: 0 0 0 1px rgba(23, 29, 20, 0.45);
+}
+
+.building-hotel {
+  width: 14px;
+  height: 7px;
+  border-radius: 1px;
+  background: var(--building-hotel);
+  box-shadow: 0 0 0 1px rgba(23, 29, 20, 0.45);
+
+  .side-left &,
+  .side-right & {
+    width: 7px;
+    height: 14px;
+  }
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  .building-house {
+    width: 4px;
+    height: 4px;
+  }
+
+  .building-hotel {
+    width: 10px;
+    height: 5px;
+
+    .side-left &,
+    .side-right & {
+      width: 5px;
+      height: 10px;
+    }
+  }
 }

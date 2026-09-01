@@ -54,11 +54,10 @@ Composition:
   closes the board's top and left edges, which the per-cell right/bottom lines leave open.
 - **No accent outline on hover or occupancy.** Both are shown by a background shift alone. The
   keyboard `:focus-visible` ring stays — that one is an accessibility need, not decoration.
-- **The action rail is always visible but disabled** while its engine commands are scaffolded.
-  Availability comes from `getPropertyActions`, a pure function, so the rail lights up on its own
-  once those commands land. Disabled buttons keep their colour (the base reset's 0.45 opacity
-  made the rail unreadable).
-- **Rail colours are theme tokens** (`--action-build` and friends), so a new theme restyles them.
+- **The action rail is gone, and the layout is two columns.** It offered four buttons that could
+  never fire: every property command needs a `spaceId` and the rail had none. Site actions come
+  from the site panel, which is reached by clicking a site on the board, and the board takes the
+  freed column.
 - **The dice have no panel of their own.** They sit in the flow beside the board rather than
   floating on a blurred card, which is what the reference shows.
 - **`max-height` animates the stack, not `height`.** Cards vary slightly in height with name
@@ -193,6 +192,6 @@ local state: the selected space id for the title-deed modal.
 
 ## Known gaps
 
-- `GamePage` still exceeds the 120-line function warning.
-- The rail cannot dispatch yet: build/mortgage need a property picker to supply a `spaceId`.
-- No dedicated component tests for the board and panel components (covered indirectly).
+- Nothing outstanding. The board cell, turn controls and error banner have their own tests;
+  BoardGrid, BoardCenter and BoardTokenLayer stay covered through the page and e2e tests, where
+  their layout is the thing under test.

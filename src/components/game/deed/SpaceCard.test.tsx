@@ -119,3 +119,44 @@ describe('SpaceCard', () => {
     expect(screen.getByRole('button', { name: 'Buy' })).toBeInTheDocument();
   });
 });
+
+/**
+ * The deed lists every rent tier, and a built site is charging exactly one of
+ * them. Marking it is the difference between a reference table and a statement
+ * of what this site costs to land on right now.
+ */
+describe('the live rent row', () => {
+  const renderStreet = (buildLevel: number) => {
+    const street = findSpace(SpaceKind.Street) as StreetSpace;
+    render(
+      <SpaceCard
+        currencySymbol="M"
+        ownership={{ ownerPlayerId: 'player-1', mortgaged: false, buildLevel }}
+        space={street}
+      />
+    );
+    return { street, rows: screen.getByTestId(TEST_IDS.rentSchedule) };
+  };
+
+  it('marks the tier a built site is charging', () => {
+    const { rows } = renderStreet(2);
+    const current = rows.querySelectorAll('[aria-current="true"]');
+
+    expect(current).toHaveLength(1);
+    expect(current[0]).toHaveTextContent(/with 2 houses/i);
+  });
+
+  it('marks the hotel row when a hotel stands there', () => {
+    const { rows } = renderStreet(5);
+
+    expect(rows.querySelector('[aria-current="true"]')).toHaveTextContent(/hotel/i);
+  });
+
+  // Nothing built: which of the two unbuilt rents applies depends on whether
+  // the owner holds the rest of the set, which the deed cannot see.
+  it('marks nothing on a bare site', () => {
+    const { rows } = renderStreet(0);
+
+    expect(rows.querySelectorAll('[aria-current="true"]')).toHaveLength(0);
+  });
+});

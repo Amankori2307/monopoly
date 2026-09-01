@@ -9,13 +9,14 @@ import type {
   StoredGameIndexEntry,
 } from '../../domain/types/game.interfaces';
 import { describeError, logger } from '../../shared/utils/logger.utils';
+import { StorageWriteError } from '../persistence/persistence.errors';
 import {
   deleteSavedGame,
   loadGame,
   loadGameIndex,
   saveGame,
 } from '../persistence/persistence';
-import { selectNewEvents, toToasts } from './toastFeed.utils';
+import { toToasts } from './toastFeed.utils';
 import { pushToasts } from './uiSlice';
 
 interface GameSliceState {
@@ -24,7 +25,6 @@ interface GameSliceState {
   loadError: string | null;
   /** Last command the engine rejected. Surfaced to the player, then dismissed. */
   commandError: string | null;
-  uiHints: string[];
 }
 
 const initialState: GameSliceState = {
@@ -32,7 +32,6 @@ const initialState: GameSliceState = {
   activeGame: null,
   loadError: null,
   commandError: null,
-  uiHints: [],
 };
 
 const slice = createSlice({
@@ -48,9 +47,6 @@ const slice = createSlice({
     setLoadError(state, action: PayloadAction<string | null>) {
       state.loadError = action.payload;
     },
-    setUiHints(state, action: PayloadAction<string[]>) {
-      state.uiHints = action.payload;
-    },
     setCommandError(state, action: PayloadAction<string | null>) {
       state.commandError = action.payload;
     },
@@ -58,13 +54,8 @@ const slice = createSlice({
 });
 
 export const gameReducer = slice.reducer;
-export const {
-  setRecentGames,
-  setActiveGame,
-  setLoadError,
-  setUiHints,
-  setCommandError,
-} = slice.actions;
+export const { setRecentGames, setActiveGame, setLoadError, setCommandError } =
+  slice.actions;
 
 export const bootstrapRecentGames = () => (dispatch: AppDispatch) => {
   try {
@@ -82,7 +73,6 @@ export const createNewGame = (input: CreateGameInput) => (dispatch: AppDispatch)
   const nextGame = createGameState(input, new DefaultRandomSource());
   saveGame(nextGame);
   dispatch(setActiveGame(nextGame));
-  dispatch(setUiHints([]));
   dispatch(bootstrapRecentGames());
   return nextGame;
 };
@@ -97,7 +87,6 @@ export const loadGameById = (gameId: string) => (dispatch: AppDispatch) => {
     }
     dispatch(setActiveGame(savedGame));
     dispatch(setLoadError(null));
-    dispatch(setUiHints([]));
     dispatch(bootstrapRecentGames());
     return savedGame;
   } catch (error) {
@@ -106,6 +95,26 @@ export const loadGameById = (gameId: string) => (dispatch: AppDispatch) => {
       setLoadError(error instanceof Error ? error.message : 'Saved game is invalid.')
     );
     return null;
+  }
+};
+
+/**
+ * Saves, returning the message to show when the browser refused.
+ *
+ * Storage failing is not the same as a command being rejected: the move has
+ * already happened, and throwing it away would cost the player their turn over
+ * a full disk. Anything else is a real bug and is left to the caller's catch.
+ */
+const trySave = (game: GameState): string | null => {
+  try {
+    saveGame(game);
+    return null;
+  } catch (error) {
+    if (error instanceof StorageWriteError) {
+      logger.error('persistence', error.message, { gameId: game.id });
+      return `${error.message} Play continues, but this game will not resume.`;
+    }
+    throw error;
   }
 };
 
@@ -130,17 +139,14 @@ export const runGameCommand =
       });
 
       const result = executeGameCommand(currentGame, command, new DefaultRandomSource());
-      saveGame(result.nextState);
+      // The move has happened; a storage failure must not undo it. Apply it and
+      // say it is not being saved, rather than reporting the command rejected.
+      const saveFailure = trySave(result.nextState);
       dispatch(setActiveGame(result.nextState));
-      // Feedback comes from the history delta, not result.events - the engine
-      // returns the whole capped history there, so it cannot say what changed.
-      dispatch(
-        pushToasts(
-          toToasts(selectNewEvents(currentGame.history, result.nextState.history))
-        )
-      );
-      dispatch(setUiHints(result.uiHints));
-      dispatch(setCommandError(null));
+      // result.events is what this command appended, so the feedback and the
+      // game record are the same text by construction.
+      dispatch(pushToasts(toToasts(result.events)));
+      dispatch(setCommandError(saveFailure));
       dispatch(bootstrapRecentGames());
       return result;
     } catch (error) {

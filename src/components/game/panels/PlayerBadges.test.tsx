@@ -1,9 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MAX_JAIL_TURNS } from '../../../domain/constants/game.constants';
-import type { PlayerState } from '../../../domain/types/game.interfaces';
+import { CardDeck, CardEffectKind } from '../../../domain/types/game.enums';
+import type { DeckCard, PlayerState } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { PlayerBadges } from './PlayerBadges';
+
+/** The badge only counts these, so one stub card stands for any of them. */
+const JAIL_CARD = {
+  id: 'chance-jail-free',
+  deck: CardDeck.Chance,
+  title: 'Get Out of Jail Free',
+  description: 'Keep this card until needed.',
+  effect: { kind: CardEffectKind.JailFree },
+} as DeckCard;
 
 const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
   id: 'player-1',
@@ -13,9 +23,10 @@ const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
   position: 0,
   inJail: false,
   jailTurnsServed: 0,
-  jailFreeCards: 0,
+  jailFreeCards: [],
   isBankrupt: false,
   bankruptcyRank: null,
+  hasPassedGo: false,
   ...overrides,
 });
 
@@ -33,13 +44,13 @@ describe('PlayerBadges', () => {
   });
 
   it('shows a held Get Out of Jail Free card', () => {
-    renderBadges(makePlayer({ jailFreeCards: 1 }));
+    renderBadges(makePlayer({ jailFreeCards: [JAIL_CARD] }));
 
     expect(badge('jail-free')).toHaveTextContent('Jail card');
   });
 
   it('counts multiple jail cards', () => {
-    renderBadges(makePlayer({ jailFreeCards: 2 }));
+    renderBadges(makePlayer({ jailFreeCards: [JAIL_CARD, JAIL_CARD] }));
 
     expect(badge('jail-free')).toHaveTextContent('Jail card x2');
   });
@@ -74,7 +85,9 @@ describe('PlayerBadges', () => {
   });
 
   it('shows every applicable badge at once', () => {
-    renderBadges(makePlayer({ inJail: true, jailTurnsServed: 1, jailFreeCards: 1 }));
+    renderBadges(
+      makePlayer({ inJail: true, jailTurnsServed: 1, jailFreeCards: [JAIL_CARD] })
+    );
 
     expect(badge('jail')).toBeInTheDocument();
     expect(badge('jail-free')).toBeInTheDocument();

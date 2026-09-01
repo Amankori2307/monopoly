@@ -2,10 +2,15 @@ import { PendingDecisionType } from '../../../../domain/types/game.enums';
 import type { DecisionHandlers, DecisionViewModel } from '../panels.interfaces';
 import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { AuctionDecision } from './AuctionDecision';
+import { BuildingPlacementDecision } from './BuildingPlacementDecision';
 import { BuyOrAuctionDecision } from './BuyOrAuctionDecision';
 import { CardDrawDecision } from './CardDrawDecision';
+import { GameOverDecision } from './GameOverDecision';
 import { JailDecision } from './JailDecision';
 import { LiquidationDecision } from './LiquidationDecision';
+import { SpeedDieBusDecision } from './SpeedDieBusDecision';
+import { SpeedDieDestinationDecision } from './SpeedDieDestinationDecision';
+import { TradeResponseDecision } from './TradeResponseDecision';
 
 interface DecisionPanelProps {
   bidAmount: number;
@@ -58,8 +63,10 @@ export function DecisionPanel({
 
       {decision.type === PendingDecisionType.JailChoice ? (
         <JailDecision
+          attemptsUsed={decision.attemptsUsed}
           canUseJailCard={decision.canUseJailCard}
           currencySymbol={currencySymbol}
+          onAttemptJailRoll={handlers.onAttemptJailRoll}
           onPayFine={handlers.onPayJailFine}
           onUseJailCard={handlers.onUseJailCard}
           playerName={decision.playerName}
@@ -76,11 +83,65 @@ export function DecisionPanel({
         />
       ) : null}
 
+      {decision.type === PendingDecisionType.TradeResponse ? (
+        <TradeResponseDecision
+          currencySymbol={currencySymbol}
+          incoming={decision.incoming}
+          incomingMortgaged={decision.incomingMortgaged}
+          onAccept={handlers.onAcceptTrade}
+          onReject={handlers.onRejectTrade}
+          outgoing={decision.outgoing}
+          recipientName={decision.recipientName}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.SpeedDieBus ? (
+        <SpeedDieBusDecision
+          onChoose={handlers.onChooseBusMove}
+          playerName={decision.playerName}
+          whiteDice={decision.whiteDice}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.SpeedDieDestination ? (
+        <SpeedDieDestinationDecision
+          board={decision.board}
+          onChoose={handlers.onChooseDestination}
+          playerName={decision.playerName}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.BuildingPlacement ? (
+        <BuildingPlacementDecision
+          buildingKind={decision.buildingKind}
+          currencySymbol={currencySymbol}
+          onChoose={handlers.onChooseBuildingSite}
+          paidAmount={decision.paidAmount}
+          playerName={decision.playerName}
+          sites={decision.sites}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.GameOver ? (
+        <GameOverDecision winnerName={decision.winnerName} />
+      ) : null}
+
       {decision.type === PendingDecisionType.AssetLiquidation ? (
         <LiquidationDecision
           amountDue={decision.amountDue}
+          canSettle={decision.canSettle}
+          creditorName={decision.creditorName}
           currencySymbol={currencySymbol}
+          isBankrupt={decision.isBankrupt}
+          mortgageableSites={decision.mortgageableSites}
+          onDeclareBankruptcy={handlers.onDeclareBankruptcy}
+          onMortgageSite={handlers.onMortgageSite}
+          onSellBuilding={handlers.onSellBuilding}
+          onSettleDebt={handlers.onSettleDebt}
           playerName={decision.playerName}
+          queuedDebtCount={decision.queuedDebtCount}
+          reason={decision.reason}
+          sellableBuildings={decision.sellableBuildings}
         />
       ) : null}
     </section>

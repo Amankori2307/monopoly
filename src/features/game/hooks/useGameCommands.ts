@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import type { Toast } from '../../../components/game/overlays/overlays.interfaces';
 import type { DecisionHandlers } from '../../../components/game/panels/panels.interfaces';
+import type { MortgageChoice } from '../../../domain/types/game.enums';
+import type { TradeState } from '../../../domain/types/game.interfaces';
 import { GameCommandType } from '../../../domain/types/game.enums';
 import { runGameCommand, setCommandError } from '../gameSlice';
 import { dismissToast, setAuctionBidInput } from '../uiSlice';
@@ -12,7 +14,9 @@ export interface UseGameCommandsResult {
   dismissError: () => void;
   dismissToast: (toastId: string) => void;
   endTurn: () => void;
-  rollDice: (isJailRoll: boolean) => void;
+  rollDice: () => void;
+  /** Sends an assembled offer to the other player. */
+  proposeTrade: (payload: TradeState) => void;
   /** A property command for one picked space, from the site panel. */
   runPropertyCommand: (command: GameCommandType, spaceId: string) => void;
   toasts: Toast[];
@@ -42,14 +46,9 @@ export const useGameCommands = (): UseGameCommandsResult => {
         ),
       dismissToast: (toastId: string) => dispatch(dismissToast(toastId)),
       endTurn: () => dispatch(runGameCommand({ type: GameCommandType.EndTurn })),
-      rollDice: (isJailRoll: boolean) =>
-        dispatch(
-          runGameCommand({
-            type: isJailRoll
-              ? GameCommandType.AttemptJailRoll
-              : GameCommandType.RollTurnDice,
-          })
-        ),
+      rollDice: () => dispatch(runGameCommand({ type: GameCommandType.RollTurnDice })),
+      proposeTrade: (payload: TradeState) =>
+        dispatch(runGameCommand({ type: GameCommandType.ProposeTrade, payload })),
       decisionHandlers: {
         onBuy: () => dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset })),
         onDecline: () =>
@@ -67,8 +66,45 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.PayJailFine })),
         onUseJailCard: () =>
           dispatch(runGameCommand({ type: GameCommandType.UseJailFreeCard })),
+        // The same command the dice dock sends. The panel needs its own way in
+        // because the decision backdrop covers the dock - which is what made
+        // trying for doubles unreachable.
+        onAttemptJailRoll: () =>
+          dispatch(runGameCommand({ type: GameCommandType.AttemptJailRoll })),
         onAcknowledgeCard: () =>
           dispatch(runGameCommand({ type: GameCommandType.AcknowledgeCard })),
+        onMortgageSite: (spaceId: string) =>
+          dispatch(runGameCommand({ type: GameCommandType.MortgageAsset, spaceId })),
+        // A hotel and a house are separate commands, and the panel knows which
+        // one is standing on the site.
+        onSellBuilding: (spaceId: string, isHotel: boolean) =>
+          dispatch(
+            runGameCommand({
+              type: isHotel ? GameCommandType.SellHotel : GameCommandType.SellHouse,
+              spaceId,
+            })
+          ),
+        onSettleDebt: () =>
+          dispatch(runGameCommand({ type: GameCommandType.SettleDebt })),
+        onDeclareBankruptcy: () =>
+          dispatch(runGameCommand({ type: GameCommandType.ConfirmBankruptcy })),
+        onAcceptTrade: (mortgageChoices: Record<string, MortgageChoice>) =>
+          dispatch(
+            runGameCommand({ type: GameCommandType.AcceptTrade, mortgageChoices })
+          ),
+        onRejectTrade: () =>
+          dispatch(runGameCommand({ type: GameCommandType.RejectTrade })),
+        onChooseBuildingSite: (spaceId: string) =>
+          dispatch(runGameCommand({ type: GameCommandType.ChooseBuildingSite, spaceId })),
+        onChooseBusMove: (steps: number) =>
+          dispatch(runGameCommand({ type: GameCommandType.ChooseBusMove, steps })),
+        onChooseDestination: (spaceId: string) =>
+          dispatch(
+            runGameCommand({
+              type: GameCommandType.ChooseSpeedDieDestination,
+              spaceId,
+            })
+          ),
       },
     }),
     [auctionBidInput, dispatch, toasts]

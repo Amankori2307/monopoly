@@ -12,9 +12,10 @@ const player = (id: string, position: number): PlayerState => ({
   position,
   inJail: false,
   jailTurnsServed: 0,
-  jailFreeCards: 0,
+  jailFreeCards: [],
   isBankrupt: false,
   bankruptcyRank: null,
+  hasPassedGo: false,
 });
 
 beforeEach(() => {

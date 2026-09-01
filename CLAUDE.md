@@ -18,23 +18,18 @@ The defining architectural decision: **the rules engine is a pure module that kn
 
 ---
 
-## 2. ⚠️ Two code trees — only one is alive
+## 2. One code tree
 
-The app was rewritten. `src/` currently holds the new app **and** a fully disconnected legacy island.
+`src/` is the app and nothing else. The Zelda-themed legacy island that used to sit beside it —
+`src/redux/`, `src/utility/`, `src/components/monopoly/`, `src/components/home/`,
+`src/components/not_found/`, and the `.scss`/`.json` under `src/assets/` that only it used — was
+deleted once the ruleset was complete. It had zero import edges into the active tree and shipped
+nothing.
 
-|                               | Active (~3.1k LOC)                                                              | Legacy island (~2.9k LOC)                                                                                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Paths                         | `src/domain/`, `src/features/`, `src/app/`, `src/components/game/`, `src/test/` | `src/redux/`, `src/utility/`, `src/components/monopoly/`, `src/components/home/`, `src/components/not_found/`, `src/assets/css/*.scss`, `src/assets/data/*.json` |
-| Reachable from `src/App.tsx`? | Yes                                                                             | **No** — verified zero import edges                                                                                                                              |
-| Theme                         | India Edition                                                                   | Zelda-themed (old)                                                                                                                                               |
-| State                         | RTK slices + pure engine                                                        | hand-rolled actions/reducers                                                                                                                                     |
-
-**Rules of engagement:**
-
-- Build all new work in the active tree.
-- Never import from the legacy island into active code, and never "fix" legacy files — they ship nothing.
-- Treat any older doc describing Zelda spaces, `boardData.json`, `playerAppropriateActionUtils`, or `Monopoly.tsx` as **historical, not current**.
-- Deleting the island is a deliberate, separate decision — confirm with the user first.
+`jquery`, `redux`, `redux-thunk` and `redux-mock-store` went with it; state is RTK slices over the
+pure engine. Anything in an older doc describing Zelda spaces, `boardData.json`,
+`playerAppropriateActionUtils` or `Monopoly.tsx` is **historical** — it is in git history, not on
+disk.
 
 ---
 
@@ -54,7 +49,10 @@ src/App.tsx                      routes only
        SpaceDetailCard.tsx       title-deed modal
   └─ domain/                     PURE — no React, no Redux, no DOM
        types/game.ts             single source of truth for all game types
-       rules/gameEngine.ts       createGameState + executeGameCommand
+       rules/gameEngine.ts       createGameState + the command dispatch table
+       rules/engine/             the engine by concern: state, money, rent,
+                                 movement, cards, turn, auction, trade settlement
+       rules/engine/commands/    one handler per command, grouped by area
        rules/rng.ts              RandomSource (Default / Seeded)
        board/, cards/, themes/   India Edition data
   └─ app/                        store wiring + typed hooks
@@ -97,16 +95,50 @@ applied by `acknowledgeCard`. A new decision type must also be added to `BLOCKIN
 
 ### Commands
 
-| Implemented                                                                                                                                                                  | Scaffolded (returns a `uiHints` placeholder, changes nothing)                                                                                               |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rollTurnDice`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `acknowledgeCard`, `endTurn` | `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `mortgageAsset`, `unmortgageAsset`, `proposeTrade`, `acceptTrade`, `rejectTrade`, `confirmBankruptcy` |
+All twenty-four runtime commands are implemented: `rollTurnDice`, `buyLandedAsset`,
+`declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`,
+`attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`,
+`confirmBankruptcy`, `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `proposeTrade`,
+`acceptTrade`, `rejectTrade`, `chooseBusMove`, `chooseSpeedDieDestination`, `chooseBuildingSite`, `endTurn`.
+
+`GameCommandResult.uiHints` is consequently always empty - it only ever carried "not implemented
+yet" notices, and nothing renders it now. Feedback goes through the history and the toasts.
+
+**The engine is nine modules and nine command groups, and the layering is one-way.**
+`engine/state.utils.ts` depends on nothing else and everything is built from it; commands sit on
+top and nothing imports them but the dispatch table in `gameEngine.ts`. `applyCardEffect` lives with
+its command rather than beside `drawCard` because applying an effect resolves a space, and keeping
+that out of `cards.utils.ts` is what stops the two forming a cycle. **`gameEngine.ts` no longer has
+an eslint exemption** — it had one for `max-lines`, `max-lines-per-function` and `complexity`, and
+the split is what removed the need for it. Do not add another.
 
 ### Locked economics (`gameEngine.ts` constants)
 
-Starting cash `₹1500` · pass GO `₹200` · jail fine `₹50` · auction opens at `₹10`, min increment `1` · 40 spaces · 32 houses / 12 hotels · history capped at 120 events, newest first.
+Starting cash `₹1500` · pass GO `₹200` · jail fine `₹50` · auction opens at `₹10`, min increment `1` · 40 spaces · 32 houses / 12 hotels (now really decremented) · buildings refund `floor(cost/2)` · history capped at 120 events, newest first.
 
-Money moves through exactly two choke points, and both log an event: `resolveBankPayment` (out) and
-`creditFromBank` (in). Add a third and feedback silently stops working for it.
+**The Speed Die is optional and fixed at setup.** `useSpeedDie` on `GameState`, and it stays inert
+until every non-bankrupt player has `hasPassedGo`. Only the two white dice decide doubles and Jail;
+`turn.speedDieFace` is deliberately separate from `turn.lastRoll` so no reader has to remember to
+exclude it. A three-of-a-kind is **not** a double - no extra roll, no step towards Jail.
+
+**Mr. Monopoly's advance survives a decision.** It is `turn.pendingMonopolyAdvance`, applied by
+`resumeTurnAfterDecision` once the turn is clear - the landed space may raise a decision of its own.
+Any command that answers a decision must go through `resumeTurnAfterDecision` rather than restating
+its phase rules, or the advance is silently dropped.
+
+**Both even rules are one comparison.** No two sites in a colour group may differ by more than one
+`buildLevel` (0-4 houses, 5 a hotel). `buildBlockedReason` / `sellBlockedReason` in
+[buildings.utils.ts](src/domain/rules/buildings.utils.ts) state it once, and both the engine's throw
+and the site panel's disabled button read from there - never restate the rule in a component.
+
+Money moves through exactly three choke points, and all of them log an event: `resolveBankPayment`
+(out), `creditFromBank` (in) and `resolvePlayerPayment` (between players). Buying and auctions used
+to move cash inline and log their own line; they go through the primitives now, so the invariant is
+total. Add a fourth and feedback silently stops working for it.
+
+**A utility's rent is charged on the dice that brought the player there.** `resolveCurrentSpace`
+takes the total: the turn's own roll when they rolled their way in, a fresh throw when a card or a
+Mr. Monopoly advance put them there.
 
 **`doublesCount`, not `canRollAgain`, is what survives a blocking decision** — `resolveCurrentSpace`
 sets `canRollAgain: false` while one is pending. Restore the phase with `resumeTurnAfterDecision`;
@@ -119,8 +151,9 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 ## 5. Persistence
 
 - Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
-- `GAME_STATE_VERSION = 1`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load.
-- Loads are validated with zod (`features/persistence/schema.ts`). The schema is deliberately loose in places (`z.any()` for players/board/ownership) — tighten it alongside any shape change.
+- `GAME_STATE_VERSION = 5`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
+- Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
+- **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. `pendingDecision` is `.passthrough()`, so a decision's own payload survives — which is why the drawn Chance / Community Chest card rides inside the decision rather than in a field of its own. Add the field to the schema, or put it where it will survive.
 - Every command save is a full-state write, then the index is rewritten sorted by `updatedAt`.
 
@@ -150,7 +183,7 @@ Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc`
 - `components/game/` are presentational: props in, callbacks out, no `useAppSelector`.
 - Slices hold state; _thunks_ hold orchestration. Business rules belong in the engine.
 - **Enums live in `*.enums.ts`; exported interfaces and type aliases in `\*.interfaces.ts.** Machine-enforced by `no-restricted-syntax`. Component `Props`, hook `Use*Result`/`Use*Options`, and type aliases derived from a value in the same file are exempt — see [docs/conventions.md](docs/conventions.md) §1, which also explains why the rule must stay in a single `overrides` entry.
-- Path aliases exist in `tsconfig.json` (`@app/*`, `@domain/*`, `@features/*`, `@components/*`, `@test/*`) but **nothing uses them yet** — the codebase is uniformly relative-import. Pick one style deliberately rather than mixing.
+- **Relative imports, everywhere.** The `@app/*`-style path aliases are gone: `nxViteTsPaths()` made them work, but nothing used them across 570 relative imports, and a working-but-unused second style is exactly the drift to avoid. Re-adding them is a `paths` block in `tsconfig.json` if that call is ever revisited.
 
 **DRY — known duplication, fix on contact**
 | Duplicated | Locations |
@@ -166,27 +199,20 @@ When you touch one of these, extract it (colors/icons → a shared board-present
 
 - **Never hardcode a colour.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. The one sanctioned exception is a **player token colour**, applied inline from `ThemeToken.color` — it is theme _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
 - Themes are token maps in `themes/_themes.scss`, emitted as `[data-theme="<id>"]` blocks. A compile-time guard fails the build if a theme misses a contract token. See [docs/theming.md](docs/theming.md).
-- The `.scss` modules under `src/assets/css/` belong to the legacy island — do not add to them.
 
 **Testing — mandatory, all three levels.** Every feature, entity, and behaviour ships with **unit + integration + e2e** coverage in the same change. Unit: pure logic, `SeededRandomSource` for dice, cover every `throw` branch. Integration: thunk → engine → persistence → store, and pages via `src/test/renderWithProviders.tsx`. E2E: the user journey in Playwright, queried by accessible role and name.
 
-Full definition of done, per-layer patterns, and the current coverage gap: [docs/coding-guidelines.md](docs/coding-guidelines.md). Three harness blockers (no ESLint config, singleton test store, no `localStorage` reset) are listed there and need fixing before the integration mandate is fully achievable.
+Full definition of done, per-layer patterns, and the current coverage gap: [docs/coding-guidelines.md](docs/coding-guidelines.md). The three harness blockers are cleared — `pnpm lint` works, `makeStore()` gives a fresh store per test, and `localStorage` is reset between them. The integration layer is covered too: `gameSlice`'s thunks have 24 tests asserting on the store _and_ on `localStorage`, and `uiSlice`, `GamePage` and `SeededRandomSource` have their own.
 
 ---
 
 ## 8. Known gaps and traps
 
-- **Jail-fine bug**: [gameEngine.ts:958](src/domain/rules/gameEngine.ts:958) — `payJailFine` calls `resolveBankPayment`, which sets an `asset-liquidation` pending decision when the player can't afford `₹50`; the lines immediately after then overwrite `pendingDecision` back to `none`, so a broke player leaves jail without paying. Its proper fix is bound up with resolving liquidation at all — see the deadlock entry below.
-- **`GameCommandResult.events` returns the entire `history`**, not the events from this command ([gameEngine.ts:1149](src/domain/rules/gameEngine.ts:1149)). `saveRequired` is hardcoded `true`. Anything wanting "what just happened" must diff `history` instead — see `selectNewEvents` in [toastFeed.utils.ts](src/features/game/toastFeed.utils.ts).
-- **No end condition**: `winnerPlayerId`, `status: 'completed'`, and the `game-over` decision are never set — games run forever.
-- **Bank inventory is cosmetic**: `housesAvailable`/`hotelsAvailable` are never decremented (building isn't implemented).
-- **`asset-liquidation` is a deadlock.** When a player cannot pay, `resolveBankPayment` / `resolvePlayerPayment` set that pending decision and **nothing in the codebase can clear it** — mortgage is its only exit and is still scaffolded. The insolvent branch also never debits the debtor or pays the creditor; the debt lives only in `amountDue`.
-- **`applyCardEffect`'s `CollectFromEach` / `PayEach` loops read the pre-mutation `state`**, not `nextState`, and each iteration can overwrite the previous player's `asset-liquidation` decision. Multi-player insolvency on one card is unhandled.
-- **Mortgaged properties** are skipped for rent but there is no way to mortgage yet. A mortgaged property still counts toward colour-set completeness and the railway/utility counts — deliberate, and matches the printed rule.
-- **A used Get Out of Jail Free card never returns to its deck.** `jailFreeCards` is a count with no record of which deck the card came from, so both can leave circulation permanently. Fixing it is a `GameState` shape change.
-- **`advanceToNextTurn` does not skip bankrupt players** — latent only because bankruptcy is never set.
-- **`movePlayerTo`'s pass-GO test is `nextPosition < player.position`**, true for any backward move. Safe only because `MoveSteps` always passes `collectGo: false`.
-- `tsconfig.json` has `strict: false` and `target: es5` — a deliberate gradual-migration holdover, not an endorsement.
+- **`GameCommandResult.events` is what this command appended**, and `saveRequired` is derived from whether the state changed. Both used to lie — `events` returned the whole capped history — so the toast feed diffed `history` itself. It no longer needs to.
+- **`asset-liquidation` is resolvable, and queues.** `settleDebt` clears it; selling buildings and mortgaging are how the cash is raised, and both deliberately leave `pendingDecision` alone. Several debts from one card all stand: the extras ride in the decision's own `queued` array, which survives a save because `pendingDecision` is the one part validated with `.passthrough()`. Read it as `queued ?? []` — a game saved before the queue existed comes back without it.
+- **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.
+- **`movePlayerTo` takes an `isForward` flag**, because the wrap test (`next < current`) is also true of every backward move. A backward card move must pass `isForward: false` or it would pay the GO salary for going the wrong way.
+- **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---
 
@@ -194,22 +220,37 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 
 Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a stale line actively misleads. **Update docs in the same change as the code**, not afterwards.
 
-| If you change…                                  | Update                                                                                             |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Engine commands, phases, or constants           | §4 above                                                                                           |
-| `GameState` shape or storage keys               | §5 + bump `GAME_STATE_VERSION` + zod schema                                                        |
-| Layer boundaries, new directory                 | §3 + `docs/architecture.md`                                                                        |
-| Ruleset behaviour or values                     | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below       |
-| Scripts in `package.json`                       | §6                                                                                                 |
-| Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                               |
-| Deleting part of the legacy island              | §2                                                                                                 |
-| Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5     |
-| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                             |
-| An ESLint rule                                  | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                         |
-| **Adding or removing any file**                 | [docs/file-index.md](docs/file-index.md) — one line saying what it does                            |
-| **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index |
-| Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                             |
-| Adding a theme, or changing theme tokens        | [docs/theming.md](docs/theming.md)                                                                 |
+| If you change…                                  | Update                                                                                                     |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Engine commands, phases, or constants           | §4 above                                                                                                   |
+| `GameState` shape or storage keys               | §5 + bump `GAME_STATE_VERSION` + zod schema                                                                |
+| Layer boundaries, new directory                 | §3 + `docs/architecture.md`                                                                                |
+| Ruleset behaviour or values                     | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below               |
+| **Adding or changing a rule**                   | give the row an id, and name a test for it in `RULE_COVERAGE` — `rulesCoverage.test.ts` fails until you do |
+| Scripts in `package.json`                       | §6                                                                                                         |
+| Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                                       |
+| Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5             |
+| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                                     |
+| An ESLint rule                                  | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                                 |
+| **Adding or removing any file**                 | [docs/file-index.md](docs/file-index.md) — one line saying what it does                                    |
+| **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index         |
+| Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                                     |
+| Adding a theme, or changing theme tokens        | [docs/theming.md](docs/theming.md)                                                                         |
+
+### Every documented rule has a test
+
+`docs/india-edition-rules.md` is the ruleset's source of truth, and every rule row in it carries a
+stable id (`5.9`, `7a.4`, `Q1.2`). [ruleCoverage.constants.ts](src/features/rules/ruleCoverage.constants.ts)
+maps each id to the test titles that prove it, and
+[rulesCoverage.test.ts](src/features/rules/rulesCoverage.test.ts) fails three ways: a documented rule
+with no entry, an entry naming a test that no longer exists, and an entry for an id the doc dropped.
+
+So a rule cannot be documented without being tested, and a test cannot be renamed out from under a
+rule. 153 rules, all claimed.
+
+The board is checked the same way but harder: [board.rules.test.ts](src/domain/board/board.rules.test.ts)
+**reads section 13 of the doc as its fixture** and compares all 40 spaces against
+`indiaEditionBoard`, so the two cannot drift at all.
 
 ### The rules booklet and the ruleset doc are one thing in two places
 

@@ -27,6 +27,7 @@ export const selectSpaceOwnerMarks = (
       color: findToken(owner.tokenId)?.color ?? '',
       mortgaged: ownership.mortgaged,
       ownerName: owner.name,
+      buildLevel: ownership.buildLevel ?? 0,
     };
   });
 

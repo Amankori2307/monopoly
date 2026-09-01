@@ -2,14 +2,11 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BoardGrid } from '../../components/game/board/BoardGrid';
 import { useAnimatedTokenPositions } from '../../components/game/hooks/useAnimatedTokenPositions';
-import { ActionRail } from '../../components/game/panels/ActionRail';
 import { CommandErrorBanner } from '../../components/game/panels/CommandErrorBanner';
-import { HintsPanel } from '../../components/game/panels/HintsPanel';
 import { ToastStack } from '../../components/game/overlays/ToastStack';
 import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
-import { getPropertyActions } from '../../domain/rules/playerActions.utils';
 import { selectSpaceOwnerMarks } from './boardOwnership.utils';
 import { GameOverlayLayer } from './GameOverlayLayer';
 import { selectSitePanel } from './sitePanel.utils';
@@ -24,7 +21,6 @@ import {
   selectActivePlayer,
   selectCanEndTurn,
   selectCanRollDice,
-  selectIsJailRoll,
   selectPlayerSummaries,
 } from './gameView.selectors';
 import { useActiveGame } from './hooks/useActiveGame';
@@ -40,7 +36,7 @@ import { useGameOverlays } from './hooks/useGameOverlays';
  */
 export function GamePage() {
   const { gameId = '' } = useParams();
-  const { activeGame, commandError, currencySymbol, loadError, theme, uiHints } =
+  const { activeGame, commandError, currencySymbol, loadError, theme } =
     useActiveGame(gameId);
   const commands = useGameCommands();
   const overlays = useGameOverlays();
@@ -58,7 +54,6 @@ export function GamePage() {
 
   const activePlayer = selectActivePlayer(activeGame);
   const findToken = makeTokenFinder(theme);
-  const isJailRoll = selectIsJailRoll(activeGame);
   const summaries = selectPlayerSummaries(activeGame, theme);
   const selectedSummary =
     summaries.find((summary) => summary.player.id === overlays.selectedPlayerId) ?? null;
@@ -70,16 +65,6 @@ export function GamePage() {
     <div className="app-shell" data-theme={activeGame.themeId}>
       <div className="page">
         <div className="game-layout" data-testid={TEST_IDS.gameLayout}>
-          {/*
-            Every property action is disabled while its engine command is
-            scaffolded, so onAction cannot fire yet. Wiring it needs a property
-            picker to supply spaceId - see docs/features/game-turn.md.
-          */}
-          <ActionRail
-            actions={getPropertyActions(activeGame, activePlayer.id)}
-            onAction={noopUntilPropertyPickerExists}
-          />
-
           <BoardGrid
             board={activeGame.board}
             centerSubtitle={BOARD_CENTER_SUBTITLE}
@@ -104,7 +89,6 @@ export function GamePage() {
                 onDismiss={commands.dismissError}
               />
 
-              <HintsPanel hints={uiHints} />
               <div className="button-row">
                 <Link className="secondary-button" to="/">
                   Home
@@ -131,10 +115,11 @@ export function GamePage() {
               canEndTurn={selectCanEndTurn(activeGame)}
               canRoll={selectCanRollDice(activeGame)}
               canRollAgain={activeGame.turn.canRollAgain}
+              speedDieFace={activeGame.turn.speedDieFace}
               lastRoll={activeGame.turn.lastRoll}
               onEndTurn={commands.endTurn}
-              onRoll={() => commands.rollDice(isJailRoll)}
-              rollLabel={isJailRoll ? 'Roll for doubles' : 'Roll dice'}
+              onRoll={commands.rollDice}
+              rollLabel="Roll dice"
             />
           </aside>
         </div>
@@ -143,6 +128,7 @@ export function GamePage() {
           activeGame={activeGame}
           commands={commands}
           currencySymbol={currencySymbol}
+          findToken={findToken}
           overlays={overlays}
           selectedSummary={selectedSummary}
           isMoving={isMoving}
@@ -156,12 +142,4 @@ export function GamePage() {
       </div>
     </div>
   );
-}
-
-/**
- * The rail still has no space to act on - the site panel is the picker, so
- * property actions are dispatched from there instead.
- */
-function noopUntilPropertyPickerExists() {
-  return undefined;
 }

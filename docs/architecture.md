@@ -130,7 +130,7 @@ Drawn cards are returned to the **bottom** of their deck; `jail-free` cards are 
 
 **`createGameState(input, randomSource)`** — builds players (`player-1..n`, `₹1500` each), decides turn order by a simulated opening roll (`chooseFirstPlayerOrder`), shuffles both decks, seeds `ownership` for buyable spaces, writes two opening history events.
 
-**`executeGameCommand(state, command, randomSource)`** — a `switch` over command type. Throws on illegal transitions; scaffolded commands push a string into `uiHints` and change nothing.
+**`executeGameCommand(state, command, randomSource)`** — a `switch` over command type. Throws on illegal transitions. `uiHints` is now always empty - it only ever carried "not implemented yet" notices.
 
 Internal helpers worth knowing before adding logic (reuse these instead of writing new ones):
 
@@ -188,7 +188,7 @@ Clicking any space opens `SpaceDetailCard` (title-deed modal, `role="dialog"`). 
 2. Implement the `case` in `executeGameCommand` — reuse the helpers in §4; return new state, never mutate.
 3. If it introduces a decision, add the `PendingDecision` variant **and** a branch in `renderDecisionPanel()`.
 4. Unit-test it with `SeededRandomSource`.
-5. Remove it from the scaffolded list in CLAUDE.md §4.
+5. Add it to the command list in CLAUDE.md §4.
 
 ### Add a theme
 
@@ -209,6 +209,6 @@ Extend `SpaceKind` + the `BoardSpace` union, then handle it in `resolveCurrentSp
 - **Vite** (`vite.config.mjs`): dev port 3000, output `build/`, base `/monopoly/` in production for GitHub Pages. Also hosts the Vitest config (jsdom, globals, `src/**/*.test.{ts,tsx}`, setup `src/setupTests.ts`).
 - **NX** (`project.json`) wraps Vite for `serve`/`build`/`test`/`lint` with caching.
 - **Playwright** (`playwright.config.ts`): `tests/e2e`, auto-starts the dev server, reuses a running one.
-- **TypeScript**: `strict: false`, `target: es5`, path aliases declared but unused.
+- **TypeScript**: `strict: true`, `target: es2020`, no `exclude`, no path aliases — imports are relative.
 
 Test layering: pure rules → engine unit tests; page behaviour → RTL via `renderWithProviders`; user journeys → Playwright.

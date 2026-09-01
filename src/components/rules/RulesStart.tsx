@@ -26,7 +26,7 @@ export function RulesStart() {
         <li>Each player chooses a token and places it on GO.</li>
         <li>
           Each player rolls both dice. The highest roll goes first; play moves to the
-          left.
+          left. If two players tie for the highest, only those players roll again.
         </li>
       </ol>
       <div className="rules-facts">

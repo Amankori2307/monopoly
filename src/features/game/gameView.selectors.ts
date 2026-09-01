@@ -5,22 +5,28 @@ import {
   getNetWorth,
   getPlayerOwnedSpaces,
 } from '../../domain/rules/holdings.utils';
-import { isOwnableSpace } from '../../domain/rules/space.utils';
-import { DeckName, PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
+import {} from '../../domain/rules/buildings.utils';
+import { getTradableSites } from '../../domain/rules/trade.utils';
+import { selectDecisionViewModel } from './decisionViewModel.selectors';
+
+export { selectDecisionViewModel } from './decisionViewModel.selectors';
+import {
+  GameStatus,
+  PendingDecisionType,
+  TurnPhase,
+} from '../../domain/types/game.enums';
 import type {
   GameState,
-  PendingDecisionCardDraw,
   PlayerId,
   PlayerState,
   ThemeConfig,
   ThemeToken,
 } from '../../domain/types/game.interfaces';
 import type {
-  AuctionDecisionViewModel,
-  CardDrawDecisionViewModel,
-  DecisionViewModel,
-  PlayerSummary,
-} from '../../components/game/panels/panels.interfaces';
+  TradeBuilderViewModel,
+  TradePartyViewModel,
+} from '../../components/game/trade/trade.interfaces';
+import type { PlayerSummary } from '../../components/game/panels/panels.interfaces';
 
 /**
  * Pure derivations from GameState. Unit-testable without React, and the single
@@ -67,8 +73,12 @@ export const selectPlayerSummaries = (
 };
 
 export const selectCanEndTurn = (game: GameState) =>
-  game.turn.phase === TurnPhase.TurnComplete ||
-  game.turn.phase === TurnPhase.AwaitExtraRollOrEnd;
+  // A finished game leaves the phase at TurnComplete, which would otherwise
+  // read as "you may end your turn" - and the engine throws on every command
+  // once the game is complete, so the control has to go.
+  game.status === GameStatus.InProgress &&
+  (game.turn.phase === TurnPhase.TurnComplete ||
+    game.turn.phase === TurnPhase.AwaitExtraRollOrEnd);
 
 /**
  * Decisions that must be answered before anything else can happen.
@@ -82,21 +92,14 @@ const BLOCKING_DECISIONS: ReadonlySet<PendingDecisionType> = new Set([
   PendingDecisionType.AssetLiquidation,
   PendingDecisionType.TradeResponse,
   PendingDecisionType.BankruptcyResolution,
+  PendingDecisionType.SpeedDieBus,
+  PendingDecisionType.SpeedDieDestination,
+  PendingDecisionType.BuildingPlacement,
   PendingDecisionType.GameOver,
 ]);
 
 const hasBlockingDecision = (game: GameState) =>
   BLOCKING_DECISIONS.has(game.pendingDecision.type);
-
-/**
- * Derived from the player, not from `pendingDecision`.
- *
- * The flag and the player's `inJail` can drift apart, and when they did the UI
- * offered a plain roll that the engine rejected - and later, once that roll was
- * guarded, offered nothing at all and deadlocked. The player's own state is the
- * fact that matters.
- */
-export const selectIsJailRoll = (game: GameState) => selectActivePlayer(game).inJail;
 
 export const selectCanRollDice = (game: GameState) => {
   const player = selectActivePlayer(game);
@@ -104,9 +107,13 @@ export const selectCanRollDice = (game: GameState) => {
   if (player.isBankrupt || hasBlockingDecision(game)) {
     return false;
   }
-  // A jailed player rolls for doubles until their turn is done.
+  // A jailed player's roll is a decision action, not a dock action. The jail
+  // panel offers it, because that panel's own backdrop covers the dock - an
+  // enabled-but-unclickable roll button there was how "try for doubles" came to
+  // be unreachable in the first place. They still always have something to do:
+  // the decision itself, which selectHasAvailableAction counts.
   if (player.inJail) {
-    return game.turn.phase !== TurnPhase.TurnComplete;
+    return false;
   }
   return game.turn.phase === TurnPhase.AwaitRoll;
 };
@@ -120,84 +127,36 @@ export const selectHasAvailableAction = (game: GameState) =>
   selectCanEndTurn(game) ||
   selectDecisionViewModel(game) !== null;
 
-/**
- * Builds the decision view model, or null when nothing is pending.
- * Returns null for decision types with no UI yet, which is why GamePage still
- * needs a fallback - see docs/features/game-turn.md.
- */
-const jailDecision = (activePlayer: PlayerState): DecisionViewModel => ({
-  type: PendingDecisionType.JailChoice,
-  playerName: activePlayer.name,
-  canUseJailCard: activePlayer.jailFreeCards > 0,
-});
-
-const auctionDecision = (game: GameState): AuctionDecisionViewModel | null => {
-  const auction = game.auctionState;
-  if (!auction) {
-    return null;
-  }
-  const bidderId = auction.activeBidderOrder[auction.activeBidderIndex];
-  const space = game.board.find((candidate) => candidate.id === auction.spaceId);
-  return {
-    type: PendingDecisionType.AuctionBid,
-    spaceName: space?.name ?? '',
-    activeBidderName: game.players[bidderId]?.name ?? '',
-    highestBid: auction.highestBid,
-    minimumBid: Math.max(auction.startPrice, auction.highestBid + auction.minIncrement),
-    auction,
-  };
-};
-
-const cardDrawDecision = (
-  game: GameState,
-  decision: PendingDecisionCardDraw,
-  activePlayer: PlayerState
-): CardDrawDecisionViewModel => ({
-  type: PendingDecisionType.CardDraw,
-  playerName: game.players[decision.playerId]?.name ?? activePlayer.name,
-  deckLabel: decision.deck === DeckName.Chance ? 'Chance' : 'Community Chest',
-  cardTitle: decision.card.title,
-  cardDescription: decision.card.description,
-});
-
-export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
-  const decision = game.pendingDecision;
-  const activePlayer = selectActivePlayer(game);
-
-  switch (decision.type) {
-    case PendingDecisionType.LandedUnownedProperty: {
-      const space = game.board.find((candidate) => candidate.id === decision.spaceId);
-      if (!space || !isOwnableSpace(space)) {
-        return null;
-      }
-      return {
-        type: PendingDecisionType.LandedUnownedProperty,
-        playerName: activePlayer.name,
-        space,
-      };
-    }
-    case PendingDecisionType.AuctionBid:
-      return auctionDecision(game);
-    case PendingDecisionType.JailChoice:
-      return jailDecision(activePlayer);
-    case PendingDecisionType.CardDraw:
-      return cardDrawDecision(game, decision, activePlayer);
-    case PendingDecisionType.AssetLiquidation:
-      return {
-        type: PendingDecisionType.AssetLiquidation,
-        playerName: game.players[decision.playerId]?.name ?? activePlayer.name,
-        amountDue: decision.amountDue,
-        playerId: decision.playerId,
-      };
-    default:
-      // Falls through to the jail check below, so a jailed player always has
-      // actions even if `pendingDecision` drifted away from `jail-choice`.
-      break;
-  }
-
-  return activePlayer.inJail ? jailDecision(activePlayer) : null;
-};
-
 /** A player's holdings grouped for the holdings drawer. */
 export const selectGroupedHoldings = (game: GameState, playerId: PlayerId) =>
   getGroupedHoldings(game, playerId);
+
+/**
+ * Both sides of a trade the active player is assembling.
+ *
+ * Built here rather than in the component because it needs the board, the
+ * ownership record and the theme's token colours - none of which a
+ * presentational component may reach for.
+ */
+export const selectTradeBuilder = (
+  game: GameState,
+  findToken: (tokenId: string) => ThemeToken | undefined,
+  recipientPlayerId: PlayerId
+): TradeBuilderViewModel | null => {
+  const proposer = selectActivePlayer(game);
+  const recipient = game.players[recipientPlayerId];
+  if (!recipient || recipient.id === proposer.id || recipient.isBankrupt) {
+    return null;
+  }
+
+  const party = (player: PlayerState): TradePartyViewModel => ({
+    playerId: player.id,
+    name: player.name,
+    color: findToken(player.tokenId)?.color ?? '',
+    cash: player.cash,
+    jailCards: player.jailFreeCards.length,
+    sites: getTradableSites(game, player.id),
+  });
+
+  return { proposer: party(proposer), recipient: party(recipient) };
+};

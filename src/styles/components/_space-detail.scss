@@ -241,6 +241,18 @@
     color: var(--text-primary);
     font: 500 0.78rem/1.35 t.$font-mono;
   }
+
+  // The rent actually being charged right now. The card is a fixed height, so
+  // this marks the row in place rather than adding anything to it.
+  .is-current-rent {
+    background: var(--accent-soft);
+
+    dt,
+    dd {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+  }
 }
 
 .deed-footer {

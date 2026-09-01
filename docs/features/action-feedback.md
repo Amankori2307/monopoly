@@ -104,13 +104,13 @@ cash directly, and pass-GO wrote its own sentence with the amount and symbol har
 
 ## Known gaps
 
-- **`AssetLiquidation` is still a deadlock.** When a player cannot pay, the engine sets that
-  decision and nothing can clear it — mortgage is the only exit and is still scaffolded. The
-  insolvent branch also never debits the debtor or pays the creditor; the debt lives only in
-  `amountDue`.
-- Toast tone is inferred from wording. A structured `GameEvent` would be more robust, but costs a
-  schema change and a version bump for a cosmetic gain.
+- **`AssetLiquidation` resolves, and several debts from one card all stand.** The panel lists the
+  buildings you could sell and the sites you could mortgage, says how many debts are waiting behind
+  this one, and offers bankruptcy when nothing is left.
+- Toasts now come from `GameCommandResult.events` rather than from diffing the history: the engine
+  says what it appended.
+- Toast tone comes with the event: the engine sets it at the three money choke points, so
+  rephrasing a message can no longer change its colour.
 - `CardEffectKind.PayEach` is implemented in the engine but no card uses it.
-- `resolveCard`'s `CollectFromEach` / `PayEach` loops read the pre-mutation `state` rather than
-  `nextState`, and each iteration can overwrite the previous player's `AssetLiquidation`. Carried
-  over unchanged by the split; recorded in CLAUDE.md section 8.
+- `resolveCard`'s `CollectFromEach` / `PayEach` loops read `nextState`, and a debt nobody can cover
+  queues behind the first rather than overwriting it.

@@ -112,3 +112,56 @@ describe('useDiceRoller', () => {
     expect(result.current.displayValues).toEqual([3, 5]);
   });
 });
+
+/**
+ * The sound is decoration. It must never be able to stop the roll.
+ */
+describe('when the browser will not play the sound', () => {
+  // `play()` does not return a promise everywhere - jsdom returns undefined,
+  // and so did older Safari - so `.catch()` on it threw out of the roll handler
+  // before either timer was set, and the click did nothing at all.
+  it('still rolls when play() returns no promise', () => {
+    vi.spyOn(window.HTMLMediaElement.prototype, 'play').mockImplementation(
+      () => undefined as unknown as Promise<void>
+    );
+    const onRoll = vi.fn();
+    const { result } = renderHook(() =>
+      useDiceRoller({ canRoll: true, lastRoll: null, onRoll, soundSrc: 'dice.wav' })
+    );
+
+    act(() => result.current.roll());
+    act(() => vi.advanceTimersByTime(DICE_ROLL_DURATION_MS));
+
+    expect(onRoll).toHaveBeenCalledOnce();
+  });
+
+  it('still rolls when play() throws outright', () => {
+    vi.spyOn(window.HTMLMediaElement.prototype, 'play').mockImplementation(() => {
+      throw new Error('NotAllowedError');
+    });
+    const onRoll = vi.fn();
+    const { result } = renderHook(() =>
+      useDiceRoller({ canRoll: true, lastRoll: null, onRoll, soundSrc: 'dice.wav' })
+    );
+
+    act(() => result.current.roll());
+    act(() => vi.advanceTimersByTime(DICE_ROLL_DURATION_MS));
+
+    expect(onRoll).toHaveBeenCalledOnce();
+  });
+
+  it('still rolls when play() rejects', async () => {
+    vi.spyOn(window.HTMLMediaElement.prototype, 'play').mockRejectedValue(
+      new Error('NotAllowedError')
+    );
+    const onRoll = vi.fn();
+    const { result } = renderHook(() =>
+      useDiceRoller({ canRoll: true, lastRoll: null, onRoll, soundSrc: 'dice.wav' })
+    );
+
+    act(() => result.current.roll());
+    act(() => vi.advanceTimersByTime(DICE_ROLL_DURATION_MS));
+
+    expect(onRoll).toHaveBeenCalledOnce();
+  });
+});

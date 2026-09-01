@@ -1,3 +1,5 @@
+import { SpeedDieFace } from '../types/game.enums';
+
 /**
  * Ruleset values for the India Edition. Nothing outside this file should
  * hardcode a money amount, a board index, or a bank inventory count.
@@ -6,7 +8,15 @@
  */
 
 /** Bumped whenever the persisted GameState shape changes. Requires a migration. */
-export const GAME_STATE_VERSION = 1;
+/**
+ * Bump this and add a migration in features/persistence/migrations.ts whenever
+ * GameState changes shape, or saved games break on load.
+ *
+ * 2: the Speed Die (useSpeedDie, turn.speedDieFace, player.hasPassedGo) and
+ *    jailFreeCards as held cards rather than a count.
+ * 3: turn.pendingMonopolyAdvance, for the Mr. Monopoly face.
+ */
+export const GAME_STATE_VERSION = 5;
 
 export const STARTING_CASH = 1500;
 export const PASS_GO_AMOUNT = 200;
@@ -28,6 +38,8 @@ export const CORNER_POSITIONS = [0, 10, 20, 30] as const;
 
 export const HOUSES_AVAILABLE = 32;
 export const HOTELS_AVAILABLE = 12;
+/** Houses a site can hold before the next build is a hotel. */
+export const MAX_HOUSES_PER_SITE = 4;
 /** Build level at which a property holds a hotel rather than houses. */
 export const HOTEL_BUILD_LEVEL = 5;
 
@@ -46,5 +58,17 @@ export const MAX_HISTORY_EVENTS = 120;
 
 export const DEFAULT_CURRENCY_SYMBOL = '₹';
 
-/** Speed Die variant, documented in the rules booklet but not implemented. */
+/** Extra starting cash in a Speed Die game, for every player. */
 export const SPEED_DIE_BONUS_CASH = 1000;
+/**
+ * The printed Speed Die's six faces: 1, 2, 3, two buses, and Mr. Monopoly.
+ * Bus appears twice, which is why it is a list rather than the enum's values.
+ */
+export const SPEED_DIE_FACES = [
+  SpeedDieFace.One,
+  SpeedDieFace.Two,
+  SpeedDieFace.Three,
+  SpeedDieFace.Bus,
+  SpeedDieFace.Bus,
+  SpeedDieFace.MrMonopoly,
+] as const;

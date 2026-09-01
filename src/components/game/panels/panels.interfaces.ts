@@ -1,5 +1,14 @@
-import type { ColorGroupProgress } from '../../../domain/rules/holdings.utils';
-import type { PendingDecisionType } from '../../../domain/types/game.enums';
+import type { SellableBuilding } from '../../../domain/rules/buildings.utils';
+import type { IncomingMortgagedSite, TradeSideSummary } from '../trade/trade.interfaces';
+import type {
+  ColorGroupProgress,
+  MortgageableSite,
+} from '../../../domain/rules/holdings.utils';
+import type {
+  BuildingKind,
+  MortgageChoice,
+  PendingDecisionType,
+} from '../../../domain/types/game.enums';
 import type {
   AuctionState,
   BoardSpace,
@@ -7,6 +16,7 @@ import type {
   OwnershipState,
   PlayerId,
   PlayerState,
+  SpaceId,
   ThemeToken,
 } from '../../../domain/types/game.interfaces';
 
@@ -55,6 +65,11 @@ export interface JailDecisionViewModel {
   type: PendingDecisionType.JailChoice;
   playerName: string;
   canUseJailCard: boolean;
+  /**
+   * Failed attempts at doubles so far, so the panel can say which of the three
+   * the player is about to take. The third failure is where the fine is forced.
+   */
+  attemptsUsed: number;
 }
 
 export interface CardDrawDecisionViewModel {
@@ -70,6 +85,69 @@ export interface LiquidationDecisionViewModel {
   playerName: string;
   amountDue: number;
   playerId: PlayerId;
+  /** Who is owed, or null when the debt is to the bank. */
+  creditorName: string | null;
+  /** What the debt is for, e.g. "rent on Delhi". */
+  reason: string;
+  /**
+   * Sites the debtor can mortgage right now. The panel lists them itself: the
+   * decision modal covers the board, so the site panel is out of reach.
+   */
+  mortgageableSites: MortgageableSite[];
+  /**
+   * Buildings the debtor can sell right now. Buildings block mortgaging their
+   * whole colour set, so this is the first move available to a built-up player.
+   */
+  sellableBuildings: SellableBuilding[];
+  /** True once the debtor's cash covers the debt. */
+  canSettle: boolean;
+  /**
+   * True when the debt exceeds everything the debtor has and could raise. This
+   * is what makes them bankrupt rather than merely short.
+   */
+  isBankrupt: boolean;
+  /** Debts from the same card still waiting behind this one. */
+  queuedDebtCount: number;
+}
+
+export interface TradeResponseDecisionViewModel {
+  type: PendingDecisionType.TradeResponse;
+  recipientName: string;
+  /**
+   * Mortgaged sites coming to the recipient. The printed rule lets them either
+   * clear the mortgage now or pay the 10% and keep it, so the panel asks.
+   */
+  incomingMortgaged: IncomingMortgagedSite[];
+  /** What the recipient receives, and what they hand over. */
+  incoming: TradeSideSummary;
+  outgoing: TradeSideSummary;
+}
+
+export interface SpeedDieBusDecisionViewModel {
+  type: PendingDecisionType.SpeedDieBus;
+  playerName: string;
+  whiteDice: [number, number];
+}
+
+export interface SpeedDieDestinationDecisionViewModel {
+  type: PendingDecisionType.SpeedDieDestination;
+  playerName: string;
+  /** The whole board, because any space on it is a legal answer. */
+  board: BoardSpace[];
+}
+
+export interface BuildingPlacementDecisionViewModel {
+  type: PendingDecisionType.BuildingPlacement;
+  playerName: string;
+  buildingKind: BuildingKind;
+  paidAmount: number;
+  /** The sites this player may legally put it on. */
+  sites: SellableBuilding[];
+}
+
+export interface GameOverDecisionViewModel {
+  type: PendingDecisionType.GameOver;
+  winnerName: string;
 }
 
 export type DecisionViewModel =
@@ -77,7 +155,12 @@ export type DecisionViewModel =
   | AuctionDecisionViewModel
   | JailDecisionViewModel
   | CardDrawDecisionViewModel
-  | LiquidationDecisionViewModel;
+  | LiquidationDecisionViewModel
+  | TradeResponseDecisionViewModel
+  | SpeedDieBusDecisionViewModel
+  | SpeedDieDestinationDecisionViewModel
+  | BuildingPlacementDecisionViewModel
+  | GameOverDecisionViewModel;
 
 export interface DecisionHandlers {
   onBuy: () => void;
@@ -87,5 +170,15 @@ export interface DecisionHandlers {
   onPass: () => void;
   onPayJailFine: () => void;
   onUseJailCard: () => void;
+  onAttemptJailRoll: () => void;
   onAcknowledgeCard: () => void;
+  onMortgageSite: (spaceId: SpaceId) => void;
+  onSellBuilding: (spaceId: SpaceId, isHotel: boolean) => void;
+  onSettleDebt: () => void;
+  onDeclareBankruptcy: () => void;
+  onAcceptTrade: (choices: Record<SpaceId, MortgageChoice>) => void;
+  onRejectTrade: () => void;
+  onChooseBuildingSite: (spaceId: SpaceId) => void;
+  onChooseBusMove: (steps: number) => void;
+  onChooseDestination: (spaceId: SpaceId) => void;
 }

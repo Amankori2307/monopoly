@@ -28,19 +28,7 @@
       "version": "detect"
     }
   },
-  "ignorePatterns": [
-    "build",
-    "coverage",
-    "node_modules",
-    "public",
-    "src/redux",
-    "src/utility",
-    "src/components/monopoly",
-    "src/components/home",
-    "src/components/not_found",
-    "src/assets/css",
-    "*.config.mjs"
-  ],
+  "ignorePatterns": ["build", "coverage", "node_modules", "public", "*.config.mjs"],
   "rules": {
     "eqeqeq": ["error", "smart"],
     "no-console": [
@@ -63,25 +51,6 @@
       {
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_"
-      }
-    ],
-    "no-restricted-imports": [
-      "error",
-      {
-        "patterns": [
-          {
-            "group": [
-              "**/redux/**",
-              "**/utility/**",
-              "**/components/monopoly/**",
-              "**/components/home/**",
-              "**/components/not_found/**",
-              "**/assets/css/**",
-              "**/assets/data/**"
-            ],
-            "message": "Legacy island: this code is unreachable from App.tsx and ships nothing. See CLAUDE.md section 2."
-          }
-        ]
       }
     ],
     "@typescript-eslint/naming-convention": [
@@ -239,14 +208,6 @@
         "max-lines-per-function": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "check-file/filename-naming-convention": "off"
-      }
-    },
-    {
-      "files": ["src/domain/rules/gameEngine.ts"],
-      "rules": {
-        "max-lines": "off",
-        "max-lines-per-function": "off",
-        "complexity": "off"
       }
     },
     {

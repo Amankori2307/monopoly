@@ -52,5 +52,6 @@ change it in the other.
 
 ## Known gaps
 
-- Anchor targets are not verified against the section ids that actually exist.
-- Content can drift from the engine; nothing checks that stated values match the constants.
+- Nothing outstanding. `rulesSync.test.ts` checks three kinds of drift: that every nav link reaches
+  a section the page renders, that the booklet and the ruleset doc cover the same topics, and that
+  every ruleset constant's formatted value still appears in the markdown. Prose is still on you.

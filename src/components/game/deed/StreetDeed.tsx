@@ -4,6 +4,8 @@ import { formatMoney } from '../../../shared/utils/money.utils';
 import { DeedPrimaryStats } from './DeedPrimaryStats';
 
 interface StreetDeedProps {
+  /** What stands on the site now, so the live rent row can be marked. */
+  buildLevel?: number;
   currencySymbol: string;
   space: StreetSpace;
 }
@@ -19,7 +21,12 @@ const rentRows = (space: StreetSpace): Array<[string, number]> => [
   ['With hotel', space.rents.withHotel],
 ];
 
-export function StreetDeed({ currencySymbol, space }: StreetDeedProps) {
+export function StreetDeed({ buildLevel = 0, currencySymbol, space }: StreetDeedProps) {
+  // Row 0 and 1 are the unbuilt rents, and the deed cannot tell which of the
+  // two applies without knowing who owns the rest of the set - so only built
+  // sites get a marked row.
+  const currentRow = buildLevel > 0 ? buildLevel + 1 : -1;
+
   return (
     <>
       <DeedPrimaryStats
@@ -29,8 +36,12 @@ export function StreetDeed({ currencySymbol, space }: StreetDeedProps) {
       />
       <p className="deed-rent-title">Rent schedule</p>
       <dl className="rent-schedule" data-testid={TEST_IDS.rentSchedule}>
-        {rentRows(space).map(([label, amount]) => (
-          <div key={label}>
+        {rentRows(space).map(([label, amount], index) => (
+          <div
+            aria-current={index === currentRow ? 'true' : undefined}
+            className={index === currentRow ? 'is-current-rent' : undefined}
+            key={label}
+          >
             <dt>{label}</dt>
             <dd>{formatMoney(amount, currencySymbol)}</dd>
           </div>

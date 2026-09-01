@@ -14,21 +14,24 @@ export function RulesSpeedDie() {
       </p>
       <ul>
         <li>Roll the Speed Die with the two white dice on your turn.</li>
+        <li>Its six faces are 1, 2, 3, Bus, Bus, and Mr. Monopoly.</li>
         <li>On 1, 2, or 3, add that number to the two white dice total.</li>
         <li>On a Bus, choose the value of one white die or both white dice.</li>
         <li>
           On Mr. Monopoly, move by the white dice as usual, resolve that space, then
           advance to the next unowned asset to buy or auction. If none are unowned,
-          advance to the next player-owned asset and pay rent.
+          advance to the next unmortgaged player-owned asset and pay rent — a mortgaged
+          one is skipped, since it collects nothing.
         </li>
         <li>
           Only white dice count for doubles and for rolling out of Jail. If all three dice
-          match, move to any space on the board.
+          match, move to any space on the board — a triple is not a double, so it earns no
+          extra roll, and it does not send you to Jail even as your third double in a row.
         </li>
       </ul>
       <p className="source-note">
-        In this app, the Speed Die rules are documented here but gameplay support is
-        planned for a later release.
+        Turn it on when you create a game. It cannot be switched on mid-game, which is
+        also what keeps the starting bonus fair.
       </p>
     </section>
   );

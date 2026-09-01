@@ -192,7 +192,7 @@ Every interactive element needs an accessible name. Board spaces, dialogs, and d
 
 ### Styling
 
-The active app uses one plain stylesheet, `src/app/app.css`, imported once in `App.tsx`. The `.scss` modules under `src/assets/css/` belong to the dead legacy island — do not add to them.
+Styling is SCSS under `src/styles/`, entry `main.scss`, imported once in `App.tsx`. See [theming.md](theming.md).
 
 ### Naming
 
@@ -210,7 +210,11 @@ Before writing a helper, check whether the engine already has one (`updatePlayer
 
 The known-duplication table in CLAUDE.md §7 is a working debt list. Touching one of those lines means extracting it and deleting the row — the table should shrink over time, never grow.
 
-**Keep modules small and single-purpose.** `gameEngine.ts` is ~900 lines and is the main candidate for splitting (movement, rent, auction, jail, cards) once building and trading land. When you add a substantial rules area, add it as a new module rather than growing the switch file further.
+**Keep modules small and single-purpose.** `gameEngine.ts` is the main candidate for splitting
+(movement, rent, auction, jail, cards) — it is now just under 2,000 lines. The rules areas added
+since have each gone into their own pure module rather than into the switch file
+(`buildings.utils.ts`, `trade.utils.ts`, `speedDie.utils.ts`); keep doing that, and prefer moving
+existing areas out to growing it further.
 
 ---
 
@@ -218,25 +222,70 @@ The known-duplication table in CLAUDE.md §7 is a working debt list. Touching on
 
 The mandate above is the standard going forward. The repository does **not** meet it today. Honest baseline:
 
-| Area                                           | Unit     | Integration | E2E          |
-| ---------------------------------------------- | -------- | ----------- | ------------ |
-| `gameEngine` (10 implemented commands)         | 15 tests | —           | partial      |
-| Card draw / acknowledge                        | 7 tests  | 4 tests     | yes          |
-| Action feedback (toasts)                       | 13 tests | —           | yes          |
-| `rng` (`SeededRandomSource`, `shuffle`)        | none     | —           | —            |
-| `persistence` (save/load/index/delete/corrupt) | none     | 4 tests     | —            |
-| `gameSlice` thunks                             | —        | none        | —            |
-| `uiSlice`                                      | none     | —           | —            |
-| `HomePage`                                     | —        | 2 tests     | partial      |
-| `GamePage` (board, decision panels)            | —        | none        | 1 smoke spec |
-| `DiceDock`                                     | none     | —           | partial      |
-| `SpaceCard`, `SpaceDetailCard`                 | 2 files  | —           | yes          |
-| Holdings drawer + stack                        | 2 files  | 1 test      | yes          |
+| Area                                           | Unit            | Integration | E2E          |
+| ---------------------------------------------- | --------------- | ----------- | ------------ |
+| `gameEngine` (all 24 commands)                 | 128 tests       | —           | yes          |
+| Card draw / acknowledge                        | 7 tests         | 4 tests     | yes          |
+| Action feedback (toasts)                       | 13 tests        | —           | yes          |
+| `rng` (`SeededRandomSource`, `shuffle`)        | 17 tests        | —           | —            |
+| `persistence` (save/load/index/delete/corrupt) | 5 tests         | 6 tests     | 1 spec       |
+| Saved-game migrations (v1 → v5)                | 18 tests        | —           | 1 spec       |
+| Buildings (both even rules, bank inventory)    | 21 tests        | —           | yes          |
+| Trading (proposal guards, transfer fees)       | 14 tests        | —           | yes          |
+| Speed Die (activation, faces, triples)         | 10 tests        | —           | yes          |
+| `gameSlice` thunks                             | —               | 24 tests    | yes          |
+| `uiSlice`                                      | 13 tests        | —           | —            |
+| `HomePage`                                     | —               | 2 tests     | partial      |
+| `GamePage` (board, decision panels)            | —               | 8 tests     | 1 smoke spec |
+| `DiceDock`                                     | 10 tests (hook) | —           | partial      |
+| `SpaceCard`, `SpaceDetailCard`                 | 2 files         | —           | yes          |
+| Holdings drawer + stack                        | 2 files         | 1 test      | yes          |
+| Documented rules (all 153, by id)              | 7 tests         | —           | —            |
+| Doubles and Speed Die interactions             | 33 tests        | —           | yes          |
+| The documented board (§13, doc as fixture)     | 11 tests        | —           | —            |
+| Bankruptcy, win detection, the debt queue      | in engine       | —           | yes          |
+| Bankruptcy + building auctions                 | in engine       | —           | yes          |
+| Board cell, turn controls, error banner        | 3 files         | —           | yes          |
 
-**Two harness blockers remain before the integration mandate is fully achievable:**
+**The harness blockers are cleared, and so is the coverage gap they existed to unblock.** The
+thunks — the layer this section calls the highest-value one to test — now have 24 integration tests
+that assert on the store _and_ on what landed in `localStorage`, which is the disagreement that
+matters. All three blockers:
 
-1. ~~`pnpm lint` is broken~~ — **fixed.** `.eslintrc.json` now exists and `pnpm lint` passes clean. It also machine-enforces the layer boundaries (see below).
-2. **`renderWithProviders` shares one singleton store** (`src/test/renderWithProviders.tsx` imports `appStore` directly). Any integration test that dispatches leaks state into the next test. Fix: export a `makeStore()` factory from `src/app/appStore.ts`, have `renderWithProviders` build a fresh store per render, and accept a `preloadedState` option.
-3. **`localStorage` is never reset between tests.** Add a global `beforeEach(() => localStorage.clear())` to `src/setupTests.ts` so persistence-touching tests cannot contaminate one another.
+1. ~~`pnpm lint` is broken~~ — **fixed.** `.eslintrc.json` exists and `pnpm lint` passes clean. It also machine-enforces the layer boundaries (see below).
+2. ~~`renderWithProviders` shares one singleton store~~ — **fixed.** `makeStore(preloadedState?)` in [appStore.ts](../src/app/appStore.ts) builds a store; `appStore` is just `makeStore()` for the app, and [renderWithProviders](../src/test/renderWithProviders.tsx) builds a fresh one per render. It also **returns the store**, so a test can assert on what a dispatch did, and accepts `preloadedState` to start from a given slice of state instead of dispatching its way there.
+3. ~~`localStorage` is never reset between tests~~ — **fixed.** A global `beforeEach(() => localStorage.clear())` in [setupTests.ts](../src/setupTests.ts).
 
-Fixing these two is the prerequisite work for the policy in §1.
+Both fixes are themselves tested ([renderWithProviders.test.tsx](../src/test/renderWithProviders.test.tsx), [setupTests.test.ts](../src/setupTests.test.ts)) — the isolation was latent, since jsdom is per file and contamination could only ever happen _within_ a file, which is precisely where it would have gone unnoticed.
+
+**Deliberately not done:** `setupTests.ts` does not call `vi.restoreAllMocks()`. Several suites install spies they never restore (`logger.utils.test.ts` mocks `Storage.prototype.setItem`; others mock `console`), and restoring them globally would change those tests' behaviour rather than fix it. Left as a separate, known hazard.
+
+### Scripting the dice
+
+Use [scriptedRolls](../src/test/scriptedRandomSource.ts) when a test is about a **particular** roll,
+rather than hunting for a seed that happens to produce one:
+
+```ts
+executeGameCommand(
+  state,
+  { type: GameCommandType.RollTurnDice },
+  scriptedRolls([{ white: [3, 3], speedDie: SpeedDieFace.Three }])
+);
+```
+
+A roll is three draws — two white dice, then the Speed Die's face index when it is in play — and each
+queued draw records which it is, so a script that falls out of step with the engine throws instead of
+handing back a face index where a die was wanted. Once the script runs out it falls through to a
+seeded source, so a test need not script what it is not about.
+
+`SeededRandomSource` is still right when a test only needs determinism, not a specific outcome.
+
+### Writing an integration test
+
+```ts
+const { store } = renderWithProviders(<GamePage />, {
+  preloadedState: { game: { activeGame: seededGame, /* ... */ } },
+});
+// act on the UI, then assert on the store and on localStorage
+expect(store.getState().game.activeGame?.turn.phase).toBe(TurnPhase.AwaitRoll);
+```

@@ -263,14 +263,33 @@ test('always leaves the player at least one action', async ({ page }) => {
   await startGame(page);
 
   const anyActionAvailable = async () => {
-    const enabled = await page
-      .locator('button:not([disabled])')
-      .filter({
-        hasText:
-          /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^OK$/,
-      })
-      .count();
-    return enabled > 0;
+    // `:not(.toast)` matters more than it looks: a toast is a button, and its
+    // message is the engine's own sentence - so "Player 1 bought Delhi." would
+    // have satisfied this check and masked exactly the deadlock it exists to
+    // catch.
+    const candidates = page.locator('button:not([disabled]):not(.toast)').filter({
+      hasText:
+        /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^OK$/,
+    });
+    const count = await candidates.count();
+    if (count === 0) {
+      return false;
+    }
+
+    // Enabled is not the same as usable, and the difference was a real bug: the
+    // jail panel's roll lived on the dice dock, under a full-viewport modal
+    // backdrop, so it was enabled and impossible to click. A trial click runs
+    // Playwright's actionability checks - including occlusion - without firing
+    // the handler.
+    for (let index = 0; index < count; index += 1) {
+      try {
+        await candidates.nth(index).click({ trial: true, timeout: 250 });
+        return true;
+      } catch {
+        // Covered or otherwise unusable; try the next one.
+      }
+    }
+    return false;
   };
 
   for (let turn = 0; turn < 40; turn += 1) {
@@ -287,8 +306,12 @@ test('always leaves the player at least one action', async ({ page }) => {
     const rollButton = page.getByTestId(TEST_IDS.rollButton);
     const endTurnButton = page.getByTestId(TEST_IDS.endTurnButton);
     const declineButton = page.getByTestId(TEST_IDS.declineButton);
-    const payFine = page.getByRole('button', { name: /^Pay \u20b9/ });
-    const passAuction = page.getByRole('button', { name: 'Pass' });
+    // Scoped to the decision panel, and exact. Toasts are buttons too, so an
+    // unscoped substring match on "Pass" also matched the "collected ₹200 -
+    // passing GO." toast the moment both were on screen.
+    const decisionPanel = page.getByTestId(TEST_IDS.decisionPanel);
+    const payFine = decisionPanel.getByRole('button', { name: /^Pay \u20b9/ });
+    const passAuction = decisionPanel.getByRole('button', { name: 'Pass', exact: true });
 
     const acknowledgeCard = page.getByTestId(TEST_IDS.acknowledgeCardButton);
 

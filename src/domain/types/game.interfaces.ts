@@ -6,13 +6,16 @@
  * ../constants/game.constants.ts.
  */
 import type {
+  BuildingKind,
   CardDeck,
   CardEffectKind,
   ColorGroup,
   DeckName,
+  MortgageChoice,
+  SpeedDieFace,
   GameCommandType,
+  GameEventTone,
   GameStatus,
-  PendingDecisionType,
   SpaceKind,
   TurnPhase,
 } from './game.enums';
@@ -105,9 +108,16 @@ export interface PlayerState {
   position: number;
   inJail: boolean;
   jailTurnsServed: number;
-  jailFreeCards: number;
+  /**
+   * The Get Out of Jail Free cards this player is holding, as cards rather than
+   * a count. A count could not say which deck one came from, so a used card
+   * could never go back and both left circulation permanently.
+   */
+  jailFreeCards: DeckCard[];
   isBankrupt: boolean;
   bankruptcyRank: number | null;
+  /** The Speed Die stays out of play until every player has been round once. */
+  hasPassedGo: boolean;
 }
 
 export interface OwnershipState {
@@ -149,82 +159,56 @@ export type DeckState = Record<DeckName, DeckCard[]>;
 export interface TurnState {
   phase: TurnPhase;
   doublesCount: number;
+  /** The two white dice. The Speed Die is kept separate - see speedDieFace. */
   lastRoll: number[] | null;
   canRollAgain: boolean;
   reason: string | null;
+  /**
+   * The Speed Die's face this turn, or null when it was not rolled. Separate
+   * from lastRoll on purpose: only the white dice decide doubles and Jail, and
+   * a third entry in that array would have to be excluded at every reader.
+   */
+  speedDieFace: SpeedDieFace | null;
+  /**
+   * True while a Mr. Monopoly advance is owed. The advance happens *after* the
+   * landed space is resolved, and that space may itself raise a decision - so
+   * it cannot simply run inline, and has to survive until the turn is clear.
+   */
+  pendingMonopolyAdvance: boolean;
 }
 
-export interface PendingDecisionNone {
-  type: PendingDecisionType.None;
-}
+import type { PendingDecision } from './decisions.interfaces';
 
-export interface PendingDecisionProperty {
-  type: PendingDecisionType.LandedUnownedProperty;
-  spaceId: SpaceId;
-  playerId: PlayerId;
-}
-
-export interface PendingDecisionAuction {
-  type: PendingDecisionType.AuctionBid;
-  auctionId: AuctionId;
-}
-
-export interface PendingDecisionJail {
-  type: PendingDecisionType.JailChoice;
-  playerId: PlayerId;
-}
-
-/**
- * A drawn Chance or Community Chest card, waiting to be acknowledged. The card
- * rides inside the decision rather than in a field of its own on GameState:
- * schema.ts validates pendingDecision with `.passthrough()`, so it survives a
- * save/load round trip, whereas a new top-level field would be silently
- * stripped by the surrounding `z.object`.
- */
-export interface PendingDecisionCardDraw {
-  type: PendingDecisionType.CardDraw;
-  playerId: PlayerId;
-  deck: DeckName;
-  card: DeckCard;
-}
-
-export interface PendingDecisionAssetLiquidation {
-  type: PendingDecisionType.AssetLiquidation;
-  playerId: PlayerId;
-  amountDue: number;
-  creditorPlayerId: PlayerId | null;
-  reason: string;
-}
-
-export interface PendingDecisionTrade {
-  type: PendingDecisionType.TradeResponse;
-  proposerPlayerId: PlayerId;
-  recipientPlayerId: PlayerId;
-}
-
-export interface PendingDecisionBankruptcy {
-  type: PendingDecisionType.BankruptcyResolution;
-  playerId: PlayerId;
-}
-
-export interface PendingDecisionGameOver {
-  type: PendingDecisionType.GameOver;
-}
-
-export type PendingDecision =
-  | PendingDecisionNone
-  | PendingDecisionProperty
-  | PendingDecisionAuction
-  | PendingDecisionJail
-  | PendingDecisionCardDraw
-  | PendingDecisionAssetLiquidation
-  | PendingDecisionTrade
-  | PendingDecisionBankruptcy
-  | PendingDecisionGameOver;
+export type {
+  DebtRecord,
+  PendingDecision,
+  PendingDecisionAssetLiquidation,
+  PendingDecisionAuction,
+  PendingDecisionBankruptcy,
+  PendingDecisionBuildingPlacement,
+  PendingDecisionCardDraw,
+  PendingDecisionGameOver,
+  PendingDecisionJail,
+  PendingDecisionNone,
+  PendingDecisionProperty,
+  PendingDecisionSpeedDieBus,
+  PendingDecisionSpeedDieDestination,
+  PendingDecisionTrade,
+} from './decisions.interfaces';
 
 export interface AuctionState {
   id: AuctionId;
+  /**
+   * The property being auctioned, or - for a building auction - the site whose
+   * build request triggered it. The winner of a building auction picks their
+   * own site, so this is only what set the opening price.
+   */
   spaceId: SpaceId;
+  /**
+   * Set when the bank is short of buildings and this auction is for one of
+   * them rather than for the property itself.
+   */
+  buildingKind?: BuildingKind;
   startPrice: number;
   minIncrement: number;
   activeBidderOrder: PlayerId[];
@@ -250,6 +234,8 @@ export interface GameEvent {
   turnNumber: number;
   createdAt: string;
   message: string;
+  /** Which way money moved, set where it moved. */
+  tone: GameEventTone;
 }
 
 // -- Theme -------------------------------------------------------------------
@@ -290,9 +276,22 @@ export interface GameState {
   turn: TurnState;
   pendingDecision: PendingDecision;
   tradeState: TradeState | null;
+  /**
+   * Properties waiting to be auctioned, oldest first.
+   *
+   * A bankruptcy to the bank returns everything at once, and the printed rule
+   * has the bank auction each one - so they queue and are sold in turn. Only
+   * one auction can run at a time.
+   */
+  pendingAuctionSpaceIds: SpaceId[];
   auctionState: AuctionState | null;
   history: GameEvent[];
   winnerPlayerId: PlayerId | null;
+  /**
+   * Whether this game plays with the Speed Die. Fixed at setup - the printed
+   * rule has it agreed before play starts, not switched on mid-game.
+   */
+  useSpeedDie: boolean;
 }
 
 export interface StoredGameIndexEntry {
@@ -322,6 +321,8 @@ export interface CreateGameInput {
   playerConfigs: CreatePlayerInput[];
   themeId: ThemeId;
   createdAt: string;
+  /** Agreed before the game starts, and fixed for its lifetime. */
+  useSpeedDie?: boolean;
 }
 
 export type GameCommand =
@@ -335,15 +336,27 @@ export type GameCommand =
   | { type: GameCommandType.UseJailFreeCard }
   | { type: GameCommandType.AttemptJailRoll }
   | { type: GameCommandType.AcknowledgeCard }
+  | { type: GameCommandType.SettleDebt }
   | { type: GameCommandType.EndTurn }
   | { type: GameCommandType.BuildHouse; spaceId: SpaceId }
   | { type: GameCommandType.BuildHotel; spaceId: SpaceId }
   | { type: GameCommandType.SellHouse; spaceId: SpaceId }
   | { type: GameCommandType.SellHotel; spaceId: SpaceId }
+  | { type: GameCommandType.ChooseBuildingSite; spaceId: SpaceId }
   | { type: GameCommandType.MortgageAsset; spaceId: SpaceId }
   | { type: GameCommandType.UnmortgageAsset; spaceId: SpaceId }
   | { type: GameCommandType.ProposeTrade; payload: TradeState }
-  | { type: GameCommandType.AcceptTrade }
+  | { type: GameCommandType.ChooseBusMove; steps: number }
+  | { type: GameCommandType.ChooseSpeedDieDestination; spaceId: SpaceId }
+  | {
+      type: GameCommandType.AcceptTrade;
+      /**
+       * What the receiver does about each mortgaged site coming to them:
+       * `redeem` clears the mortgage now, `keep` pays the 10% and leaves it
+       * mortgaged. Sites left out default to `keep`.
+       */
+      mortgageChoices?: Record<SpaceId, MortgageChoice>;
+    }
   | { type: GameCommandType.RejectTrade }
   | { type: GameCommandType.ConfirmBankruptcy };
 
@@ -357,5 +370,11 @@ export interface GameCommandResult {
   nextState: GameState;
   events: GameEvent[];
   saveRequired: boolean;
+  /**
+   * Advisory notes for the UI. Empty since every command was implemented - the
+   * only messages it ever carried were "not implemented yet". Kept in the
+   * contract for a future command that needs to say something the history does
+   * not; nothing renders it today.
+   */
   uiHints: string[];
 }
