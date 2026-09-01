@@ -154,6 +154,20 @@ export enum MortgageChoice {
 }
 
 /**
+ * Which way a token travelled to reach its space.
+ *
+ * Stated by every caller of `movePlayerTo` rather than defaulted, because two
+ * readers depend on it and neither can work it out for itself: the GO salary is
+ * only paid going forward, and the walking animation has to know which way round
+ * the board to step. The wrap test `next < current` is true of every backward
+ * move too, so position alone cannot tell them apart.
+ */
+export enum MoveDirection {
+  Forward = 'forward',
+  Backward = 'backward',
+}
+
+/**
  * What one line of an auction's ledger records.
  *
  * The ledger is the panel's narrative of a single auction, kept apart from the

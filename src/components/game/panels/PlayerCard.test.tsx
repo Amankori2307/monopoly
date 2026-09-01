@@ -20,6 +20,7 @@ const summary = (overrides: Partial<PlayerSummary> = {}): PlayerSummary => ({
     isBankrupt: false,
     bankruptcyRank: null,
     hasPassedGo: false,
+    lastMove: null,
   },
   token: indiaEditionTheme.tokenCatalog[0],
   propertyCount: 0,

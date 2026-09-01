@@ -113,7 +113,11 @@ export function GamePage() {
 
             <TurnControls
               canEndTurn={selectCanEndTurn(activeGame)}
-              canRoll={selectCanRollDice(activeGame)}
+              // Not while a token is walking. A double puts the turn straight
+              // into AwaitExtraRollOrEnd, so Roll went live mid-walk - and the
+              // second roll then restarted the walk from wherever the token had
+              // got to, cutting both legs short.
+              canRoll={selectCanRollDice(activeGame) && !isMoving}
               canRollAgain={activeGame.turn.canRollAgain}
               speedDieFace={activeGame.turn.speedDieFace}
               lastRoll={activeGame.turn.lastRoll}

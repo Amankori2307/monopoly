@@ -1,6 +1,7 @@
 import {
   CardEffectKind,
   GameCommandType,
+  MoveDirection,
   PendingDecisionType,
 } from '../../../types/game.enums';
 import type { DeckCard, GameState } from '../../../types/game.interfaces';
@@ -39,11 +40,14 @@ const applyCardEffect = (
     case CardEffectKind.Pay:
       return resolveBankPayment(nextState, activePlayer.id, effect.amount, card.title);
     case CardEffectKind.MoveTo: {
+      // Every MoveTo card is an "Advance to ...", so the token goes forward -
+      // round the whole board if that is what it takes.
       nextState = movePlayerTo(
         nextState,
         activePlayer.id,
         effect.index,
-        effect.collectGo
+        effect.collectGo,
+        MoveDirection.Forward
       );
       // The player did not roll their way here, so a utility's rent is charged
       // on a fresh throw - the printed rule for any card-driven arrival.
@@ -59,13 +63,14 @@ const applyCardEffect = (
         (activePlayer.position + effect.steps + nextState.board.length) %
         nextState.board.length;
       // A MoveSteps card may go backwards ("go back three spaces"), which is
-      // the case the isForward flag exists for.
+      // the case the direction argument exists for.
+      const direction = effect.steps > 0 ? MoveDirection.Forward : MoveDirection.Backward;
       nextState = movePlayerTo(
         nextState,
         activePlayer.id,
         destination,
-        effect.steps > 0,
-        effect.steps > 0
+        direction === MoveDirection.Forward,
+        direction
       );
       return resolveCurrentSpace(
         nextState,

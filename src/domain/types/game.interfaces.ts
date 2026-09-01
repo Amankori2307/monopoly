@@ -13,6 +13,7 @@ import type {
   ColorGroup,
   DeckName,
   MortgageChoice,
+  MoveDirection,
   SpeedDieFace,
   GameCommandType,
   GameEventTone,
@@ -119,6 +120,15 @@ export interface PlayerState {
   bankruptcyRank: number | null;
   /** The Speed Die stays out of play until every player has been round once. */
   hasPassedGo: boolean;
+  /**
+   * Which way this player last travelled, or null before their first move.
+   *
+   * Recorded so the walking animation replays the move the engine actually made
+   * instead of inferring one from the position change - an inference that could
+   * not tell "go back three spaces" from thirty-seven forward, and walked the
+   * token the wrong way round the board.
+   */
+  lastMove: MoveDirection | null;
 }
 
 export interface OwnershipState {

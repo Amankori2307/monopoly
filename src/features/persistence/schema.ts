@@ -6,6 +6,7 @@ import {
   CardEffectKind,
   ColorGroup,
   GameEventTone,
+  MoveDirection,
   GameStatus,
   PendingDecisionType,
   SpaceKind,
@@ -85,6 +86,8 @@ const playerSchema = z.object({
   isBankrupt: z.boolean(),
   bankruptcyRank: z.number().nullable(),
   hasPassedGo: z.boolean(),
+  /** Which way they last travelled, so the walk animation replays it. */
+  lastMove: z.nativeEnum(MoveDirection).nullable(),
 });
 
 // -- Board -------------------------------------------------------------------

@@ -115,6 +115,56 @@ describe('taking a turn from the page', () => {
     expect(storedGame(game.id).history.length).toBe(inStore?.history.length);
   });
 
+  /**
+   * The doubles complaint. A double leaves the turn in AwaitExtraRollOrEnd the
+   * instant the engine resolves, so the button came back live while the token
+   * was still walking - and the second roll then restarted the walk from
+   * wherever the token had got to, cutting both legs short.
+   */
+  it('will not offer another roll while the token is still walking', async () => {
+    const game = seedGame();
+    const { store } = renderPage(game.id);
+    await screen.findByTestId(TEST_IDS.boardGrid);
+
+    fireEvent.click(screen.getByTestId(TEST_IDS.rollButton));
+    await waitFor(
+      () =>
+        expect(store.getState().game.activeGame?.turn.phase).not.toBe(
+          TurnPhase.AwaitRoll
+        ),
+      { timeout: 3000 }
+    );
+
+    // The engine has moved them; the token has not caught up yet.
+    expect(screen.getByTestId(TEST_IDS.rollButton)).toBeDisabled();
+  });
+
+  it('offers the roll again once the token has landed', async () => {
+    const game = seedGame();
+    const { store } = renderPage(game.id);
+    await screen.findByTestId(TEST_IDS.boardGrid);
+
+    fireEvent.click(screen.getByTestId(TEST_IDS.rollButton));
+    await waitFor(
+      () =>
+        expect(store.getState().game.activeGame?.turn.phase).not.toBe(
+          TurnPhase.AwaitRoll
+        ),
+      { timeout: 3000 }
+    );
+
+    // Either the walk finishes and the extra roll is offered, or the turn had no
+    // extra roll to give - both are settled states, neither is mid-walk.
+    await waitFor(
+      () => {
+        const canRollAgain = store.getState().game.activeGame?.turn.canRollAgain;
+        const rollButton = screen.getByTestId(TEST_IDS.rollButton);
+        expect(canRollAgain ? !rollButton.hasAttribute('disabled') : true).toBe(true);
+      },
+      { timeout: 5000 }
+    );
+  });
+
   it('shows the roll in the activity feed as a toast', async () => {
     const game = seedGame();
     const { store } = renderPage(game.id);

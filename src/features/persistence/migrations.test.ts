@@ -237,3 +237,36 @@ describe('giving an in-flight auction a ledger', () => {
     ]);
   });
 });
+
+/**
+ * v6 -> v7: each player records which way they last travelled.
+ *
+ * The direction was an argument that went nowhere before this, so an older save
+ * cannot say - every player comes back with none, and the animation reads that
+ * as forward, which is every ordinary move.
+ */
+describe('giving players a recorded direction', () => {
+  const playersSave = (players: unknown) =>
+    migrateSavedGame({ version: 6, players }) as {
+      version: number;
+      players: Record<string, { lastMove: unknown; cash?: number }>;
+    };
+
+  it('gives every player no direction, keeping the rest of them', () => {
+    const migrated = playersSave({
+      'player-1': { id: 'player-1', cash: 1500, position: 4 },
+      'player-2': { id: 'player-2', cash: 900, position: 17 },
+    });
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+    expect(migrated.players['player-1'].lastMove).toBeNull();
+    expect(migrated.players['player-2'].lastMove).toBeNull();
+    expect(migrated.players['player-2'].cash).toBe(900);
+  });
+
+  it('copes with a save that has no players at all', () => {
+    const migrated = migrateSavedGame({ version: 6 }) as { version: number };
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+  });
+});

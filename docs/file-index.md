@@ -80,15 +80,15 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Data
 
-| File                                                                       | What it does                                                                        |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)     | The 40 board spaces with prices, rents, and colour groups.                          |
-| [board/board.rules.test.ts](../src/domain/board/board.rules.test.ts)       | The board checked against section 13 of the ruleset doc, read as the fixture.       |
-| [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)     | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                        |
-| [board/tokenMovement.utils.ts](../src/domain/board/tokenMovement.utils.ts) | Forward step count, whether a move is walkable, and the path it passes through.     |
-| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)     | Chance and Community Chest deck contents and effects.                               |
-| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts)   | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS. |
-| [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)         | Which edge of the board a space sits on; drives which side its colour ribbon hugs.  |
+| File                                                                       | What it does                                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)     | The 40 board spaces with prices, rents, and colour groups.                           |
+| [board/board.rules.test.ts](../src/domain/board/board.rules.test.ts)       | The board checked against section 13 of the ruleset doc, read as the fixture.        |
+| [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)     | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                         |
+| [board/tokenMovement.utils.ts](../src/domain/board/tokenMovement.utils.ts) | Board geometry for the walk: steps and the path it passes through, either way round. |
+| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)     | Chance and Community Chest deck contents and effects.                                |
+| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts)   | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS.  |
+| [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)         | Which edge of the board a space sits on; drives which side its colour ribbon hugs.   |
 
 ### Domain tests
 
@@ -98,7 +98,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.                                     |
 | [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.                                       |
 | [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.                                      |
-| [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Forward steps, GO wrapping, walkable vs teleport, path contents.                         |
+| [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Steps and paths both ways, wrapping past GO either way, and a full round.                |
 | [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping.                         |
 | [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)           | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard. |
 | [rules/buildings.utils.test.ts](../src/domain/rules/buildings.utils.test.ts)         | Both even rules as a table of levels, bank shortages, and what buildings could raise.    |
@@ -276,6 +276,8 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [shared/components/ErrorBoundary.test.tsx](../src/shared/components/ErrorBoundary.test.tsx) | The fallback, the log entry, and the full-reload way out.                               |
 | [utils/logger.utils.test.ts](../src/shared/utils/logger.utils.test.ts)                      | Ring cap, persistence, error filtering, storage-failure safety.                         |
 | [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                                  | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
+| [utils/audio.utils.ts](../src/shared/utils/audio.utils.ts)                                  | `playSound` (a `play()` returning nothing must not throw) and a round-robin clip pool.  |
+| [utils/audio.utils.test.ts](../src/shared/utils/audio.utils.test.ts)                        | Every way play() can fail, and the pool round-robin.                                    |
 | [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)                        | Unit tests for money formatting.                                                        |
 | [hooks/useEscapeKey.ts](../src/shared/hooks/useEscapeKey.ts)                                | Escape-to-dismiss for overlays, with listener cleanup.                                  |
 | [hooks/useEscapeKey.test.ts](../src/shared/hooks/useEscapeKey.test.ts)                      | Unit tests, including that the listener is removed on unmount.                          |
@@ -326,6 +328,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [tests/e2e/jail.spec.ts](../tests/e2e/jail.spec.ts)                                       | A jailed player taking their three free attempts at doubles.                                                      |
 | [tests/e2e/trade.spec.ts](../tests/e2e/trade.spec.ts)                                     | Proposing, accepting and rejecting a two-sided deal.                                                              |
 | [tests/e2e/auction.spec.ts](../tests/e2e/auction.spec.ts)                                 | The auction panel: the deed, the log, the prefilled bid, a refused bid, and the win.                              |
+| [tests/e2e/movement.spec.ts](../tests/e2e/movement.spec.ts)                               | A full round on Advance to GO, a backward card, the backward trip to Jail, and the roll gate.                     |
 | [tests/e2e/speed-die.spec.ts](../tests/e2e/speed-die.spec.ts)                             | The third die, the bus choice, and a three-of-a-kind move.                                                        |
 | [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                                     | Booklet nav resolves, the FAQ answers, and amounts render in ₹.                                                   |
 | [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)                               | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.                                        |

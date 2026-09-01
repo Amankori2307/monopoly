@@ -48,6 +48,21 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   column on narrow screens. The auction panel is built the same way; see
   [auctions.md](auctions.md).
 
+- **The animation is told which way the token went; it does not work it out.** `movePlayerTo` takes
+  a required `MoveDirection` and records it as `player.lastMove`, and
+  [useAnimatedTokenPositions](../../src/components/game/hooks/useAnimatedTokenPositions.ts) replays
+  that. Inferring it from the position change is not possible — three spaces back and thirty-seven
+  forward end on the same square — and the inference came with a twelve-space cap, so "Advance to GO"
+  teleported, a backward card snapped, and a Go To Jail card drawn just past GO walked the token
+  _forward_ into Jail like an ordinary roll. Every move is walked now, however long; the per-step
+  interval shrinks with distance so a full round is about two and a half seconds rather than seven,
+  and every step ticks.
+
+- **Rolling is blocked while a token walks.** A double leaves the turn in `AwaitExtraRollOrEnd` the
+  moment the engine resolves, so Roll came back live mid-walk and the second roll restarted the walk
+  from the token's display position — cutting both legs short. `GamePage` gates `canRoll` on
+  `isMoving`, the same flag that already withholds decision modals.
+
 - **Command pattern over direct mutation.** One choke point means saving, logging, and undo are
   possible without touching the UI, and rules stay unit-testable with no React in scope.
 - **Dice are injected** via `RandomSource` so tests are deterministic; the UI's dice animation is

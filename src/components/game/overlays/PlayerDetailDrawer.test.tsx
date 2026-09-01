@@ -52,6 +52,7 @@ const summary: PlayerSummary = {
     isBankrupt: false,
     bankruptcyRank: null,
     hasPassedGo: false,
+    lastMove: null,
   },
   token: indiaEditionTheme.tokenCatalog[0],
   propertyCount: 2,

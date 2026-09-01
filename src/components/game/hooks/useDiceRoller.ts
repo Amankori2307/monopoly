@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { playSound } from '../../../shared/utils/audio.utils';
 import { describeError, logger } from '../../../shared/utils/logger.utils';
 import { DIE_MAX, DIE_MIN } from '../../../domain/constants/game.constants';
 import {
@@ -35,21 +36,6 @@ const randomDie = () => Math.floor(Math.random() * (DIE_MAX - DIE_MIN + 1)) + DI
  * Autoplay policy, a missing file and an environment with no audio at all are
  * all the same thing here: no sound, and a roll that still happens.
  */
-const playRollSound = (audio: HTMLAudioElement | null) => {
-  if (!audio) {
-    return;
-  }
-  try {
-    audio.currentTime = 0;
-    const played: unknown = audio.play();
-    if (played instanceof Promise) {
-      void played.catch(() => undefined);
-    }
-  } catch {
-    // No sound. The roll carries on.
-  }
-};
-
 export const useDiceRoller = ({
   canRoll,
   lastRoll,
@@ -103,7 +89,7 @@ export const useDiceRoller = ({
     // and so did older Safari - so `.catch()` on it threw synchronously, out of
     // `roll` and into React's event handler, before either timer below was set.
     // The click then did nothing at all.
-    playRollSound(audioRef.current);
+    playSound(audioRef.current);
 
     shuffleTimerRef.current = window.setInterval(() => {
       setDisplayValues([randomDie(), randomDie()]);

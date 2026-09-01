@@ -19,6 +19,7 @@ const makeSummary = (index: number): PlayerSummary => ({
     isBankrupt: false,
     bankruptcyRank: null,
     hasPassedGo: false,
+    lastMove: null,
   },
   token: indiaEditionTheme.tokenCatalog[index],
   propertyCount: 0,

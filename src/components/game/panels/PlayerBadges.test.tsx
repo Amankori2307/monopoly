@@ -27,6 +27,7 @@ const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
   isBankrupt: false,
   bankruptcyRank: null,
   hasPassedGo: false,
+  lastMove: null,
   ...overrides,
 });
 

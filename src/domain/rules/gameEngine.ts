@@ -141,6 +141,7 @@ const createPlayers = (input: CreateGameInput): Record<PlayerId, PlayerState> =>
         jailTurnsServed: 0,
         jailFreeCards: [],
         hasPassedGo: false,
+        lastMove: null,
         isBankrupt: false,
         bankruptcyRank: null,
       };

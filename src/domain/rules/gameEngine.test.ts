@@ -3,6 +3,7 @@ import {
   AuctionLedgerKind,
   BuildingKind,
   ColorGroup,
+  MoveDirection,
   GameCommandType,
   GameEventTone,
   GameStatus,
@@ -4945,6 +4946,7 @@ describe('doubles and the Speed Die', () => {
             {
               ...player,
               hasPassedGo: true,
+              lastMove: null,
               position: id === playerId ? 0 : player.position,
             },
           ])
@@ -5265,5 +5267,209 @@ describe('a Mr. Monopoly advance with nothing unowned', () => {
     const { state, mover } = allOwned(() => true);
 
     expect(findMonopolyAdvance(state, mover)).toBeNull();
+  });
+});
+
+/**
+ * Which way the token went, recorded by the engine.
+ *
+ * The walking animation replays `player.lastMove` instead of inferring a
+ * direction from the position change, because that inference cannot be made:
+ * three spaces back and thirty-seven forward end on the same square. It read
+ * every move as forward and capped the walk at a dice roll, so "Advance to GO"
+ * teleported and a Go To Jail card drawn just past GO strolled the token in as
+ * though it had rolled a three.
+ */
+describe('recording the direction of a move', () => {
+  const CHANCE_NEAR_GO = 7;
+
+  /** Puts the active player on a space with a given card already drawn. */
+  const withDrawnCard = (position: number, card: DeckCard): GameState => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+
+    return {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.CardDraw,
+        playerId: activePlayerId,
+        deck: card.deck === CardDeck.Chance ? DeckName.Chance : DeckName.CommunityChest,
+        card,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+  };
+
+  const acknowledge = (state: GameState) =>
+    executeGameCommand(
+      state,
+      { type: GameCommandType.AcknowledgeCard },
+      new SeededRandomSource(3)
+    ).nextState;
+
+  it('starts every player with no recorded move', () => {
+    const game = createBaseGame();
+
+    game.playerOrder.forEach((playerId) => {
+      expect(game.players[playerId].lastMove).toBeNull();
+    });
+  });
+
+  it('records a rolled move as forward', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+
+    const rolled = executeGameCommand(
+      game,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(7)
+    ).nextState;
+
+    expect(rolled.players[activePlayerId].lastMove).toBe(MoveDirection.Forward);
+  });
+
+  it('records an advance card as forward, and pays for the trip', () => {
+    const advanceToGo: DeckCard = {
+      id: 'test-advance-go',
+      deck: CardDeck.Chance,
+      title: 'Advance to GO',
+      description: 'Advance to GO.',
+      effect: { kind: CardEffectKind.MoveTo, index: GO_POSITION, collectGo: true },
+    };
+    const state = withDrawnCard(20, advanceToGo);
+    const activePlayerId = state.playerOrder[state.activePlayerIndex];
+    const before = state.players[activePlayerId].cash;
+
+    const next = acknowledge(state);
+
+    expect(next.players[activePlayerId].position).toBe(GO_POSITION);
+    expect(next.players[activePlayerId].lastMove).toBe(MoveDirection.Forward);
+    expect(next.players[activePlayerId].cash).toBe(before + PASS_GO_AMOUNT);
+  });
+
+  it('records "go back three spaces" as backward', () => {
+    const backThree: DeckCard = {
+      id: 'test-back-three',
+      deck: CardDeck.Chance,
+      title: 'Go back three spaces',
+      description: 'Move back three spaces.',
+      effect: { kind: CardEffectKind.MoveSteps, steps: -3 },
+    };
+    const state = withDrawnCard(22, backThree);
+    const activePlayerId = state.playerOrder[state.activePlayerIndex];
+
+    const next = acknowledge(state);
+
+    expect(next.players[activePlayerId].position).toBe(19);
+    expect(next.players[activePlayerId].lastMove).toBe(MoveDirection.Backward);
+  });
+
+  it('records a forward MoveSteps card as forward', () => {
+    const forwardThree: DeckCard = {
+      id: 'test-forward-three',
+      deck: CardDeck.Chance,
+      title: 'Go forward three spaces',
+      description: 'Move forward three spaces.',
+      effect: { kind: CardEffectKind.MoveSteps, steps: 3 },
+    };
+    const state = withDrawnCard(5, forwardThree);
+    const activePlayerId = state.playerOrder[state.activePlayerIndex];
+
+    expect(acknowledge(state).players[activePlayerId].lastMove).toBe(
+      MoveDirection.Forward
+    );
+  });
+
+  /**
+   * Being sent to Jail is recorded as backward, because that is the truth of it:
+   * the printed rule pays no salary for the trip, so walking the token forward
+   * round the board would show a journey that did not happen.
+   */
+  it('records landing on Go To Jail as backward', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const goToJailIndex = game.board.findIndex(
+      (space) => space.kind === SpaceKind.GoToJail
+    );
+    // Ten from twenty reaches it, and four-and-six is not a double, so the roll
+    // is not confused by an extra one.
+    const onTwenty: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position: 20 },
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitRoll },
+    };
+
+    const next = executeGameCommand(
+      onTwenty,
+      { type: GameCommandType.RollTurnDice },
+      scriptedRolls([{ white: [4, 6] }])
+    ).nextState;
+
+    expect(goToJailIndex).toBe(30);
+    expect(next.players[activePlayerId].position).toBe(JAIL_POSITION);
+    expect(next.players[activePlayerId].inJail).toBe(true);
+    expect(next.players[activePlayerId].lastMove).toBe(MoveDirection.Backward);
+  });
+
+  /**
+   * The assertion that pins routing sendPlayerToJail through movePlayerTo: from
+   * Chance at index 7, the backward path to Jail runs straight past GO. The
+   * salary must not follow it.
+   */
+  it('pays nothing for the trip to Jail, even going back past GO', () => {
+    const goToJail: DeckCard = {
+      id: 'test-go-to-jail',
+      deck: CardDeck.Chance,
+      title: 'Go to Jail',
+      description: 'Go directly to Jail.',
+      effect: { kind: CardEffectKind.GoToJail },
+    };
+    const state = withDrawnCard(CHANCE_NEAR_GO, goToJail);
+    const activePlayerId = state.playerOrder[state.activePlayerIndex];
+    const before = state.players[activePlayerId].cash;
+
+    const next = acknowledge(state);
+
+    expect(next.players[activePlayerId].position).toBe(JAIL_POSITION);
+    expect(next.players[activePlayerId].inJail).toBe(true);
+    expect(next.players[activePlayerId].lastMove).toBe(MoveDirection.Backward);
+    expect(next.players[activePlayerId].cash).toBe(before);
+    // And it is not counted as having been round: the Speed Die waits on that.
+    expect(next.players[activePlayerId].hasPassedGo).toBe(false);
+  });
+
+  it('records rolling out of Jail as forward', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const jailed: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: {
+          ...game.players[activePlayerId],
+          position: JAIL_POSITION,
+          inJail: true,
+          lastMove: MoveDirection.Backward,
+        },
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+
+    const next = executeGameCommand(
+      jailed,
+      { type: GameCommandType.AttemptJailRoll },
+      scriptedRolls([{ white: [3, 3] }])
+    ).nextState;
+
+    expect(next.players[activePlayerId].inJail).toBe(false);
+    expect(next.players[activePlayerId].position).toBe(JAIL_POSITION + 6);
+    expect(next.players[activePlayerId].lastMove).toBe(MoveDirection.Forward);
   });
 });

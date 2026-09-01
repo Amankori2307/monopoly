@@ -145,12 +145,40 @@ const v5ToV6 = (raw: Record<string, unknown>): Record<string, unknown> => {
   };
 };
 
+/**
+ * v7 recorded which way each player last travelled.
+ *
+ * An older save cannot say - the direction was an argument that went nowhere -
+ * so every player comes back with none, and the animation treats a token with no
+ * recorded direction as having gone forward. That only matters if a save is
+ * caught mid-walk, and a reload does not resume one.
+ */
+const v6ToV7 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const players = raw.players;
+
+  if (typeof players !== 'object' || players === null) {
+    return { ...raw, version: 7 };
+  }
+
+  return {
+    ...raw,
+    players: Object.fromEntries(
+      Object.entries(players as Record<string, unknown>).map(([id, player]) => [
+        id,
+        { ...(player as object), lastMove: null },
+      ])
+    ),
+    version: 7,
+  };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
   3: v3ToV4,
   4: v4ToV5,
   5: v5ToV6,
+  6: v6ToV7,
 };
 
 /**

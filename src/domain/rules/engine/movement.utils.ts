@@ -1,6 +1,7 @@
 import { JAIL_POSITION, PASS_GO_AMOUNT } from '../../constants/game.constants';
 import {
   DeckName,
+  MoveDirection,
   PendingDecisionType,
   SpaceKind,
   TurnPhase,
@@ -22,16 +23,21 @@ import { appendEvents, createEvent, getPlayerById, updatePlayer } from './state.
  * turn: a player brought here by a card did not roll to get here.
  */
 
+/**
+ * The single way a token changes space.
+ *
+ * `direction` has no default: every caller states which way the token went,
+ * because two readers depend on it and neither can recover it. The GO salary is
+ * only paid going forward, and the walking animation reads `player.lastMove` to
+ * know which way round the board to step - it used to guess from the position
+ * change, which cannot tell "back three spaces" from thirty-seven forward.
+ */
 export const movePlayerTo = (
   state: GameState,
   playerId: PlayerId,
   nextPosition: number,
   collectGo: boolean,
-  /**
-   * Whether the token travelled forward to get here. Only a forward move can
-   * pass GO; the wrap test cannot tell the two apart on its own.
-   */
-  isForward = true
+  direction: MoveDirection
 ): GameState => {
   const player = getPlayerById(state, playerId);
   let nextState = state;
@@ -39,7 +45,8 @@ export const movePlayerTo = (
   // Deliberately `passesGo`, not a bare position comparison: `next < current`
   // is also true of every backward move, so a card that moved a player back
   // past GO with collectGo set would have paid them for it.
-  const passesGo = collectGo && isForward && nextPosition < player.position;
+  const passesGo =
+    collectGo && direction === MoveDirection.Forward && nextPosition < player.position;
 
   if (passesGo) {
     nextState = creditFromBank(nextState, playerId, PASS_GO_AMOUNT, 'passing GO');
@@ -54,17 +61,36 @@ export const movePlayerTo = (
   return updatePlayer(nextState, playerId, (currentPlayer) => ({
     ...currentPlayer,
     position: nextPosition,
+    lastMove: direction,
   }));
 };
 
+/**
+ * Sends a player to Jail: backward, and never paid for the trip.
+ *
+ * Backward is the truthful direction. The printed rule is that you do not pass
+ * GO on the way, so walking the token forward round the board would show a trip
+ * that did not happen - and from a Chance space just past GO, Jail is only a few
+ * spaces ahead, so it looked exactly like an ordinary roll.
+ *
+ * It goes through `movePlayerTo` rather than setting `position` itself, which is
+ * what guarantees the salary cannot leak in: `collectGo` is false *and* the
+ * direction is backward, and either alone would be enough.
+ */
 export const sendPlayerToJail = (
   state: GameState,
   playerId: PlayerId,
   reason: string
 ): GameState => {
-  let nextState = updatePlayer(state, playerId, (player) => ({
+  let nextState = movePlayerTo(
+    state,
+    playerId,
+    JAIL_POSITION,
+    false,
+    MoveDirection.Backward
+  );
+  nextState = updatePlayer(nextState, playerId, (player) => ({
     ...player,
-    position: JAIL_POSITION,
     inJail: true,
     jailTurnsServed: 0,
   }));
@@ -225,6 +251,6 @@ export const advanceAndResolve = (
 ): GameState => {
   const player = getPlayerById(state, playerId);
   const destination = (player.position + steps) % state.board.length;
-  const moved = movePlayerTo(state, playerId, destination, true);
+  const moved = movePlayerTo(state, playerId, destination, true, MoveDirection.Forward);
   return resolveCurrentSpace(moved, playerId, allowExtraRoll, rentDiceTotal);
 };

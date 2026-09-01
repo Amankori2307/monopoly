@@ -87,6 +87,33 @@ describe('players', () => {
     ).toBe(false);
   });
 
+  it('accepts either recorded direction, and none at all', () => {
+    ['forward', 'backward', null].forEach((lastMove) => {
+      expect(
+        corrupt((game) => {
+          game.players[game.playerOrder[0]].lastMove = lastMove;
+        }).success
+      ).toBe(true);
+    });
+  });
+
+  it('refuses a direction that is not one', () => {
+    expect(
+      corrupt((game) => {
+        game.players[game.playerOrder[0]].lastMove = 'sideways';
+      }).success
+    ).toBe(false);
+  });
+
+  // A save from before v7 must go through the migration, not straight to zod.
+  it('refuses a player with no recorded direction field', () => {
+    expect(
+      corrupt((game) => {
+        delete game.players[game.playerOrder[0]].lastMove;
+      }).success
+    ).toBe(false);
+  });
+
   it('refuses a jail card with no deck on it', () => {
     expect(
       corrupt((game) => {

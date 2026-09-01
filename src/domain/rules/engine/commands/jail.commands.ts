@@ -5,6 +5,7 @@ import {
 } from '../../../constants/game.constants';
 import {
   GameCommandType,
+  MoveDirection,
   PendingDecisionType,
   TurnPhase,
 } from '../../../types/game.enums';
@@ -129,7 +130,8 @@ export const jailCommands: CommandHandlers = {
         nextState,
         activePlayer.id,
         (JAIL_POSITION + dieOne + dieTwo) % nextState.board.length,
-        true
+        true,
+        MoveDirection.Forward
       );
       nextState = resolveCurrentSpace(nextState, activePlayer.id, false);
     } else {
@@ -159,7 +161,8 @@ export const jailCommands: CommandHandlers = {
           nextState,
           activePlayer.id,
           (JAIL_POSITION + dieOne + dieTwo) % nextState.board.length,
-          true
+          true,
+          MoveDirection.Forward
         );
         nextState = resolveCurrentSpace(nextState, activePlayer.id, false);
       } else {
