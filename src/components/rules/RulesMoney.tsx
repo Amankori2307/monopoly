@@ -21,19 +21,21 @@ export function RulesMoney() {
       </ul>
       <h3>Deals and trades</h3>
       <p>
-        Players may buy, sell, or swap property at any time. Trades may include cash,
-        property, and Get Out of Jail Free cards. Buildings cannot be traded and must
-        first be sold to the Bank. No loans, future promises, or private rent agreements
-        are part of the game.
+        Offer a deal from any site another player owns. Trades may include cash, property,
+        and Get Out of Jail Free cards, in any combination and at any price you both
+        agree. Buildings cannot be traded and must first be sold to the Bank, and neither
+        can a site whose color set still holds any. A mortgaged site can be traded: the
+        player receiving it pays the Bank {MORTGAGE_INTEREST_PERCENT}% and it stays
+        mortgaged. No loans, future promises, or private rent agreements are part of the
+        game.
       </p>
       <h3>If you cannot pay</h3>
       <p>
         First try selling buildings and mortgaging property. If you still cannot pay, you
-        are bankrupt and leave the game. Debt to another player transfers your mortgaged
-        properties and jail-free cards to that player; they must immediately repay the
-        mortgage or pay {MORTGAGE_INTEREST_PERCENT}% to keep it mortgaged. Debt to the
-        Bank returns your properties to the Bank, cancels mortgages, and auctions those
-        properties. Play continues until one player remains.
+        are bankrupt and leave the game. Debt to another player transfers everything you
+        hold to them, mortgages and all. Debt to the Bank returns your properties unowned,
+        to be bought again by whoever lands on them. Play continues until one player
+        remains, and that player wins.
       </p>
     </section>
   );

@@ -24,7 +24,6 @@ interface GameSliceState {
   loadError: string | null;
   /** Last command the engine rejected. Surfaced to the player, then dismissed. */
   commandError: string | null;
-  uiHints: string[];
 }
 
 const initialState: GameSliceState = {
@@ -32,7 +31,6 @@ const initialState: GameSliceState = {
   activeGame: null,
   loadError: null,
   commandError: null,
-  uiHints: [],
 };
 
 const slice = createSlice({
@@ -48,9 +46,6 @@ const slice = createSlice({
     setLoadError(state, action: PayloadAction<string | null>) {
       state.loadError = action.payload;
     },
-    setUiHints(state, action: PayloadAction<string[]>) {
-      state.uiHints = action.payload;
-    },
     setCommandError(state, action: PayloadAction<string | null>) {
       state.commandError = action.payload;
     },
@@ -58,13 +53,8 @@ const slice = createSlice({
 });
 
 export const gameReducer = slice.reducer;
-export const {
-  setRecentGames,
-  setActiveGame,
-  setLoadError,
-  setUiHints,
-  setCommandError,
-} = slice.actions;
+export const { setRecentGames, setActiveGame, setLoadError, setCommandError } =
+  slice.actions;
 
 export const bootstrapRecentGames = () => (dispatch: AppDispatch) => {
   try {
@@ -82,7 +72,6 @@ export const createNewGame = (input: CreateGameInput) => (dispatch: AppDispatch)
   const nextGame = createGameState(input, new DefaultRandomSource());
   saveGame(nextGame);
   dispatch(setActiveGame(nextGame));
-  dispatch(setUiHints([]));
   dispatch(bootstrapRecentGames());
   return nextGame;
 };
@@ -97,7 +86,6 @@ export const loadGameById = (gameId: string) => (dispatch: AppDispatch) => {
     }
     dispatch(setActiveGame(savedGame));
     dispatch(setLoadError(null));
-    dispatch(setUiHints([]));
     dispatch(bootstrapRecentGames());
     return savedGame;
   } catch (error) {
@@ -139,7 +127,6 @@ export const runGameCommand =
           toToasts(selectNewEvents(currentGame.history, result.nextState.history))
         )
       );
-      dispatch(setUiHints(result.uiHints));
       dispatch(setCommandError(null));
       dispatch(bootstrapRecentGames());
       return result;

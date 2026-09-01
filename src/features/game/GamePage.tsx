@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom';
 import { BoardGrid } from '../../components/game/board/BoardGrid';
 import { useAnimatedTokenPositions } from '../../components/game/hooks/useAnimatedTokenPositions';
 import { CommandErrorBanner } from '../../components/game/panels/CommandErrorBanner';
-import { HintsPanel } from '../../components/game/panels/HintsPanel';
 import { ToastStack } from '../../components/game/overlays/ToastStack';
 import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
@@ -38,7 +37,7 @@ import { useGameOverlays } from './hooks/useGameOverlays';
  */
 export function GamePage() {
   const { gameId = '' } = useParams();
-  const { activeGame, commandError, currencySymbol, loadError, theme, uiHints } =
+  const { activeGame, commandError, currencySymbol, loadError, theme } =
     useActiveGame(gameId);
   const commands = useGameCommands();
   const overlays = useGameOverlays();
@@ -92,7 +91,6 @@ export function GamePage() {
                 onDismiss={commands.dismissError}
               />
 
-              <HintsPanel hints={uiHints} />
               <div className="button-row">
                 <Link className="secondary-button" to="/">
                   Home
@@ -131,6 +129,7 @@ export function GamePage() {
           activeGame={activeGame}
           commands={commands}
           currencySymbol={currencySymbol}
+          findToken={findToken}
           overlays={overlays}
           selectedSummary={selectedSummary}
           isMoving={isMoving}

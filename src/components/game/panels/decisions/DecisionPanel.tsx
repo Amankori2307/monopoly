@@ -7,6 +7,7 @@ import { CardDrawDecision } from './CardDrawDecision';
 import { GameOverDecision } from './GameOverDecision';
 import { JailDecision } from './JailDecision';
 import { LiquidationDecision } from './LiquidationDecision';
+import { TradeResponseDecision } from './TradeResponseDecision';
 
 interface DecisionPanelProps {
   bidAmount: number;
@@ -74,6 +75,17 @@ export function DecisionPanel({
           deckLabel={decision.deckLabel}
           onAcknowledge={handlers.onAcknowledgeCard}
           playerName={decision.playerName}
+        />
+      ) : null}
+
+      {decision.type === PendingDecisionType.TradeResponse ? (
+        <TradeResponseDecision
+          currencySymbol={currencySymbol}
+          incoming={decision.incoming}
+          onAccept={handlers.onAcceptTrade}
+          onReject={handlers.onRejectTrade}
+          outgoing={decision.outgoing}
+          recipientName={decision.recipientName}
         />
       ) : null}
 

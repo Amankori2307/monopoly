@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import type { Toast } from '../../../components/game/overlays/overlays.interfaces';
 import type { DecisionHandlers } from '../../../components/game/panels/panels.interfaces';
+import type { TradeState } from '../../../domain/types/game.interfaces';
 import { GameCommandType } from '../../../domain/types/game.enums';
 import { runGameCommand, setCommandError } from '../gameSlice';
 import { dismissToast, setAuctionBidInput } from '../uiSlice';
@@ -13,6 +14,8 @@ export interface UseGameCommandsResult {
   dismissToast: (toastId: string) => void;
   endTurn: () => void;
   rollDice: (isJailRoll: boolean) => void;
+  /** Sends an assembled offer to the other player. */
+  proposeTrade: (payload: TradeState) => void;
   /** A property command for one picked space, from the site panel. */
   runPropertyCommand: (command: GameCommandType, spaceId: string) => void;
   toasts: Toast[];
@@ -50,6 +53,8 @@ export const useGameCommands = (): UseGameCommandsResult => {
               : GameCommandType.RollTurnDice,
           })
         ),
+      proposeTrade: (payload: TradeState) =>
+        dispatch(runGameCommand({ type: GameCommandType.ProposeTrade, payload })),
       decisionHandlers: {
         onBuy: () => dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset })),
         onDecline: () =>
@@ -84,6 +89,10 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.SettleDebt })),
         onDeclareBankruptcy: () =>
           dispatch(runGameCommand({ type: GameCommandType.ConfirmBankruptcy })),
+        onAcceptTrade: () =>
+          dispatch(runGameCommand({ type: GameCommandType.AcceptTrade })),
+        onRejectTrade: () =>
+          dispatch(runGameCommand({ type: GameCommandType.RejectTrade })),
       },
     }),
     [auctionBidInput, dispatch, toasts]

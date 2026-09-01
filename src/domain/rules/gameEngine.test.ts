@@ -17,7 +17,7 @@ import {
   MORTGAGE_INTEREST_PERCENT,
   HOTEL_BUILD_LEVEL,
 } from '../constants/game.constants';
-import type { GameState, StreetSpace } from '../types/game.interfaces';
+import type { GameState, StreetSpace, TradeState } from '../types/game.interfaces';
 import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { SeededRandomSource } from './rng';
@@ -1850,5 +1850,210 @@ describe('building', () => {
     expect(rentPaid(state)).toBe(first.rents.with1House);
     expect(rentPaid(bare)).toBe(first.rents.monopolyRent);
     expect(first.rents.with1House).toBeGreaterThan(first.rents.monopolyRent);
+  });
+});
+
+/**
+ * Trading is the only way property changes hands between players, so these
+ * check that everything moves and that a rejection leaves the turn intact.
+ */
+describe('trading', () => {
+  const withOneSiteEach = () => {
+    const game = createBaseGame();
+    const streets = game.board.filter(
+      (space): space is StreetSpace => space.kind === SpaceKind.Street
+    );
+    const [proposerId, recipientId] = game.playerOrder;
+    const offered = streets[0];
+    const requested = streets[streets.length - 1];
+
+    return {
+      offered,
+      requested,
+      proposerId,
+      recipientId,
+      state: {
+        ...game,
+        ownership: {
+          ...game.ownership,
+          [offered.id]: { ownerPlayerId: proposerId, mortgaged: false, buildLevel: 0 },
+          [requested.id]: {
+            ownerPlayerId: recipientId,
+            mortgaged: false,
+            buildLevel: 0,
+          },
+        },
+        turn: { ...game.turn, phase: TurnPhase.TurnComplete },
+      } as GameState,
+    };
+  };
+
+  const propose = (state: GameState, payload: Partial<TradeState>): GameState =>
+    executeGameCommand(
+      state,
+      {
+        type: GameCommandType.ProposeTrade,
+        payload: {
+          proposerPlayerId: state.playerOrder[0],
+          recipientPlayerId: state.playerOrder[1],
+          offeredCash: 0,
+          requestedCash: 0,
+          offeredSpaceIds: [],
+          requestedSpaceIds: [],
+          offeredJailCards: 0,
+          requestedJailCards: 0,
+          ...payload,
+        },
+      },
+      new SeededRandomSource(3)
+    ).nextState;
+
+  it('puts a proposal to the recipient and blocks the turn', () => {
+    const { state, offered } = withOneSiteEach();
+
+    const next = propose(state, { offeredSpaceIds: [offered.id], requestedCash: 100 });
+
+    expect(next.pendingDecision.type).toBe(PendingDecisionType.TradeResponse);
+    expect(next.tradeState?.offeredSpaceIds).toEqual([offered.id]);
+    expect(next.turn.phase).toBe(TurnPhase.AwaitDecision);
+  });
+
+  it('moves sites and cash both ways on acceptance', () => {
+    const { state, offered, requested, proposerId, recipientId } = withOneSiteEach();
+    const proposerCash = state.players[proposerId].cash;
+    const recipientCash = state.players[recipientId].cash;
+
+    const proposed = propose(state, {
+      offeredSpaceIds: [offered.id],
+      offeredCash: 50,
+      requestedSpaceIds: [requested.id],
+      requestedCash: 200,
+    });
+    const settled = executeGameCommand(
+      proposed,
+      { type: GameCommandType.AcceptTrade },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(settled.ownership[offered.id].ownerPlayerId).toBe(recipientId);
+    expect(settled.ownership[requested.id].ownerPlayerId).toBe(proposerId);
+    expect(settled.players[proposerId].cash).toBe(proposerCash - 50 + 200);
+    expect(settled.players[recipientId].cash).toBe(recipientCash + 50 - 200);
+    expect(settled.tradeState).toBeNull();
+    expect(settled.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+
+  it('moves jail cards', () => {
+    const { state, proposerId, recipientId } = withOneSiteEach();
+    const withCard: GameState = {
+      ...state,
+      players: {
+        ...state.players,
+        [proposerId]: { ...state.players[proposerId], jailFreeCards: 1 },
+      },
+    };
+
+    const settled = executeGameCommand(
+      propose(withCard, { offeredJailCards: 1, requestedCash: 10 }),
+      { type: GameCommandType.AcceptTrade },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(settled.players[proposerId].jailFreeCards).toBe(0);
+    expect(settled.players[recipientId].jailFreeCards).toBe(1);
+  });
+
+  // A mortgaged site travels as it is, and the receiver pays the bank 10% for
+  // the privilege of keeping it that way.
+  it('charges the receiver interest on a mortgaged site', () => {
+    const { state, offered, recipientId } = withOneSiteEach();
+    const mortgaged: GameState = {
+      ...state,
+      ownership: {
+        ...state.ownership,
+        [offered.id]: { ...state.ownership[offered.id], mortgaged: true },
+      },
+    };
+    const recipientCash = mortgaged.players[recipientId].cash;
+
+    const settled = executeGameCommand(
+      propose(mortgaged, { offeredSpaceIds: [offered.id], requestedCash: 1 }),
+      { type: GameCommandType.AcceptTrade },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    const fee = Math.ceil((offered.mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
+    expect(settled.players[recipientId].cash).toBe(recipientCash - 1 - fee);
+    expect(settled.ownership[offered.id].mortgaged).toBe(true);
+  });
+
+  it('leaves everything where it was on a rejection', () => {
+    const { state, offered, proposerId } = withOneSiteEach();
+    const proposerCash = state.players[proposerId].cash;
+
+    const rejected = executeGameCommand(
+      propose(state, { offeredSpaceIds: [offered.id], requestedCash: 100 }),
+      { type: GameCommandType.RejectTrade },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(rejected.ownership[offered.id].ownerPlayerId).toBe(proposerId);
+    expect(rejected.players[proposerId].cash).toBe(proposerCash);
+    expect(rejected.tradeState).toBeNull();
+    expect(rejected.pendingDecision.type).toBe(PendingDecisionType.None);
+  });
+
+  // A trade blocks the turn like any other decision, so the extra roll a double
+  // earned has to survive it.
+  it('gives back the extra roll a double had earned', () => {
+    const { state } = withOneSiteEach();
+    const afterDouble: GameState = {
+      ...state,
+      turn: { ...state.turn, doublesCount: 1, phase: TurnPhase.TurnComplete },
+    };
+
+    const rejected = executeGameCommand(
+      propose(afterDouble, { offeredCash: 10 }),
+      { type: GameCommandType.RejectTrade },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(rejected.turn.canRollAgain).toBe(true);
+  });
+
+  it('refuses a proposal from anyone but the active player', () => {
+    const { state } = withOneSiteEach();
+
+    expect(() =>
+      executeGameCommand(
+        state,
+        {
+          type: GameCommandType.ProposeTrade,
+          payload: {
+            proposerPlayerId: state.playerOrder[1],
+            recipientPlayerId: state.playerOrder[0],
+            offeredCash: 10,
+            requestedCash: 0,
+            offeredSpaceIds: [],
+            requestedSpaceIds: [],
+            offeredJailCards: 0,
+            requestedJailCards: 0,
+          },
+        },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/whose turn it is/i);
+  });
+
+  it('refuses an answer when no trade is pending', () => {
+    const { state } = withOneSiteEach();
+
+    expect(() =>
+      executeGameCommand(
+        state,
+        { type: GameCommandType.AcceptTrade },
+        new SeededRandomSource(3)
+      )
+    ).toThrow(/no trade to answer/i);
   });
 });

@@ -85,7 +85,8 @@ the whole ladder. `isOwnedBy` was made public in `holdings.utils.ts`.
 
 ## Known gaps
 
-- **Trade is the last disabled action.** Mortgage, redeem, build and sell all work.
+- Nothing here is disabled any more. Mortgage, redeem, build, sell and "Offer a deal" all work; a
+  disabled control now always means a rule refusing it, with the reason in its tooltip.
 
 ## Resolved
 

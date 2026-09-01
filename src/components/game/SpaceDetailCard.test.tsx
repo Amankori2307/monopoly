@@ -123,8 +123,13 @@ describe('SpaceDetailCard', () => {
       ...overrides,
     });
 
-    const renderPanel = (panel: SitePanelViewModel) =>
-      render(<SpaceDetailCard {...baseProps} onClose={vi.fn()} panel={panel} />);
+    const renderPanel = (
+      panel: SitePanelViewModel,
+      overrides: Partial<Parameters<typeof SpaceDetailCard>[0]> = {}
+    ) =>
+      render(
+        <SpaceDetailCard {...baseProps} onClose={vi.fn()} panel={panel} {...overrides} />
+      );
 
     it('shows no action block for a space nobody owns', () => {
       renderPanel(unownedPanel(street()));
@@ -159,14 +164,19 @@ describe('SpaceDetailCard', () => {
       expect(screen.getByTestId(TEST_IDS.proposeTradeButton)).toBeInTheDocument();
     });
 
-    // Trading is the next phase, so the button states its own absence rather
-    // than being hidden - the same way the action rail already behaves.
-    it('renders the deal button disabled with a reason', () => {
-      renderPanel(ownedPanel({ isOwnedByOpponent: true, siteActions: [] }));
+    // An opponent's site is a trade target, and the deal button is the only way
+    // into the offer builder.
+    it('offers a deal on an opponent site, and passes the space along', () => {
+      const onProposeTrade = vi.fn();
+      renderPanel(ownedPanel({ isOwnedByOpponent: true, siteActions: [] }), {
+        onProposeTrade,
+      });
 
       const button = screen.getByTestId(TEST_IDS.proposeTradeButton);
-      expect(button).toBeDisabled();
-      expect(button).toHaveAttribute('title', 'Not implemented yet');
+      expect(button).toBeEnabled();
+
+      button.click();
+      expect(onProposeTrade).toHaveBeenCalledWith(street().id);
     });
 
     it('stamps a mortgaged deed so it reads as mortgaged everywhere', () => {

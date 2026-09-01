@@ -10,6 +10,7 @@ import {
   getLiquidationValue,
   getSellableBuildings,
 } from '../../domain/rules/buildings.utils';
+import { getTradableSites, getTransferFees } from '../../domain/rules/trade.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
 import {
   DeckName,
@@ -21,15 +22,23 @@ import type {
   GameState,
   PendingDecisionAssetLiquidation,
   PendingDecisionCardDraw,
+  PendingDecisionTrade,
   PlayerId,
   PlayerState,
   ThemeConfig,
   ThemeToken,
 } from '../../domain/types/game.interfaces';
 import type {
+  TradeBuilderViewModel,
+  TradePartyViewModel,
+} from '../../components/game/trade/trade.interfaces';
+import type {
   AuctionDecisionViewModel,
+  BuyDecisionViewModel,
+  GameOverDecisionViewModel,
   CardDrawDecisionViewModel,
   LiquidationDecisionViewModel,
+  TradeResponseDecisionViewModel,
   DecisionViewModel,
   PlayerSummary,
 } from '../../components/game/panels/panels.interfaces';
@@ -198,6 +207,45 @@ const liquidationDecision = (
   };
 };
 
+/**
+ * The pending trade, in words, from the recipient's point of view.
+ *
+ * "Incoming" and "outgoing" rather than "offered" and "requested": the panel is
+ * read by the recipient, and the proposer's language would be backwards there.
+ */
+const tradeResponseDecision = (
+  game: GameState,
+  decision: PendingDecisionTrade
+): TradeResponseDecisionViewModel | null => {
+  const trade = game.tradeState;
+  if (!trade) return null;
+
+  const nameOf = (spaceIds: string[]) =>
+    spaceIds.map(
+      (spaceId) =>
+        game.board.find((space) => space.id === spaceId)?.name ?? 'Unknown site'
+    );
+
+  return {
+    type: PendingDecisionType.TradeResponse,
+    recipientName: game.players[decision.recipientPlayerId]?.name ?? 'They',
+    incoming: {
+      playerName: game.players[decision.proposerPlayerId]?.name ?? 'They',
+      cash: trade.offeredCash,
+      siteNames: nameOf(trade.offeredSpaceIds),
+      jailCards: trade.offeredJailCards,
+      transferFee: getTransferFees(game, trade.offeredSpaceIds),
+    },
+    outgoing: {
+      playerName: game.players[decision.recipientPlayerId]?.name ?? 'You',
+      cash: trade.requestedCash,
+      siteNames: nameOf(trade.requestedSpaceIds),
+      jailCards: trade.requestedJailCards,
+      transferFee: getTransferFees(game, trade.requestedSpaceIds),
+    },
+  };
+};
+
 const cardDrawDecision = (
   game: GameState,
   decision: PendingDecisionCardDraw,
@@ -210,22 +258,33 @@ const cardDrawDecision = (
   cardDescription: decision.card.description,
 });
 
+const buyDecision = (
+  game: GameState,
+  spaceId: string,
+  activePlayer: PlayerState
+): BuyDecisionViewModel | null => {
+  const space = game.board.find((candidate) => candidate.id === spaceId);
+  return space && isOwnableSpace(space)
+    ? {
+        type: PendingDecisionType.LandedUnownedProperty,
+        playerName: activePlayer.name,
+        space,
+      }
+    : null;
+};
+
+const gameOverDecision = (game: GameState): GameOverDecisionViewModel => ({
+  type: PendingDecisionType.GameOver,
+  winnerName: game.winnerPlayerId ? (game.players[game.winnerPlayerId]?.name ?? '') : '',
+});
+
 export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
   const decision = game.pendingDecision;
   const activePlayer = selectActivePlayer(game);
 
   switch (decision.type) {
-    case PendingDecisionType.LandedUnownedProperty: {
-      const space = game.board.find((candidate) => candidate.id === decision.spaceId);
-      if (!space || !isOwnableSpace(space)) {
-        return null;
-      }
-      return {
-        type: PendingDecisionType.LandedUnownedProperty,
-        playerName: activePlayer.name,
-        space,
-      };
-    }
+    case PendingDecisionType.LandedUnownedProperty:
+      return buyDecision(game, decision.spaceId, activePlayer);
     case PendingDecisionType.AuctionBid:
       return auctionDecision(game);
     case PendingDecisionType.JailChoice:
@@ -234,13 +293,10 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
       return cardDrawDecision(game, decision, activePlayer);
     case PendingDecisionType.AssetLiquidation:
       return liquidationDecision(game, decision, activePlayer);
+    case PendingDecisionType.TradeResponse:
+      return tradeResponseDecision(game, decision);
     case PendingDecisionType.GameOver:
-      return {
-        type: PendingDecisionType.GameOver,
-        winnerName: game.winnerPlayerId
-          ? (game.players[game.winnerPlayerId]?.name ?? '')
-          : '',
-      };
+      return gameOverDecision(game);
     default:
       // Falls through to the jail check below, so a jailed player always has
       // actions even if `pendingDecision` drifted away from `jail-choice`.
@@ -253,3 +309,33 @@ export const selectDecisionViewModel = (game: GameState): DecisionViewModel | nu
 /** A player's holdings grouped for the holdings drawer. */
 export const selectGroupedHoldings = (game: GameState, playerId: PlayerId) =>
   getGroupedHoldings(game, playerId);
+
+/**
+ * Both sides of a trade the active player is assembling.
+ *
+ * Built here rather than in the component because it needs the board, the
+ * ownership record and the theme's token colours - none of which a
+ * presentational component may reach for.
+ */
+export const selectTradeBuilder = (
+  game: GameState,
+  findToken: (tokenId: string) => ThemeToken | undefined,
+  recipientPlayerId: PlayerId
+): TradeBuilderViewModel | null => {
+  const proposer = selectActivePlayer(game);
+  const recipient = game.players[recipientPlayerId];
+  if (!recipient || recipient.id === proposer.id || recipient.isBankrupt) {
+    return null;
+  }
+
+  const party = (player: PlayerState): TradePartyViewModel => ({
+    playerId: player.id,
+    name: player.name,
+    color: findToken(player.tokenId)?.color ?? '',
+    cash: player.cash,
+    jailCards: player.jailFreeCards,
+    sites: getTradableSites(game, player.id),
+  });
+
+  return { proposer: party(proposer), recipient: party(recipient) };
+};

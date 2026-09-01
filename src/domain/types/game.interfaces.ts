@@ -358,5 +358,11 @@ export interface GameCommandResult {
   nextState: GameState;
   events: GameEvent[];
   saveRequired: boolean;
+  /**
+   * Advisory notes for the UI. Empty since every command was implemented - the
+   * only messages it ever carried were "not implemented yet". Kept in the
+   * contract for a future command that needs to say something the history does
+   * not; nothing renders it today.
+   */
   uiHints: string[];
 }

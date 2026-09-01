@@ -1,0 +1,150 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+/**
+ * The offer builder and the offer as the recipient reads it.
+ *
+ * Two columns, always: a trade is only ever judged as a whole - what you give
+ * against what you get - so the two sides have to be readable at once. They
+ * stack only when the screen cannot hold them side by side.
+ */
+.trade-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(22, 27, 22, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.trade-modal {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: t.$gap-lg;
+  border-radius: t.$radius-md;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.trade-builder,
+.trade-response {
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-sm;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .eyebrow {
+    margin: 0;
+  }
+}
+
+.trade-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: t.$gap-md;
+
+  @include m.below(t.$breakpoint-mobile) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.trade-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: t.$gap-sm;
+  border: 1px solid var(--border-subtle);
+  border-radius: t.$radius-md;
+  background: var(--surface-muted);
+}
+
+.trade-column-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+// The owner's token colour: theme data, applied inline, like the board's dot.
+.trade-column-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.trade-column-cash {
+  margin: 0;
+  color: var(--text-muted);
+  font: 500 0.75rem/1.3 t.$font-mono;
+}
+
+.trade-sites {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 210px;
+  overflow-y: auto;
+
+  li {
+    color: var(--text-body);
+    font-size: 0.8rem;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+
+    &.is-blocked {
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.trade-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.trade-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-body);
+  font-size: 0.8rem;
+
+  input {
+    width: 96px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-input);
+    border-radius: t.$radius-sharp;
+    background: var(--surface-input);
+    color: var(--text-primary);
+    font: 500 0.8rem t.$font-mono;
+  }
+}
+
+.trade-fee {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}

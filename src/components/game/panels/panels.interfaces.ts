@@ -1,4 +1,5 @@
 import type { SellableBuilding } from '../../../domain/rules/buildings.utils';
+import type { TradeSideSummary } from '../trade/trade.interfaces';
 import type {
   ColorGroupProgress,
   MortgageableSite,
@@ -98,6 +99,14 @@ export interface LiquidationDecisionViewModel {
   isBankrupt: boolean;
 }
 
+export interface TradeResponseDecisionViewModel {
+  type: PendingDecisionType.TradeResponse;
+  recipientName: string;
+  /** What the recipient receives, and what they hand over. */
+  incoming: TradeSideSummary;
+  outgoing: TradeSideSummary;
+}
+
 export interface GameOverDecisionViewModel {
   type: PendingDecisionType.GameOver;
   winnerName: string;
@@ -109,6 +118,7 @@ export type DecisionViewModel =
   | JailDecisionViewModel
   | CardDrawDecisionViewModel
   | LiquidationDecisionViewModel
+  | TradeResponseDecisionViewModel
   | GameOverDecisionViewModel;
 
 export interface DecisionHandlers {
@@ -124,4 +134,6 @@ export interface DecisionHandlers {
   onSellBuilding: (spaceId: SpaceId, isHotel: boolean) => void;
   onSettleDebt: () => void;
   onDeclareBankruptcy: () => void;
+  onAcceptTrade: () => void;
+  onRejectTrade: () => void;
 }

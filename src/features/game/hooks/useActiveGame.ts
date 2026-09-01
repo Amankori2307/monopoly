@@ -13,7 +13,6 @@ export interface UseActiveGameResult {
   currencySymbol: string;
   loadError: string | null;
   theme: ThemeConfig | undefined;
-  uiHints: string[];
 }
 
 /**
@@ -24,7 +23,6 @@ export const useActiveGame = (gameId: string): UseActiveGameResult => {
   const dispatch = useAppDispatch();
   const activeGame = useAppSelector((state) => state.game.activeGame);
   const loadError = useAppSelector((state) => state.game.loadError);
-  const uiHints = useAppSelector((state) => state.game.uiHints);
   const commandError = useAppSelector((state) => state.game.commandError);
 
   useEffect(() => {
@@ -57,6 +55,5 @@ export const useActiveGame = (gameId: string): UseActiveGameResult => {
     currencySymbol: resolveCurrencySymbol(theme?.currencySymbol),
     loadError,
     theme,
-    uiHints,
   };
 };

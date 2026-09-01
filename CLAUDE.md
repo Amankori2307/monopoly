@@ -97,9 +97,14 @@ applied by `acknowledgeCard`. A new decision type must also be added to `BLOCKIN
 
 ### Commands
 
-| Implemented                                                                                                                                                                                                                                                                                               | Scaffolded (returns a `uiHints` placeholder, changes nothing) |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `rollTurnDice`, `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `buyLandedAsset`, `declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`, `attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`, `confirmBankruptcy`, `endTurn` | `proposeTrade`, `acceptTrade`, `rejectTrade`                  |
+All twenty runtime commands are implemented: `rollTurnDice`, `buyLandedAsset`,
+`declineLandedAsset`, `submitAuctionBid`, `passAuction`, `payJailFine`, `useJailFreeCard`,
+`attemptJailRoll`, `acknowledgeCard`, `mortgageAsset`, `unmortgageAsset`, `settleDebt`,
+`confirmBankruptcy`, `buildHouse`, `buildHotel`, `sellHouse`, `sellHotel`, `proposeTrade`,
+`acceptTrade`, `rejectTrade`, `endTurn`.
+
+`GameCommandResult.uiHints` is consequently always empty - it only ever carried "not implemented
+yet" notices, and nothing renders it now. Feedback goes through the history and the toasts.
 
 ### Locked economics (`gameEngine.ts` constants)
 

@@ -5,8 +5,13 @@ import type { SitePanelViewModel } from '../../components/game/overlays/overlays
 import { PlayerDetailDrawer } from '../../components/game/overlays/PlayerDetailDrawer';
 import type { PlayerSummary } from '../../components/game/panels/panels.interfaces';
 import { SpaceDetailCard } from '../../components/game/SpaceDetailCard';
-import type { GameState } from '../../domain/types/game.interfaces';
-import { selectDecisionViewModel, selectGroupedHoldings } from './gameView.selectors';
+import { TradeBuilder } from '../../components/game/trade/TradeBuilder';
+import type { GameState, ThemeToken } from '../../domain/types/game.interfaces';
+import {
+  selectDecisionViewModel,
+  selectGroupedHoldings,
+  selectTradeBuilder,
+} from './gameView.selectors';
 import type { UseGameCommandsResult } from './hooks/useGameCommands';
 import type { UseGameOverlaysResult } from './hooks/useGameOverlays';
 
@@ -14,6 +19,8 @@ interface GameOverlayLayerProps {
   activeGame: GameState;
   commands: UseGameCommandsResult;
   currencySymbol: string;
+  /** Token lookup, so each side of a trade wears its player's colour. */
+  findToken: (tokenId: string) => ThemeToken | undefined;
   /** True while a token is walking, when a decision must stay hidden. */
   isMoving: boolean;
   overlays: UseGameOverlaysResult;
@@ -33,11 +40,16 @@ export function GameOverlayLayer({
   activeGame,
   commands,
   currencySymbol,
+  findToken,
   isMoving,
   overlays,
   selectedSummary,
   sitePanel,
 }: GameOverlayLayerProps) {
+  const tradeBuilder = overlays.tradeTargetPlayerId
+    ? selectTradeBuilder(activeGame, findToken, overlays.tradeTargetPlayerId)
+    : null;
+
   return (
     <>
       <ActivityButton
@@ -66,9 +78,41 @@ export function GameOverlayLayer({
         currencySymbol={currencySymbol}
         onClose={overlays.clearSpace}
         onPropertyAction={commands.runPropertyCommand}
-        onProposeTrade={noopUntilTradingLands}
+        // A deal is with the site's owner, so the panel's spaceId is the way in.
+        onProposeTrade={(spaceId) => {
+          const ownerId = activeGame.ownership[spaceId]?.ownerPlayerId;
+          if (ownerId) {
+            overlays.openTrade(ownerId);
+          }
+        }}
         panel={sitePanel}
       />
+
+      {/* Unlike a decision modal this one IS dismissible: an offer nobody has
+          sent yet is not a decision anyone is waiting on. */}
+      {tradeBuilder ? (
+        <div
+          className="trade-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              overlays.closeTrade();
+            }
+          }}
+          role="presentation"
+        >
+          <div aria-modal="true" className="trade-modal" role="dialog">
+            <TradeBuilder
+              builder={tradeBuilder}
+              currencySymbol={currencySymbol}
+              onCancel={overlays.closeTrade}
+              onPropose={(trade) => {
+                commands.proposeTrade(trade);
+                overlays.closeTrade();
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {/* Suppressed while a token walks, so a decision cannot appear before the
           move that caused it has finished. */}
@@ -80,9 +124,4 @@ export function GameOverlayLayer({
       />
     </>
   );
-}
-
-/** Trading is the next phase; the offer button renders disabled until then. */
-function noopUntilTradingLands() {
-  return undefined;
 }

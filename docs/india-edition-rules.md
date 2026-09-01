@@ -369,7 +369,7 @@ consistently.
 | The property stays yours; you simply collect no rent on it                                       | ✅                                                                                |
 | **You cannot mortgage a property with buildings anywhere in its colour group** — sell them first | ✅ the guard exists; a no-op until building lands, since `buildLevel` is always 0 |
 | Unmortgaging costs the mortgage value **plus `MORTGAGE_INTEREST_PERCENT`%**                      | ✅                                                                                |
-| A mortgaged property can still be traded                                                         | ❌ trading is not implemented                                                     |
+| A mortgaged property can still be traded                                                         | ✅ the receiver pays the 10% and it stays mortgaged                               |
 | The bank never buys a property back; mortgage, trade or sell to a player instead                 | ✅ by omission — no such command exists                                           |
 
 **Rounding.** The printed rule says "plus 10%" without saying how to round, and every other amount in
@@ -381,10 +381,15 @@ this game is a whole number. The interest is rounded **up** — `mortgageValue +
 panel when you owe money you cannot pay — see §11. The liquidation panel lists your mortgageable
 sites itself, because the decision modal is non-dismissible and covers the board.
 
-## 10. Trading — ❌ not implemented
+## 10. Trading — ✅ implemented
 
-`TradeState`, `tradeState` and the `TradeResponse` decision are all declared and inert; the trade
-commands have no UI entry point beyond a disabled "Offer a deal" button.
+A trade starts from an opponent's site panel — "Offer a deal" — and opens a two-column builder:
+what you give on the left, what you get on the right. The other player sees the same two sides
+read-only and either accepts or rejects. Rejecting hands the turn straight back, extra roll intact.
+
+The builder offers no opinion on whether a deal is fair. Any price both players agree on is legal,
+and that is the one rule this screen must not get in the way of; the only offer it refuses to send
+is one that moves nothing at all.
 
 | Tradeable                  | Not tradeable         |
 | -------------------------- | --------------------- |
@@ -398,9 +403,15 @@ commands have no UI entry point beyond a disabled "Offer a deal" button.
 | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Any price both players agree on is legal — ₹20 for a ₹180 site, or ₹500, both fine                                                                  |
 | A property with buildings anywhere in its colour group cannot be traded until they are sold                                                         |
-| Mortgaged properties may be traded; the new owner pays the mortgage off, or pays 10% to keep it mortgaged                                           |
+| Mortgaged properties may be traded; the receiver pays 10% to the Bank and the site stays mortgaged                                                  |
 | **You cannot auction property you own.** An auction is only ever the bank's forced sale of an _unowned_ property a player declined — see section 7a |
 | **You cannot sell property back to the bank** at any price. Selling to another player is the only route                                             |
+
+> **⚠️ Divergence — the receiver of a mortgaged site does not get a choice.** The printed rule lets
+> them either pay the mortgage off there and then or pay 10% to keep it mortgaged. Here they always
+> pay the 10% and keep it mortgaged; redeeming it afterwards costs the usual mortgage value plus
+> 10%, so nothing is lost but a step. Offering the choice mid-trade needs another decision type,
+> and acceptance already has to check the receiver can cover the fee at all.
 
 ---
 
@@ -408,11 +419,11 @@ commands have no UI entry point beyond a disabled "Offer a deal" button.
 
 The order of rescue when you cannot pay:
 
-| Step                                         | Status                        |
-| -------------------------------------------- | ----------------------------- |
-| 1. Sell buildings back to the bank           | ✅ listed first in the panel  |
-| 2. Mortgage properties                       | ✅                            |
-| 3. Sell or trade properties to other players | ❌ trading is not implemented |
+| Step                                         | Status                       |
+| -------------------------------------------- | ---------------------------- |
+| 1. Sell buildings back to the bank           | ✅ listed first in the panel |
+| 2. Mortgage properties                       | ✅                           |
+| 3. Sell or trade properties to other players | ✅                           |
 
 **Owing money you cannot pay works.** The debt raises an `asset-liquidation` decision naming the
 amount, the creditor and the reason. The panel lists every building you could sell and every site you
@@ -615,9 +626,9 @@ complete auction loop, street/railway/utility rent with colour-set doubling, all
 the three-turn limit, turn rotation, ₹ throughout, per-action feedback, and **mortgaging, redeeming
 and settling a debt you could not otherwise pay, bankruptcy when you cannot, the win that ends
 the game, and building and selling houses and hotels with both even rules and a real bank
-inventory**.
+inventory, and trading between players**.
 
-**Type-level only, no runtime behaviour:** all trading, Speed Die.
+**Type-level only, no runtime behaviour:** Speed Die.
 
 ### Fixed so far
 

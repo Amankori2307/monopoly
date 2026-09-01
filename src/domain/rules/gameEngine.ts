@@ -40,8 +40,10 @@ import type {
   PlayerId,
   PlayerState,
   RuntimeGameCommand,
+  SpaceId,
   StreetSpace,
   ThemeConfig,
+  TradeState,
 } from '../types/game.interfaces';
 import {
   getPlayerOwnedSpaces,
@@ -49,6 +51,11 @@ import {
   isOwnedBy,
   ownsEntireColorSet,
 } from './holdings.utils';
+import {
+  acceptanceBlockedReason,
+  getTransferFees,
+  proposalBlockedReason,
+} from './trade.utils';
 import {
   buildBlockedReason,
   getBuildLevel,
@@ -691,6 +698,79 @@ const getRentForSpace = (
  * canRollAgain, so declining a property silently forfeited the extra roll that
  * buying it kept.
  */
+/**
+ * Carries out an agreed trade: cash, sites and jail cards, both directions.
+ *
+ * Each side pays the bank 10% on the mortgaged sites it receives, and those
+ * sites stay mortgaged - the receiver redeems them later at the usual cost if
+ * they want to. Affordability is checked before this runs, so the payments here
+ * cannot raise a liquidation.
+ */
+const settleTrade = (state: GameState, trade: TradeState): GameState => {
+  const proposer = getPlayerById(state, trade.proposerPlayerId);
+  const recipient = getPlayerById(state, trade.recipientPlayerId);
+  let nextState = state;
+
+  if (trade.offeredCash > 0) {
+    nextState = resolvePlayerPayment(
+      nextState,
+      trade.proposerPlayerId,
+      trade.recipientPlayerId,
+      trade.offeredCash,
+      `traded cash to ${recipient.name}`
+    );
+  }
+  if (trade.requestedCash > 0) {
+    nextState = resolvePlayerPayment(
+      nextState,
+      trade.recipientPlayerId,
+      trade.proposerPlayerId,
+      trade.requestedCash,
+      `traded cash to ${proposer.name}`
+    );
+  }
+
+  const moveSites = (spaceIds: SpaceId[], toPlayerId: PlayerId) => {
+    const fees = getTransferFees(nextState, spaceIds);
+    spaceIds.forEach((spaceId) => {
+      nextState = updateSpaceOwnership(nextState, spaceId, (ownership) => ({
+        ...ownership,
+        ownerPlayerId: toPlayerId,
+      }));
+    });
+    if (fees > 0) {
+      nextState = resolveBankPayment(
+        nextState,
+        toPlayerId,
+        fees,
+        'mortgage interest on traded sites'
+      );
+    }
+  };
+
+  moveSites(trade.offeredSpaceIds, trade.recipientPlayerId);
+  moveSites(trade.requestedSpaceIds, trade.proposerPlayerId);
+
+  const netJailCards = trade.requestedJailCards - trade.offeredJailCards;
+  if (netJailCards !== 0) {
+    nextState = updatePlayer(nextState, trade.proposerPlayerId, (player) => ({
+      ...player,
+      jailFreeCards: player.jailFreeCards + netJailCards,
+    }));
+    nextState = updatePlayer(nextState, trade.recipientPlayerId, (player) => ({
+      ...player,
+      jailFreeCards: player.jailFreeCards - netJailCards,
+    }));
+  }
+
+  return appendEvents(nextState, [
+    createEvent(
+      nextState.turnNumber,
+      `${recipient.name} accepted ${proposer.name}'s trade.`
+    ),
+  ]);
+};
+
 const resumeTurnAfterDecision = (state: GameState): GameState => {
   const canRollAgain = state.turn.doublesCount > 0;
 
@@ -1505,13 +1585,79 @@ export const executeGameCommand = (
       // alone: selling buildings is how a player raises cash mid-liquidation.
       break;
     }
-    case GameCommandType.ProposeTrade:
-    case GameCommandType.AcceptTrade:
-    case GameCommandType.RejectTrade:
-      uiHints.push(
-        `${command.type} is scaffolded in the engine contract and will be implemented in the next phase.`
+    case GameCommandType.ProposeTrade: {
+      const activePlayer = getActivePlayer(nextState);
+      const trade = command.payload;
+      if (trade.proposerPlayerId !== activePlayer.id) {
+        throw new Error('Only the player whose turn it is can propose a trade.');
+      }
+      const blocked = proposalBlockedReason(nextState, trade);
+      if (blocked) {
+        throw new Error(`${blocked}.`);
+      }
+
+      const recipient = getPlayerById(nextState, trade.recipientPlayerId);
+      nextState = appendEvents(
+        {
+          ...nextState,
+          tradeState: trade,
+          pendingDecision: {
+            type: PendingDecisionType.TradeResponse,
+            proposerPlayerId: trade.proposerPlayerId,
+            recipientPlayerId: trade.recipientPlayerId,
+          },
+          turn: { ...nextState.turn, phase: TurnPhase.AwaitDecision },
+        },
+        [
+          createEvent(
+            nextState.turnNumber,
+            `${activePlayer.name} offered ${recipient.name} a trade.`
+          ),
+        ]
       );
       break;
+    }
+    case GameCommandType.AcceptTrade: {
+      const trade = nextState.tradeState;
+      if (
+        nextState.pendingDecision.type !== PendingDecisionType.TradeResponse ||
+        !trade
+      ) {
+        throw new Error('There is no trade to answer.');
+      }
+      const blocked = acceptanceBlockedReason(nextState, trade);
+      if (blocked) {
+        throw new Error(`${blocked}.`);
+      }
+
+      nextState = settleTrade(nextState, trade);
+      nextState = resumeTurnAfterDecision({
+        ...nextState,
+        tradeState: null,
+        pendingDecision: { type: PendingDecisionType.None },
+      });
+      break;
+    }
+    case GameCommandType.RejectTrade: {
+      const trade = nextState.tradeState;
+      if (
+        nextState.pendingDecision.type !== PendingDecisionType.TradeResponse ||
+        !trade
+      ) {
+        throw new Error('There is no trade to answer.');
+      }
+      const recipient = getPlayerById(nextState, trade.recipientPlayerId);
+      nextState = appendEvents(
+        {
+          ...nextState,
+          tradeState: null,
+          pendingDecision: { type: PendingDecisionType.None },
+        },
+        [createEvent(nextState.turnNumber, `${recipient.name} rejected the trade.`)]
+      );
+      nextState = resumeTurnAfterDecision(nextState);
+      break;
+    }
     default:
       break;
   }
