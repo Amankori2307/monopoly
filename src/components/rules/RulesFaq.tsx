@@ -90,8 +90,8 @@ export function RulesFaq() {
       </dl>
 
       <p className="source-note">
-        Building, selling, mortgaging and trading are documented here but their gameplay
-        is planned for a later release.
+        Every rule on this page is playable. Manage a site you own by clicking it on the
+        board.
       </p>
     </section>
   );

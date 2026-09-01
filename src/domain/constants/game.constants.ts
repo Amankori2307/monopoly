@@ -58,7 +58,7 @@ export const MAX_HISTORY_EVENTS = 120;
 
 export const DEFAULT_CURRENCY_SYMBOL = '₹';
 
-/** Speed Die variant, documented in the rules booklet but not implemented. */
+/** Extra starting cash in a Speed Die game, for every player. */
 export const SPEED_DIE_BONUS_CASH = 1000;
 /**
  * The printed Speed Die's six faces: 1, 2, 3, two buses, and Mr. Monopoly.

@@ -1,6 +1,6 @@
 # Playing a turn
 
-**Status:** Shipped for movement, buying, auctions, and jail. Building and trading are scaffolded.
+**Status:** Shipped. Every engine command is implemented, including the optional Speed Die.
 **Entry points:** [src/domain/rules/gameEngine.ts](../../src/domain/rules/gameEngine.ts), [src/features/game/GamePage.tsx](../../src/features/game/GamePage.tsx)
 
 ## What it does

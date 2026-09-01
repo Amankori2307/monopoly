@@ -210,7 +210,11 @@ Before writing a helper, check whether the engine already has one (`updatePlayer
 
 The known-duplication table in CLAUDE.md §7 is a working debt list. Touching one of those lines means extracting it and deleting the row — the table should shrink over time, never grow.
 
-**Keep modules small and single-purpose.** `gameEngine.ts` is ~900 lines and is the main candidate for splitting (movement, rent, auction, jail, cards) once building and trading land. When you add a substantial rules area, add it as a new module rather than growing the switch file further.
+**Keep modules small and single-purpose.** `gameEngine.ts` is the main candidate for splitting
+(movement, rent, auction, jail, cards) — it is now just under 2,000 lines. The rules areas added
+since have each gone into their own pure module rather than into the switch file
+(`buildings.utils.ts`, `trade.utils.ts`, `speedDie.utils.ts`); keep doing that, and prefer moving
+existing areas out to growing it further.
 
 ---
 
@@ -220,11 +224,15 @@ The mandate above is the standard going forward. The repository does **not** mee
 
 | Area                                           | Unit     | Integration | E2E          |
 | ---------------------------------------------- | -------- | ----------- | ------------ |
-| `gameEngine` (10 implemented commands)         | 15 tests | —           | partial      |
+| `gameEngine` (all 20 commands)                 | 97 tests | —           | yes          |
 | Card draw / acknowledge                        | 7 tests  | 4 tests     | yes          |
 | Action feedback (toasts)                       | 13 tests | —           | yes          |
 | `rng` (`SeededRandomSource`, `shuffle`)        | none     | —           | —            |
 | `persistence` (save/load/index/delete/corrupt) | none     | 4 tests     | —            |
+| Saved-game migrations (v1 → v2 → v3)           | 19 tests | —           | 1 spec       |
+| Buildings (both even rules, bank inventory)    | 21 tests | —           | yes          |
+| Trading (proposal guards, transfer fees)       | 14 tests | —           | yes          |
+| Speed Die (activation, faces, triples)         | 10 tests | —           | yes          |
 | `gameSlice` thunks                             | —        | none        | —            |
 | `uiSlice`                                      | none     | —           | —            |
 | `HomePage`                                     | —        | 2 tests     | partial      |

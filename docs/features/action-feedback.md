@@ -104,10 +104,10 @@ cash directly, and pass-GO wrote its own sentence with the amount and symbol har
 
 ## Known gaps
 
-- **`AssetLiquidation` is still a deadlock.** When a player cannot pay, the engine sets that
-  decision and nothing can clear it — mortgage is the only exit and is still scaffolded. The
-  insolvent branch also never debits the debtor or pays the creditor; the debt lives only in
-  `amountDue`.
+- **`AssetLiquidation` resolves.** The panel lists the buildings you could sell and the sites you
+  could mortgage, a Pay button settles once the cash is there, and bankruptcy is offered when
+  nothing is left. What remains: only one liquidation can be pending, so several debts from one
+  card still stop at the first player who cannot pay.
 - Toast tone is inferred from wording. A structured `GameEvent` would be more robust, but costs a
   schema change and a version bump for a cosmetic gain.
 - `CardEffectKind.PayEach` is implemented in the engine but no card uses it.
