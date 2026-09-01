@@ -3660,6 +3660,64 @@ describe('Jail', () => {
     expect(next.turn.canRollAgain).toBe(false);
   });
 
+  /**
+   * 6.9 / 6.12: three attempts, and the first two are free.
+   *
+   * Walked as a sequence on purpose. The other jail tests each seed a single
+   * attempt, so between them they never pinned *how many* free attempts there
+   * are - changing the comparison to `>= MAX_JAIL_TURNS - 1` gave two instead of
+   * three and passed the entire suite.
+   */
+  it('gives three attempts, charging nothing until the third fails', () => {
+    const { state, playerId } = jailed();
+    const cashAtStart = state.players[playerId].cash;
+    let current = state;
+
+    // Attempts one and two: still inside, nothing taken, nowhere moved.
+    for (const expectedServed of [1, 2]) {
+      current = executeGameCommand(
+        current,
+        { type: GameCommandType.AttemptJailRoll },
+        NOT_DOUBLE()
+      ).nextState;
+
+      expect(current.players[playerId].jailTurnsServed).toBe(expectedServed);
+      expect(current.players[playerId].inJail).toBe(true);
+      expect(current.players[playerId].cash).toBe(cashAtStart);
+      expect(current.players[playerId].position).toBe(JAIL_POSITION);
+    }
+
+    // The third failure is where the fine finally lands.
+    current = executeGameCommand(
+      current,
+      { type: GameCommandType.AttemptJailRoll },
+      NOT_DOUBLE()
+    ).nextState;
+
+    expect(current.players[playerId].inJail).toBe(false);
+    expect(current.players[playerId].position).toBe(JAIL_POSITION + 5);
+    expect(current.players[playerId].cash).toBeLessThanOrEqual(cashAtStart - JAIL_FINE);
+  });
+
+  it('takes no money at all across two failed attempts', () => {
+    const { state, playerId } = jailed();
+    const cashAtStart = state.players[playerId].cash;
+
+    const afterTwo = [1, 2].reduce(
+      (current) =>
+        executeGameCommand(
+          current,
+          { type: GameCommandType.AttemptJailRoll },
+          NOT_DOUBLE()
+        ).nextState,
+      state
+    );
+
+    expect(afterTwo.players[playerId].cash).toBe(cashAtStart);
+    // And nothing was logged as paid either, so no silent charge.
+    expect(afterTwo.history.some((event) => /paid/i.test(event.message))).toBe(false);
+  });
+
   // 6.6: paying up front is not a wasted turn either - you roll and move as
   // normal afterwards.
   it('lets a player who pays the fine roll and move normally', () => {

@@ -21,7 +21,6 @@ import {
   selectActivePlayer,
   selectCanEndTurn,
   selectCanRollDice,
-  selectIsJailRoll,
   selectPlayerSummaries,
 } from './gameView.selectors';
 import { useActiveGame } from './hooks/useActiveGame';
@@ -55,7 +54,6 @@ export function GamePage() {
 
   const activePlayer = selectActivePlayer(activeGame);
   const findToken = makeTokenFinder(theme);
-  const isJailRoll = selectIsJailRoll(activeGame);
   const summaries = selectPlayerSummaries(activeGame, theme);
   const selectedSummary =
     summaries.find((summary) => summary.player.id === overlays.selectedPlayerId) ?? null;
@@ -120,8 +118,8 @@ export function GamePage() {
               speedDieFace={activeGame.turn.speedDieFace}
               lastRoll={activeGame.turn.lastRoll}
               onEndTurn={commands.endTurn}
-              onRoll={() => commands.rollDice(isJailRoll)}
-              rollLabel={isJailRoll ? 'Roll for doubles' : 'Roll dice'}
+              onRoll={commands.rollDice}
+              rollLabel="Roll dice"
             />
           </aside>
         </div>

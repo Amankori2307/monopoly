@@ -14,7 +14,7 @@ export interface UseGameCommandsResult {
   dismissError: () => void;
   dismissToast: (toastId: string) => void;
   endTurn: () => void;
-  rollDice: (isJailRoll: boolean) => void;
+  rollDice: () => void;
   /** Sends an assembled offer to the other player. */
   proposeTrade: (payload: TradeState) => void;
   /** A property command for one picked space, from the site panel. */
@@ -46,14 +46,7 @@ export const useGameCommands = (): UseGameCommandsResult => {
         ),
       dismissToast: (toastId: string) => dispatch(dismissToast(toastId)),
       endTurn: () => dispatch(runGameCommand({ type: GameCommandType.EndTurn })),
-      rollDice: (isJailRoll: boolean) =>
-        dispatch(
-          runGameCommand({
-            type: isJailRoll
-              ? GameCommandType.AttemptJailRoll
-              : GameCommandType.RollTurnDice,
-          })
-        ),
+      rollDice: () => dispatch(runGameCommand({ type: GameCommandType.RollTurnDice })),
       proposeTrade: (payload: TradeState) =>
         dispatch(runGameCommand({ type: GameCommandType.ProposeTrade, payload })),
       decisionHandlers: {
@@ -73,6 +66,11 @@ export const useGameCommands = (): UseGameCommandsResult => {
           dispatch(runGameCommand({ type: GameCommandType.PayJailFine })),
         onUseJailCard: () =>
           dispatch(runGameCommand({ type: GameCommandType.UseJailFreeCard })),
+        // The same command the dice dock sends. The panel needs its own way in
+        // because the decision backdrop covers the dock - which is what made
+        // trying for doubles unreachable.
+        onAttemptJailRoll: () =>
+          dispatch(runGameCommand({ type: GameCommandType.AttemptJailRoll })),
         onAcknowledgeCard: () =>
           dispatch(runGameCommand({ type: GameCommandType.AcknowledgeCard })),
         onMortgageSite: (spaceId: string) =>

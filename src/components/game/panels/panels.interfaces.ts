@@ -65,6 +65,11 @@ export interface JailDecisionViewModel {
   type: PendingDecisionType.JailChoice;
   playerName: string;
   canUseJailCard: boolean;
+  /**
+   * Failed attempts at doubles so far, so the panel can say which of the three
+   * the player is about to take. The third failure is where the fine is forced.
+   */
+  attemptsUsed: number;
 }
 
 export interface CardDrawDecisionViewModel {
@@ -165,6 +170,7 @@ export interface DecisionHandlers {
   onPass: () => void;
   onPayJailFine: () => void;
   onUseJailCard: () => void;
+  onAttemptJailRoll: () => void;
   onAcknowledgeCard: () => void;
   onMortgageSite: (spaceId: SpaceId) => void;
   onSellBuilding: (spaceId: SpaceId, isHotel: boolean) => void;

@@ -101,25 +101,19 @@ const BLOCKING_DECISIONS: ReadonlySet<PendingDecisionType> = new Set([
 const hasBlockingDecision = (game: GameState) =>
   BLOCKING_DECISIONS.has(game.pendingDecision.type);
 
-/**
- * Derived from the player, not from `pendingDecision`.
- *
- * The flag and the player's `inJail` can drift apart, and when they did the UI
- * offered a plain roll that the engine rejected - and later, once that roll was
- * guarded, offered nothing at all and deadlocked. The player's own state is the
- * fact that matters.
- */
-export const selectIsJailRoll = (game: GameState) => selectActivePlayer(game).inJail;
-
 export const selectCanRollDice = (game: GameState) => {
   const player = selectActivePlayer(game);
 
   if (player.isBankrupt || hasBlockingDecision(game)) {
     return false;
   }
-  // A jailed player rolls for doubles until their turn is done.
+  // A jailed player's roll is a decision action, not a dock action. The jail
+  // panel offers it, because that panel's own backdrop covers the dock - an
+  // enabled-but-unclickable roll button there was how "try for doubles" came to
+  // be unreachable in the first place. They still always have something to do:
+  // the decision itself, which selectHasAvailableAction counts.
   if (player.inJail) {
-    return game.turn.phase !== TurnPhase.TurnComplete;
+    return false;
   }
   return game.turn.phase === TurnPhase.AwaitRoll;
 };

@@ -93,6 +93,30 @@ the throw escaped the dice commit callback, and the dice stuck on "Rolling…" p
 layers now guard it: the engine ends the turn when a player is jailed, `selectCanRollDice` refuses
 a roll from jail, and the dice roller contains and logs any throw.
 
+## Jail: the roll lives in the panel
+
+All three ways out of Jail are offered by
+[JailDecision](../../src/components/game/panels/decisions/JailDecision.tsx), including trying for
+doubles, and the panel says which of the three attempts the player is on.
+
+It has to be there rather than on the dice dock. A jailed player gets a decision for their whole
+stay — `decisionViewModel.selectors.ts` returns one whenever `inJail`, even with `pendingDecision:
+None` — and `.decision-backdrop` is `position: fixed; inset: 0; z-index: 40` while `.turn-controls`
+and `.dice-dock` set neither. So a roll offered by the dock is covered and unclickable. It was, and
+a jailed player was forced to pay the fine or spend a card, losing the three free attempts the rules
+give them.
+
+`selectCanRollDice` therefore returns **false** for a jailed player: the roll is a decision action
+now, and an enabled-but-covered button is worse than no button. `selectHasAvailableAction` still
+holds, because the decision itself counts.
+
+**The audit that followed:** all ten decision panels were checked for the same shape — a control the
+player needs while the modal is up, rendered outside it. Jail was the only one.
+`SpeedDieDestinationDecision` and `BuildingPlacementDecision` render their own lists, and
+`AssetLiquidation` was already fixed for exactly this reason. The deadlock check in
+`overlays.spec.ts` now requires an action to be **trial-clickable**, not merely enabled; counting
+enabled buttons is what let a covered one pass.
+
 ## Known gaps
 
 - Every engine command is implemented. `uiHints` is always empty and nothing renders it.

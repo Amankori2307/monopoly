@@ -45,6 +45,7 @@ const jailDecision = (activePlayer: PlayerState): DecisionViewModel => ({
   type: PendingDecisionType.JailChoice,
   playerName: activePlayer.name,
   canUseJailCard: activePlayer.jailFreeCards.length > 0,
+  attemptsUsed: activePlayer.jailTurnsServed,
 });
 
 const auctionDecision = (game: GameState): AuctionDecisionViewModel | null => {

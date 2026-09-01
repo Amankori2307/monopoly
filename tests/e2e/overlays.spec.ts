@@ -267,14 +267,29 @@ test('always leaves the player at least one action', async ({ page }) => {
     // message is the engine's own sentence - so "Player 1 bought Delhi." would
     // have satisfied this check and masked exactly the deadlock it exists to
     // catch.
-    const enabled = await page
-      .locator('button:not([disabled]):not(.toast)')
-      .filter({
-        hasText:
-          /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^OK$/,
-      })
-      .count();
-    return enabled > 0;
+    const candidates = page.locator('button:not([disabled]):not(.toast)').filter({
+      hasText:
+        /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^OK$/,
+    });
+    const count = await candidates.count();
+    if (count === 0) {
+      return false;
+    }
+
+    // Enabled is not the same as usable, and the difference was a real bug: the
+    // jail panel's roll lived on the dice dock, under a full-viewport modal
+    // backdrop, so it was enabled and impossible to click. A trial click runs
+    // Playwright's actionability checks - including occlusion - without firing
+    // the handler.
+    for (let index = 0; index < count; index += 1) {
+      try {
+        await candidates.nth(index).click({ trial: true, timeout: 250 });
+        return true;
+      } catch {
+        // Covered or otherwise unusable; try the next one.
+      }
+    }
+    return false;
   };
 
   for (let turn = 0; turn < 40; turn += 1) {

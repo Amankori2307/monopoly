@@ -559,3 +559,31 @@
   color: var(--text-body);
   line-height: 1.55;
 }
+
+// The three ways out of Jail. Three buttons rather than two, so the free option
+// is as visible as the ones that cost money.
+.jail-decision {
+  display: flex;
+  flex-direction: column;
+  gap: t.$gap-sm;
+
+  h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .eyebrow {
+    margin: 0;
+  }
+
+  .button-row {
+    flex-wrap: wrap;
+  }
+}
+
+.jail-attempt {
+  margin: 0;
+  color: var(--text-body);
+  line-height: 1.5;
+}

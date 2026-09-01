@@ -98,6 +98,9 @@ export const TEST_IDS = {
   destinationDecision: 'destination-decision',
   destinationChoice: 'destination-choice',
   rollButton: 'roll-button',
+  jailRollButton: 'jail-roll-button',
+  jailDecision: 'jail-decision',
+  jailAttempt: 'jail-attempt',
   endTurnButton: 'end-turn-button',
 
   // Space detail

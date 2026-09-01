@@ -63,8 +63,10 @@ export function DecisionPanel({
 
       {decision.type === PendingDecisionType.JailChoice ? (
         <JailDecision
+          attemptsUsed={decision.attemptsUsed}
           canUseJailCard={decision.canUseJailCard}
           currencySymbol={currencySymbol}
+          onAttemptJailRoll={handlers.onAttemptJailRoll}
           onPayFine={handlers.onPayJailFine}
           onUseJailCard={handlers.onUseJailCard}
           playerName={decision.playerName}

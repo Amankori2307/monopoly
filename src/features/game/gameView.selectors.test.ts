@@ -10,7 +10,6 @@ import {
 } from '../../domain/types/game.enums';
 import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
 import { isStreetSpace } from '../../domain/rules/space.utils';
-import { selectIsJailRoll } from './gameView.selectors';
 import type { GameState, OwnableSpace } from '../../domain/types/game.interfaces';
 import {
   makeTokenFinder,
@@ -187,15 +186,21 @@ describe('a jailed player always has something to do', () => {
     const decision = selectDecisionViewModel(game);
 
     expect(decision?.type).toBe(PendingDecisionType.JailChoice);
-    expect(selectCanRollDice(game)).toBe(true);
+    // The action is the decision, not the dice dock: the jail panel offers the
+    // roll, because its own backdrop covers the dock. What the original
+    // regression cared about - that a jailed player is never left with nothing
+    // to do - still holds, and is what this asserts.
     expect(selectHasAvailableAction(game)).toBe(true);
+    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
   });
 
-  it('routes the roll to the jail attempt, not a plain roll', () => {
+  it('offers no dock roll to a jailed player, because the panel owns it', () => {
     const game = jailedGame();
     game.pendingDecision = { type: PendingDecisionType.None };
 
-    expect(selectIsJailRoll(game)).toBe(true);
+    // Enabled-but-covered is what made trying for doubles unreachable.
+    expect(selectCanRollDice(game)).toBe(false);
+    expect(selectHasAvailableAction(game)).toBe(true);
   });
 
   it('still offers the jail decision with the flag set', () => {
@@ -328,5 +333,39 @@ describe('a finished game', () => {
       type: PendingDecisionType.GameOver,
       winnerName: game.players[game.playerOrder[1]].name,
     });
+  });
+});
+
+/**
+ * The jail decision has to say which attempt the player is on, because the third
+ * failure is where the fine stops being a choice.
+ */
+describe('the jail decision', () => {
+  const jailedGame = (jailTurnsServed: number): GameState => {
+    const game = createGame();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], inJail: true, jailTurnsServed },
+      },
+    };
+  };
+
+  it.each([0, 1, 2])('reports %i attempts used', (served) => {
+    const decision = selectDecisionViewModel(jailedGame(served));
+
+    expect(decision).toMatchObject({
+      type: PendingDecisionType.JailChoice,
+      attemptsUsed: served,
+    });
+  });
+
+  // A jailed player always has jail actions, even if pendingDecision drifted.
+  it('offers the choice even with no pending decision recorded', () => {
+    const game = jailedGame(0);
+
+    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
   });
 });

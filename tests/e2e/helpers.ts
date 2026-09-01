@@ -34,6 +34,8 @@ export type GameAction =
   | 'declined'
   | 'passed'
   | 'paid-fine'
+  /** Took a free attempt at doubles from inside Jail. */
+  | 'jail-rolled'
   | 'acknowledged-card'
   | 'ended-turn'
   /** A buy decision is up and the caller asked not to answer it. */
@@ -52,6 +54,11 @@ interface AdvanceOptions {
   acknowledgeCards?: boolean;
   /** Pass false to stop at a buy decision instead of declining it. */
   declineBuys?: boolean;
+  /**
+   * Pass true to buy the way out of Jail instead of rolling for it. The default
+   * rolls, so the three free attempts stay on the path these specs walk.
+   */
+  payJailFine?: boolean;
 }
 
 const tryAdvance = async (page: Page, options: AdvanceOptions): Promise<GameAction> => {
@@ -79,6 +86,24 @@ const tryAdvance = async (page: Page, options: AdvanceOptions): Promise<GameActi
   if (await pass.isVisible()) {
     await pass.click();
     return 'passed';
+  }
+
+  // Rolling for doubles comes BEFORE paying, deliberately. This helper used to
+  // check the Pay button first, so every long-running spec paid its way out of
+  // Jail and none ever rolled - which is how a jail panel with no roll button at
+  // all went unnoticed. Free actions first keeps that path walked.
+  const jailRoll = page.getByTestId(TEST_IDS.jailRollButton);
+  if (await jailRoll.isVisible()) {
+    if (options.payJailFine === true) {
+      const payFineFirst = page.getByRole('button', { name: /^Pay \u20b9/ });
+      if (await payFineFirst.isVisible()) {
+        await payFineFirst.click();
+        return 'paid-fine';
+      }
+    }
+    await jailRoll.click();
+    await page.waitForTimeout(120);
+    return 'jail-rolled';
   }
 
   const payFine = page.getByRole('button', { name: /^Pay \u20b9/ });
