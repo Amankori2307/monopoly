@@ -261,6 +261,17 @@
               }
             ]
           }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "JSXAttribute[name.name=\"onClick\"] > JSXExpressionContainer > Identifier[name=/Roll/]",
+            "message": "A dice roll must go through useDiceRoller, which plays the sound and tumbles the faces. Wiring the handler straight to the click is how the Jail roll ended up silent. See docs/features/game-turn.md."
+          },
+          {
+            "selector": "JSXAttribute[name.name=\"onClick\"] CallExpression > Identifier[name=/Roll/]",
+            "message": "A dice roll must go through useDiceRoller, which plays the sound and tumbles the faces. Wiring the handler straight to the click is how the Jail roll ended up silent. See docs/features/game-turn.md."
+          }
         ]
       }
     },

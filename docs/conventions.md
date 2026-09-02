@@ -167,6 +167,13 @@ survives renders, subscriptions, timers, or store access. Pure logic is a util, 
   as props, so children do not re-render for nothing.
 - A hook that only wraps `useState` adds indirection without value — don't.
 - Keep hooks out of `domain/`. That layer must stay React-free.
+- **A hook that owns how something _feels_ is mandatory, not optional.** `useDiceRoller` owns the
+  roll sound and the tumble, so every control a player presses to roll goes through it. The Jail
+  panel's button did not, and a Jail roll was silent and instant while every other roll in the game
+  had both. Two things enforce it now: `no-restricted-syntax` rejects a roll handler wired straight
+  to an `onClick`, and
+  [diceRolling.guard.test.ts](../src/components/game/diceRolling.guard.test.ts) reads the component
+  sources and fails if anything renders a roll control without importing and calling the hook.
 
 **Which React tool to reach for**
 
@@ -266,18 +273,19 @@ split the file rather than raising the limit.
 
 ## 8. Enforcement
 
-| Convention                                 | Enforced by                                                    |
-| ------------------------------------------ | -------------------------------------------------------------- |
-| Layer boundaries                           | `no-restricted-imports` overrides in `.eslintrc.json`          |
-| File naming                                | `check-file/filename-naming-convention`                        |
-| Enums / exported types in their typed file | `no-restricted-syntax` in `.eslintrc.json` (section 1)         |
-| Folder naming                              | `check-file/folder-naming-convention`                          |
-| Identifier naming                          | `@typescript-eslint/naming-convention`                         |
-| No `any`                                   | `@typescript-eslint/no-explicit-any`                           |
-| No nested ternaries                        | `no-nested-ternary`                                            |
-| File/function size                         | `max-lines`, `max-lines-per-function`, `complexity` (warnings) |
-| Formatting                                 | Prettier (`pnpm format`)                                       |
-| Theme token discipline                     | `@error` guard in `themes/_themes.scss` at compile time        |
+| Convention                                 | Enforced by                                                       |
+| ------------------------------------------ | ----------------------------------------------------------------- |
+| Layer boundaries                           | `no-restricted-imports` overrides in `.eslintrc.json`             |
+| File naming                                | `check-file/filename-naming-convention`                           |
+| Enums / exported types in their typed file | `no-restricted-syntax` in `.eslintrc.json` (section 1)            |
+| Dice rolls going through `useDiceRoller`   | `no-restricted-syntax` (section 4c) + `diceRolling.guard.test.ts` |
+| Folder naming                              | `check-file/folder-naming-convention`                             |
+| Identifier naming                          | `@typescript-eslint/naming-convention`                            |
+| No `any`                                   | `@typescript-eslint/no-explicit-any`                              |
+| No nested ternaries                        | `no-nested-ternary`                                               |
+| File/function size                         | `max-lines`, `max-lines-per-function`, `complexity` (warnings)    |
+| Formatting                                 | Prettier (`pnpm format`)                                          |
+| Theme token discipline                     | `@error` guard in `themes/_themes.scss` at compile time           |
 
 Run everything before reporting work done:
 

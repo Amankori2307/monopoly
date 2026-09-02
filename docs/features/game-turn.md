@@ -81,6 +81,12 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   drift apart in how a roll feels. The fine and the jail card are withheld while the dice are in the
   air, for the same reason the dock disables its own button.
 
+  Two guards keep it that way, because nothing was watching the _set_ of roll controls — each was
+  only ever tested on its own. `no-restricted-syntax` rejects a roll handler wired straight to an
+  `onClick`, and [diceRolling.guard.test.ts](../../src/components/game/diceRolling.guard.test.ts)
+  reads the component sources and fails if anything renders a roll control without importing and
+  calling the hook, or if a new roll-ish test id appears unclassified.
+
 - **Rolling is blocked while a token walks.** A double leaves the turn in `AwaitExtraRollOrEnd` the
   moment the engine resolves, so Roll came back live mid-walk and the second roll restarted the walk
   from the token's display position — cutting both legs short. `GamePage` gates `canRoll` on
