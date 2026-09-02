@@ -588,3 +588,16 @@
   color: var(--text-body);
   line-height: 1.5;
 }
+
+/**
+ * The dice, in the panel rather than the dock.
+ *
+ * A jailed player rolls from inside this modal, and its backdrop covers the dock
+ * completely - so a Jail roll had no dice to watch and no sound, while every
+ * other roll in the game had both.
+ */
+.jail-dice {
+  display: flex;
+  gap: 10px;
+  margin: 4px 0 2px;
+}

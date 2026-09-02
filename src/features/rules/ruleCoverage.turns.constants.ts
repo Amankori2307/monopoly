@@ -79,7 +79,7 @@ export const TURN_RULE_COVERAGE: RuleCoverageMap = {
   ],
   '6.8': [
     'frees a player who rolls doubles, and ends their turn',
-    'rolls for doubles when asked',
+    'rolls for doubles when asked, once the dice have settled',
     'offers a jailed player the choice to try for doubles',
   ],
   '6.9': [

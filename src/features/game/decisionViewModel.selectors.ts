@@ -45,11 +45,12 @@ import type { TokenFinder } from './gameView.interfaces';
  * Returns null for decision types with no UI yet, which is why GamePage still
  * needs a fallback - see docs/features/game-turn.md.
  */
-const jailDecision = (activePlayer: PlayerState): DecisionViewModel => ({
+const jailDecision = (game: GameState, activePlayer: PlayerState): DecisionViewModel => ({
   type: PendingDecisionType.JailChoice,
   playerName: activePlayer.name,
   canUseJailCard: activePlayer.jailFreeCards.length > 0,
   attemptsUsed: activePlayer.jailTurnsServed,
+  lastRoll: game.turn.lastRoll,
 });
 
 /**
@@ -74,7 +75,7 @@ const jailDecisionIfActionable = (
   game: GameState,
   activePlayer: PlayerState
 ): DecisionViewModel | null =>
-  activePlayer.inJail && canActFromJail(game) ? jailDecision(activePlayer) : null;
+  activePlayer.inJail && canActFromJail(game) ? jailDecision(game, activePlayer) : null;
 
 /**
  * Everything the liquidation panel needs to be self-contained.

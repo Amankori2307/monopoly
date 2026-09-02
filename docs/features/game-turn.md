@@ -73,6 +73,14 @@ Phase machine and helper inventory: [../architecture.md](../architecture.md) sec
   so a watchdog snaps every token to its true position and clears the flag no matter what the timers
   did. Both guarantees are tested with the walk deliberately broken.
 
+- **A Jail roll is a roll, dice and all.** The Jail panel's "Roll for doubles" used to dispatch the
+  command straight out: no tumble, no sound, while every other roll in the game had both - and the
+  dice dock that would have shown them is behind this modal's backdrop. It goes through the same
+  [`useDiceRoller`](../../src/components/game/hooks/useDiceRoller.ts) the dock uses, and draws its
+  own dice with the shared [`DieFace`](../../src/components/game/DieFace.tsx), so the two cannot
+  drift apart in how a roll feels. The fine and the jail card are withheld while the dice are in the
+  air, for the same reason the dock disables its own button.
+
 - **Rolling is blocked while a token walks.** A double leaves the turn in `AwaitExtraRollOrEnd` the
   moment the engine resolves, so Roll came back live mid-walk and the second roll restarted the walk
   from the token's display position — cutting both legs short. `GamePage` gates `canRoll` on

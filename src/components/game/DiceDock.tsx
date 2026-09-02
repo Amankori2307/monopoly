@@ -1,6 +1,7 @@
 import diceRollSound from '../../assets/audio/dice-roll.wav';
 import { SpeedDieFace } from '../../domain/types/game.enums';
-import { scopedTestId, TEST_IDS } from '../../shared/constants/testIds.constants';
+import { TEST_IDS } from '../../shared/constants/testIds.constants';
+import { DieFace } from './DieFace';
 import { useDiceRoller } from './hooks/useDiceRoller';
 
 interface DiceDockProps {
@@ -10,26 +11,6 @@ interface DiceDockProps {
   rollLabel: string;
   /** The Speed Die's face, when this game is playing with one. */
   speedDieFace: SpeedDieFace | null;
-}
-
-interface DieProps {
-  index: number;
-  isRolling: boolean;
-  value: number;
-}
-
-function Die({ index, isRolling, value }: DieProps) {
-  return (
-    <div
-      aria-label={`${value}`}
-      className={`die-face face-${value} ${isRolling ? 'is-rolling' : ''}`}
-      data-testid={scopedTestId(TEST_IDS.dieFace, index)}
-    >
-      {Array.from({ length: value }, (_, pipIndex) => (
-        <span className={`pip pip-${pipIndex + 1}`} key={pipIndex} />
-      ))}
-    </div>
-  );
 }
 
 /** Markup only - the animation and timing live in useDiceRoller. */
@@ -54,8 +35,8 @@ export function DiceDock({
       data-testid={TEST_IDS.diceDock}
     >
       <div aria-live="polite" className="dice-pair">
-        <Die index={0} isRolling={isRolling} value={displayValues[0]} />
-        <Die index={1} isRolling={isRolling} value={displayValues[1]} />
+        <DieFace index={0} isRolling={isRolling} value={displayValues[0]} />
+        <DieFace index={1} isRolling={isRolling} value={displayValues[1]} />
         {/* Beside the white dice but visibly not one of them: only the white
             dice decide doubles and Jail, and the board has to show that. */}
         {speedDieFace ? <SpeedDie face={speedDieFace} isRolling={isRolling} /> : null}

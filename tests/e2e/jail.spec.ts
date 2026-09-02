@@ -64,6 +64,28 @@ const jailedState = (page: Page) =>
     };
   });
 
+/** How many events the game has logged, which every Jail attempt adds to. */
+const eventCount = (page: Page) =>
+  page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    return (JSON.parse(localStorage.getItem(key) as string).history as unknown[]).length;
+  });
+
+/**
+ * Rolls for doubles and waits for the dice to land.
+ *
+ * The Jail roll tumbles before it commits, the same as every other roll in the
+ * game - it used to dispatch straight out, with no animation and no sound. So
+ * the state cannot be read on the click; the roll is logged when it lands.
+ */
+const rollForDoubles = async (page: Page) => {
+  const before = await eventCount(page);
+  await page.getByTestId(TEST_IDS.jailRollButton).click();
+  await expect.poll(() => eventCount(page), { timeout: 5000 }).toBeGreaterThan(before);
+};
+
 test('offers a jailed player the choice to try for doubles', async ({ page }) => {
   await startGame(page);
   await jailActivePlayer(page);
@@ -83,7 +105,7 @@ test('allows one attempt per turn, and hands the turn back on a failure', async 
   await startGame(page);
   const { cash } = await jailActivePlayer(page);
 
-  await page.getByTestId(TEST_IDS.jailRollButton).click();
+  await rollForDoubles(page);
   const state = await jailedState(page);
 
   if (!state.inJail) {
@@ -122,7 +144,7 @@ test('charges nothing until the third turn in Jail', async ({ page }) => {
     });
     await page.reload();
 
-    await page.getByTestId(TEST_IDS.jailRollButton).click();
+    await rollForDoubles(page);
     const after = await jailedState(page);
 
     if (turn < MAX_JAIL_TURNS && after.inJail) {

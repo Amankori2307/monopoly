@@ -123,6 +123,8 @@ export interface JailDecisionViewModel {
    * the player is about to take. The third failure is where the fine is forced.
    */
   attemptsUsed: number;
+  /** The engine's last throw, so the panel's dice settle on it. */
+  lastRoll: number[] | null;
 }
 
 export interface CardDrawDecisionViewModel {

@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { DICE_ROLL_DURATION_MS } from '../../src/components/game/diceDock.constants';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 
 /** Board indices of the four corner spaces, with their expected labels. */
@@ -102,7 +103,9 @@ const tryAdvance = async (page: Page, options: AdvanceOptions): Promise<GameActi
       }
     }
     await jailRoll.click();
-    await page.waitForTimeout(120);
+    // The Jail roll tumbles before it commits, the same as every other roll -
+    // 120ms was enough when it dispatched straight out and is not now.
+    await page.waitForTimeout(DICE_ROLL_DURATION_MS + 150);
     return 'jail-rolled';
   }
 

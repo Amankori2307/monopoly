@@ -1,12 +1,17 @@
+import diceRollSound from '../../../../assets/audio/dice-roll.wav';
 import { JAIL_FINE, MAX_JAIL_TURNS } from '../../../../domain/constants/game.constants';
 import { TEST_IDS } from '../../../../shared/constants/testIds.constants';
 import { formatMoney } from '../../../../shared/utils/money.utils';
+import { DieFace } from '../../DieFace';
+import { useDiceRoller } from '../../hooks/useDiceRoller';
 
 interface JailDecisionProps {
   /** Failed attempts so far, so the panel can say which one is next. */
   attemptsUsed: number;
   canUseJailCard: boolean;
   currencySymbol: string;
+  /** The engine's last throw, which the dice settle on once the tumble ends. */
+  lastRoll: number[] | null;
   onAttemptJailRoll: () => void;
   onPayFine: () => void;
   onUseJailCard: () => void;
@@ -24,11 +29,18 @@ interface JailDecisionProps {
  * The attempt counter is not decoration: the third failure is where the fine
  * stops being a choice, and a player deciding whether to risk another roll needs
  * to know which one they are on.
+ *
+ * **The dice are here too, and they are real dice.** The button used to dispatch
+ * the command straight out, so a Jail roll had no tumble and no sound while
+ * every other roll in the game had both - and the dock that would have shown
+ * them is behind this modal's backdrop. It goes through the same `useDiceRoller`
+ * the dock uses, so the two cannot drift apart in how a roll feels.
  */
 export function JailDecision({
   attemptsUsed,
   canUseJailCard,
   currencySymbol,
+  lastRoll,
   onAttemptJailRoll,
   onPayFine,
   onUseJailCard,
@@ -36,6 +48,14 @@ export function JailDecision({
 }: JailDecisionProps) {
   const attempt = Math.min(attemptsUsed + 1, MAX_JAIL_TURNS);
   const isLastAttempt = attempt === MAX_JAIL_TURNS;
+  const { displayValues, isRolling, roll } = useDiceRoller({
+    // The panel is only rendered while the attempt is still available, so
+    // whether it may be taken is already decided by then.
+    canRoll: true,
+    lastRoll,
+    onRoll: onAttemptJailRoll,
+    soundSrc: diceRollSound,
+  });
 
   return (
     <div className="jail-decision" data-testid={TEST_IDS.jailDecision}>
@@ -48,21 +68,32 @@ export function JailDecision({
           : 'Rolling costs nothing.'}
       </p>
 
+      <div aria-live="polite" className="jail-dice">
+        <DieFace index={0} isRolling={isRolling} value={displayValues[0]} />
+        <DieFace index={1} isRolling={isRolling} value={displayValues[1]} />
+      </div>
+
       <div className="button-row">
         <button
           className="primary-button"
           data-testid={TEST_IDS.jailRollButton}
-          onClick={onAttemptJailRoll}
+          disabled={isRolling}
+          onClick={roll}
           type="button"
         >
-          Roll for doubles
+          {isRolling ? 'Rolling…' : 'Roll for doubles'}
         </button>
-        <button className="secondary-button" onClick={onPayFine} type="button">
+        <button
+          className="secondary-button"
+          disabled={isRolling}
+          onClick={onPayFine}
+          type="button"
+        >
           Pay {formatMoney(JAIL_FINE, currencySymbol)}
         </button>
         <button
           className="secondary-button"
-          disabled={!canUseJailCard}
+          disabled={!canUseJailCard || isRolling}
           onClick={onUseJailCard}
           title={canUseJailCard ? '' : 'No Get Out of Jail Free card to use'}
           type="button"

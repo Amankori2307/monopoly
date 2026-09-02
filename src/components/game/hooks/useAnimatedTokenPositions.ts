@@ -92,14 +92,18 @@ export const useAnimatedTokenPositions = (
       TOKEN_STEP_POOL_SIZE,
       TOKEN_STEP_VOLUME
     );
+    // Captured on mount: the ref's own identity is stable, and reading
+    // `.current` in the cleanup would read whatever a later render left there.
+    const timers = timersRef.current;
+    const pool = poolRef.current;
 
     return () => {
-      timersRef.current.forEach((timer) => window.clearTimeout(timer));
-      timersRef.current.clear();
+      timers.forEach((timer) => window.clearTimeout(timer));
+      timers.clear();
       if (watchdogRef.current !== null) {
         window.clearTimeout(watchdogRef.current);
       }
-      poolRef.current?.stop();
+      pool.stop();
     };
   }, []);
 

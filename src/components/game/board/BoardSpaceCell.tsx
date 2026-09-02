@@ -20,6 +20,18 @@ import type { SpaceOwnerMark } from './board.interfaces';
 const isPortraitSide = (side: BoardSide): boolean =>
   side === BoardSide.Bottom || side === BoardSide.Top;
 
+/** The cell's own classes: its kind, its edge, and whether anything is on it. */
+const cellClassName = (space: BoardSpace, side: BoardSide, isOccupied: boolean): string =>
+  [
+    'board-space',
+    `space-${space.kind}`,
+    `side-${side}`,
+    isOccupied ? 'active-space' : '',
+    CORNER_POSITIONS.includes(space.index as never) ? 'corner-space' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
 interface BoardSpaceCellProps {
   /** Whether any token currently sits here - tokens themselves are drawn by
    * BoardTokenLayer, over the board rather than inside the cell. */
@@ -45,19 +57,13 @@ export function BoardSpaceCell({
 }: BoardSpaceCellProps) {
   const side = getBoardSide(space.index);
   const position = boardIndexToGridPosition(space.index);
+  const stampTestId = scopedTestId(TEST_IDS.spaceMortgaged, space.index);
+  // The top and bottom rows are portrait squares, so the word runs down them -
+  // the same way their space names already do.
+  const stampVariant = isPortraitSide(side) ? 'space-tall' : 'space-wide';
   const cornerIcon = getCornerIcon(space);
   const spaceIcon = getSpaceIcon(space);
-  const isCorner = CORNER_POSITIONS.includes(space.index as never);
-
-  const className = [
-    'board-space',
-    `space-${space.kind}`,
-    `side-${side}`,
-    isOccupied ? 'active-space' : '',
-    isCorner ? 'corner-space' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const className = cellClassName(space, side, isOccupied);
 
   return (
     <button
@@ -103,15 +109,9 @@ export function BoardSpaceCell({
       ) : null}
 
       {/* Struck across the square, so a mortgaged site reads at a glance across
-          forty of them rather than only from the hollow dot. No wording at this
-          size - see MortgageStamp. */}
+          forty of them rather than only from the hollow dot. */}
       {ownerMark?.mortgaged ? (
-        <MortgageStamp
-          testId={scopedTestId(TEST_IDS.spaceMortgaged, space.index)}
-          // The top and bottom rows are portrait squares, so the word runs down
-          // them - the same way their space names already do.
-          variant={isPortraitSide(side) ? 'space-tall' : 'space-wide'}
-        />
+        <MortgageStamp testId={stampTestId} variant={stampVariant} />
       ) : null}
 
       {/* Wrapper so the ribbon can sit on any edge while the text keeps the rest. */}
