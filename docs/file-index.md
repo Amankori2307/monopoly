@@ -114,7 +114,14 @@ File-naming rules are in [conventions.md](conventions.md).
 | [game/GamePage.tsx](../src/features/game/GamePage.tsx)                                                     | Game screen **wiring only**: selects state, derives view models, dispatches commands.                         |
 | [game/GamePage.integration.test.tsx](../src/features/game/GamePage.integration.test.tsx)                   | Route to load to render to command, and the decision modal.                                                   |
 | [game/GameOverlayLayer.tsx](../src/features/game/GameOverlayLayer.tsx)                                     | Everything that floats over the board: drawers, deed panel, toasts, decision modal.                           |
-| [game/toastFeed.utils.ts](../src/features/game/toastFeed.utils.ts)                                         | Turns the history delta into toasts, and derives each one's tone from its wording.                            |
+| [game/toastFeed.utils.ts](../src/features/game/toastFeed.utils.ts)                                         | Turns a command's events into toasts, narrowing each event's cue to one of three colours.                     |
+| [game/soundCues.constants.ts](../src/features/game/soundCues.constants.ts)                                 | Cue → clip, the cue priority, and the cue volume. **The one place to swap a sound.**                          |
+| [game/soundCue.utils.ts](../src/features/game/soundCue.utils.ts)                                           | Picks the one cue a command's events should sound.                                                            |
+| [game/soundCue.utils.test.ts](../src/features/game/soundCue.utils.test.ts)                                 | The priority pick over a mixed batch, and silence for an empty one.                                           |
+| [game/soundCues.guard.test.ts](../src/features/game/soundCues.guard.test.ts)                               | Every cue has a clip, on disk, short and audible - so a new cue cannot ship silent.                           |
+| [game/soundPreference.utils.ts](../src/features/game/soundPreference.utils.ts)                             | The mute, remembered under its own storage key rather than in the save.                                       |
+| [game/hooks/useGameSounds.ts](../src/features/game/hooks/useGameSounds.ts)                                 | Plays the cue the thunk chose, once, and never when muted.                                                    |
+| [game/hooks/useGameSounds.test.tsx](../src/features/game/hooks/useGameSounds.test.tsx)                     | One sound per cue id, two for the same cue twice, none when muted.                                            |
 | [game/boardOwnership.utils.ts](../src/features/game/boardOwnership.utils.ts)                               | Builds the board's owner-marker map from ownership plus the theme token catalogue.                            |
 | [game/sitePanel.utils.ts](../src/features/game/sitePanel.utils.ts)                                         | Resolves a picked space into the site panel's three ownership states.                                         |
 | [game/toastFeed.utils.test.ts](../src/features/game/toastFeed.utils.test.ts)                               | Tone classification, the history delta, and the behaviour once the history cap is reached.                    |
@@ -357,12 +364,14 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Assets and tools
 
-| File                                                              | What it does                                                                                           |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| [assets/audio/token-step.wav](../src/assets/audio/token-step.wav) | The token step pop. Trimmed from the source pack - 48ms mono, audible from 1.8ms.                      |
-| [assets/audio/dice-roll.wav](../src/assets/audio/dice-roll.wav)   | The dice throw. CC0, sourced - see ATTRIBUTION.md.                                                     |
-| [assets/audio/ATTRIBUTION.md](../src/assets/audio/ATTRIBUTION.md) | Where each clip came from, and the licence position on each.                                           |
-| [tools/generate-token-step.py](../tools/generate-token-step.py)   | Rebuilds token-step.wav: a wooden knock from a noise transient and four non-harmonic damped sinusoids. |
+| File                                                              | What it does                                                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [assets/audio/token-step.wav](../src/assets/audio/token-step.wav) | The token step pop. Trimmed from the source pack - 48ms mono, audible from 1.8ms.           |
+| [assets/audio/dice-roll.wav](../src/assets/audio/dice-roll.wav)   | The dice throw. CC0, sourced - see ATTRIBUTION.md.                                          |
+| [assets/audio/](../src/assets/audio/)                             | Nine event-cue clips, generated. Four are placeholders - see ATTRIBUTION.md.                |
+| [assets/audio/ATTRIBUTION.md](../src/assets/audio/ATTRIBUTION.md) | Where each clip came from, and the licence position on each.                                |
+| [tools/trim-token-step.py](../tools/trim-token-step.py)           | Rebuilds token-step.wav: trims the chosen pop out of the source pack, normalised and faded. |
+| [tools/generate-cue-sounds.py](../tools/generate-cue-sounds.py)   | Synthesises the nine event-cue clips, one seed per clip.                                    |
 
 ## Other
 

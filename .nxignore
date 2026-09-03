@@ -1,0 +1,5 @@
+# Agent worktrees live under .claude/ and each holds a full copy of the project,
+# so Nx sees a second project called "monopoly" and refuses to build:
+#   "The following projects are defined in multiple locations".
+# Nothing under .claude/ is source, so none of it belongs in the project graph.
+.claude

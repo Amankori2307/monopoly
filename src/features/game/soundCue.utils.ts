@@ -1,5 +1,5 @@
 import type { GameEvent } from '../../domain/types/game.interfaces';
-import { GameEventCue } from '../../domain/types/game.enums';
+import type { GameEventCue } from '../../domain/types/game.enums';
 import { CUE_PRIORITY, SOUND_FOR_CUE } from './soundCues.constants';
 
 /**

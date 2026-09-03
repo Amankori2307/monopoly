@@ -32,3 +32,6 @@ dist
 # playwright
 /test-results
 /playwright-report
+
+# Agent worktrees: each is a full checkout, and none of it is this project's source.
+.claude/worktrees/
