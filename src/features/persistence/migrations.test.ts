@@ -145,14 +145,18 @@ describe('migrating across more than one version', () => {
 });
 
 /**
- * v4 -> v5: events carry their own tone, and old ones keep the colours the
- * wording used to give them.
+ * v4 -> v5, and v7 -> v8 on top of it: an event carries its own classification.
+ *
+ * v5 gave every event a `tone`, read from the wording it was written with. v8
+ * widened that into a `cue`, because the same field decides the sound as well as
+ * the toast's colour - so a save this old arrives with a cue, and only the three
+ * an older build could have known.
  */
-describe('giving old events a tone', () => {
+describe('giving old events a cue', () => {
   const migrate = (history: { message: string }[]) =>
     migrateSavedGame({ version: 4, history }) as {
       version: number;
-      history: { message: string; tone: string }[];
+      history: { message: string; cue: string; tone?: unknown }[];
     };
 
   it('reads money leaving a player as a debit', () => {
@@ -161,19 +165,25 @@ describe('giving old events a tone', () => {
       { message: 'Asha bought Delhi for ₹350.' },
     ]);
 
-    expect(migrated.history.map((event) => event.tone)).toEqual(['debit', 'debit']);
+    expect(migrated.history.map((event) => event.cue)).toEqual(['debit', 'debit']);
   });
 
   it('reads money arriving as a credit', () => {
     expect(
-      migrate([{ message: 'Asha collected ₹200 - passing GO.' }]).history[0].tone
+      migrate([{ message: 'Asha collected ₹200 - passing GO.' }]).history[0].cue
     ).toBe('credit');
   });
 
-  it('reads anything else as neutral', () => {
-    expect(migrate([{ message: 'Asha rolled 3 and 5.' }]).history[0].tone).toBe(
-      'neutral'
-    );
+  // The finer cues did not exist when these messages were written, so anything
+  // that is not plainly money is silent rather than guessed at.
+  it('gives anything else no cue at all', () => {
+    expect(migrate([{ message: 'Asha rolled 3 and 5.' }]).history[0].cue).toBe('none');
+  });
+
+  it('leaves no tone behind', () => {
+    const migrated = migrate([{ message: 'Asha collected ₹200 - passing GO.' }]);
+
+    expect(migrated.history[0]).not.toHaveProperty('tone');
   });
 
   it('copes with a save that has no history at all', () => {

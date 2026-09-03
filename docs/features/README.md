@@ -14,6 +14,7 @@ which the code itself cannot tell them.
 | Game setup and saved games | [setup.md](setup.md)                     | Shipped                            |
 | Playing a turn             | [game-turn.md](game-turn.md)             | Shipped (building/trading pending) |
 | Action feedback            | [action-feedback.md](action-feedback.md) | Shipped                            |
+| Sound                      | [sound.md](sound.md)                     | Shipped (4 placeholder clips)      |
 | Site ownership             | [site-ownership.md](site-ownership.md)   | Shipped (owner actions pending)    |
 | Auctions                   | [auctions.md](auctions.md)               | Shipped                            |
 | Trading                    | [trading.md](trading.md)                 | Shipped                            |

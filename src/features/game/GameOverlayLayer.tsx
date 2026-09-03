@@ -23,6 +23,8 @@ interface GameOverlayLayerProps {
   findToken: (tokenId: string) => ThemeToken | undefined;
   /** True while a token is walking, when a decision must stay hidden. */
   isMoving: boolean;
+  /** False when the player has muted the game - the Jail panel rolls dice. */
+  soundEnabled: boolean;
   overlays: UseGameOverlaysResult;
   selectedSummary: PlayerSummary | null;
   sitePanel: SitePanelViewModel;
@@ -45,6 +47,7 @@ export function GameOverlayLayer({
   overlays,
   selectedSummary,
   sitePanel,
+  soundEnabled,
 }: GameOverlayLayerProps) {
   const tradeBuilder = overlays.tradeTargetPlayerId
     ? selectTradeBuilder(activeGame, findToken, overlays.tradeTargetPlayerId)
@@ -119,6 +122,7 @@ export function GameOverlayLayer({
           move that caused it has finished. */}
       <DecisionModal
         bidField={commands.bidField}
+        soundEnabled={soundEnabled}
         currencySymbol={currencySymbol}
         decision={isMoving ? null : selectDecisionViewModel(activeGame, findToken)}
         handlers={commands.decisionHandlers}

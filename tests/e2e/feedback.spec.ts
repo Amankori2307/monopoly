@@ -294,3 +294,111 @@ test('shows a mortgaged site as mortgaged on its deed', async ({ page }) => {
     page.getByTestId(`${TEST_IDS.playerBadge}-mortgaged`).first()
   ).toContainText('1 mortgaged');
 });
+
+/**
+ * Sound, and the one switch that turns it all off.
+ *
+ * Counting `play()` calls is the only way to assert this from outside: the
+ * assertion is that a command makes exactly one sound, and none at all when
+ * muted - including the dice and the token's steps, because a mute that leaves
+ * two sounds playing is worse than no mute.
+ */
+/** Puts the active player on an unowned street with the buy decision up. */
+const seedLandedOnUnowned = async (page: Page) => {
+  await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const street = game.board.find((space: { kind: string }) => space.kind === 'street');
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    game.players[activePlayerId].position = street.index;
+    game.pendingDecision = {
+      type: 'landed-unowned-property',
+      spaceId: street.id,
+      playerId: activePlayerId,
+    };
+    game.turn = {
+      phase: 'await_decision',
+      doublesCount: 0,
+      lastRoll: [3, 4],
+      canRollAgain: false,
+      reason: 'Decide on the site',
+      speedDieFace: null,
+      pendingMonopolyAdvance: false,
+    };
+    localStorage.setItem(key, JSON.stringify(game));
+  });
+  await page.reload();
+  await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
+};
+
+test.describe('sound', () => {
+  /** Records the file name of every clip the page plays. */
+  const watchSounds = (page: Page) =>
+    page.addInitScript(() => {
+      (window as unknown as { __sounds: string[] }).__sounds = [];
+      const media = window.HTMLMediaElement.prototype;
+      const play = media.play;
+      media.play = function patched(this: HTMLMediaElement, ...args: never[]) {
+        const name = (this.src || '').split('/').pop()?.split('?')[0] ?? '';
+        (window as unknown as { __sounds: string[] }).__sounds.push(name);
+        return play.apply(this, args);
+      };
+    });
+
+  const soundsPlayed = (page: Page) =>
+    page.evaluate(() => (window as unknown as { __sounds: string[] }).__sounds);
+
+  const clearSounds = (page: Page) =>
+    page.evaluate(() => {
+      (window as unknown as { __sounds: string[] }).__sounds = [];
+    });
+
+  test('sounds a bought site once, and only once', async ({ page }) => {
+    await watchSounds(page);
+    await startGame(page);
+    await seedLandedOnUnowned(page);
+    await clearSounds(page);
+
+    await page.getByTestId(TEST_IDS.buyButton).click();
+    await expect.poll(() => soundsPlayed(page)).toContain('bought.wav');
+
+    expect(await soundsPlayed(page)).toHaveLength(1);
+  });
+
+  test('mutes everything, dice included, and remembers it', async ({ page }) => {
+    await watchSounds(page);
+    await startGame(page);
+
+    const toggle = page.getByTestId(TEST_IDS.soundToggle);
+    await expect(toggle).toContainText(/sound/i);
+    await toggle.click();
+    await expect(toggle).toContainText(/muted/i);
+
+    await clearSounds(page);
+    await page.getByTestId(TEST_IDS.rollButton).click();
+    await page.waitForTimeout(2500);
+
+    expect(await soundsPlayed(page)).toEqual([]);
+
+    // And the choice is a preference, so it outlives the page.
+    await page.reload();
+    await expect(page.getByTestId(TEST_IDS.soundToggle)).toContainText(/muted/i);
+  });
+
+  test('plays the dice again once sound is switched back on', async ({ page }) => {
+    await watchSounds(page);
+    await startGame(page);
+    const toggle = page.getByTestId(TEST_IDS.soundToggle);
+
+    await toggle.click();
+    await toggle.click();
+    await expect(toggle).toContainText(/sound/i);
+
+    await clearSounds(page);
+    await page.getByTestId(TEST_IDS.rollButton).click();
+
+    await expect.poll(() => soundsPlayed(page)).toContain('dice-roll.wav');
+  });
+});

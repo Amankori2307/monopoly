@@ -1,4 +1,8 @@
-import { GameCommandType, PendingDecisionType } from '../../../types/game.enums';
+import {
+  GameCommandType,
+  GameEventCue,
+  PendingDecisionType,
+} from '../../../types/game.enums';
 import { groupHasBuildings, isOwnedBy } from '../../holdings.utils';
 import { isOwnableSpace, isStreetSpace } from '../../space.utils';
 import { startAuction } from '../auction.utils';
@@ -43,7 +47,8 @@ export const propertyCommands: CommandHandlers = {
       nextState,
       buyer.id,
       space.price,
-      `bought ${space.name}`
+      `bought ${space.name}`,
+      GameEventCue.Bought
     );
     nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
       ...ownership,

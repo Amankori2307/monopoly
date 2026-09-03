@@ -2,6 +2,7 @@ import {
   CardDeck,
   CardEffectKind,
   DeckName,
+  GameEventCue,
   PendingDecisionType,
   TurnPhase,
 } from '../../types/game.enums';
@@ -47,6 +48,37 @@ export const returnJailCardToDeck = (state: GameState, card: DeckCard): GameStat
   };
 };
 
+/**
+ * Whether a card helps or hurts the player who drew it.
+ *
+ * Read off the effect, which is already on the card - so a card's sting needs no
+ * new state and cannot disagree with what the card then does. A move is judged
+ * by direction: an advance is worth having, being sent back is not.
+ *
+ * It does not double up with the money sound. Drawing and acknowledging are two
+ * separate commands: the draw plays this, and the acknowledgement plays whatever
+ * the effect turns out to be.
+ */
+export const cueForCard = (card: DeckCard): GameEventCue => {
+  switch (card.effect.kind) {
+    case CardEffectKind.Collect:
+    case CardEffectKind.CollectFromEach:
+    case CardEffectKind.JailFree:
+      return GameEventCue.CardGood;
+    case CardEffectKind.Pay:
+    case CardEffectKind.PayEach:
+    case CardEffectKind.GoToJail:
+      return GameEventCue.CardBad;
+    case CardEffectKind.MoveTo:
+      // Every MoveTo card is an "Advance to ...".
+      return GameEventCue.CardGood;
+    case CardEffectKind.MoveSteps:
+      return card.effect.steps > 0 ? GameEventCue.CardGood : GameEventCue.CardBad;
+    default:
+      return GameEventCue.None;
+  }
+};
+
 export const drawCard = (state: GameState, deckName: DeckName): GameState => {
   const card = state.decks[deckName][0];
   const remainingCards = state.decks[deckName].slice(1);
@@ -74,6 +106,10 @@ export const drawCard = (state: GameState, deckName: DeckName): GameState => {
   };
 
   return appendEvents(nextState, [
-    createEvent(nextState.turnNumber, `${activePlayer.name} drew ${card.title}.`),
+    createEvent(
+      nextState.turnNumber,
+      `${activePlayer.name} drew ${card.title}.`,
+      cueForCard(card)
+    ),
   ]);
 };

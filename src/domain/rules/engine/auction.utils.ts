@@ -2,7 +2,7 @@ import {
   AUCTION_MIN_INCREMENT,
   AUCTION_START_PRICE,
 } from '../../constants/game.constants';
-import { PendingDecisionType, TurnPhase } from '../../types/game.enums';
+import { GameEventCue, PendingDecisionType, TurnPhase } from '../../types/game.enums';
 import type { BuildingKind } from '../../types/game.enums';
 import type { AuctionState, DebtRecord, GameState } from '../../types/game.interfaces';
 import { openingLedgerEntry } from '../auctionBids.utils';
@@ -146,7 +146,9 @@ export const completeAuctionIfPossible = (
     auction.highestBid,
     auction.buildingKind
       ? `won a ${auction.buildingKind} at auction`
-      : `won the auction for ${space.name}`
+      : `won the auction for ${space.name}`,
+    // Winning is acquiring, whichever it was.
+    auction.buildingKind ? GameEventCue.Built : GameEventCue.Bought
   );
 
   // A building auction sells the building, not the site: the winner picks which

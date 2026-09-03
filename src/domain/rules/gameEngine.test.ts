@@ -5,7 +5,7 @@ import {
   ColorGroup,
   MoveDirection,
   GameCommandType,
-  GameEventTone,
+  GameEventCue,
   GameStatus,
   MortgageChoice,
   PendingDecisionType,
@@ -34,6 +34,14 @@ import { chanceCards, communityChestCards } from '../cards/indiaEditionCards';
 import { indiaEditionTheme } from '../themes/indiaEditionTheme';
 import { getPlacementSites } from './buildings.utils';
 import { startAuction } from './engine/auction.utils';
+import { drawCard } from './engine/cards.utils';
+import {
+  creditFromBank,
+  resolveBankPayment,
+  resolvePlayerPayment,
+} from './engine/money.utils';
+import { sendPlayerToJail } from './engine/movement.utils';
+import { concludeIfWon } from './engine/turn.utils';
 import { getThemeOrDefault } from './engine/state.utils';
 import { findMonopolyAdvance } from './engine/turn.utils';
 import { SeededRandomSource } from './rng';
@@ -2928,7 +2936,7 @@ describe('the command result', () => {
         turnNumber: 1,
         createdAt: '2026-08-29T00:00:00.000Z',
         message: `filler ${index}`,
-        tone: GameEventTone.Neutral,
+        cue: GameEventCue.None,
       })),
     };
 
@@ -5473,3 +5481,169 @@ describe('recording the direction of a move', () => {
     expect(next.players[activePlayerId].lastMove).toBe(MoveDirection.Forward);
   });
 });
+
+/**
+ * The cue on each event, set where the thing happened.
+ *
+ * The toast's colour and the sound both read it, so a wrong cue is a wrong
+ * colour *and* a wrong noise. It replaced a regex over the message, where
+ * rephrasing a sentence silently changed both.
+ */
+describe('what each event says happened', () => {
+  const cuesFrom = (result: { nextState: GameState }, count = 6) =>
+    result.nextState.history.slice(0, count).map((event) => event.cue);
+
+  const streetOf = (game: GameState) => {
+    const street = game.board.find((space) => space.kind === SpaceKind.Street);
+    if (!street || !isOwnableSpace(street)) {
+      throw new Error('No street on the board');
+    }
+    return street;
+  };
+
+  /** Puts the active player on a street with the buy decision pending. */
+  const landedOnUnowned = (game: GameState): GameState => {
+    const street = streetOf(game);
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    return {
+      ...game,
+      players: {
+        ...game.players,
+        [activePlayerId]: { ...game.players[activePlayerId], position: street.index },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.LandedUnownedProperty,
+        spaceId: street.id,
+        playerId: activePlayerId,
+      },
+      turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+    };
+  };
+
+  it('says a site was bought, not merely paid for', () => {
+    const result = executeGameCommand(
+      landedOnUnowned(createBaseGame()),
+      { type: GameCommandType.BuyLandedAsset },
+      new SeededRandomSource(3)
+    );
+
+    expect(cuesFrom(result)).toContain(GameEventCue.Bought);
+    // And not as a plain debit, which is what it would sound like otherwise.
+    expect(result.nextState.history[0].cue).toBe(GameEventCue.Bought);
+  });
+
+  it('says money from the bank is a credit', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const next = creditFromBank(game, activePlayerId, 200, 'passing GO');
+
+    expect(next.history[0].cue).toBe(GameEventCue.Credit);
+  });
+
+  it('says money to the bank is a debit', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    const next = resolveBankPayment(game, activePlayerId, 100, 'Income Tax');
+
+    expect(next.history[0].cue).toBe(GameEventCue.Debit);
+  });
+
+  // Money to a player is nearly always rent, and it deserves its own sound.
+  it('says money to another player is rent', () => {
+    const game = createBaseGame();
+    const [payer, payee] = game.playerOrder;
+    const next = resolvePlayerPayment(game, payer, payee, 50, 'rent on Delhi');
+
+    expect(next.history[0].cue).toBe(GameEventCue.Rent);
+  });
+
+  it('says a building went up', () => {
+    const game = createBaseGame();
+    const street = streetOf(game);
+    const owner = game.playerOrder[game.activePlayerIndex];
+    const group = (street as StreetSpace).colorGroup;
+    const set = game.board.filter(
+      (space) => space.kind === SpaceKind.Street && space.colorGroup === group
+    );
+    const owned: GameState = {
+      ...game,
+      ownership: set.reduce(
+        (accumulator, space) => ({
+          ...accumulator,
+          [space.id]: { ownerPlayerId: owner, mortgaged: false, buildLevel: 0 },
+        }),
+        game.ownership
+      ),
+      turn: { ...game.turn, phase: TurnPhase.TurnComplete },
+    };
+
+    const result = executeGameCommand(
+      owned,
+      { type: GameCommandType.BuildHouse, spaceId: street.id },
+      new SeededRandomSource(3)
+    );
+
+    expect(result.nextState.history[0].cue).toBe(GameEventCue.Built);
+  });
+
+  it('says a player was jailed', () => {
+    const game = createBaseGame();
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+
+    const next = sendPlayerToJail(game, activePlayerId, 'Landed on Go To Jail');
+
+    expect(next.history[0].cue).toBe(GameEventCue.Jailed);
+  });
+
+  it('says the game was won', () => {
+    const game = createBaseGame();
+    const [winner, loser] = game.playerOrder;
+    const nearlyOver: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [loser]: { ...game.players[loser], isBankrupt: true, bankruptcyRank: 1 },
+      },
+    };
+
+    const settled = concludeIfWon(nearlyOver);
+
+    expect(settled.history[0].cue).toBe(GameEventCue.Won);
+    expect(settled.winnerPlayerId).toBe(winner);
+  });
+
+  /**
+   * A drawn card stings before it acts, and the sting comes from the card's own
+   * effect - so it cannot disagree with what the card then does.
+   */
+  it('says whether a drawn card helps or hurts', () => {
+    const game = createBaseGame();
+    const good = drawCardForTest(game, {
+      id: 'test-good',
+      deck: CardDeck.Chance,
+      title: 'Bank pays you',
+      description: 'Collect ₹50.',
+      effect: { kind: CardEffectKind.Collect, amount: 50 },
+    });
+    const bad = drawCardForTest(game, {
+      id: 'test-bad',
+      deck: CardDeck.Chance,
+      title: 'Pay a fine',
+      description: 'Pay ₹50.',
+      effect: { kind: CardEffectKind.Pay, amount: 50 },
+    });
+
+    expect(good).toBe(GameEventCue.CardGood);
+    expect(bad).toBe(GameEventCue.CardBad);
+  });
+});
+
+/** The cue drawCard would log for a card, without shuffling a real deck. */
+const drawCardForTest = (game: GameState, card: DeckCard): GameEventCue =>
+  drawCard(
+    {
+      ...game,
+      decks: { ...game.decks, [DeckName.Chance]: [card, ...game.decks[DeckName.Chance]] },
+    },
+    DeckName.Chance
+  ).history[0].cue;

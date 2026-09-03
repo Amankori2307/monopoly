@@ -30,6 +30,7 @@ const renderPanel = (overrides: Partial<Parameters<typeof JailDecision>[0]> = {}
       canUseJailCard={false}
       currencySymbol="₹"
       lastRoll={null}
+      soundEnabled
       onAttemptJailRoll={onAttemptJailRoll}
       onPayFine={onPayFine}
       onUseJailCard={onUseJailCard}

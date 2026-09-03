@@ -1,5 +1,5 @@
 import { MAX_HISTORY_EVENTS } from '../../constants/game.constants';
-import { GameEventTone } from '../../types/game.enums';
+import { GameEventCue } from '../../types/game.enums';
 import type {
   BoardSpace,
   GameEvent,
@@ -33,13 +33,13 @@ import { availableThemes, indiaEditionTheme } from '../../themes/indiaEditionThe
 export const createEvent = (
   turnNumber: number,
   message: string,
-  tone: GameEventTone = GameEventTone.Neutral
+  cue: GameEventCue = GameEventCue.None
 ): GameEvent => ({
   id: crypto.randomUUID(),
   turnNumber,
   createdAt: new Date().toISOString(),
   message,
-  tone,
+  cue,
 });
 
 /**

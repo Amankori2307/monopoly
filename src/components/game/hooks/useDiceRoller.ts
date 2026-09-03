@@ -12,6 +12,8 @@ export interface UseDiceRollerOptions {
   canRoll: boolean;
   lastRoll: number[] | null;
   onRoll: () => void;
+  /** False when the player has muted the game. The tumble still runs. */
+  soundEnabled?: boolean;
   soundSrc: string;
 }
 
@@ -40,6 +42,7 @@ export const useDiceRoller = ({
   canRoll,
   lastRoll,
   onRoll,
+  soundEnabled = true,
   soundSrc,
 }: UseDiceRollerOptions): UseDiceRollerResult => {
   const [isRolling, setIsRolling] = useState(false);
@@ -89,7 +92,9 @@ export const useDiceRoller = ({
     // and so did older Safari - so `.catch()` on it threw synchronously, out of
     // `roll` and into React's event handler, before either timer below was set.
     // The click then did nothing at all.
-    playSound(audioRef.current);
+    if (soundEnabled) {
+      playSound(audioRef.current);
+    }
 
     shuffleTimerRef.current = window.setInterval(() => {
       setDisplayValues([randomDie(), randomDie()]);
@@ -109,7 +114,7 @@ export const useDiceRoller = ({
         setIsRolling(false);
       }
     }, DICE_ROLL_DURATION_MS);
-  }, [canRoll, clearTimers, isRolling, onRoll]);
+  }, [canRoll, clearTimers, isRolling, onRoll, soundEnabled]);
 
   return { displayValues, isRolling, roll };
 };

@@ -188,13 +188,35 @@ export enum BuildingKind {
 }
 
 /**
- * Which way money moved in an event, if it moved at all.
+ * What happened, as far as feedback is concerned.
  *
- * Set by the engine at the three money choke points rather than guessed from
- * the wording afterwards - the sentence is for players, not for parsing.
+ * Set by the engine where the thing happened rather than guessed from the
+ * wording afterwards - the sentence is for players, not for parsing. It was
+ * regex-matched from the message once, and rephrasing a line silently changed
+ * its colour.
+ *
+ * **One classification, two readers**: the toast's colour and the sound. This
+ * started as three tones for the colour alone; sound needs more distinctions,
+ * and a second engine-set classification of the same event would be two
+ * fallbacks for one value.
  */
-export enum GameEventTone {
-  Debit = 'debit',
+export enum GameEventCue {
+  /** Money in, from the bank. */
   Credit = 'credit',
-  Neutral = 'neutral',
+  /** Money out, to the bank. */
+  Debit = 'debit',
+  /** Money to another player - landing on a site somebody owns. */
+  Rent = 'rent',
+  /** A site acquired, by buying it or winning it at auction. */
+  Bought = 'bought',
+  /** A house or a hotel going up. */
+  Built = 'built',
+  Jailed = 'jailed',
+  /** A card drawn whose effect helps, and one whose effect hurts. */
+  CardGood = 'card-good',
+  CardBad = 'card-bad',
+  Bankrupt = 'bankrupt',
+  Won = 'won',
+  /** Everything else. Nothing sounds, and the toast is plain. */
+  None = 'none',
 }

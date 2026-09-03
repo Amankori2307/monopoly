@@ -5,7 +5,7 @@ import {
   CardDeck,
   CardEffectKind,
   ColorGroup,
-  GameEventTone,
+  GameEventCue,
   MoveDirection,
   GameStatus,
   PendingDecisionType,
@@ -270,7 +270,7 @@ export const gameStateSchema = z
         turnNumber: z.number(),
         createdAt: z.string(),
         message: z.string(),
-        tone: z.nativeEnum(GameEventTone),
+        cue: z.nativeEnum(GameEventCue),
       })
     ),
     winnerPlayerId: z.string().nullable(),

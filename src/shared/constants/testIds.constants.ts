@@ -55,6 +55,7 @@ export const TEST_IDS = {
   tradeReject: 'trade-reject',
   spaceOwnerDot: 'space-owner-dot',
   toast: 'toast',
+  soundToggle: 'sound-toggle',
   liquidationDecision: 'liquidation-decision',
   liquidationMortgage: 'liquidation-mortgage',
   liquidationSell: 'liquidation-sell',

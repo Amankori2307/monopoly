@@ -3,6 +3,8 @@ import type { SpeedDieFace } from '../../../domain/types/game.enums';
 import { DiceDock } from '../DiceDock';
 
 interface TurnControlsProps {
+  /** False when the player has muted the game. */
+  soundEnabled: boolean;
   canEndTurn: boolean;
   canRoll: boolean;
   canRollAgain: boolean;
@@ -22,11 +24,12 @@ export function TurnControls({
   canEndTurn,
   canRoll,
   canRollAgain,
-  speedDieFace,
   lastRoll,
   onEndTurn,
   onRoll,
   rollLabel,
+  soundEnabled,
+  speedDieFace,
 }: TurnControlsProps) {
   return (
     <div className="turn-controls" data-testid={TEST_IDS.turnControls}>
@@ -41,6 +44,7 @@ export function TurnControls({
         </button>
       ) : null}
       <DiceDock
+        soundEnabled={soundEnabled}
         canRoll={canRoll}
         speedDieFace={speedDieFace}
         lastRoll={lastRoll}

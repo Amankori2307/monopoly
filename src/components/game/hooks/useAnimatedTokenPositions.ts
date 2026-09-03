@@ -73,7 +73,9 @@ const stepIntervalFor = (steps: number): number => {
  * immediately, which is mount and a game just loaded.
  */
 export const useAnimatedTokenPositions = (
-  players: PlayerState[]
+  players: PlayerState[],
+  /** False when the player has muted the game, so the steps fall silent too. */
+  soundEnabled = true
 ): UseAnimatedTokenPositionsResult => {
   const displayRef = useRef<TokenPositions>(positionsOf(players));
   const [displayPositions, setDisplayPositions] = useState<TokenPositions>(
@@ -202,7 +204,9 @@ export const useAnimatedTokenPositions = (
           setDisplayPositions(displayRef.current);
           // One tak per tick, however many spaces this tick covered - the pool
           // is what lets consecutive taks overlap rather than cut each other off.
-          playSound(poolRef.current?.next());
+          if (soundEnabled) {
+            playSound(poolRef.current?.next());
+          }
         }
 
         if (taken < walk.path.length) {
@@ -217,7 +221,7 @@ export const useAnimatedTokenPositions = (
 
     // players is intentionally excluded: positionsKey is its meaningful identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [positionsKey]);
+  }, [positionsKey, soundEnabled]);
 
   /**
    * Derived, not stored.

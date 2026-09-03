@@ -14,6 +14,7 @@ const renderControls = (overrides: Partial<Parameters<typeof TurnControls>[0]> =
       canRollAgain={false}
       lastRoll={[3, 4]}
       onEndTurn={onEndTurn}
+      soundEnabled
       onRoll={onRoll}
       rollLabel="Roll dice"
       speedDieFace={null}
@@ -72,6 +73,7 @@ describe('TurnControls', () => {
         canEndTurn={false}
         canRoll={true}
         canRollAgain={false}
+        soundEnabled
         lastRoll={[3, 4]}
         onEndTurn={vi.fn()}
         onRoll={vi.fn()}

@@ -6,6 +6,7 @@ import {
 import {
   BuildingKind,
   GameCommandType,
+  GameEventCue,
   PendingDecisionType,
 } from '../../../types/game.enums';
 import type { GameState, RuntimeGameCommand } from '../../../types/game.interfaces';
@@ -79,7 +80,8 @@ const buildHouseHandler = (
     nextState,
     activePlayer.id,
     cost,
-    isHotel ? `built a hotel on ${space.name}` : `built a house on ${space.name}`
+    isHotel ? `built a hotel on ${space.name}` : `built a house on ${space.name}`,
+    GameEventCue.Built
   );
   nextState = updateSpaceOwnership(nextState, space.id, (ownership) => ({
     ...ownership,

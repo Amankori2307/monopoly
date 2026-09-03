@@ -23,7 +23,10 @@ import {
   selectCanRollDice,
   selectPlayerSummaries,
 } from './gameView.selectors';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { setSoundEnabled } from './uiSlice';
 import { useActiveGame } from './hooks/useActiveGame';
+import { useGameSounds } from './hooks/useGameSounds';
 import { useGameCommands } from './hooks/useGameCommands';
 import { useGameOverlays } from './hooks/useGameOverlays';
 
@@ -46,7 +49,15 @@ export function GamePage() {
     [activeGame]
   );
   // Display positions lag the engine while a token walks to its new space.
-  const { positions: tokenPositions, isMoving } = useAnimatedTokenPositions(players);
+  const dispatch = useAppDispatch();
+  const soundEnabled = useAppSelector((state) => state.ui.soundEnabled);
+  // Sounds whatever the last command did. Mounted here because the page is
+  // where the game is being played.
+  useGameSounds();
+  const { positions: tokenPositions, isMoving } = useAnimatedTokenPositions(
+    players,
+    soundEnabled
+  );
 
   if (!activeGame) {
     return <GameUnavailable loadError={loadError} />;
@@ -96,6 +107,18 @@ export function GamePage() {
                 <Link className="secondary-button" to="/rules">
                   Rules
                 </Link>
+                {/* Beside the other two rather than tucked away: nine sounds
+                    need an off switch a player can find. */}
+                <button
+                  aria-pressed={!soundEnabled}
+                  className="secondary-button"
+                  data-testid={TEST_IDS.soundToggle}
+                  onClick={() => dispatch(setSoundEnabled(!soundEnabled))}
+                  title={soundEnabled ? 'Turn sound off' : 'Turn sound on'}
+                  type="button"
+                >
+                  {soundEnabled ? '🔊 Sound' : '🔇 Muted'}
+                </button>
               </div>
             </div>
 
@@ -112,6 +135,7 @@ export function GamePage() {
             />
 
             <TurnControls
+              soundEnabled={soundEnabled}
               canEndTurn={selectCanEndTurn(activeGame)}
               // Not while a token is walking. A double puts the turn straight
               // into AwaitExtraRollOrEnd, so Roll went live mid-walk - and the
@@ -136,6 +160,7 @@ export function GamePage() {
           overlays={overlays}
           selectedSummary={selectedSummary}
           isMoving={isMoving}
+          soundEnabled={soundEnabled}
           sitePanel={selectSitePanel(
             activeGame,
             activePlayer.id,

@@ -114,3 +114,11 @@ cash directly, and pass-GO wrote its own sentence with the amount and symbol har
 - `CardEffectKind.PayEach` is implemented in the engine but no card uses it.
 - `resolveCard`'s `CollectFromEach` / `PayEach` loops read `nextState`, and a debt nobody can cover
   queues behind the first rather than overwriting it.
+
+## The tone became a cue
+
+The event's classification was `GameEventTone` with three members, read only by this feature for the
+toast's colour. Sound needs ten distinctions, so the field widened into `GameEventCue` and the toast
+now narrows it: ten cues down to three colours, in one map in `toastFeed.utils.ts`. The decision
+behind it is unchanged and is the important part - it is set by the engine where the thing happened,
+never parsed back out of the sentence. See [sound.md](sound.md).

@@ -17,7 +17,8 @@ import {
   saveGame,
 } from '../persistence/persistence';
 import { toToasts } from './toastFeed.utils';
-import { pushToasts } from './uiSlice';
+import { cueForEvents } from './soundCue.utils';
+import { pushToasts, setSoundCue } from './uiSlice';
 
 interface GameSliceState {
   recentGames: StoredGameIndexEntry[];
@@ -144,8 +145,14 @@ export const runGameCommand =
       const saveFailure = trySave(result.nextState);
       dispatch(setActiveGame(result.nextState));
       // result.events is what this command appended, so the feedback and the
-      // game record are the same text by construction.
+      // game record are the same text by construction - and the sound comes off
+      // the same batch, so a cue and its toast are always the same event.
       dispatch(pushToasts(toToasts(result.events)));
+      const cue = cueForEvents(result.events);
+      if (cue) {
+        // The event's own id, so two of the same cue in a row sound twice.
+        dispatch(setSoundCue({ id: result.events[0]?.id ?? cue, cue }));
+      }
       dispatch(setCommandError(saveFailure));
       dispatch(bootstrapRecentGames());
       return result;

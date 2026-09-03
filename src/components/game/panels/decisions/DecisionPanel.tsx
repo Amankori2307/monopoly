@@ -20,6 +20,8 @@ import { TradeResponseDecision } from './TradeResponseDecision';
 interface DecisionPanelProps {
   /** Null unless an auction is open; the auction branch is the only reader. */
   bidField: BidFieldState | null;
+  /** False when the player has muted the game - the Jail panel rolls dice. */
+  soundEnabled: boolean;
   currencySymbol: string;
   decision: DecisionViewModel | null;
   handlers: DecisionHandlers;
@@ -61,6 +63,7 @@ export function DecisionPanel({
   currencySymbol,
   decision,
   handlers,
+  soundEnabled,
 }: DecisionPanelProps) {
   if (!decision) {
     return null;
@@ -92,6 +95,7 @@ export function DecisionPanel({
           onPayFine={handlers.onPayJailFine}
           onUseJailCard={handlers.onUseJailCard}
           playerName={decision.playerName}
+          soundEnabled={soundEnabled}
         />
       ) : null}
 

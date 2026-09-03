@@ -1,5 +1,5 @@
 import { MORTGAGE_INTEREST_PERCENT } from '../../constants/game.constants';
-import { GameEventTone, PendingDecisionType, TurnPhase } from '../../types/game.enums';
+import { GameEventCue, PendingDecisionType, TurnPhase } from '../../types/game.enums';
 import type {
   DebtRecord,
   GameState,
@@ -46,7 +46,7 @@ export const creditFromBank = (
     createEvent(
       nextState.turnNumber,
       `${player.name} collected ${money(nextState, amount)} - ${reason}.`,
-      GameEventTone.Credit
+      GameEventCue.Credit
     ),
   ]);
 };
@@ -119,7 +119,12 @@ export const resolveBankPayment = (
   state: GameState,
   playerId: PlayerId,
   amount: number,
-  reason: string
+  reason: string,
+  /**
+   * What the money bought, when that is worth its own feedback - a site, or a
+   * building. Money leaving is a debit by default.
+   */
+  cue: GameEventCue = GameEventCue.Debit
 ): GameState => {
   const player = getPlayerById(state, playerId);
   if (player.cash >= amount) {
@@ -131,7 +136,7 @@ export const resolveBankPayment = (
       createEvent(
         paidState.turnNumber,
         `${player.name} paid ${money(paidState, amount)} to the bank - ${reason}.`,
-        GameEventTone.Debit
+        cue
       ),
     ]);
   }
@@ -166,7 +171,9 @@ export const resolvePlayerPayment = (
       createEvent(
         nextState.turnNumber,
         `${payer.name} paid ${payee.name} ${money(nextState, amount)} - ${reason}.`,
-        GameEventTone.Debit
+        // Money to a *player*, which is nearly always rent - and it deserves to
+        // sound different from paying the bank.
+        GameEventCue.Rent
       ),
     ]);
   }

@@ -1,6 +1,7 @@
 import { HOTEL_BUILD_LEVEL } from '../../../constants/game.constants';
 import {
   GameCommandType,
+  GameEventCue,
   GameStatus,
   PendingDecisionType,
   TurnPhase,
@@ -102,7 +103,8 @@ export const debtCommands: CommandHandlers = {
       nextState = appendEvents(nextState, [
         createEvent(
           nextState.turnNumber,
-          `${debtor.name} went bankrupt. ${creditor.name} took ${money(nextState, debtor.cash)} and ${owned.length} site(s).`
+          `${debtor.name} went bankrupt. ${creditor.name} took ${money(nextState, debtor.cash)} and ${owned.length} site(s).`,
+          GameEventCue.Bankrupt
         ),
       ]);
     } else {
@@ -143,7 +145,8 @@ export const debtCommands: CommandHandlers = {
       nextState = appendEvents(nextState, [
         createEvent(
           nextState.turnNumber,
-          `${debtor.name} went bankrupt. ${owned.length} site(s) go to auction.`
+          `${debtor.name} went bankrupt. ${owned.length} site(s) go to auction.`,
+          GameEventCue.Bankrupt
         ),
       ]);
     }

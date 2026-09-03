@@ -1,7 +1,8 @@
 import {
-  SpeedDieFace,
+  GameEventCue,
   GameStatus,
   PendingDecisionType,
+  SpeedDieFace,
   TurnPhase,
 } from '../../types/game.enums';
 import type { GameState, PlayerId, SpaceId } from '../../types/game.interfaces';
@@ -216,7 +217,7 @@ export const concludeIfWon = (state: GameState): GameState => {
       pendingDecision: { type: PendingDecisionType.GameOver },
       turn: { ...state.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
     },
-    [createEvent(state.turnNumber, `${winner.name} won the game.`)]
+    [createEvent(state.turnNumber, `${winner.name} won the game.`, GameEventCue.Won)]
   );
 };
 

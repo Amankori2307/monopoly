@@ -3,7 +3,7 @@ import {
   AuctionLedgerKind,
   CardDeck,
   CardEffectKind,
-  GameEventTone,
+  GameEventCue,
 } from '../../domain/types/game.enums';
 import type { GameState } from '../../domain/types/game.interfaces';
 
@@ -108,14 +108,19 @@ const v4ToV5 = (raw: Record<string, unknown>): Record<string, unknown> => {
   };
 };
 
-/** The wording-based reading toasts used before events carried a tone. */
-const toneFromWording = (message: string): GameEventTone => {
+/**
+ * The wording-based reading toasts used before events carried a tone.
+ *
+ * Returns the *v5* values as plain strings, not today's enum. A migration
+ * reproduces the shape of the version it upgrades to, and nothing later: this
+ * step wrote a `tone`, so it still writes one, and v7ToV8 converts it. Pointing
+ * it at the current enum instead made v8 overwrite its own input with nothing.
+ */
+const toneFromWording = (message: string): string => {
   if (/\bpaid\b|\bbought\b|\bwon the auction\b|\bbid\b/i.test(message)) {
-    return GameEventTone.Debit;
+    return 'debit';
   }
-  return /\bcollected\b|\breceived\b/i.test(message)
-    ? GameEventTone.Credit
-    : GameEventTone.Neutral;
+  return /\bcollected\b|\breceived\b/i.test(message) ? 'credit' : 'neutral';
 };
 
 /**
@@ -172,6 +177,31 @@ const v6ToV7 = (raw: Record<string, unknown>): Record<string, unknown> => {
   };
 };
 
+/**
+ * v8 widened the event's `tone` into a `cue`.
+ *
+ * Three tones became ten cues, because the same field now decides the sound as
+ * well as the toast's colour. An older save only ever knew the three, so each
+ * maps to its like and a neutral event simply makes no sound.
+ */
+const v7ToV8 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const history = Array.isArray(raw.history) ? raw.history : [];
+  const cueForTone: Record<string, GameEventCue> = {
+    debit: GameEventCue.Debit,
+    credit: GameEventCue.Credit,
+    neutral: GameEventCue.None,
+  };
+
+  return {
+    ...raw,
+    history: history.map((event) => {
+      const { tone, ...rest } = event as { tone?: unknown };
+      return { ...rest, cue: cueForTone[String(tone)] ?? GameEventCue.None };
+    }),
+    version: 8,
+  };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
@@ -179,6 +209,7 @@ const MIGRATIONS: Record<number, Migration> = {
   4: v4ToV5,
   5: v5ToV6,
   6: v6ToV7,
+  7: v7ToV8,
 };
 
 /**

@@ -1,12 +1,4 @@
-After everything is done add small interaction
-    - money getting credited sound
-    - money debiting sound
-    - bought site congrats sound
-    - landed on an owned site sound
-    - landing in jail sound
-    - good comunicity card/chance sound
-    - bad community card/ chance sound
-    - other similar things
+
 
 
 Build a better UI and theme
@@ -20,8 +12,7 @@ Actual Houses and Hotel
 I have made the game working, now I have to make the game playable, so that it is actually usable
 
 
-- I have 
 
-when we do roll for a double while in jail, we don't get dice sound [BUG]
+
 
 

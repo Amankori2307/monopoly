@@ -16,7 +16,7 @@ import type {
   MoveDirection,
   SpeedDieFace,
   GameCommandType,
-  GameEventTone,
+  GameEventCue,
   GameStatus,
   SpaceKind,
   TurnPhase,
@@ -262,8 +262,8 @@ export interface GameEvent {
   turnNumber: number;
   createdAt: string;
   message: string;
-  /** Which way money moved, set where it moved. */
-  tone: GameEventTone;
+  /** What happened, set where it happened. Drives the toast colour and the sound. */
+  cue: GameEventCue;
 }
 
 // -- Theme -------------------------------------------------------------------

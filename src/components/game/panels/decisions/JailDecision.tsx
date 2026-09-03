@@ -16,6 +16,8 @@ interface JailDecisionProps {
   onPayFine: () => void;
   onUseJailCard: () => void;
   playerName: string;
+  /** False when the player has muted the game. */
+  soundEnabled: boolean;
 }
 
 /**
@@ -45,6 +47,7 @@ export function JailDecision({
   onPayFine,
   onUseJailCard,
   playerName,
+  soundEnabled,
 }: JailDecisionProps) {
   const attempt = Math.min(attemptsUsed + 1, MAX_JAIL_TURNS);
   const isLastAttempt = attempt === MAX_JAIL_TURNS;
@@ -54,6 +57,7 @@ export function JailDecision({
     canRoll: true,
     lastRoll,
     onRoll: onAttemptJailRoll,
+    soundEnabled,
     soundSrc: diceRollSound,
   });
 

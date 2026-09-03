@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { GameEventTone } from '../../domain/types/game.enums';
+import { GameEventCue } from '../../domain/types/game.enums';
 import type { GameEvent } from '../../domain/types/game.interfaces';
 import { classifyEventTone, toToasts } from './toastFeed.utils';
 
 const event = (
   id: string,
   message: string,
-  tone: GameEventTone = GameEventTone.Neutral
+  cue: GameEventCue = GameEventCue.None
 ): GameEvent => ({
   id,
   turnNumber: 1,
   createdAt: '2026-08-31T00:00:00.000Z',
   message,
-  tone,
+  cue,
 });
 
 /**
@@ -22,9 +22,9 @@ const event = (
  */
 describe('classifyEventTone', () => {
   it.each([
-    [GameEventTone.Debit, 'debit'],
-    [GameEventTone.Credit, 'credit'],
-    [GameEventTone.Neutral, 'neutral'],
+    [GameEventCue.Debit, 'debit'],
+    [GameEventCue.Credit, 'credit'],
+    [GameEventCue.None, 'neutral'],
   ])('maps %s to the %s toast', (tone, expected) => {
     expect(classifyEventTone(event('a', 'anything', tone))).toBe(expected);
   });
@@ -35,7 +35,7 @@ describe('classifyEventTone', () => {
     const misleading = event(
       'a',
       'Asha paid Vikram ₹35 and collected nothing.',
-      GameEventTone.Credit
+      GameEventCue.Credit
     );
 
     expect(classifyEventTone(misleading)).toBe('credit');
@@ -60,7 +60,7 @@ describe('toToasts', () => {
     const collected = event(
       'a',
       'Asha collected ₹200 - passing GO.',
-      GameEventTone.Credit
+      GameEventCue.Credit
     );
 
     expect(toToasts([collected])).toEqual([

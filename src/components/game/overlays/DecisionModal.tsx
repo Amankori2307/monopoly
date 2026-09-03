@@ -8,6 +8,7 @@ import type {
 
 interface DecisionModalProps {
   bidField: BidFieldState | null;
+  soundEnabled: boolean;
   currencySymbol: string;
   decision: DecisionViewModel | null;
   handlers: DecisionHandlers;
@@ -22,6 +23,7 @@ interface DecisionModalProps {
  */
 export function DecisionModal({
   bidField,
+  soundEnabled,
   currencySymbol,
   decision,
   handlers,
@@ -40,6 +42,7 @@ export function DecisionModal({
       >
         <DecisionPanel
           bidField={bidField}
+          soundEnabled={soundEnabled}
           currencySymbol={currencySymbol}
           decision={decision}
           handlers={handlers}

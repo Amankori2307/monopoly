@@ -1,6 +1,7 @@
 import { JAIL_POSITION, PASS_GO_AMOUNT } from '../../constants/game.constants';
 import {
   DeckName,
+  GameEventCue,
   MoveDirection,
   PendingDecisionType,
   SpaceKind,
@@ -109,7 +110,8 @@ export const sendPlayerToJail = (
   return appendEvents(nextState, [
     createEvent(
       nextState.turnNumber,
-      `${getPlayerById(state, playerId).name} was sent to Jail.`
+      `${getPlayerById(state, playerId).name} was sent to Jail.`,
+      GameEventCue.Jailed
     ),
   ]);
 };

@@ -9,6 +9,8 @@ interface DiceDockProps {
   lastRoll: number[] | null;
   onRoll: () => void;
   rollLabel: string;
+  /** False when the player has muted the game. */
+  soundEnabled: boolean;
   /** The Speed Die's face, when this game is playing with one. */
   speedDieFace: SpeedDieFace | null;
 }
@@ -19,12 +21,14 @@ export function DiceDock({
   lastRoll,
   onRoll,
   rollLabel,
+  soundEnabled,
   speedDieFace,
 }: DiceDockProps) {
   const { displayValues, isRolling, roll } = useDiceRoller({
     canRoll,
     lastRoll,
     onRoll,
+    soundEnabled,
     soundSrc: diceRollSound,
   });
 

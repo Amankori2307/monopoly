@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { gameReducer } from '../features/game/gameSlice';
-import { uiReducer } from '../features/game/uiSlice';
+import { readSoundPreference } from '../features/game/soundPreference.utils';
+import { uiInitialState, uiReducer } from '../features/game/uiSlice';
 
 const reducer = {
   game: gameReducer,
@@ -18,7 +19,16 @@ type PreloadedState = Parameters<typeof configureStore>[0]['preloadedState'];
  * slice of state rather than dispatching its way there.
  */
 export const makeStore = (preloadedState?: PreloadedState) =>
-  configureStore({ reducer, preloadedState });
+  configureStore({
+    reducer,
+    // The sound preference is read here rather than in the slice's initial
+    // state: that is evaluated once when the module loads, so a store built
+    // afterwards never saw a change. An explicit preloadedState wins over this.
+    preloadedState: {
+      ui: { ...uiInitialState, soundEnabled: readSoundPreference() },
+      ...(preloadedState as object),
+    } as PreloadedState,
+  });
 
 export const appStore = makeStore();
 

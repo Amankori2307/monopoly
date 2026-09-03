@@ -8,6 +8,7 @@ import {
 import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
 import {
   GameCommandType,
+  GameEventCue,
   PendingDecisionType,
   SpaceKind,
   TurnPhase,
@@ -15,6 +16,8 @@ import {
 import type { CreateGameInput } from '../../domain/types/game.interfaces';
 import { StorageWriteError } from '../persistence/persistence.errors';
 import { loadGame, saveGame } from '../persistence/persistence';
+import { SOUND_PREFERENCE_KEY } from './soundPreference.utils';
+import { setSoundEnabled } from './uiSlice';
 import {
   bootstrapRecentGames,
   createNewGame,
@@ -479,5 +482,94 @@ describe('an auction through the store', () => {
 
     expect(storedGame(gameId).auctionState.ledger).toHaveLength(1);
     expect(store.getState().game.commandError).toMatch(/at least/i);
+  });
+});
+
+/**
+ * The sound cue, through the store.
+ *
+ * It is picked from the same `result.events` the toasts come from, so a cue and
+ * its toast are always the same event - the property the toast feed already has
+ * with the game record.
+ */
+describe('the sound cue a command leaves behind', () => {
+  const landOnUnowned = (store: ReturnType<typeof makeStore>) => {
+    const game = store.dispatch(createNewGame(input()));
+    const street = game.board.find((space) => space.kind === SpaceKind.Street);
+    if (!street) {
+      throw new Error('No street on the board');
+    }
+    const activePlayerId = game.playerOrder[game.activePlayerIndex];
+    store.dispatch(
+      setActiveGame({
+        ...game,
+        players: {
+          ...game.players,
+          [activePlayerId]: { ...game.players[activePlayerId], position: street.index },
+        },
+        pendingDecision: {
+          type: PendingDecisionType.LandedUnownedProperty,
+          spaceId: street.id,
+          playerId: activePlayerId,
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      })
+    );
+    return street.id as string;
+  };
+
+  it('says a site was bought', () => {
+    const store = makeStore();
+    landOnUnowned(store);
+
+    store.dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset }));
+
+    expect(store.getState().ui.soundCue?.cue).toBe(GameEventCue.Bought);
+  });
+
+  it('leaves the cue alone on a command that logs nothing worth hearing', () => {
+    const store = makeStore();
+    const game = store.dispatch(createNewGame(input()));
+    store.dispatch(
+      setActiveGame({ ...game, turn: { ...game.turn, phase: TurnPhase.TurnComplete } })
+    );
+
+    store.dispatch(runGameCommand({ type: GameCommandType.EndTurn }));
+
+    expect(store.getState().ui.soundCue).toBeNull();
+  });
+
+  // The cue rides the same batch as the toasts, so they cannot disagree.
+  it('pushes a toast for the same command that set the cue', () => {
+    const store = makeStore();
+    landOnUnowned(store);
+
+    store.dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset }));
+
+    expect(store.getState().ui.toasts.length).toBeGreaterThan(0);
+    expect(store.getState().ui.soundCue).not.toBeNull();
+  });
+
+  // A preference, not game state: it stays out of the save and outlives a game.
+  it('remembers the mute across a store, without touching the save', () => {
+    const store = makeStore();
+    const game = store.dispatch(createNewGame(input()));
+
+    store.dispatch(setSoundEnabled(false));
+
+    expect(localStorage.getItem(SOUND_PREFERENCE_KEY)).toBe('off');
+    expect(storedGame(game.id)).not.toHaveProperty('soundEnabled');
+    // A fresh store reads it back.
+    expect(makeStore().getState().ui.soundEnabled).toBe(false);
+  });
+
+  it('clears a queued cue when sound is switched off', () => {
+    const store = makeStore();
+    landOnUnowned(store);
+    store.dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset }));
+
+    store.dispatch(setSoundEnabled(false));
+
+    expect(store.getState().ui.soundCue).toBeNull();
   });
 });

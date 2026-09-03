@@ -1,7 +1,8 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { MAX_VISIBLE_TOASTS } from './game.constants';
 import type { Toast } from '../../components/game/overlays/overlays.interfaces';
-import type { KeyedBidInput } from './auctionBid.interfaces';
+import type { KeyedBidInput, PendingSoundCue } from './auctionBid.interfaces';
+import { writeSoundPreference } from './soundPreference.utils';
 
 interface UiSliceState {
   /**
@@ -18,19 +19,44 @@ interface UiSliceState {
   auctionBidInput: KeyedBidInput | null;
   /** Ephemeral action feedback. Never persisted - a reload starts clean. */
   toasts: Toast[];
+  /**
+   * The cue to sound, and an id so the same cue twice in a row sounds twice.
+   * Null once nothing is pending.
+   */
+  soundCue: PendingSoundCue | null;
+  /** Whether sound plays at all. Remembered across games, not per save. */
+  soundEnabled: boolean;
 }
 
-const initialState: UiSliceState = {
+export const uiInitialState: UiSliceState = {
   auctionBidInput: null,
   toasts: [],
+  soundCue: null,
+  // A pure default. The saved preference is read in makeStore, because a
+  // module-level read happens once - so a store built later never saw a change,
+  // which is exactly what the integration test caught.
+  soundEnabled: true,
 };
 
 const slice = createSlice({
   name: 'ui',
-  initialState,
+  initialState: uiInitialState,
   reducers: {
     setAuctionBidInput(state, action: PayloadAction<KeyedBidInput>) {
       state.auctionBidInput = action.payload;
+    },
+    setSoundCue(state, action: PayloadAction<PendingSoundCue | null>) {
+      state.soundCue = action.payload;
+    },
+    setSoundEnabled(state, action: PayloadAction<boolean>) {
+      state.soundEnabled = action.payload;
+      // Written here rather than in a thunk: it is one value with no ordering
+      // to get wrong, and every caller would otherwise have to remember.
+      writeSoundPreference(action.payload);
+      if (!action.payload) {
+        // Nothing queued should sound after the switch goes off.
+        state.soundCue = null;
+      }
     },
     pushToasts(state, action: PayloadAction<Toast[]>) {
       // Newest last, capped: a single command can append several events, and an
@@ -48,5 +74,11 @@ const slice = createSlice({
 });
 
 export const uiReducer = slice.reducer;
-export const { setAuctionBidInput, pushToasts, dismissToast, clearToasts } =
-  slice.actions;
+export const {
+  setAuctionBidInput,
+  setSoundCue,
+  setSoundEnabled,
+  pushToasts,
+  dismissToast,
+  clearToasts,
+} = slice.actions;
