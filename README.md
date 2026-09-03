@@ -15,17 +15,23 @@ pnpm install
 pnpm dev          # Vite dev server on :3000
 ```
 
-| Command         | What it does                                             |
-| --------------- | -------------------------------------------------------- |
-| `pnpm dev`      | dev server on :3000                                      |
-| `pnpm build`    | production build into `build/`                           |
-| `pnpm test`     | unit and integration tests (vitest)                      |
-| `pnpm test:e2e` | end-to-end tests (playwright, starts its own dev server) |
-| `pnpm lint`     | eslint over `src/` and `tests/`                          |
-| `pnpm fix-all`  | eslint --fix, then prettier                              |
-| `pnpm deploy`   | build and publish to gh-pages                            |
+| Command          | What it does                                             |
+| ---------------- | -------------------------------------------------------- |
+| `pnpm dev`       | dev server on :3000                                      |
+| `pnpm build`     | production build into `build/`                           |
+| `pnpm test`      | unit and integration tests (vitest)                      |
+| `pnpm test:e2e`  | end-to-end tests (playwright, starts its own dev server) |
+| `pnpm typecheck` | tsc --noEmit                                             |
+| `pnpm lint`      | eslint over `src/` and `tests/`                          |
+| `pnpm check-all` | typecheck, lint and formatting in one                    |
+| `pnpm fix-all`   | eslint --fix, then prettier                              |
+| `pnpm deploy`    | build and publish to gh-pages                            |
 
-Typecheck with `npx tsc --noEmit`.
+Typecheck with `pnpm typecheck`, or `pnpm check-all` for typecheck, lint and formatting together.
+
+This project is pnpm-only. `packageManager` pins the version, and a `preinstall` script checks the
+installer's user agent and stops anything that is not pnpm — so `npm install` cannot quietly leave a
+second lockfile behind.
 
 ## The one architectural idea
 

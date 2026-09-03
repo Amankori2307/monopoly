@@ -169,17 +169,24 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 
 ## 6. Commands
 
+**pnpm, never npm.** The lockfile is `pnpm-lock.yaml`, `packageManager` pins the version, and a
+`preinstall` script refuses any installer that is not pnpm - so `npm install` stops rather than
+quietly writing a second lockfile. Reach for a script below rather than `npx`.
+
 ```bash
 pnpm dev          # Vite dev server on :3000
 pnpm build        # production build → build/
+pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
 pnpm test:e2e     # playwright (tests/e2e), auto-starts dev server
 pnpm lint         # eslint (config: .eslintrc.json)
+pnpm check-all    # typecheck + lint + prettier, in one
 pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-Typecheck with `npx tsc --noEmit`. **Baseline as of the last verified run: `tsc` clean, eslint clean, 5/5 unit tests passing, `nx build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
+**Baseline as of the last verified run: `pnpm check-all` clean, 907 unit tests and 107 e2e passing,
+`pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 ---
 
@@ -279,4 +286,4 @@ Two mechanisms hold them together, and both are machine-enforced by
 
 Prose is not diffable, so it is on you: change a rule in one and change it in the other.
 
-Before finishing a task: re-read the sections you touched, delete anything now false, and re-run `npx tsc --noEmit` + `pnpm test`.
+Before finishing a task: re-read the sections you touched, delete anything now false, and re-run `pnpm typecheck` + `pnpm test`.

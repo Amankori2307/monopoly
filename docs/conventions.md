@@ -290,7 +290,7 @@ split the file rather than raising the limit.
 Run everything before reporting work done:
 
 ```bash
-npx tsc --noEmit && pnpm lint && pnpm test && pnpm test:e2e
+pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 ```
 
 ## 9. Adding something new — checklist

@@ -16,9 +16,11 @@
     "zod": "^3.24.1"
   },
   "scripts": {
+    "preinstall": "node -e \"if (!/pnpm/.test(process.env.npm_config_user_agent || '')) { console.error('\\\\nThis project is pnpm-only. Run: pnpm install\\\\n'); process.exit(1); }\"",
     "start": "nx serve",
     "dev": "nx serve",
     "build": "nx build",
+    "typecheck": "tsc --noEmit",
     "test": "nx test",
     "test:watch": "nx test --watch",
     "test:e2e": "playwright test",
@@ -75,5 +77,6 @@
     "vite": "^6.0.0",
     "vitest": "^3.2.4",
     "web-vitals": "^5.0.3"
-  }
+  },
+  "packageManager": "pnpm@10.29.3"
 }

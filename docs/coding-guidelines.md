@@ -27,7 +27,7 @@ Copy this into your working notes and satisfy every line before reporting a task
 - [ ] Unit test covers the happy path **and** every error/guard branch
 - [ ] Integration test covers the layer wiring, including the persisted result
 - [ ] E2E test covers the user-visible journey (added or extended)
-- [ ] `npx tsc --noEmit` clean
+- [ ] `pnpm typecheck` clean
 - [ ] `pnpm test` green
 - [ ] `pnpm test:e2e` green
 - [ ] Docs updated per the contract in CLAUDE.md
