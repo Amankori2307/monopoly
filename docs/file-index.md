@@ -149,6 +149,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [persistence/migrations.ts](../src/features/persistence/migrations.ts)                                     | Brings an older save up to the current GAME_STATE_VERSION, before validation.                                 |
 | [persistence/persistence.errors.ts](../src/features/persistence/persistence.errors.ts)                     | StorageWriteError: a write the browser refused, told apart from a bug.                                        |
 | [rules/RulesPage.tsx](../src/features/rules/RulesPage.tsx)                                                 | Rules booklet shell: header, section nav, and the section components.                                         |
+| [rules/hooks/useHashScroll.ts](../src/features/rules/hooks/useHashScroll.ts)                               | Scrolls to the section named by the URL hash - HashRouter takes the browser's own anchor scrolling away.      |
 | [rules/rulesSync.test.ts](../src/features/rules/rulesSync.test.ts)                                         | Enforces that the booklet and docs/india-edition-rules.md cover the same topics and quote the same numbers.   |
 | [rules/ruleCoverage.constants.ts](../src/features/rules/ruleCoverage.constants.ts)                         | Which test proves which documented rule, by rule id.                                                          |
 | [rules/rulesCoverage.test.ts](../src/features/rules/rulesCoverage.test.ts)                                 | Fails if a documented rule has no test, or a claimed test has gone.                                           |
@@ -359,6 +360,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [tests/e2e/speed-die.spec.ts](../tests/e2e/speed-die.spec.ts)                             | The third die, the bus choice, and a three-of-a-kind move.                                                        |
 | [tests/e2e/rules.spec.ts](../tests/e2e/rules.spec.ts)                                     | Booklet nav resolves, the FAQ answers, and amounts render in ₹.                                                   |
 | [tests/e2e/feedback.spec.ts](../tests/e2e/feedback.spec.ts)                               | Toasts, the drawn-card modal, owner marks, the three site-panel states, ₹.                                        |
+| [tests/routing/deepLinks.spec.ts](../tests/routing/deepLinks.spec.ts)                     | Deep links and refresh against the real build on a fallback-free host, plus the control 404.                      |
 
 ## Config
 
@@ -384,6 +386,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [assets/audio/ATTRIBUTION.md](../src/assets/audio/ATTRIBUTION.md) | Where each clip came from, and the licence position on each.                                |
 | [tools/trim-token-step.py](../tools/trim-token-step.py)           | Rebuilds token-step.wav: trims the chosen pop out of the source pack, normalised and faded. |
 | [tools/generate-cue-sounds.py](../tools/generate-cue-sounds.py)   | Synthesises the nine event-cue clips, one seed per clip.                                    |
+| [tools/serve-build.mjs](../tools/serve-build.mjs)                 | Serves `build/` the way GitHub Pages does: a file or a 404, no history fallback.            |
 
 ## Other
 

@@ -12,7 +12,7 @@ import {
  * what only a browser can: the nav resolves, and the amounts render.
  */
 test.beforeEach(async ({ page }) => {
-  await page.goto('/rules');
+  await page.goto('/#/rules');
   await expect(page.getByRole('heading', { name: /Rules of play/i })).toBeVisible();
 });
 
@@ -21,7 +21,9 @@ test('every nav link scrolls to a section that exists', async ({ page }) => {
   await expect(nav.locator('a')).toHaveCount(RULES_SECTIONS.length);
 
   for (const section of RULES_SECTIONS) {
-    const link = nav.locator(`a[href="#${section.id}"]`);
+    // The href is the router's own URL, not a bare `#faq` anchor - see the
+    // comment in RulesPage.
+    const link = nav.locator(`a[href="#/rules#${section.id}"]`);
     await expect(link, `no nav link for the ${section.label} section`).toHaveText(
       section.label
     );
@@ -30,6 +32,23 @@ test('every nav link scrolls to a section that exists', async ({ page }) => {
       `nav links to #${section.id} but no such section renders`
     ).toBeAttached();
   }
+});
+
+test('a nav link stays on the rules page and scrolls to its section', async ({
+  page,
+}) => {
+  // The nav used to be bare `#faq` anchors. Under HashRouter that is the route
+  // itself, so clicking one navigated to `/faq`, matched nothing, and left a
+  // blank page. Asserting the href exists - which is all this file used to do -
+  // could not have caught it: only a click can.
+  await page
+    .getByRole('navigation', { name: /Rules sections/i })
+    .getByText('FAQ')
+    .click();
+
+  await expect(page).toHaveURL(/#\/rules#faq$/);
+  await expect(page.getByRole('heading', { name: /Rules of play/i })).toBeVisible();
+  await expect(page.locator('#faq')).toBeInViewport();
 });
 
 test('answers the questions that come up mid-game', async ({ page }) => {

@@ -6,7 +6,8 @@
 ## What it does
 
 Every game is saved to `localStorage` after every command, so closing the tab loses nothing.
-Games have stable ids and live at `/game/:gameId`, which makes them resumable by URL.
+Games have stable ids and live at `#/game/:gameId`, which makes them resumable by URL. The hash
+is load-bearing on GitHub Pages - see the routing note in CLAUDE.md §8.
 
 ## How it works
 

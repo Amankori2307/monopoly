@@ -11,8 +11,11 @@ import { RulesMoney } from '../../components/rules/RulesMoney';
 import { RulesSpeedDie } from '../../components/rules/RulesSpeedDie';
 import { RulesStart } from '../../components/rules/RulesStart';
 import { RulesTurn } from '../../components/rules/RulesTurn';
+import { useHashScroll } from './hooks/useHashScroll';
 
 export function RulesPage() {
+  useHashScroll();
+
   return (
     <div className="app-shell rules-shell">
       <main className="rules-page">
@@ -31,12 +34,19 @@ export function RulesPage() {
 
         {/* Nav, sections, and the matching headings in
             docs/india-edition-rules.md all come from RULES_SECTIONS, so they
-            cannot drift apart. rulesSync.test.ts enforces it. */}
+            cannot drift apart. rulesSync.test.ts enforces it.
+
+            These are Links, not bare `<a href="#faq">` anchors. Under
+            HashRouter the whole route lives after the `#`, so a bare anchor
+            would replace the route with `/faq` - no such route - and blank the
+            page instead of scrolling. `to="/rules#faq"` renders as
+            `#/rules#faq`, which stays on this route, survives a copy-paste and
+            a reload, and is scrolled to by useHashScroll. */}
         <nav className="rules-nav" aria-label="Rules sections">
           {RULES_SECTIONS.map((section) => (
-            <a href={`#${section.id}`} key={section.id}>
+            <Link to={`/rules#${section.id}`} key={section.id}>
               {section.label}
-            </a>
+            </Link>
           ))}
         </nav>
 

@@ -90,6 +90,12 @@ jobs:
       - name: End-to-end tests
         run: pnpm test:e2e
 
+      # Deep links can only fail on a host with no history fallback, which the
+      # dev server is not. This builds and serves build/ the way GitHub Pages
+      # does. See tools/serve-build.mjs.
+      - name: Routing tests against the production build
+        run: pnpm test:routing
+
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

@@ -101,7 +101,12 @@ test('loads a saved game written by the previous version', async ({ page }) => {
     return game.id as string;
   });
 
-  await page.goto(`/game/${gameId}`);
+  // A reload, not a goto: startGame already left the page on this game's URL,
+  // and under HashRouter navigating to a URL that differs only in its hash
+  // does not reload the document - so the app would never re-read the save we
+  // just rewrote. This is what reopening a saved game actually is.
+  expect(page.url()).toContain(`#/game/${gameId}`);
+  await page.reload();
   await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
 
   // Loading migrates and writes the upgraded save straight back, so both the UI

@@ -12,7 +12,7 @@ Guidance for Claude Code working in this repository.
 
 ## 1. What this project is
 
-A **Monopoly India Edition** board game in the browser: React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `/game/:gameId`.
+A **Monopoly India Edition** board game in the browser: React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `#/game/:gameId`.
 
 The defining architectural decision: **the rules engine is a pure module that knows nothing about React or Redux.** UI dispatches _commands_; the engine returns a _new game state_. Keep it that way.
 
@@ -179,13 +179,14 @@ pnpm build        # production build → build/
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
 pnpm test:e2e     # playwright (tests/e2e), auto-starts dev server
+pnpm test:routing # builds, then playwright (tests/routing) against a static host
 pnpm lint         # eslint (config: .eslintrc.json)
 pnpm check-all    # typecheck + lint + prettier, in one
 pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1058 unit tests and 122 e2e passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1062 unit tests, 123 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -245,6 +246,21 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 - **A walk reads its position off the clock, and a watchdog force-settles it.** Two failure modes rule out the obvious approaches: queueing every step up front means they all come due together after a stall (six steps in one millisecond, six taks as one noise), and chaining each step off the previous one hangs instead, because a background tab throttles timers to about one a second - a 39-step walk became a 39-second freeze with Roll disabled throughout. Elapsed time survives both. On top of that, `isMoving` gates the Roll button _and_ withholds every decision modal, so a token stuck mid-walk is an unplayable game with nothing on screen explaining why - `TOKEN_WALK_WATCHDOG_SLACK_MS` is the backstop that snaps every token to its true position and lets go. Two tests assert the guarantee holds even with the walk deliberately broken.
 - **The step clip must stay shorter than `TOKEN_MIN_STEP_INTERVAL_MS`** and audible from its first millisecond, which `tokenStepSound.test.ts` measures. The clip it replaced was 1373ms with its first sound 177ms in, so at the fastest pace it never sounded at all. Rebuild it with [tools/trim-token-step.py](tools/trim-token-step.py).
 - **Every move is walked, and the Roll button is gated on `isMoving`.** A double puts the turn straight into `AwaitExtraRollOrEnd`, so Roll went live mid-walk and the second roll restarted the walk from wherever the token had got to.
+- **Routing is `HashRouter`, and the `#` is not spare.** GitHub Pages is a plain static host under
+  the `/monopoly/` base: it serves a file or it 404s, so `BrowserRouter` made every deep link and
+  every mid-game refresh a hard 404 - and the home page too, because `/monopoly/` never matched `/`.
+  The consequence to remember is that **a bare `<a href="#section">` is now a route**, not an anchor:
+  it navigates to `/section`, matches nothing, and blanks the page. Link to `/route#section` and let
+  [useHashScroll](src/features/rules/hooks/useHashScroll.ts) do the scrolling. E2E URLs carry the
+  hash (`page.goto('/#/rules')`), and `page.goto` to a URL that differs **only** in its hash does not
+  reload the document - use `page.reload()` when a test needs the app to re-read `localStorage`.
+  None of this is reproducible against the dev server, which falls back to index.html for unknown
+  paths; that is what `pnpm test:routing` and [tools/serve-build.mjs](tools/serve-build.mjs) exist
+  for, and the suite's first test asserts the host really does 404 so the rest is not vacuous.
+- **The deployed origin is `https://amankori2307.github.io/monopoly/`.** `index.html`, `sitemap.xml`
+  and `robots.txt` used to advertise `monopoly.amankori.me`, which does not resolve - no `CNAME`
+  exists and none should be added without DNS first, because setting a custom domain with no DNS
+  behind it takes the working github.io URL down too.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

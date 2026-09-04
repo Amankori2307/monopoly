@@ -26,7 +26,14 @@ describe('RulesPage', () => {
     }
   });
 
-  it('links each nav item to its section anchor', () => {
+  // The nav links carry the route as well as the anchor. A bare `#faq` would
+  // be the whole URL under the app's HashRouter, so clicking one navigated to
+  // `/faq`, matched no route, and blanked the page.
+  //
+  // These are the MemoryRouter hrefs, which is what this harness renders. The
+  // shape the browser actually gets - `#/rules#faq` - is asserted in
+  // tests/e2e/rules.spec.ts, against the real router.
+  it('links each nav item to its section on this route', () => {
     renderWithProviders(<RulesPage />);
 
     const nav = screen.getByRole('navigation', { name: /Rules sections/i });
@@ -34,7 +41,7 @@ describe('RulesPage', () => {
       a.getAttribute('href')
     );
 
-    expect(hrefs).toEqual(NAV_TARGETS.map((id) => `#${id}`));
+    expect(hrefs).toEqual(NAV_TARGETS.map((id) => `/rules#${id}`));
   });
 
   // Added because the questions it answers were the ones being asked in play.
