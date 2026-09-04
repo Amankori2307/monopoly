@@ -67,6 +67,33 @@ Composition:
 
 ## Board and card details
 
+### Space icons
+
+Eleven glyphs, resolved by
+[spaceIcon.registry.ts](../../src/components/game/icons/spaceIcon.registry.ts) and drawn by
+[SpaceIcon](../../src/components/game/icons/SpaceIcon.tsx) — one `<svg>` wrapper for all of them, so
+the fill, the aria attributes and the focusability cannot drift apart. The shapes live as data
+(viewBox + path, no colour) in `spaceGlyphs.ts`, generated from the `.svg` files they replaced.
+
+They are **inline SVG filled with `currentColor`**, taking `--board-icon-ink`. As `<img src>` the ink
+was baked into the file, so under a dark theme they were near-black paths on a near-black cell and no
+CSS could reach them. An e2e test flips `data-theme` and asserts the colour moves — a hardcoded
+colour of any kind simply will not.
+
+The per-kind `opacity` steps (0.62 Chance/Community Chest, 0.74 edge, 0.82 corner) stay as they are:
+they encode relative hierarchy, which is the same under any theme, so one ink token layered with them
+beats a token per weight.
+
+**Overrides are keyed by board index, not by name.** Two spaces need something other than their
+kind's default — Electric Company (12) and Super Tax (38). Keyed by display name, as they were,
+renaming a space silently dropped its icon with nothing failing. Indices are positional and stable by
+construction, and the registry test asserts each override still holds the kind it was written for.
+
+**Streets carry no glyph.** The ribbon is a street's identity on a printed board, and a glyph on every
+square flattens the distinction that makes railway/utility/chance scannable across forty of them.
+There is also no room: the side columns already had their `padding-block` trimmed to buy the longest
+names a third line, and the name-clipping test measures exactly the axis an icon would take.
+
 ### Houses and hotels
 
 Drawn by [BuildingPiece](../../src/components/game/board/BuildingPiece.tsx) and placed by
@@ -203,13 +230,15 @@ local state: the selected space id for the title-deed modal.
 
 ## Tests
 
-| Level | File                                                                               | Covers                                                                        |
-| ----- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)      | Index → grid cell: corners, uniqueness, edges, wrapping.                      |
-| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts)   | The view models every panel receives.                                         |
-| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                   | Three-column ordering; corner geometry; rail actions present and disabled.    |
-| Unit  | [BoardSpaceCell.test.tsx](../../src/components/game/board/BoardSpaceCell.test.tsx) | The pieces are SVG, not boxes, and the hotel faces its ribbon's axis.         |
-| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                             | Pieces stand on the ribbon and fit along it; sharp corners with buildings up. |
+| Level | File                                                                                     | Covers                                                                                  |
+| ----- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | Index → grid cell: corners, uniqueness, edges, wrapping.                                |
+| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts)         | The view models every panel receives.                                                   |
+| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                         | Three-column ordering; corner geometry; rail actions present and disabled.              |
+| Unit  | [BoardSpaceCell.test.tsx](../../src/components/game/board/BoardSpaceCell.test.tsx)       | The pieces are SVG, not boxes, and the hotel faces its ribbon's axis.                   |
+| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                                   | Pieces stand on the ribbon and fit along it; sharp corners with buildings up.           |
+| Unit  | [spaceIcon.registry.test.ts](../../src/components/game/icons/spaceIcon.registry.test.ts) | Every non-street space resolves a glyph; every kind covered; overrides hold their kind. |
+| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | The icons take theme ink: flipping `data-theme` must move their colour.                 |
 
 ## Known gaps
 

@@ -9,7 +9,8 @@ import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { MortgageStamp } from '../deed/MortgageStamp';
 import { HotelPiece, HousePiece } from './BuildingPiece';
-import { getCornerIcon, getSpaceIcon } from '../spaceIcons.constants';
+import { SpaceIcon } from '../icons/SpaceIcon';
+import { getCornerIcon, getSpaceIcon } from '../icons/spaceIcon.registry';
 import type { SpaceOwnerMark } from './board.interfaces';
 
 /**
@@ -120,14 +121,12 @@ export function BoardSpaceCell({
       <div className="space-body">
         {cornerIcon ? (
           <div className="corner-title">
-            <img alt="" aria-hidden="true" src={cornerIcon} />
+            <SpaceIcon className="corner-icon" glyph={cornerIcon} />
             <strong className="space-name">{space.name}</strong>
           </div>
         ) : (
           <div className="space-label">
-            {spaceIcon ? (
-              <img alt="" aria-hidden="true" className="space-icon" src={spaceIcon} />
-            ) : null}
+            {spaceIcon ? <SpaceIcon className="space-icon" glyph={spaceIcon} /> : null}
             <strong className="space-name">{space.name}</strong>
           </div>
         )}

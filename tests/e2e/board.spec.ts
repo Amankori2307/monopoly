@@ -266,6 +266,45 @@ test('never clips a space name', async ({ page }) => {
   expect(clipped).toEqual([]);
 });
 
+/**
+ * The reason the glyphs stopped being image files.
+ *
+ * As `<img src>` their ink was baked into the file, so a dark theme left them
+ * near-black on a near-black cell with nothing CSS could reach. Inline SVG
+ * filled with `currentColor` puts them on a theme token like everything else.
+ *
+ * Flipping data-theme and asserting the colour moves is the whole proof: a
+ * hardcoded colour, of any kind, simply will not move.
+ */
+test('themes the space icons along with the board', async ({ page }) => {
+  await startGame(page);
+
+  const inkPerTheme = await page.evaluate(() => {
+    const read = () => {
+      const edge = document.querySelector('.space-icon');
+      const corner = document.querySelector('.corner-icon');
+      return {
+        edge: edge ? getComputedStyle(edge).color : null,
+        corner: corner ? getComputedStyle(corner).color : null,
+      };
+    };
+
+    const shell = document.querySelector('.app-shell') as HTMLElement;
+    const before = read();
+    shell.setAttribute('data-theme', 'midnight');
+    const after = read();
+    shell.setAttribute('data-theme', 'india-edition');
+    return { before, after };
+  });
+
+  // Both must actually be on the board, or the comparison is vacuous.
+  expect(inkPerTheme.before.edge).not.toBeNull();
+  expect(inkPerTheme.before.corner).not.toBeNull();
+
+  expect(inkPerTheme.after.edge).not.toBe(inkPerTheme.before.edge);
+  expect(inkPerTheme.after.corner).not.toBe(inkPerTheme.before.corner);
+});
+
 // Each cell reads ribbon -> icon -> text from the board centre outward, and the
 // icon turns with the text so the cell reads as one unit.
 test('orders and rotates the icon to match the text', async ({ page }) => {

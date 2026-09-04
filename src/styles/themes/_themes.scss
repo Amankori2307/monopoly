@@ -29,13 +29,13 @@ $theme-contract: surface-app surface-panel surface-board surface-input surface-m
   surface-raised text-primary text-body text-muted text-inverse text-eyebrow accent
   accent-hover accent-strong accent-soft accent-contrast border-subtle border-input
   border-space border-dashed focus-ring shadow-panel shadow-board board-space-bg
-  board-space-hover ribbon-bg ribbon-border ribbon-outline ribbon-text ribbon-drop
-  deck-community-bg deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text
-  decision-bg decision-border badge-bg token-bg danger-bg error-text action-build
-  action-sell action-mortgage action-redeem action-text building-house building-house-roof
-  building-hotel building-hotel-roof building-window piece-outline button-primary
-  button-primary-hover button-primary-text button-secondary button-secondary-hover
-  button-secondary-text;
+  board-space-hover board-icon-ink ribbon-bg ribbon-border ribbon-outline ribbon-text
+  ribbon-drop deck-community-bg deck-chance-bg deck-marker-border deck-marker-shadow
+  deck-marker-text decision-bg decision-border badge-bg token-bg danger-bg error-text
+  action-build action-sell action-mortgage action-redeem action-text building-house
+  building-house-roof building-hotel building-hotel-roof building-window piece-outline
+  button-primary button-primary-hover button-primary-text button-secondary
+  button-secondary-hover button-secondary-text;
 
 $themes: (
   // -- India Edition: the shipped look. -------------------------------------
@@ -72,6 +72,7 @@ $themes: (
       ),
       board-space-bg: #fff,
       board-space-hover: #fffdf6,
+      board-icon-ink: #4a5142,
 
       ribbon-bg: #c9362f,
       ribbon-border: #fff7d9,
@@ -156,6 +157,7 @@ $themes: (
       ),
       board-space-bg: #1b2027,
       board-space-hover: #232b34,
+      board-icon-ink: #8b97a6,
 
       ribbon-bg: #b8362d,
       ribbon-border: #2a323c,

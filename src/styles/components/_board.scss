@@ -352,11 +352,18 @@
   }
 }
 
+// The glyphs are inline SVG filled with currentColor, so `color` is what themes
+// them - they were <img> until now, with the ink baked into the file, which
+// left them near-black on a near-black cell under a dark theme.
+//
+// The opacity steps below stay as they are: they encode relative hierarchy
+// between kinds of space, which is the same under any theme, so one ink token
+// layered with them beats a token per weight.
 .space-icon {
   flex: 0 0 auto;
   width: clamp(12px, 1.35vw, 19px);
   height: clamp(12px, 1.35vw, 19px);
-  object-fit: contain;
+  color: var(--board-icon-ink);
   opacity: 0.74;
 }
 
@@ -396,10 +403,12 @@
   padding: t.$space-inset;
   text-align: center;
 
-  img {
+  // A class rather than `img`: the glyph is an <svg> now, and a selector that
+  // names the element couples the stylesheet to the shape of the markup.
+  .corner-icon {
     width: clamp(15px, 2.2vw, 34px);
     height: clamp(15px, 2.2vw, 34px);
-    object-fit: contain;
+    color: var(--board-icon-ink);
     opacity: 0.82;
   }
 

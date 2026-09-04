@@ -3,7 +3,8 @@ import { isOwnableSpace, isStreetSpace } from '../../../domain/rules/space.utils
 import { SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace, OwnershipState } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
-import { getSpaceIcon } from '../spaceIcons.constants';
+import { SpaceIcon } from '../icons/SpaceIcon';
+import { getSpaceIcon } from '../icons/spaceIcon.registry';
 import { MortgageStamp } from './MortgageStamp';
 import { RailwayDeed } from './RailwayDeed';
 import { SpaceDescription } from './SpaceDescription';
@@ -83,9 +84,7 @@ export function SpaceCard({
           reads through - see MortgageStamp. */}
       {ownership?.mortgaged ? <MortgageStamp variant="deed" /> : null}
       <div className="space-detail-title-row">
-        {icon ? (
-          <img alt="" aria-hidden="true" className="space-detail-icon" src={icon} />
-        ) : null}
+        {icon ? <SpaceIcon className="space-detail-icon" glyph={icon} /> : null}
         <h2 id={headingId}>{space.name}</h2>
       </div>
 

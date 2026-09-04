@@ -41,6 +41,34 @@ theme against it (and against every colour group in `$color-groups`) and raises 
 miss. A partially-defined theme fails the build instead of silently inheriting the default
 theme's colour at runtime, which is close to impossible to debug by eye.
 
+**It runs in both directions.** A second pass `@error`s on any key a theme defines that is neither in
+the contract nor a `group-*`. For a long time the guard only asked whether the contract was covered,
+never whether a theme had grown a key past it — which is how `--board-active-outline` survived a
+redesign in both themes, referenced by no stylesheet at all. An extra key is not harmless: it is a
+token the next person will assume something reads.
+
+### Board tokens
+
+Three different surfaces, easily confused:
+
+| Token              | Paints                                        |
+| ------------------ | --------------------------------------------- |
+| `--board-space-bg` | one of the 40 cells                           |
+| `--surface-board`  | `.board-card`, the slab under the grid        |
+| `--board-icon-ink` | the `currentColor` every space glyph inherits |
+| `--piece-outline`  | the edge around a house or hotel              |
+
+`--board-icon-ink` is what made the glyphs themeable at all: they were `<img src>` files with their
+ink baked in, invisible on a dark cell and unreachable from CSS. They are inline SVG filled with
+`currentColor` now — see [game-layout.md](features/game-layout.md).
+
+### Deliberately not tokenised
+
+The `.token-chip` and `.pip` shading gradients are hardcoded white and black, and should stay that
+way. They are colour-agnostic _shading_ layered over an arbitrary inline player colour — the thing
+that makes a flat disc read as a sphere. A theme that could change them could break the illusion, and
+there is no theme-dependent decision for them to express.
+
 ### Button roles
 
 `--button-primary` / `--button-secondary` (plus their `-hover` and `-text` pairs) are part of the
@@ -113,7 +141,7 @@ renders before any `data-theme` attribute applies.
 
 ## Current themes
 
-| id              | Status                                                                                                                                                                                                                      |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `india-edition` | Shipped. The default.                                                                                                                                                                                                       |
-| `midnight`      | Dark palette, fully defined in SCSS. **Not registered** in `src/domain/themes/`, so it is not yet selectable — it exists to prove the engine and as a starting point. Add a `ThemeConfig` with id `midnight` to turn it on. |
+| id              | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `india-edition` | Shipped. The default.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `midnight`      | Dark palette, fully defined in SCSS. **Not registered** in `src/domain/themes/`, so it is not yet selectable — it exists to prove the engine, and an e2e test flips `data-theme` to it to prove the board carries no hardcoded colour. Registering it needs a `ThemeConfig` with id `midnight`; what still blocks that is the literals outside the board — `_dice.scss` (the die face is a hardcoded white gradient), `_overlays.scss`, `_trade.scss`, `_space-detail.scss`, `_player.scss`, `_holdings.scss`, `_buttons.scss`, `_rules.scss`. |
