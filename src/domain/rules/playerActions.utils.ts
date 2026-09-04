@@ -27,6 +27,22 @@ import { isOwnableSpace, isStreetSpace } from './space.utils';
  * disagree about why something is not allowed.
  */
 
+/**
+ * Why the landed site cannot be bought, or null when it can.
+ *
+ * Stated once, exactly as the auction's `bidBlockedReason` is: the engine throws
+ * this string and the decision panel disables Buy with it, so the button and the
+ * command cannot disagree.
+ *
+ * It used to be an inline comparison in the command alone, which left Buy always
+ * live. A player without the cash clicked it, the engine threw, the thunk logged
+ * to the console - and the modal stayed up with no way to answer it, so the game
+ * looked frozen. Every other affordability rule here was already guarded this
+ * way; buying was the one that was not.
+ */
+export const buyBlockedReason = (buyerCash: number, price: number): string | null =>
+  buyerCash < price ? 'Not enough cash to buy it' : null;
+
 /** Build and Sell mean a hotel at the top of the ladder, a house below it. */
 const commandFor = (action: PropertyAction, buildLevel: number): GameCommandType => {
   if (action === PropertyAction.Build) {

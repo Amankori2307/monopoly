@@ -608,3 +608,107 @@ test('relaxes the card to full width on a narrow screen', async ({ page }) => {
   );
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+/**
+ * A player who lands on a site they cannot afford.
+ *
+ * This is the shape the bug took, and it looked like the game had frozen: Buy
+ * was live regardless of cash, clicking it threw in the engine, and the only
+ * trace was a line in the console - behind a modal with no other way out. The
+ * player clicked it again, and again.
+ */
+test('never offers a purchase the player cannot afford', async ({ page }) => {
+  await startGame(page);
+
+  const site = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const street = game.board.find((space: { kind: string }) => space.kind === 'street');
+    const buyer = game.playerOrder[0];
+
+    game.activePlayerIndex = 0;
+    game.players[buyer].cash = 0;
+    game.players[buyer].position = street.index;
+    game.pendingDecision = {
+      type: 'landed-unowned-property',
+      spaceId: street.id,
+      playerId: buyer,
+    };
+    game.turn = {
+      phase: 'await_decision',
+      doublesCount: 0,
+      lastRoll: [2, 3],
+      canRollAgain: false,
+      reason: null,
+      speedDieFace: null,
+      pendingMonopolyAdvance: false,
+    };
+    localStorage.setItem(key, JSON.stringify(game));
+    return { name: street.name as string };
+  });
+
+  await page.reload();
+  await expect(page.getByTestId(TEST_IDS.decisionModal)).toBeVisible();
+
+  // Disabled, and saying why in the panel - not only in a title attribute.
+  await expect(page.getByTestId(TEST_IDS.buyButton)).toBeDisabled();
+  await expect(page.getByTestId(TEST_IDS.buyBlockedReason)).toBeVisible();
+
+  // And the player is not stuck: declining still works and clears the decision.
+  await page.getByTestId(TEST_IDS.declineButton).click();
+  await expect(page.getByTestId(TEST_IDS.buyDecision)).toHaveCount(0);
+  await expect(page.getByTestId(TEST_IDS.commandError)).toHaveCount(0);
+  expect(site.name).toBeTruthy();
+});
+
+/**
+ * The safety net for whatever still slips through.
+ *
+ * A rejected command sets `commandError` and the banner says so - but the banner
+ * lives in the sidebar and the decision backdrop is a fixed sheet over the whole
+ * viewport, so anything rejected while a modal was up painted *behind* it. The
+ * player saw nothing, which is exactly what "the game seems stuck" was.
+ *
+ * Asserted from the stylesheet rather than from a live banner, deliberately: the
+ * suite's own rule is that the UI never offers an action the engine rejects, so
+ * there is no way left to raise one through the UI - which is the point. The
+ * cascade is what broke, and the cascade is what is pinned.
+ */
+test('paints a rejected-command banner above the decision backdrop', async ({ page }) => {
+  await startGame(page);
+
+  const layers = await page.evaluate(() => {
+    const zIndexOf = (selector: string) => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules: CSSRuleList;
+        try {
+          rules = sheet.cssRules;
+        } catch {
+          continue; // cross-origin sheet, not ours
+        }
+        for (const rule of Array.from(rules)) {
+          if (
+            rule instanceof CSSStyleRule &&
+            rule.selectorText === selector &&
+            rule.style.zIndex
+          ) {
+            return Number(rule.style.zIndex);
+          }
+        }
+      }
+      return null;
+    };
+
+    return {
+      banner: zIndexOf('.command-error'),
+      backdrop: zIndexOf('.decision-backdrop'),
+    };
+  });
+
+  // Both must be found, or the comparison below proves nothing.
+  expect(layers.banner, '.command-error has no z-index rule').not.toBeNull();
+  expect(layers.backdrop, '.decision-backdrop has no z-index rule').not.toBeNull();
+  expect(layers.banner as number).toBeGreaterThan(layers.backdrop as number);
+});

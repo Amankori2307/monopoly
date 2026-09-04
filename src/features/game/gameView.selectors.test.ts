@@ -136,6 +136,38 @@ describe('selectDecisionViewModel', () => {
       expect(decision.space.price).toBeGreaterThan(0);
       expect(decision.space.name).toBeTruthy();
       expect(decision.space.id).toBeTruthy();
+      // Affordable at ₹1500 starting cash, so Buy is offered.
+      expect(decision.buyBlockedReason).toBeNull();
+    }
+  });
+
+  /**
+   * The button and the engine read one rule, so a live Buy is always a command
+   * that will succeed. It used to be checked in the command alone: the button
+   * stayed live, and clicking it left the modal up with only a console error.
+   */
+  it('blocks the buy decision when the player cannot afford the site', () => {
+    const game = createGame();
+    const buyer = game.playerOrder[game.activePlayerIndex];
+    game.players[buyer].position = 0;
+    const { nextState } = executeGameCommand(
+      game,
+      { type: GameCommandType.RollTurnDice },
+      new SeededRandomSource(2)
+    );
+    const broke = {
+      ...nextState,
+      players: {
+        ...nextState.players,
+        [buyer]: { ...nextState.players[buyer], cash: 0 },
+      },
+    };
+
+    const decision = selectDecisionViewModel(broke, findToken);
+
+    expect(decision?.type).toBe(PendingDecisionType.LandedUnownedProperty);
+    if (decision?.type === PendingDecisionType.LandedUnownedProperty) {
+      expect(decision.buyBlockedReason).toMatch(/not enough cash/i);
     }
   });
 

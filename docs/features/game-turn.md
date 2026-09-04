@@ -132,6 +132,28 @@ The engine throws on an invalid command. `runGameCommand` catches it, logs it wi
 turn, phase, and pending decision, and puts the message in `game.commandError`, which the
 `CommandErrorBanner` shows. Nothing throws into React.
 
+**Two rules keep that from becoming a dead end**, and both were broken at once:
+
+- **Never offer an action the engine will reject.** Every affordability rule is a
+  `*BlockedReason` the engine throws from _and_ the button disables from, so a live control is
+  always a command that will succeed — `bidBlockedReason`, `buildBlockedReason`,
+  `sellBlockedReason`, `siteActionBlockedReason`, and now `buyBlockedReason`. Buying was the one
+  that was not: Buy stayed live regardless of cash, and a player without it clicked a button that
+  did nothing. The reason is shown in the panel, not only as the button's `title` — a title is
+  neither readable on touch nor reliably announced, and a disabled button with no explanation reads
+  as a broken game.
+- **The banner has to be visible wherever the player is.** It renders in the sidebar, and the
+  decision backdrop is a fixed, blurred sheet over the whole viewport at `z-index: 40` — so
+  _anything_ rejected while a modal was up painted behind it and the player saw nothing but a
+  console line. It sits above the backdrop now, and is `pointer-events: none` while a modal is up
+  for the same reason the toasts are: the modal is the only thing to act on, and an alert that
+  swallowed a click on it would trade one dead end for another. Nothing is lost — the banner clears
+  itself the moment a command succeeds.
+
+Together those make the safety net deliberately unreachable through the UI, which is what
+`overlays.spec.ts` has always asserted ("The UI must never offer an action the engine then
+rejects"). The layering is therefore pinned from the stylesheet rather than from a live banner.
+
 _Fixed:_ a Chance card could jail a player mid-doubles, and `resolveCurrentSpace` then reassigned
 the phase and granted the jailed player an extra roll. The engine rejected that roll by throwing,
 the throw escaped the dice commit callback, and the dice stuck on "Rolling…" permanently. Three

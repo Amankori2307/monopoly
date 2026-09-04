@@ -51,6 +51,11 @@ export interface BuyDecisionViewModel {
   playerName: string;
   /** The whole space, so the decision can show the same card as the board does. */
   space: OwnableSpace;
+  /**
+   * Why Buy is not available, or null when it is. Comes from the same rule the
+   * engine throws from, so the button cannot offer what the command refuses.
+   */
+  buyBlockedReason: string | null;
 }
 
 /**

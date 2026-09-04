@@ -26,6 +26,7 @@ import {
   getSellableBuildings,
 } from '../../domain/rules/buildings.utils';
 import { getMortgageableSites } from '../../domain/rules/holdings.utils';
+import { buyBlockedReason } from '../../domain/rules/playerActions.utils';
 import { isOwnableSpace } from '../../domain/rules/space.utils';
 import { getMortgageTransferFee, getTransferFees } from '../../domain/rules/trade.utils';
 import { selectAuctionDecision } from './auctionViewModel.selectors';
@@ -182,14 +183,17 @@ const cardDrawDecision = (
 const buyDecision = (
   game: GameState,
   spaceId: string,
-  activePlayer: PlayerState
+  buyer: PlayerState
 ): BuyDecisionViewModel | null => {
   const space = game.board.find((candidate) => candidate.id === spaceId);
   return space && isOwnableSpace(space)
     ? {
         type: PendingDecisionType.LandedUnownedProperty,
-        playerName: activePlayer.name,
+        playerName: buyer.name,
         space,
+        // The engine throws from this same rule, so a live Buy button always
+        // means a command that will succeed.
+        buyBlockedReason: buyBlockedReason(buyer.cash, space.price),
       }
     : null;
 };

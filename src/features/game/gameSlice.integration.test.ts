@@ -222,6 +222,42 @@ describe('runGameCommand', () => {
     expect(store.getState().game.activeGame).toBe(before);
   });
 
+  /**
+   * The engine's refusal and the button's refusal are one string.
+   *
+   * They were two: the command threw "Player does not have enough money to buy
+   * this asset." while the button had no opinion at all and stayed live.
+   */
+  it('refuses an unaffordable purchase in the same words the button uses', () => {
+    const store = makeStore();
+    const game = store.dispatch(createNewGame(input()));
+    const street = game.board.find((space) => space.kind === SpaceKind.Street);
+    const buyer = game.playerOrder[game.activePlayerIndex];
+    store.dispatch(
+      setActiveGame({
+        ...game,
+        players: {
+          ...game.players,
+          [buyer]: { ...game.players[buyer], cash: 0, position: street!.index },
+        },
+        pendingDecision: {
+          type: PendingDecisionType.LandedUnownedProperty,
+          spaceId: street!.id,
+          playerId: buyer,
+        },
+        turn: { ...game.turn, phase: TurnPhase.AwaitDecision },
+      })
+    );
+
+    store.dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset }));
+
+    expect(store.getState().game.commandError).toMatch(/not enough cash/i);
+    // The decision is untouched, so the player can still send it to auction.
+    expect(store.getState().game.activeGame?.pendingDecision.type).toBe(
+      PendingDecisionType.LandedUnownedProperty
+    );
+  });
+
   it('clears an earlier command error once one succeeds', () => {
     const store = makeStore();
     store.dispatch(createNewGame(input()));

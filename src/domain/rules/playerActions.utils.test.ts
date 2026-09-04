@@ -3,7 +3,7 @@ import { HOTEL_BUILD_LEVEL } from '../constants/game.constants';
 import { GameCommandType, PropertyAction } from '../types/game.enums';
 import type { GameState } from '../types/game.interfaces';
 import { createGameState } from './gameEngine';
-import { getSiteActions } from './playerActions.utils';
+import { buyBlockedReason, getSiteActions } from './playerActions.utils';
 import { SeededRandomSource } from './rng';
 
 const createGame = (): GameState =>
@@ -180,5 +180,33 @@ describe('getSiteActions', () => {
 
     expect(mortgage?.isEnabled).toBe(false);
     expect(mortgage?.disabledReason).toMatch(/sell the buildings/i);
+  });
+});
+
+/**
+ * The rule behind both the disabled Buy button and the engine's throw.
+ *
+ * It was an inline comparison in the command alone, so the button was always
+ * live: a player without the cash clicked Buy, the engine threw, and the modal
+ * stayed up with nothing on screen saying why. Every other affordability rule
+ * here was already guarded this way.
+ */
+describe('buyBlockedReason', () => {
+  it('allows a purchase the player can afford', () => {
+    expect(buyBlockedReason(200, 100)).toBeNull();
+  });
+
+  // The boundary is the one worth pinning: exactly the price is affordable,
+  // and the engine's guard has to agree with the button on it.
+  it('allows a purchase that spends the player out exactly', () => {
+    expect(buyBlockedReason(100, 100)).toBeNull();
+  });
+
+  it('blocks a purchase one rupee short, and says why', () => {
+    expect(buyBlockedReason(99, 100)).toMatch(/not enough cash/i);
+  });
+
+  it('blocks a broke player', () => {
+    expect(buyBlockedReason(0, 60)).toMatch(/not enough cash/i);
   });
 });

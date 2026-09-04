@@ -121,6 +121,7 @@ export const TEST_IDS = {
   spaceCard: 'space-card',
   buyDecision: 'buy-decision',
   buyButton: 'buy-button',
+  buyBlockedReason: 'buy-blocked-reason',
   declineButton: 'decline-button',
   deedBand: 'deed-band',
   rentSchedule: 'rent-schedule',

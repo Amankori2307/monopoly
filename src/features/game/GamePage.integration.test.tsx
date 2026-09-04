@@ -1,14 +1,19 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createGameState } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
 import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
-import { PendingDecisionType, TurnPhase } from '../../domain/types/game.enums';
+import {
+  GameCommandType,
+  PendingDecisionType,
+  TurnPhase,
+} from '../../domain/types/game.enums';
 import type { GameState } from '../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { saveGame } from '../persistence/persistence';
+import { runGameCommand } from './gameSlice';
 import { GamePage } from './GamePage';
 
 /**
@@ -270,6 +275,81 @@ describe('a pending decision', () => {
 
     expect(await screen.findByTestId(TEST_IDS.decisionModal)).toBeInTheDocument();
     expect(screen.getByTestId(TEST_IDS.rollButton)).toBeDisabled();
+  });
+
+  /**
+   * A player who cannot afford the site is not stuck.
+   *
+   * This is the shape the bug took: Buy was live regardless of cash, clicking it
+   * threw in the engine, and the only trace was a console line - behind a modal
+   * that could not be answered. Buy now says no itself, and Decline still works.
+   */
+  it('offers no purchase the player cannot make, and stays answerable', async () => {
+    const base = seedGame();
+    const street = base.board.find((space) => space.kind === 'street');
+    const buyer = base.playerOrder[0];
+    const game = seedGame({
+      players: {
+        ...base.players,
+        [buyer]: { ...base.players[buyer], cash: 0 },
+      },
+      pendingDecision: {
+        type: PendingDecisionType.LandedUnownedProperty,
+        playerId: buyer,
+        spaceId: street?.id ?? '',
+      },
+      turn: { ...base.turn, phase: TurnPhase.AwaitDecision },
+    });
+
+    const { store } = renderPage(game.id);
+    await screen.findByTestId(TEST_IDS.decisionModal);
+
+    expect(screen.getByTestId(TEST_IDS.buyButton)).toBeDisabled();
+    expect(screen.getByTestId(TEST_IDS.buyBlockedReason)).toBeInTheDocument();
+
+    // The way out is still there, and taking it works.
+    fireEvent.click(screen.getByTestId(TEST_IDS.declineButton));
+    await waitFor(() =>
+      expect(store.getState().game.activeGame?.pendingDecision.type).not.toBe(
+        PendingDecisionType.LandedUnownedProperty
+      )
+    );
+    expect(store.getState().game.commandError).toBeNull();
+  });
+
+  /**
+   * The safety net, for whatever still slips through.
+   *
+   * Every rejected command sets `commandError`, and the banner has to be on
+   * screen even while a decision modal is up - it renders in the sidebar, and
+   * the modal's backdrop is a fixed sheet over the whole viewport, so it used to
+   * be painted behind it and the player saw nothing at all.
+   */
+  it('shows a rejected command even while a decision modal is up', async () => {
+    const base = seedGame();
+    const street = base.board.find((space) => space.kind === 'street');
+    const game = seedGame({
+      pendingDecision: {
+        type: PendingDecisionType.LandedUnownedProperty,
+        playerId: base.playerOrder[0],
+        spaceId: street?.id ?? '',
+      },
+      turn: { ...base.turn, phase: TurnPhase.AwaitDecision },
+    });
+
+    const { store } = renderPage(game.id);
+    await screen.findByTestId(TEST_IDS.decisionModal);
+
+    // A command the engine refuses in this phase.
+    act(() => {
+      store.dispatch(runGameCommand({ type: GameCommandType.EndTurn }));
+    });
+
+    const banner = await screen.findByTestId(TEST_IDS.commandError);
+    expect(banner).toBeInTheDocument();
+    expect(banner).toHaveTextContent(/cannot be ended/i);
+    // And the modal is still there to answer.
+    expect(screen.getByTestId(TEST_IDS.decisionModal)).toBeInTheDocument();
   });
 
   it('clears once the decision is answered', async () => {

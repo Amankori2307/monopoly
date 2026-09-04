@@ -73,6 +73,7 @@ export function DecisionPanel({
     <section className="decision-card" data-testid={TEST_IDS.decisionPanel}>
       {decision.type === PendingDecisionType.LandedUnownedProperty ? (
         <BuyOrAuctionDecision
+          buyBlockedReason={decision.buyBlockedReason}
           currencySymbol={currencySymbol}
           onBuy={handlers.onBuy}
           onDecline={handlers.onDecline}

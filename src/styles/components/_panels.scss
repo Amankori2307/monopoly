@@ -105,7 +105,31 @@
 }
 
 // Rejected command notice. Loud enough to notice, dismissible once read.
+// Why a decision's action is unavailable, said in the panel rather than only in
+// the button's title - a title is not readable on touch and not reliably
+// announced, so a disabled button with no explanation reads as a broken game.
+.decision-blocked {
+  margin: 0;
+  color: var(--error-text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+// A rejected command has to reach the player wherever they are.
+//
+// This sits in the sidebar, and the decision backdrop is a fixed, blurred sheet
+// over the whole viewport at z-index 40 - so every command rejected while a
+// modal was up rendered behind it and the player saw nothing at all. The game
+// looked frozen: a button that did nothing, an error only in the console.
+//
+// Above the backdrop, then, exactly as the toast stack is. And display-only
+// while a modal is up, for exactly the same reason the toasts are: the modal is
+// the only thing the player may act on, and an alert that swallows a click on it
+// would trade one dead end for another. Nothing is lost - the banner clears
+// itself the moment a command succeeds.
 .command-error {
+  position: relative;
+  z-index: 45;
   display: flex;
   align-items: start;
   justify-content: space-between;
@@ -113,6 +137,10 @@
   padding: 14px 16px;
   border-left: 5px solid var(--error-text);
   background: var(--surface-muted);
+}
+
+.page:has(.decision-backdrop) .command-error {
+  pointer-events: none;
 }
 
 .command-error-message {

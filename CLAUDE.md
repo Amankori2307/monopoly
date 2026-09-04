@@ -185,7 +185,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1040 unit tests and 119 e2e passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1053 unit tests and 121 e2e passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 ---
@@ -224,6 +224,8 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 ## 8. Known gaps and traps
 
 - **Every event carries a `GameEventCue` saying what happened**, set where it happened - not read back out of the message. It drives two things: the toast's colour and the sound. It was three tones for the colour alone and was regex-matched from the wording before that, so rephrasing a sentence silently changed it. A new cue needs a row in `SOUND_FOR_CUE`; `soundCues.guard.test.ts` fails until it has one.
+- **Never offer an action the engine will reject, and make sure a rejection is visible anyway.** Every affordability rule is a `*BlockedReason` in `domain/rules/` that the engine throws from _and_ the control disables from - `bidBlockedReason`, `buildBlockedReason`, `sellBlockedReason`, `siteActionBlockedReason`, `buyBlockedReason` - so a live button is always a command that will succeed, and the reason is shown in the panel rather than only as a `title`. Buying was the one left unguarded: Buy stayed live regardless of cash, and clicking it left a modal that could not be answered with only a console line to show for it. The `CommandErrorBanner` is the net beneath that, and it has to paint **above** the decision backdrop - it renders in the sidebar, and the backdrop is a fixed sheet over the whole viewport, so every rejection during a modal used to be invisible. It is inert to clicks while a modal is up, exactly as the toasts are.
+
 - **A command's feedback waits for the move it is about.** The engine resolves a whole turn in one synchronous step, and the board then spends up to a couple of seconds walking the token there - so a toast dispatched from the thunk announced the rent before the player reached the site. `runGameCommand` queues into `ui.pendingFeedback` and has no say in the timing; `useFeedbackGate` drains it once `isMoving` clears, which is the same flag that already withholds the decision modal. Toasts and the cue release **together**, or the sound arrives early on its own. `data-moving` on `.game-layout` publishes the walk so a test can assert the invariant mid-flight. Anything new that speaks to the player goes through the queue, not straight to the store.
 
 - **A mute must mute everything.** `soundEnabled` reaches the cue sounds, both dice rollers and the token walk. A switch that leaves two sounds playing is worse than none, and the e2e test fails on a half-mute.

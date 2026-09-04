@@ -4,6 +4,7 @@ import {
   PendingDecisionType,
 } from '../../../types/game.enums';
 import { groupHasBuildings, isOwnedBy } from '../../holdings.utils';
+import { buyBlockedReason } from '../../playerActions.utils';
 import { isOwnableSpace, isStreetSpace } from '../../space.utils';
 import { startAuction } from '../auction.utils';
 import { creditFromBank, getRedemptionCost, resolveBankPayment } from '../money.utils';
@@ -36,8 +37,11 @@ export const propertyCommands: CommandHandlers = {
     if (!isOwnableSpace(space)) {
       throw new Error('Current space is not buyable.');
     }
-    if (buyer.cash < space.price) {
-      throw new Error('Player does not have enough money to buy this asset.');
+    // From the shared rule, so the disabled Buy button and this throw always
+    // give the same answer - the auction's bid guard works the same way.
+    const blockedReason = buyBlockedReason(buyer.cash, space.price);
+    if (blockedReason) {
+      throw new Error(blockedReason);
     }
 
     // Through the money primitive, not inline: it is what logs the movement,

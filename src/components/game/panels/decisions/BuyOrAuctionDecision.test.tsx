@@ -17,11 +17,15 @@ const spaceOfKind = (kind: SpaceKind): OwnableSpace => {
   return space;
 };
 
-const renderDecision = (space: OwnableSpace = spaceOfKind(SpaceKind.Street)) => {
+const renderDecision = (
+  space: OwnableSpace = spaceOfKind(SpaceKind.Street),
+  buyBlockedReason: string | null = null
+) => {
   const onBuy = vi.fn();
   const onDecline = vi.fn();
   render(
     <BuyOrAuctionDecision
+      buyBlockedReason={buyBlockedReason}
       currencySymbol="M"
       onBuy={onBuy}
       onDecline={onDecline}
@@ -95,5 +99,54 @@ describe('BuyOrAuctionDecision', () => {
     expect(screen.getByTestId(TEST_IDS.deedBand)).toHaveClass(
       `group-${street.colorGroup}`
     );
+  });
+});
+
+/**
+ * A player who cannot afford the site.
+ *
+ * Buy used to be live regardless: clicking it threw in the engine, the thunk
+ * logged to the console, and the modal stayed up with no way to answer it - the
+ * game looked frozen. The button now says no before the command does.
+ */
+describe('when the player cannot afford it', () => {
+  const REASON = 'Not enough cash to buy it';
+
+  it('disables Buy', () => {
+    renderDecision(spaceOfKind(SpaceKind.Street), REASON);
+
+    expect(screen.getByTestId(TEST_IDS.buyButton)).toBeDisabled();
+  });
+
+  // A disabled button with no explanation reads as a broken game, and a title
+  // attribute is neither readable on touch nor reliably announced.
+  it('says why, in the panel rather than only in a tooltip', () => {
+    renderDecision(spaceOfKind(SpaceKind.Street), REASON);
+
+    expect(screen.getByTestId(TEST_IDS.buyBlockedReason)).toHaveTextContent(REASON);
+  });
+
+  it('does not fire the command when the button is clicked anyway', () => {
+    const { onBuy } = renderDecision(spaceOfKind(SpaceKind.Street), REASON);
+
+    fireEvent.click(screen.getByTestId(TEST_IDS.buyButton));
+
+    expect(onBuy).not.toHaveBeenCalled();
+  });
+
+  // The decision must stay answerable - declining is what the player has left.
+  it('leaves the auction available', () => {
+    const { onDecline } = renderDecision(spaceOfKind(SpaceKind.Street), REASON);
+
+    expect(screen.getByTestId(TEST_IDS.declineButton)).toBeEnabled();
+    fireEvent.click(screen.getByTestId(TEST_IDS.declineButton));
+    expect(onDecline).toHaveBeenCalledTimes(1);
+  });
+
+  it('says nothing, and enables Buy, when the player can afford it', () => {
+    renderDecision();
+
+    expect(screen.getByTestId(TEST_IDS.buyButton)).toBeEnabled();
+    expect(screen.queryByTestId(TEST_IDS.buyBlockedReason)).not.toBeInTheDocument();
   });
 });
