@@ -4,10 +4,8 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { PlayerConfigRow } from '../../components/setup/PlayerConfigRow';
 import { RecentGamesList } from '../../components/setup/RecentGamesList';
 import { GameIdentityFields } from '../../components/setup/GameIdentityFields';
-import { RulesetSummary } from '../../components/setup/RulesetSummary';
 import { SetupHero } from '../../components/setup/SetupHero';
 import { SpeedDieToggle } from '../../components/setup/SpeedDieToggle';
-import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
 import { useGameSetupForm } from './hooks/useGameSetupForm';
@@ -43,17 +41,17 @@ export function HomePage() {
     navigate(`/game/${nextGame.id}`);
   };
 
-  // The summary quotes the ruleset, so it follows the selected theme's symbol
-  // rather than repeating amounts in the copy.
+  // The masthead's ruleset card quotes the constants, so it follows the selected
+  // theme's symbol rather than repeating amounts in the copy.
   const currencySymbol = form.selectedTheme.currencySymbol;
 
   return (
     <div className="app-shell" data-theme={form.themeId}>
       <div className="page">
-        <SetupHero />
+        <SetupHero currencySymbol={currencySymbol} themeName={form.selectedTheme.name} />
 
         <div className="layout-grid">
-          <section className="panel">
+          <section className="panel setup-panel">
             <h2>Start a new game</h2>
             <form
               className="setup-form"
@@ -63,37 +61,12 @@ export function HomePage() {
               <GameIdentityFields
                 gameName={form.gameName}
                 onGameNameChange={form.setGameName}
+                onPlayerCountChange={form.setPlayerCount}
                 onThemeChange={form.setThemeId}
+                playerCount={form.playerCount}
+                playerCountNotice={form.playerCountNotice}
                 themeId={form.themeId}
               />
-
-              <div className="field-grid two">
-                <label>
-                  Players
-                  <input
-                    className="text-input"
-                    data-testid={TEST_IDS.playerCountInput}
-                    max={MAX_PLAYERS}
-                    min={MIN_PLAYERS}
-                    onChange={(event) => form.setPlayerCount(Number(event.target.value))}
-                    type="number"
-                    value={form.playerCount}
-                  />
-                  {form.playerCountNotice ? (
-                    <span
-                      className="helper-text"
-                      data-testid={TEST_IDS.playerCountNotice}
-                      role="status"
-                    >
-                      {form.playerCountNotice}
-                    </span>
-                  ) : null}
-                </label>
-                <RulesetSummary
-                  currencySymbol={currencySymbol}
-                  themeName={form.selectedTheme.name}
-                />
-              </div>
 
               <SpeedDieToggle
                 currencySymbol={currencySymbol}
@@ -126,7 +99,7 @@ export function HomePage() {
             </form>
           </section>
 
-          <section className="panel">
+          <section className="panel recent-panel">
             <h2>Recent games</h2>
             <RecentGamesList
               games={recentGames}

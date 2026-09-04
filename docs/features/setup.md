@@ -39,6 +39,34 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 - **`data-theme` is set from the form's current selection**, so the theme preview is live before
   the game exists.
 
+- **The screen is addressed to a player, not to whoever built the app.** It opened with a project
+  description ("a typed, resumable rebuild ... with the rules engine separated from the UI") beside
+  a **Locked v1 scope** table listing `Persistence: LocalStorage`. That table had also gone stale:
+  its Speed Die row still read "planned later" while the Speed Die's own toggle sat a few
+  centimetres below it. Both are gone. Two tests keep them gone — the rendered copy may not contain
+  "LocalStorage", "rules engine" or "planned later".
+
+- **The masthead is built as a title deed**, because that is an object the game already has and the
+  player already recognises: a colour band across the top, a mono label, a serif name. It is the tie
+  to the board, which is card stock and a display serif — the screen shared nothing with it before.
+  No new theme tokens were needed; the band takes `--accent` and the cards take the surfaces every
+  panel already uses.
+
+- **The title is the theme's own name**, not copy in the component, so the masthead follows whichever
+  ruleset is selected in the form below it.
+
+- **The ruleset card quotes the constants** — players, starting cash, GO salary, jail fine — so the
+  screen cannot drift from the game it is about to start. It is a table of rows rather than a
+  sentence, which is why the e2e assertion is scoped to the card and checks the label and the amount
+  separately.
+
+- **The form takes the wider column.** It had the narrower of the two, with the room given to a
+  recent-games list that is empty on a first visit.
+
+- **The player count is a narrow field.** It sat on a row of its own beside the ruleset summary,
+  stretched to half the form's width — a single-digit input the size of a name field. Name, count
+  and ruleset share one row now, and the summary moved to the masthead.
+
 ## State and data
 
 - Local: `gameName`, `playerCount`, `themeId`, `playerNames[]`, `playerTokens[]`, `formError`.
@@ -47,11 +75,11 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 
 ## Tests
 
-| Level       | File                                                            | Covers                                                 |
-| ----------- | --------------------------------------------------------------- | ------------------------------------------------------ |
-| Unit        | —                                                               | _Gap: `clampPlayerCount`, validation rules._           |
-| Integration | [HomePage.test.tsx](../../src/features/setup/HomePage.test.tsx) | Renders setup + recent games; rejects duplicate names. |
-| E2E         | [tests/e2e/setup.spec.ts](../../tests/e2e/setup.spec.ts)        | Create game → navigates to `/game/:id`.                |
+| Level       | File                                                            | Covers                                                                                                                                                                                                       |
+| ----------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Unit        | —                                                               | _Gap: `clampPlayerCount`, validation rules._                                                                                                                                                                 |
+| Integration | [HomePage.test.tsx](../../src/features/setup/HomePage.test.tsx) | Renders setup + recent games; rejects duplicate names; the masthead titles itself from the ruleset, quotes the constants, and says nothing about how the app is built or about a shipped rule being unbuilt. |
+| E2E         | [tests/e2e/setup.spec.ts](../../tests/e2e/setup.spec.ts)        | Create game → navigates to `/game/:id`; the masthead is set in the display serif, the form takes the wider column, and the copy carries no build detail.                                                     |
 
 ## Known gaps
 

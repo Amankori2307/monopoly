@@ -2,8 +2,6 @@
 @use '../abstracts/mixins' as m;
 
 .panel,
-.hero-card,
-.summary-card,
 .decision-card,
 .recent-game-item {
   border: 1px solid var(--border-subtle);
@@ -17,46 +15,6 @@
 
   @include m.below(t.$breakpoint-tablet) {
     padding: 16px;
-  }
-}
-
-.hero-card {
-  display: grid;
-  grid-template-columns: 1.3fr 0.7fr;
-  gap: t.$gap-xl;
-  padding: 34px;
-  border-radius: t.$radius-sharp;
-
-  @include m.below(t.$breakpoint-tablet) {
-    grid-template-columns: 1fr;
-    padding: t.$gap-lg;
-  }
-}
-
-.hero-card h1,
-.game-header h1 {
-  margin: 0 0 8px;
-  font-size: clamp(2.1rem, 4vw, 4.3rem);
-  line-height: 0.98;
-  letter-spacing: -0.055em;
-}
-
-.hero-card p,
-.game-header p {
-  margin-bottom: 0;
-  line-height: 1.5;
-}
-
-.hero-actions {
-  margin-top: 20px;
-}
-
-.summary-card {
-  padding: 18px;
-  border-radius: t.$radius-sharp;
-
-  h2 {
-    margin-bottom: 16px;
   }
 }
 

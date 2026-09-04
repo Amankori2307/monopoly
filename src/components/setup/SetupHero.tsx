@@ -1,37 +1,39 @@
 import { Link } from 'react-router-dom';
-import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
+import { RulesetSummary } from './RulesetSummary';
 
-/** Intro card on the home screen: what the app is and the locked v1 scope. */
-export function SetupHero() {
+interface SetupHeroProps {
+  currencySymbol: string;
+  themeName: string;
+}
+
+/**
+ * The masthead: what this is, and what the game about to start is like.
+ *
+ * Built as a title deed, because that is the game's own object - a colour band
+ * across the top, a mono label, a serif name. It used to be a project README
+ * pointed at the player ("a typed, resumable rebuild ... with the rules engine
+ * separated from the UI") beside a "Locked v1 scope" table.
+ *
+ * The ruleset card follows the theme picked in the form below, so the numbers on
+ * screen are always the ones the game will be started with.
+ */
+export function SetupHero({ currencySymbol, themeName }: SetupHeroProps) {
   return (
-    <section className="hero-card">
-      <div>
-        <h1>Monopoly India Edition</h1>
-        <p>
-          A typed, resumable rebuild of Monopoly India Edition with local saves, stable
-          game ids, and the rules engine separated from the UI.
+    <section className="setup-masthead">
+      <div className="masthead-brand">
+        {/* The game's own name, from the theme rather than from copy here, so
+            the masthead follows whichever ruleset is selected below. */}
+        <h1>{themeName}</h1>
+        <p className="masthead-lede">
+          Roll, buy, build, and bankrupt your friends around one board. Every game saves
+          itself as you play, so you can stop mid-turn and pick it up later.
         </p>
-        <div className="button-row hero-actions">
-          <Link className="secondary-button" to="/rules">
-            Read the rules
-          </Link>
-        </div>
+        <Link className="secondary-button" to="/rules">
+          Read the rules
+        </Link>
       </div>
-      <div className="summary-card">
-        <h2>Locked v1 scope</h2>
-        <div className="summary-grid">
-          <span>Players</span>
-          <strong>
-            {MIN_PLAYERS} to {MAX_PLAYERS}
-          </strong>
-          <span>Persistence</span>
-          <strong>LocalStorage</strong>
-          <span>Ruleset</span>
-          <strong>India Edition</strong>
-          <span>Speed Die</span>
-          <strong>Planned later</strong>
-        </div>
-      </div>
+
+      <RulesetSummary currencySymbol={currencySymbol} />
     </section>
   );
 }

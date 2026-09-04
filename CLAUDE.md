@@ -185,7 +185,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1053 unit tests and 121 e2e passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1058 unit tests and 122 e2e passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 ---

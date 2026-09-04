@@ -261,15 +261,15 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/components/setup/` — presentational setup components
 
-| File                                                                               | What it does                                                    |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)                             | Intro card: what the app is and the locked v1 scope.            |
-| [setup/SpeedDieToggle.tsx](../src/components/setup/SpeedDieToggle.tsx)             | The one optional ruleset choice, agreed before the game starts. |
-| [setup/RulesetSummary.tsx](../src/components/setup/RulesetSummary.tsx)             | Headline economics, quoted from the constants.                  |
-| [setup/GameIdentityFields.tsx](../src/components/setup/GameIdentityFields.tsx)     | Game name and theme.                                            |
-| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx)                 | One player's name and token inputs.                             |
-| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx)                 | Saved games with continue and delete, or the empty state.       |
-| [setup/RecentGamesList.test.tsx](../src/components/setup/RecentGamesList.test.tsx) | The two-step delete.                                            |
+| File                                                                               | What it does                                                                                 |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)                             | The masthead, built as a title deed: the ruleset's name, the lede, the rules link.           |
+| [setup/SpeedDieToggle.tsx](../src/components/setup/SpeedDieToggle.tsx)             | The one optional ruleset choice, agreed before the game starts.                              |
+| [setup/RulesetSummary.tsx](../src/components/setup/RulesetSummary.tsx)             | The ruleset at a glance - players and the three headline amounts, quoted from the constants. |
+| [setup/GameIdentityFields.tsx](../src/components/setup/GameIdentityFields.tsx)     | Game name, player count and ruleset, on one row.                                             |
+| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx)                 | One player's name and token inputs.                                                          |
+| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx)                 | Saved games with continue and delete, or the empty state.                                    |
+| [setup/RecentGamesList.test.tsx](../src/components/setup/RecentGamesList.test.tsx) | The two-step delete.                                                                         |
 
 ## `src/components/rules/` — rules booklet sections
 
@@ -330,7 +330,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [components/\_auction.scss](../src/styles/components/_auction.scss)               | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                   |
 | [components/\_player.scss](../src/styles/components/_player.scss)                 | Player cards, metrics, owned-property cards.                                                 |
 | [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Three-column game layout, turn panel, activity list, responsive rules.                       |
-| [pages/\_home.scss](../src/styles/pages/_home.scss)                               | Recent-games list styling.                                                                   |
+| [pages/\_home.scss](../src/styles/pages/_home.scss)                               | The setup screen: the deed-band masthead, the ruleset glance, the form and the saved games.  |
 | [pages/\_rules.scss](../src/styles/pages/_rules.scss)                             | Rules booklet typography and tables.                                                         |
 
 ## Test infrastructure

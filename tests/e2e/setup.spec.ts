@@ -3,6 +3,45 @@ import { GAME_STATE_VERSION } from '../../src/domain/constants/game.constants';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { startGame } from './helpers';
 
+/**
+ * The front door reads as a game, and every number on it comes from the ruleset.
+ *
+ * It used to open with a project description and a "Locked v1 scope" table -
+ * Persistence: LocalStorage - whose Speed Die row said "planned later" while the
+ * Speed Die's own toggle sat a few centimetres below it.
+ */
+test('opens on a masthead a player can read, not a spec sheet', async ({ page }) => {
+  await page.goto('/');
+
+  // Titled with the ruleset it is about to start, in the board's display serif.
+  const title = page.getByRole('heading', { level: 1 });
+  await expect(title).toHaveText(/India Edition/);
+  await expect(title).toHaveCSS('font-family', /Fraunces/);
+
+  await expect(page.getByTestId(TEST_IDS.rulesetGlance)).toBeVisible();
+  await expect(page.getByRole('link', { name: /Read the rules/i })).toBeVisible();
+
+  // Nothing about how it was built, and nothing calling a shipped rule unbuilt.
+  const copy = (await page.locator('body').innerText()).toLowerCase();
+  expect(copy).not.toContain('localstorage');
+  expect(copy).not.toContain('rules engine');
+  expect(copy).not.toContain('planned later');
+
+  // The form is the reason anyone is here, so it takes the wider column - it
+  // used to take the narrower one, with the room given to a recent-games list
+  // that is empty on a first visit. By panel, not by the list inside it: there
+  // are no saved games yet, so the list itself is not on the page.
+  const [form, recent] = await Promise.all([
+    page.locator('.setup-panel').boundingBox(),
+    page.locator('.recent-panel').boundingBox(),
+  ]);
+  expect(form, 'the setup panel is not on the page').not.toBeNull();
+  expect(recent, 'the recent-games panel is not on the page').not.toBeNull();
+  expect((form as NonNullable<typeof form>).width).toBeGreaterThan(
+    (recent as NonNullable<typeof recent>).width
+  );
+});
+
 test('creates a game and navigates to a resumable route', async ({ page }) => {
   await startGame(page);
 

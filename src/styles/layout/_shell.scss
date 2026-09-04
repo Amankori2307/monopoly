@@ -17,9 +17,13 @@
   margin: 0 auto;
 }
 
+// The setup screen's two columns. The form is the reason anyone is here, so it
+// takes the wider one - it used to be the narrower of the two, with the mostly
+// empty recent-games list given the room.
 .layout-grid {
   display: grid;
-  grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(360px, 1.15fr) minmax(0, 0.85fr);
+  align-items: start;
   gap: t.$gap-lg;
   margin-top: t.$gap-lg;
 
@@ -30,7 +34,6 @@
 
 .field-grid.two,
 .two-column,
-.summary-grid,
 .player-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

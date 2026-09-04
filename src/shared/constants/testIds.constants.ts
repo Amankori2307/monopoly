@@ -131,6 +131,7 @@ export const TEST_IDS = {
   playerCountNotice: 'player-count-notice',
   speedDieToggle: 'speed-die-toggle',
   setupForm: 'setup-form',
+  rulesetGlance: 'ruleset-glance',
   recentGamesList: 'recent-games-list',
   recentGameItem: 'recent-game-item',
   deleteGame: 'delete-game',

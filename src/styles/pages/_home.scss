@@ -1,21 +1,164 @@
 @use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
 
-.recent-game-item {
-  padding: 16px;
+// ---------------------------------------------------------------------------
+// The setup screen, built out of the game's own objects.
+//
+// It read as a project README before this: a repo description for a subtitle
+// and a "Locked v1 scope" table telling the player about LocalStorage. It also
+// shared nothing with the board, which is card stock, a display serif and a
+// printed palette.
+//
+// The tie is the title deed - a colour band across the top, a mono label, a
+// serif name - because that is a thing the game already has and the player
+// already recognises. No new theme tokens: the band takes --accent, and the
+// cards take the surfaces every panel uses.
+// ---------------------------------------------------------------------------
+
+/** The deed's colour band, on any card that wants one. */
+@mixin deed-band($colour: var(--accent)) {
+  &::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 6px;
+    content: '';
+    background: $colour;
+  }
+}
+
+.setup-masthead {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.65fr);
+  align-items: start;
+  gap: t.$gap-xl;
+  padding: 40px 34px 34px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+
+  @include deed-band;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+    padding: t.$gap-xl t.$gap-lg t.$gap-lg;
+  }
 }
 
-.recent-game-meta {
-  margin: 8px 0 14px;
-  color: var(--text-muted);
-  font-size: 0.78rem;
+.masthead-brand h1 {
+  margin: 0 0 12px;
+  // The board's display serif. The title is the theme's own name, so it can run
+  // to three words - hence a clamp that leans smaller than a one-word title
+  // would need, and a line-height that lets it wrap without colliding.
+  font-family: t.$font-serif;
+  font-size: clamp(2rem, 3.6vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
 }
 
-// One opt-in setting, so it reads as a sentence rather than a form row.
+.masthead-lede {
+  max-width: 52ch;
+  margin: 0 0 t.$gap-lg;
+  color: var(--text-body);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+// ---------------------------------------------------------------------------
+// The ruleset, at a glance
+// ---------------------------------------------------------------------------
+.ruleset-glance {
+  padding: 16px 18px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: t.$radius-sharp;
+  background: var(--surface-muted);
+}
+
+.ruleset-glance-title {
+  @include m.mono-label;
+  margin: 0 0 12px;
+  color: var(--text-eyebrow);
+}
+
+.ruleset-glance-rows {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+// A rule between rows rather than around each: this is a printed table, and it
+// reads as one object instead of four.
+.ruleset-glance-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$gap-md;
+  padding: 9px 0;
+
+  + .ruleset-glance-row {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  dt {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--text-primary);
+    font-family: t.$font-mono;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Start a new game
+// ---------------------------------------------------------------------------
+.setup-panel,
+.recent-panel {
+  position: relative;
+  overflow: hidden;
+
+  h2 {
+    font-family: t.$font-serif;
+    font-size: 1.35rem;
+  }
+}
+
+// Name, count and ruleset on one row. The count is the narrow one: it holds a
+// single digit, and giving it a third of the row made it read as a text field.
+.field-grid.setup-identity {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) 84px minmax(0, 1.2fr);
+  gap: 12px;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.setup-identity-notice {
+  grid-column: 1 / -1;
+}
+
+// The one optional rule, set apart so it reads as a choice rather than as
+// another field in the run.
 .checkbox-field {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--accent-soft);
+  border-radius: t.$radius-sharp;
+  background: var(--surface-muted);
   cursor: pointer;
   color: var(--text-primary);
   font-weight: 700;
@@ -28,7 +171,42 @@
 
   .helper-text {
     display: block;
-    margin-top: 2px;
+    margin-top: 3px;
     font-weight: 500;
+    line-height: 1.45;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Recent games
+// ---------------------------------------------------------------------------
+.recent-games {
+  display: grid;
+  gap: 12px;
+}
+
+.recent-game-item {
+  position: relative;
+  padding: 16px 18px;
+  border-radius: t.$radius-sharp;
+  overflow: hidden;
+
+  // A saved game is a deed too, in the theme's accent rather than a street's.
+  @include deed-band(var(--accent-soft));
+
+  > strong {
+    display: block;
+    padding-top: 4px;
+    font-family: t.$font-serif;
+    font-size: 1.02rem;
+  }
+}
+
+.recent-game-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 6px 0 14px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
 }
