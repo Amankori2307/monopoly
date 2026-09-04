@@ -475,10 +475,15 @@
 // ribbon on the inner edge is a different fact and must stay readable.
 // The colour itself is an inline style - token colours are theme data.
 // ---------------------------------------------------------------------------
+// The owner's mark, kept off the ribbon.
+//
+// It used to sit at the cell's top-right on every side, which on the bottom row
+// is precisely where the ribbon is - so it covered the pieces standing on it.
+// With 6px pips that was a nibble; with real houses it hid the fourth one and a
+// hotel's windows outright. It now hugs the cell's OUTER edge, the opposite one
+// to the ribbon, per side.
 .space-owner-dot {
   position: absolute;
-  top: 3px;
-  right: 3px;
   // Above the cell's ::after divider, which sits at z-index 5.
   z-index: 6;
   width: 7px;
@@ -492,23 +497,39 @@
     background: var(--surface-panel);
     border-width: 2px;
   }
-}
 
-// The corner squares carry no owner, so nothing to reposition there.
-.board-space.side-left .space-owner-dot,
-.board-space.side-right .space-owner-dot {
-  top: 3px;
+  // The ribbon hugs the inner edge (see .space-color), so the outer edge is
+  // whichever one it is not on.
+  .side-bottom & {
+    right: 3px;
+    bottom: 3px;
+  }
+
+  .side-top & {
+    top: 3px;
+    right: 3px;
+  }
+
+  .side-left & {
+    top: 3px;
+    left: 3px;
+  }
+
+  .side-right & {
+    top: 3px;
+    right: 3px;
+  }
 }
 
 /**
- * Houses and hotels, drawn on the colour ribbon the way a printed board does.
+ * Houses and hotels, standing on the colour ribbon the way a printed board does.
  *
- * The pips run along the ribbon, so they follow its axis: across on the top and
- * bottom rows, down the left and right columns.
+ * The pieces run along the ribbon, so they follow its axis: across on the top
+ * and bottom rows, down the left and right columns.
  */
 .space-buildings {
   display: flex;
-  gap: 2px;
+  gap: 1.5px;
   align-items: center;
   justify-content: center;
 
@@ -518,44 +539,51 @@
   }
 }
 
+// The pieces are drawn, not styled - see BuildingPiece.tsx. All this sets is
+// how big they are, because a pitched roof and an outline that survives a green
+// house on a green ribbon are things CSS boxes cannot do.
+//
+// Nothing here rounds a corner. The board's sharp-corner rule is whole-DOM
+// enforced, and an SVG's own geometry is not a border-radius, so the pieces get
+// their shape without needing an exception.
 .building-house {
-  width: 6px;
-  height: 6px;
-  border-radius: 1px;
-  // Physical pieces are rounded; these are pieces, not UI, so they carry the
-  // same treatment as the tokens and dice.
-  background: var(--building-house);
-  box-shadow: 0 0 0 1px var(--piece-outline);
+  width: 8px;
+  height: 8px;
 }
 
 .building-hotel {
-  width: 14px;
-  height: 7px;
-  border-radius: 1px;
-  background: var(--building-hotel);
-  box-shadow: 0 0 0 1px var(--piece-outline);
+  width: 15px;
+  height: 8px;
 
+  // Transposed, not rotated: the drawing itself differs per axis, so this only
+  // has to give it the right box to sit in.
   .side-left &,
   .side-right & {
-    width: 7px;
-    height: 14px;
+    width: 8px;
+    height: 15px;
   }
 }
 
 @include m.below(t.$breakpoint-tablet) {
   .building-house {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
   }
 
   .building-hotel {
-    width: 10px;
+    width: 9px;
     height: 5px;
 
     .side-left &,
     .side-right & {
       width: 5px;
-      height: 10px;
+      height: 9px;
     }
+  }
+
+  // A 1.7-unit window inside a 5px piece is under one device pixel, and reads
+  // as grey mush rather than as windows.
+  .building-hotel-windows {
+    display: none;
   }
 }

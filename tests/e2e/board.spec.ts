@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { CORNERS, startGame } from './helpers';
+import { CORNERS, findRoundedElements, startGame } from './helpers';
 
 test('shows a title deed with the street colour band and rent schedule', async ({
   page,
@@ -328,23 +328,9 @@ test('orders and rotates the icon to match the text', async ({ page }) => {
 test('renders every surface with square corners', async ({ page }) => {
   await startGame(page);
 
-  const rounded = await page.evaluate(() => {
-    // Physical game pieces are the documented exception: a pawn, a die, and its
-    // pips are real objects, not UI surfaces. Nothing else may be round.
-    const physicalPieces = ['token-chip', 'die-face', 'pip'];
-    return Array.from(document.querySelectorAll('body *'))
-      .filter(
-        (element) => !physicalPieces.some((name) => element.classList.contains(name))
-      )
-      .filter((element) => {
-        const radius = getComputedStyle(element).borderRadius;
-        return radius !== '' && radius !== '0px';
-      })
-      .map((element) => `${element.tagName.toLowerCase()}.${element.className}`)
-      .slice(0, 10);
-  });
-
-  expect(rounded).toEqual([]);
+  // Shared with buildings.spec.ts, which runs the same scan on a board that has
+  // pieces on it - this one cannot, because a fresh game has none.
+  expect(await findRoundedElements(page)).toEqual([]);
 });
 
 // The exclusion above only proves the pieces are allowed to be round. This

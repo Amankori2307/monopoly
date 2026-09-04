@@ -32,9 +32,10 @@ $theme-contract: surface-app surface-panel surface-board surface-input surface-m
   board-space-hover ribbon-bg ribbon-border ribbon-outline ribbon-text ribbon-drop
   deck-community-bg deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text
   decision-bg decision-border badge-bg token-bg danger-bg error-text action-build
-  action-sell action-mortgage action-redeem action-text building-house building-hotel
-  piece-outline button-primary button-primary-hover button-primary-text button-secondary
-  button-secondary-hover button-secondary-text;
+  action-sell action-mortgage action-redeem action-text building-house building-house-roof
+  building-hotel building-hotel-roof building-window piece-outline button-primary
+  button-primary-hover button-primary-text button-secondary button-secondary-hover
+  button-secondary-text;
 
 $themes: (
   // -- India Edition: the shipped look. -------------------------------------
@@ -97,7 +98,10 @@ $themes: (
       action-redeem: #2547a8,
       action-text: #fffaf0,
       building-house: #1f7a3d,
+      building-house-roof: #15592c,
       building-hotel: #c8382c,
+      building-hotel-roof: #98261d,
+      building-window: #f4eed8,
       piece-outline: rgba(23, 29, 20, 0.45),
       button-primary: #2547a8,
       button-primary-hover: #1c3782,
@@ -178,7 +182,10 @@ $themes: (
       action-redeem: #4a6fd4,
       action-text: #f4f7fb,
       building-house: #2e9257,
+      building-house-roof: #1f6b3e,
       building-hotel: #d4483c,
+      building-hotel-roof: #a3332a,
+      building-window: #f0d9a8,
       piece-outline: rgba(0, 0, 0, 0.6),
       button-primary: #4a6fd4,
       button-primary-hover: #5c81e6,

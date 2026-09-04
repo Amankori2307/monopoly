@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
 import { HOTEL_BUILD_LEVEL } from '../../../domain/constants/game.constants';
-import { SpaceKind } from '../../../domain/types/game.enums';
+import { BoardSide, SpaceKind } from '../../../domain/types/game.enums';
+import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import type { BoardSpace, StreetSpace } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { BoardSpaceCell } from './BoardSpaceCell';
@@ -127,6 +128,50 @@ describe('BoardSpaceCell', () => {
       renderCell(street);
 
       expect(pips()).not.toBeInTheDocument();
+    });
+
+    // Drawn, not styled. A CSS box cannot carry a pitched roof, and a clip-path
+    // silhouette loses the outline that keeps a green house legible on a green
+    // ribbon - so a regression to boxes is worth failing on.
+    it('draws the pieces rather than styling boxes', () => {
+      renderCell(street, mark({ buildLevel: 2 }));
+
+      const houses = Array.from(pips()?.querySelectorAll('.building-house') ?? []);
+      expect(houses).toHaveLength(2);
+      houses.forEach((house) => expect(house.tagName.toLowerCase()).toBe('svg'));
+    });
+
+    // The hotel is a second drawing per axis, never a rotation: a rotation
+    // happens after layout and would lay the roof on its side.
+    it('turns the hotel to face the ribbon it stands on', () => {
+      const bottomRow = indiaEditionBoard.find(
+        (space): space is StreetSpace =>
+          space.kind === SpaceKind.Street &&
+          getBoardSide(space.index) === BoardSide.Bottom
+      ) as StreetSpace;
+      const leftColumn = indiaEditionBoard.find(
+        (space): space is StreetSpace =>
+          space.kind === SpaceKind.Street && getBoardSide(space.index) === BoardSide.Left
+      ) as StreetSpace;
+
+      const hotelOn = (space: StreetSpace) => {
+        const view = render(
+          <BoardSpaceCell
+            isOccupied={false}
+            onSelect={vi.fn()}
+            ownerMark={mark({ buildLevel: HOTEL_BUILD_LEVEL })}
+            space={space}
+          />
+        );
+        const hotel = view.container.querySelector('.building-hotel');
+        const box = hotel?.getAttribute('viewBox');
+        view.unmount();
+        return box;
+      };
+
+      // The ribbon runs across a bottom-row cell and down a left-column one.
+      expect(hotelOn(bottomRow)).toBe('0 0 18 10');
+      expect(hotelOn(leftColumn)).toBe('0 0 10 18');
     });
   });
 });

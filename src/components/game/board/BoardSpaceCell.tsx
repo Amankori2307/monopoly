@@ -8,6 +8,7 @@ import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.util
 import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { MortgageStamp } from '../deed/MortgageStamp';
+import { HotelPiece, HousePiece } from './BuildingPiece';
 import { getCornerIcon, getSpaceIcon } from '../spaceIcons.constants';
 import type { SpaceOwnerMark } from './board.interfaces';
 
@@ -83,10 +84,11 @@ export function BoardSpaceCell({
           className={`space-color group-${space.colorGroup}`}
           data-testid={TEST_IDS.spaceColorBar}
         >
-          {/* Buildings ride the colour ribbon, as on a printed board: up to
-              four house pips, or one wider mark for a hotel. */}
+          {/* Buildings stand on the colour ribbon, as on a printed board: up to
+              four houses, or one hotel. */}
           <BuildingPips
             buildLevel={ownerMark?.buildLevel ?? 0}
+            isVerticalRibbon={!isPortraitSide(side)}
             spaceIndex={space.index}
           />
         </div>
@@ -137,15 +139,21 @@ export function BoardSpaceCell({
 interface BuildingPipsProps {
   buildLevel: number;
   spaceIndex: number;
+  /** The ribbon's axis, which decides the hotel's drawing. See HotelPiece. */
+  isVerticalRibbon: boolean;
 }
 
 /**
- * Houses and hotels, drawn on the colour ribbon.
+ * Houses and hotels, standing on the colour ribbon.
  *
- * A hotel is one wider mark rather than five pips - it is not "five houses",
+ * A hotel is one wider piece rather than five houses - it is not "five houses",
  * and the difference has to read at a glance across a 40-space board.
+ *
+ * The run direction comes from the stylesheet, which already lays the pieces out
+ * along whichever axis the ribbon runs. Only the hotel's own drawing depends on
+ * the side, and it cannot be a rotation, so it is chosen here.
  */
-function BuildingPips({ buildLevel, spaceIndex }: BuildingPipsProps) {
+function BuildingPips({ buildLevel, isVerticalRibbon, spaceIndex }: BuildingPipsProps) {
   if (buildLevel === 0) {
     return null;
   }
@@ -158,9 +166,13 @@ function BuildingPips({ buildLevel, spaceIndex }: BuildingPipsProps) {
       className={`space-buildings ${isHotel ? 'has-hotel' : ''}`}
       data-testid={scopedTestId(TEST_IDS.spaceBuildings, spaceIndex)}
     >
-      {Array.from({ length: isHotel ? 1 : buildLevel }, (_, index) => (
-        <span className={isHotel ? 'building-hotel' : 'building-house'} key={index} />
-      ))}
+      {isHotel ? (
+        <HotelPiece className="building-hotel" portrait={isVerticalRibbon} />
+      ) : (
+        Array.from({ length: buildLevel }, (_, index) => (
+          <HousePiece className="building-house" key={index} />
+        ))
+      )}
     </span>
   );
 }

@@ -67,6 +67,25 @@ Composition:
 
 ## Board and card details
 
+### Houses and hotels
+
+Drawn by [BuildingPiece](../../src/components/game/board/BuildingPiece.tsx) and placed by
+`BuildingPips` inside `BoardSpaceCell`: up to four gabled houses along the site's colour ribbon, or
+one hotel with lit windows. They are **inline SVG** — a CSS box cannot carry a pitched roof, and a
+`clip-path` silhouette loses the outline that keeps a green house legible on a green ribbon. Drawing
+also keeps them clear of the sharp-corner system, since an SVG's own geometry is not a
+`border-radius`.
+
+The **run direction is CSS** (the ribbon's axis, already in the stylesheet) but the **hotel's drawing
+is chosen in JS**, one geometry per axis. A CSS rotation happens after layout and would lay the roof
+on its side — the same reason `MortgageStamp` picks its box per variant. Houses are never rotated at
+all: a rotated word still reads, a rotated house reads as a broken shape. The windows come off below
+the tablet breakpoint, where they are under a device pixel.
+
+The **owner dot hugs the cell's outer edge**, opposite the ribbon, per side — it used to sit
+top-right on every side, which on the bottom row is where the ribbon is, so it covered the pieces
+standing on it.
+
 ### Player tokens
 
 Drawn by [BoardTokenLayer](../../src/components/game/board/BoardTokenLayer.tsx), an overlay above
@@ -184,11 +203,13 @@ local state: the selected space id for the title-deed modal.
 
 ## Tests
 
-| Level | File                                                                             | Covers                                                                     |
-| ----- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)    | Index → grid cell: corners, uniqueness, edges, wrapping.                   |
-| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts) | The view models every panel receives.                                      |
-| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                 | Three-column ordering; corner geometry; rail actions present and disabled. |
+| Level | File                                                                               | Covers                                                                        |
+| ----- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)      | Index → grid cell: corners, uniqueness, edges, wrapping.                      |
+| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts)   | The view models every panel receives.                                         |
+| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                   | Three-column ordering; corner geometry; rail actions present and disabled.    |
+| Unit  | [BoardSpaceCell.test.tsx](../../src/components/game/board/BoardSpaceCell.test.tsx) | The pieces are SVG, not boxes, and the hotel faces its ribbon's axis.         |
+| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                             | Pieces stand on the ribbon and fit along it; sharp corners with buildings up. |
 
 ## Known gaps
 

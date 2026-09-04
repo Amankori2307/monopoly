@@ -191,7 +191,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | File                                                                                  | What it does                                                                           |
 | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)                     | The 11x11 board: centre plus all 40 space cells.                                       |
-| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx)           | One square: colour bar (streets only), icon, name, player tokens.                      |
+| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx)           | One square: colour bar (streets only), icon, name, owner dot, buildings.               |
+| [board/BuildingPiece.tsx](../src/components/game/board/BuildingPiece.tsx)             | The house and hotel, drawn - a box cannot have a roof and a clip loses the outline.    |
 | [board/BoardSpaceCell.test.tsx](../src/components/game/board/BoardSpaceCell.test.tsx) | Accessible names, the owner dot, and the building pips.                                |
 | [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)                 | Decorative centre: deck markers and logo ribbon.                                       |
 | [board/BoardTokenLayer.tsx](../src/components/game/board/BoardTokenLayer.tsx)         | Player tokens drawn over the board, placed by grid cell so they cannot resize a space. |

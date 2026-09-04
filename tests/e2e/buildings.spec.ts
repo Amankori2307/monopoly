@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { HOTEL_BUILD_LEVEL } from '../../src/domain/constants/game.constants';
 import { PropertyAction } from '../../src/domain/types/game.enums';
 import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { startGame } from './helpers';
+import { findRoundedElements, startGame } from './helpers';
 
 /**
  * Building is what finally reaches the rent tiers the deed has always printed.
@@ -282,4 +282,73 @@ test('auctions the last house when two players could use it', async ({ page }) =
   expect(Object.values(after.ownership).some((entry) => entry.buildLevel === 1)).toBe(
     true
   );
+});
+
+/**
+ * The pieces are drawn objects, and they have to stand on the ribbon they belong
+ * to rather than beside it.
+ *
+ * Four houses along one ribbon is the tightest fit on the board, and it is why
+ * the ribbon was deliberately not thickened to make more room: the width it
+ * would take comes off the axis the space-name clipping test measures, and a
+ * cramped house is cosmetic where a clipped name is a failure.
+ */
+test('stands real houses on the colour ribbon', async ({ page }) => {
+  await startGame(page);
+  const seeded = await seedCompleteSet(page, [4, 4]);
+
+  const fit = await page.evaluate((spaceIndex) => {
+    const cell = document.querySelector(`[data-testid="board-space-${spaceIndex}"]`);
+    const ribbon = cell?.querySelector('.space-color');
+    const pieces = Array.from(cell?.querySelectorAll('.building-house') ?? []);
+    if (!ribbon || pieces.length === 0) {
+      return null;
+    }
+    const r = ribbon.getBoundingClientRect();
+    const boxes = pieces.map((piece) => piece.getBoundingClientRect());
+    const horizontal = r.width > r.height;
+
+    return {
+      count: pieces.length,
+      allSvg: pieces.every((piece) => piece.tagName.toLowerCase() === 'svg'),
+      // Half a pixel of tolerance: sub-pixel layout, not overhang.
+      inside: boxes.every(
+        (b) =>
+          b.left >= r.left - 0.5 &&
+          b.right <= r.right + 0.5 &&
+          b.top >= r.top - 0.5 &&
+          b.bottom <= r.bottom + 0.5
+      ),
+      // The whole run has to fit along the ribbon, not just each piece alone.
+      extent: horizontal
+        ? Math.max(...boxes.map((b) => b.right)) - Math.min(...boxes.map((b) => b.left))
+        : Math.max(...boxes.map((b) => b.bottom)) - Math.min(...boxes.map((b) => b.top)),
+      ribbonLength: horizontal ? r.width : r.height,
+    };
+  }, seeded.indices[0]);
+
+  expect(fit).not.toBeNull();
+  expect(fit?.count).toBe(4);
+  expect(fit?.allSvg, 'the pieces regressed to styled boxes').toBe(true);
+  expect(fit?.inside, 'a house is hanging off its ribbon').toBe(true);
+  expect(fit?.extent).toBeLessThanOrEqual(fit?.ribbonLength ?? 0);
+});
+
+/**
+ * The whole-DOM sharp-corner scan, run on a board that has pieces on it.
+ *
+ * board.spec.ts runs the same scan, but a fresh game leaves every buildLevel at
+ * 0, so the pieces were never in the DOM to be measured - the guarantee was
+ * silently vacuous for them, and a `border-radius: 1px` sat on the house for as
+ * long as the rule had existed.
+ */
+test('keeps square corners with buildings on the board', async ({ page }) => {
+  await startGame(page);
+  const seeded = await seedCompleteSet(page, [4, HOTEL_BUILD_LEVEL]);
+
+  await expect(
+    page.getByTestId(scopedTestId(TEST_IDS.spaceBuildings, seeded.indices[1]))
+  ).toBeVisible();
+
+  expect(await findRoundedElements(page)).toEqual([]);
 });
