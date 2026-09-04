@@ -12,6 +12,11 @@
 // ---------------------------------------------------------------------------
 @each $group in t.$color-groups {
   .group-#{$group} {
-    background: var(--group-#{$group});
+    // background-color, not the `background` shorthand: the shorthand resets
+    // background-image too, so a component painting a sheen or a texture on the
+    // same element had it silently wiped by a utility that only meant to set a
+    // colour - and utilities win here by design, so it would have been the
+    // component that looked wrong.
+    background-color: var(--group-#{$group});
   }
 }

@@ -60,7 +60,7 @@
   border: 3px solid var(--ribbon-border);
   outline: 2px solid var(--ribbon-outline);
   background: var(--ribbon-bg);
-  box-shadow: 0 5px 0 rgba(76, 31, 27, 0.38);
+  box-shadow: 0 5px 0 var(--ribbon-drop);
   color: var(--ribbon-text);
   line-height: 0.9;
   text-align: center;
@@ -86,9 +86,9 @@
   width: clamp(38px, 7.4vw, 86px);
   aspect-ratio: 1;
   padding: 7px;
-  border: 2px dotted rgba(36, 64, 43, 0.75);
-  box-shadow: 3px 3px 0 rgba(38, 73, 44, 0.18);
-  color: #1b3929;
+  border: 2px dotted var(--deck-marker-border);
+  box-shadow: 3px 3px 0 var(--deck-marker-shadow);
+  color: var(--deck-marker-text);
   font-size: clamp(0.38rem, 0.74vw, 0.67rem);
   line-height: 1.05;
   text-align: center;
@@ -525,7 +525,7 @@
   // Physical pieces are rounded; these are pieces, not UI, so they carry the
   // same treatment as the tokens and dice.
   background: var(--building-house);
-  box-shadow: 0 0 0 1px rgba(23, 29, 20, 0.45);
+  box-shadow: 0 0 0 1px var(--piece-outline);
 }
 
 .building-hotel {
@@ -533,7 +533,7 @@
   height: 7px;
   border-radius: 1px;
   background: var(--building-hotel);
-  box-shadow: 0 0 0 1px rgba(23, 29, 20, 0.45);
+  box-shadow: 0 0 0 1px var(--piece-outline);
 
   .side-left &,
   .side-right & {

@@ -1,4 +1,6 @@
+@use 'sass:list';
 @use 'sass:map';
+@use 'sass:string';
 @use '../abstracts/tokens' as t;
 
 // ---------------------------------------------------------------------------
@@ -19,15 +21,20 @@
 // ---------------------------------------------------------------------------
 
 // Every key a theme must define. Used to fail the build on an incomplete theme.
+//
+// board-active-outline was removed rather than left unused: it named an accent
+// ring on hover/occupancy that the design dropped, and board.spec.ts now
+// actively forbids reintroducing one. A token nothing reads is a trap.
 $theme-contract: surface-app surface-panel surface-board surface-input surface-muted
   surface-raised text-primary text-body text-muted text-inverse text-eyebrow accent
   accent-hover accent-strong accent-soft accent-contrast border-subtle border-input
   border-space border-dashed focus-ring shadow-panel shadow-board board-space-bg
-  board-space-hover board-active-outline ribbon-bg ribbon-border ribbon-outline
-  ribbon-text deck-community-bg deck-chance-bg decision-bg decision-border badge-bg
-  token-bg danger-bg error-text action-build action-sell action-mortgage action-redeem
-  action-text building-house building-hotel button-primary button-primary-hover
-  button-primary-text button-secondary button-secondary-hover button-secondary-text;
+  board-space-hover ribbon-bg ribbon-border ribbon-outline ribbon-text ribbon-drop
+  deck-community-bg deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text
+  decision-bg decision-border badge-bg token-bg danger-bg error-text action-build
+  action-sell action-mortgage action-redeem action-text building-house building-hotel
+  piece-outline button-primary button-primary-hover button-primary-text button-secondary
+  button-secondary-hover button-secondary-text;
 
 $themes: (
   // -- India Edition: the shipped look. -------------------------------------
@@ -64,15 +71,17 @@ $themes: (
       ),
       board-space-bg: #fff,
       board-space-hover: #fffdf6,
-      board-active-outline: #d53f32,
 
       ribbon-bg: #c9362f,
       ribbon-border: #fff7d9,
       ribbon-outline: #a22d28,
       ribbon-text: #fff9e6,
-
+      ribbon-drop: rgba(76, 31, 27, 0.38),
       deck-community-bg: #77d7e5,
       deck-chance-bg: #ff9b2f,
+      deck-marker-border: rgba(36, 64, 43, 0.75),
+      deck-marker-shadow: rgba(38, 73, 44, 0.18),
+      deck-marker-text: #1b3929,
 
       decision-bg: #fff2dc,
       decision-border: #ca4334,
@@ -89,7 +98,7 @@ $themes: (
       action-text: #fffaf0,
       building-house: #1f7a3d,
       building-hotel: #c8382c,
-
+      piece-outline: rgba(23, 29, 20, 0.45),
       button-primary: #2547a8,
       button-primary-hover: #1c3782,
       button-primary-text: #ffffff,
@@ -143,15 +152,17 @@ $themes: (
       ),
       board-space-bg: #1b2027,
       board-space-hover: #232b34,
-      board-active-outline: #f0685b,
 
       ribbon-bg: #b8362d,
       ribbon-border: #2a323c,
       ribbon-outline: #7d221c,
       ribbon-text: #ffeede,
-
+      ribbon-drop: rgba(0, 0, 0, 0.55),
       deck-community-bg: #2f7f8d,
       deck-chance-bg: #b8701f,
+      deck-marker-border: rgba(226, 233, 243, 0.32),
+      deck-marker-shadow: rgba(0, 0, 0, 0.5),
+      deck-marker-text: #0e1116,
 
       decision-bg: #262019,
       decision-border: #e2574a,
@@ -168,7 +179,7 @@ $themes: (
       action-text: #f4f7fb,
       building-house: #2e9257,
       building-hotel: #d4483c,
-
+      piece-outline: rgba(0, 0, 0, 0.6),
       button-primary: #4a6fd4,
       button-primary-hover: #5c81e6,
       button-primary-text: #0e1116,
@@ -206,6 +217,17 @@ $default-theme: 'india-edition';
   @each $group in t.$color-groups {
     @if not map.has-key($tokens, 'group-#{$group}') {
       @error 'Theme "#{$theme-name}" is missing colour group token "group-#{$group}".';
+    }
+  }
+
+  // And the inverse: a key no component reads is emitted on every theme
+  // forever and nothing ever notices. board-active-outline lived that way
+  // through a whole redesign - the check above only ever asked whether the
+  // contract was covered, never whether a theme had grown a key past it.
+  @each $token, $value in $tokens {
+    $is-group: string.index('#{$token}', 'group-') == 1;
+    @if not $is-group and not list.index($theme-contract, $token) {
+      @error 'Theme "#{$theme-name}" defines "#{$token}", which is not in $theme-contract. Add it to the contract (and to every other theme), or delete it.';
     }
   }
 }
