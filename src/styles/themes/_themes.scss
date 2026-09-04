@@ -42,7 +42,7 @@ $themes: (
   'india-edition': (
       surface-app: #f1f3f5,
       surface-panel: #fff,
-      surface-board: #fff,
+      surface-board: #f4f0e2,
       surface-input: #fffef9,
       surface-muted: #f4eed8,
       surface-raised: #fffef8,
@@ -61,7 +61,7 @@ $themes: (
 
       border-subtle: rgba(37, 42, 31, 0.18),
       border-input: #cfc5a4,
-      border-space: rgba(42, 51, 41, 0.42),
+      border-space: rgba(28, 34, 26, 0.55),
       border-dashed: #d0c7a6,
 
       focus-ring: #3150b6,
@@ -70,8 +70,8 @@ $themes: (
         0 24px 52px rgba(25, 31, 24, 0.24),
         0 4px 12px rgba(25, 31, 24, 0.12),
       ),
-      board-space-bg: #fff,
-      board-space-hover: #fffdf6,
+      board-space-bg: #fdfaf1,
+      board-space-hover: #fff6e2,
       board-icon-ink: #4a5142,
       jail-cell-bg: #f6ecd4,
       jail-bars: #3a3128,
@@ -114,14 +114,14 @@ $themes: (
       button-secondary-hover: #ded9c8,
       button-secondary-text: #23281f,
 
-      group-brown: #8d5a2b,
-      group-light-blue: #8fd3ff,
-      group-pink: #ef6fb0,
-      group-orange: #f08c2e,
-      group-red: #d13232,
-      group-yellow: #e7c947,
-      group-green: #2a9d5b,
-      group-dark-blue: #3150b6,
+      group-brown: #7b4a2a,
+      group-light-blue: #a3d7ea,
+      group-pink: #d2609b,
+      group-orange: #e8801f,
+      group-red: #cc2f2a,
+      group-yellow: #edc531,
+      group-green: #1f8a4d,
+      group-dark-blue: #2c46a8,
     ),
 
   // -- Midnight: proves the engine works end to end. -------------------------

@@ -166,6 +166,25 @@ export const advanceGame = async (
 };
 
 /**
+ * A theme token's value, as the browser will have computed it.
+ *
+ * Assertions compare against this rather than against a literal `rgb(...)`. The
+ * intent is almost always "this element carries that token", and a literal
+ * cannot tell the difference between a palette change and the element quietly
+ * stopping to track its token - it fails on the first and passes the second.
+ */
+export const tokenColor = async (page: Page, token: string): Promise<string> => {
+  const hex = await page.evaluate(
+    (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim(),
+    token
+  );
+  const value = hex.replace('#', '');
+  const full = value.length === 3 ? value.replace(/./g, (c) => c + c) : value;
+  const int = parseInt(full, 16);
+  return `rgb(${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255})`;
+};
+
+/**
  * Every element whose corners are not square, ignoring the physical pieces.
  *
  * The design system is deliberately sharp, and the guarantee is whole-DOM: any

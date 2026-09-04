@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { advanceGame, startGame } from './helpers';
+import { advanceGame, startGame, tokenColor } from './helpers';
 
 // The main screen stays to the board, players, and turn controls. Holdings and
 // the activity log moved behind overlays so nothing competes with the board.
@@ -182,22 +182,8 @@ test('uses themed primary and secondary buttons, side by side at the bottom', as
     buy.evaluate((el) => getComputedStyle(el).backgroundColor),
     decline.evaluate((el) => getComputedStyle(el).backgroundColor),
   ]);
-  const [primary, secondary] = await page.evaluate(() => {
-    const style = getComputedStyle(document.documentElement);
-    return [
-      style.getPropertyValue('--button-primary').trim(),
-      style.getPropertyValue('--button-secondary').trim(),
-    ];
-  });
-
-  const toRgb = (hex: string) => {
-    const value = hex.replace('#', '');
-    const full = value.length === 3 ? value.replace(/./g, (c) => c + c) : value;
-    const int = parseInt(full, 16);
-    return `rgb(${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255})`;
-  };
-  expect(buyBg).toBe(toRgb(primary));
-  expect(declineBg).toBe(toRgb(secondary));
+  expect(buyBg).toBe(await tokenColor(page, '--button-primary'));
+  expect(declineBg).toBe(await tokenColor(page, '--button-secondary'));
 
   // Side by side, not stacked, and pinned to the bottom of their column.
   const [buyBox, declineBox, choiceBox] = await Promise.all([

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { JAIL_BAND_FRACTION } from '../../src/domain/board/boardLayout.utils';
 import { JAIL_POSITION } from '../../src/domain/constants/game.constants';
 import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { CORNERS, findRoundedElements, startGame } from './helpers';
+import { CORNERS, findRoundedElements, startGame, tokenColor } from './helpers';
 
 test('shows a title deed with the street colour band and rent schedule', async ({
   page,
@@ -18,7 +18,13 @@ test('shows a title deed with the street colour band and rent schedule', async (
 
   const band = page.getByTestId(TEST_IDS.deedBand);
   await expect(band).toHaveClass(/group-dark-blue/);
-  await expect(band).toHaveCSS('background-color', 'rgb(49, 80, 182)');
+  // Against the token, not a literal: what matters is that the band carries the
+  // street's colour rather than the panel's, and a pinned rgb() cannot tell a
+  // palette change from the band quietly ceasing to track its group.
+  await expect(band).toHaveCSS(
+    'background-color',
+    await tokenColor(page, '--group-dark-blue')
+  );
 });
 
 // Corner spaces render one fewer child than street spaces (no colour bar). A row
