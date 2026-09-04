@@ -17,7 +17,7 @@ import type { CreateGameInput } from '../../domain/types/game.interfaces';
 import { StorageWriteError } from '../persistence/persistence.errors';
 import { loadGame, saveGame } from '../persistence/persistence';
 import { SOUND_PREFERENCE_KEY } from './soundPreference.utils';
-import { setSoundEnabled } from './uiSlice';
+import { releaseFeedback, setSoundEnabled } from './uiSlice';
 import {
   bootstrapRecentGames,
   createNewGame,
@@ -166,9 +166,44 @@ describe('runGameCommand', () => {
 
     store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
 
-    const { toasts } = store.getState().ui;
+    const { toasts } = store.getState().ui.pendingFeedback;
     expect(toasts.length).toBeGreaterThan(0);
     // Same text as the history, by construction.
+    const history = store.getState().game.activeGame?.history ?? [];
+    expect(history.map((event) => event.message)).toContain(toasts[0].message);
+  });
+
+  /**
+   * The thunk queues; it does not show.
+   *
+   * A roll resolves the whole turn in one synchronous step, so at the instant
+   * it returns the token has not walked anywhere - putting "paid ₹250 rent" on
+   * screen here announced the outcome before the move that caused it. Only the
+   * screen knows whether a token is still walking, so only the screen decides
+   * when the queue drains (`useFeedbackGate`).
+   */
+  it('shows none of it yet, because the token has not moved on screen', () => {
+    const store = makeStore();
+    store.dispatch(createNewGame(input()));
+
+    store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+
+    expect(store.getState().ui.pendingFeedback.toasts.length).toBeGreaterThan(0);
+    expect(store.getState().ui.toasts).toEqual([]);
+    expect(store.getState().ui.soundCue).toBeNull();
+  });
+
+  // What the gate does when the walk settles, without a screen to run it.
+  it('puts the queue on screen when the board has caught up', () => {
+    const store = makeStore();
+    store.dispatch(createNewGame(input()));
+
+    store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+    store.dispatch(releaseFeedback());
+
+    const { toasts, pendingFeedback } = store.getState().ui;
+    expect(toasts.length).toBeGreaterThan(0);
+    expect(pendingFeedback).toEqual({ toasts: [], cue: null });
     const history = store.getState().game.activeGame?.history ?? [];
     expect(history.map((event) => event.message)).toContain(toasts[0].message);
   });
@@ -523,8 +558,21 @@ describe('the sound cue a command leaves behind', () => {
     landOnUnowned(store);
 
     store.dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset }));
+    store.dispatch(releaseFeedback());
 
     expect(store.getState().ui.soundCue?.cue).toBe(GameEventCue.Bought);
+  });
+
+  // Held with its toast, not ahead of it: the sound must not announce a space
+  // the token is still walking towards.
+  it('waits in the queue rather than sounding straight away', () => {
+    const store = makeStore();
+    landOnUnowned(store);
+
+    store.dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset }));
+
+    expect(store.getState().ui.soundCue).toBeNull();
+    expect(store.getState().ui.pendingFeedback.cue?.cue).toBe(GameEventCue.Bought);
   });
 
   it('leaves the cue alone on a command that logs nothing worth hearing', () => {
@@ -535,6 +583,7 @@ describe('the sound cue a command leaves behind', () => {
     );
 
     store.dispatch(runGameCommand({ type: GameCommandType.EndTurn }));
+    store.dispatch(releaseFeedback());
 
     expect(store.getState().ui.soundCue).toBeNull();
   });
@@ -545,6 +594,7 @@ describe('the sound cue a command leaves behind', () => {
     landOnUnowned(store);
 
     store.dispatch(runGameCommand({ type: GameCommandType.BuyLandedAsset }));
+    store.dispatch(releaseFeedback());
 
     expect(store.getState().ui.toasts.length).toBeGreaterThan(0);
     expect(store.getState().ui.soundCue).not.toBeNull();
@@ -563,6 +613,9 @@ describe('the sound cue a command leaves behind', () => {
     expect(makeStore().getState().ui.soundEnabled).toBe(false);
   });
 
+  // The mute has to reach the queue, not just the sound slot: a cue waiting on
+  // a walk would otherwise fire the moment the token arrived, after the player
+  // had already switched the sound off.
   it('clears a queued cue when sound is switched off', () => {
     const store = makeStore();
     landOnUnowned(store);
@@ -570,6 +623,10 @@ describe('the sound cue a command leaves behind', () => {
 
     store.dispatch(setSoundEnabled(false));
 
+    expect(store.getState().ui.pendingFeedback.cue).toBeNull();
+    store.dispatch(releaseFeedback());
     expect(store.getState().ui.soundCue).toBeNull();
+    // The toast still arrives - muting silences the game, it does not hide it.
+    expect(store.getState().ui.toasts.length).toBeGreaterThan(0);
   });
 });

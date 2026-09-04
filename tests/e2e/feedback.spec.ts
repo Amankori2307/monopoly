@@ -116,16 +116,175 @@ test('never covers the dice or the end-turn button', async ({ page }) => {
   expect(blocked, 'a toast is intercepting clicks on a turn control').toBe(0);
 });
 
+/**
+ * The order of a turn, as the player experiences it: roll, walk, outcome.
+ *
+ * The engine resolves all three in one synchronous step, so the toasts used to
+ * go up the instant the dice committed - "paid ₹250 rent" while the token was
+ * still three spaces short of the site it was paying for. They queue now, and
+ * the queue drains when the walk settles.
+ *
+ * Sampled continuously rather than asserted at two chosen moments: the failure
+ * is a window of a second or two, and checking before and after it would step
+ * straight over the thing that is wrong. `data-moving` on the layout is the
+ * walk, published for exactly this.
+ *
+ * Each turn starts from an empty stack, waiting out the 4.2s a toast lives.
+ * A toast left over from the previous turn is not this turn's outcome arriving
+ * early - counting one would have failed a game that was behaving perfectly.
+ */
+test('never announces the outcome while the token is still walking', async ({ page }) => {
+  test.setTimeout(120_000);
+  await startGame(page);
+
+  await page.evaluate(
+    ([layoutId, toastPrefix]) => {
+      const counters = { moving: 0, violations: 0, toasted: 0 };
+      (window as unknown as { __feedbackOrder: typeof counters }).__feedbackOrder =
+        counters;
+      window.setInterval(() => {
+        const layout = document.querySelector(`[data-testid="${layoutId}"]`);
+        const toast = document.querySelector(`[data-testid^="${toastPrefix}-"]`);
+        if (toast) {
+          counters.toasted += 1;
+        }
+        if (layout?.getAttribute('data-moving') !== 'true') {
+          return;
+        }
+        counters.moving += 1;
+        if (toast) {
+          counters.violations += 1;
+        }
+      }, 16);
+    },
+    [TEST_IDS.gameLayout, TEST_IDS.toast] as const
+  );
+
+  const toasts = page.locator(`[data-testid^="${TEST_IDS.toast}-"]`);
+
+  // Several turns, so the sampler sees walks of every length the dice give it,
+  // and the rents and cards that only appear once the board has been crossed.
+  //
+  // The generous wait is not slack: each row's dismiss timer restarts whenever
+  // the stack changes, so a stack of three takes three times a toast's life to
+  // drain rather than one.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await expect(toasts).toHaveCount(0, { timeout: 15_000 });
+    await advanceGame(page);
+  }
+
+  const counters = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __feedbackOrder: { moving: number; violations: number; toasted: number };
+        }
+      ).__feedbackOrder
+  );
+
+  // Both guards, or "no violations" is vacuously true of a game that never
+  // moved a token or never said anything.
+  expect(counters.moving, 'the sampler never caught a token walking').toBeGreaterThan(0);
+  expect(counters.toasted, 'the sampler never caught a toast at all').toBeGreaterThan(0);
+  expect(counters.violations, 'a toast was on screen while a token was walking').toBe(0);
+});
+
+/**
+ * The toast reports what the decision on screen is about, so the two are up
+ * together - and a wide decision panel reaches under the sidebar where the
+ * stack lives. The stack has to paint above the decision backdrop to stay
+ * readable, which is exactly what let it swallow the click on Decline.
+ *
+ * Rare before, because the toast went up during the walk and the modal only
+ * after it. They arrive in the same frame now and overlap for the toast's whole
+ * life, so this is hit-tested the way the turn controls already are - but
+ * sampled continuously rather than once, because whether they overlap at all
+ * depends on how tall the stack has grown and which panel is up.
+ */
+test('never intercepts a click on the decision it is reporting', async ({ page }) => {
+  test.setTimeout(120_000);
+  await startGame(page);
+
+  await page.evaluate(
+    ([panelId, toastPrefix]) => {
+      const counters = { withDecision: 0, blocked: 0 };
+      (window as unknown as { __decisionClicks: typeof counters }).__decisionClicks =
+        counters;
+      window.setInterval(() => {
+        const panel = document.querySelector(`[data-testid="${panelId}"]`);
+        if (!panel) {
+          return;
+        }
+        counters.withDecision += 1;
+        for (const button of Array.from(panel.querySelectorAll('button'))) {
+          const box = button.getBoundingClientRect();
+          if (button.disabled || box.width === 0) {
+            continue;
+          }
+          // Whatever sits at the button's centre is what a click would hit.
+          const atCentre = document.elementFromPoint(
+            box.left + box.width / 2,
+            box.top + box.height / 2
+          );
+          if (atCentre?.closest(`[data-testid^="${toastPrefix}-"]`)) {
+            counters.blocked += 1;
+          }
+        }
+      }, 16);
+    },
+    [TEST_IDS.decisionPanel, TEST_IDS.toast] as const
+  );
+
+  // Enough turns for buys, auctions and cards, at every height the stack
+  // reaches: one toast clears the buy panel's buttons by nine pixels, two do
+  // not, and the stack holds three.
+  for (let turn = 0; turn < 20; turn += 1) {
+    await advanceGame(page);
+  }
+
+  const counters = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __decisionClicks: { withDecision: number; blocked: number };
+        }
+      ).__decisionClicks
+  );
+
+  // Without this the test would pass on a run that never raised a decision.
+  expect(counters.withDecision, 'no decision was ever on screen').toBeGreaterThan(0);
+  expect(counters.blocked, 'a toast is intercepting clicks on the decision panel').toBe(
+    0
+  );
+});
+
 test('dismisses a toast when it is clicked', async ({ page }) => {
   await startGame(page);
 
-  await page.getByTestId(TEST_IDS.rollButton).click();
   const toast = page.locator(`[data-testid^="${TEST_IDS.toast}-"]`).first();
+
+  // With no decision up: a toast is deliberately display-only while a modal has
+  // the screen, so clicking one there is not the behaviour under test - see the
+  // interception test above. It still dismisses itself on its timer.
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (
+      (await toast.isVisible()) &&
+      !(await page.getByTestId(TEST_IDS.decisionPanel).isVisible())
+    ) {
+      break;
+    }
+    await advanceGame(page);
+  }
+
   await expect(toast).toBeVisible();
+  await expect(page.getByTestId(TEST_IDS.decisionPanel)).toHaveCount(0);
 
-  await toast.click();
+  // Pinned by its own id, not `.first()`: with two toasts up, dismissing the
+  // first leaves `.first()` matching the second and the count never reaches 0.
+  const dismissed = page.getByTestId((await toast.getAttribute('data-testid')) as string);
+  await dismissed.click();
 
-  await expect(toast).toHaveCount(0);
+  await expect(dismissed).toHaveCount(0);
 });
 
 /**

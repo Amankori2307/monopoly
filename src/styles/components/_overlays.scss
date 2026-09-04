@@ -225,6 +225,33 @@
   // Deliberately not display:none when empty - that would drop the auto margin
   // and unpin the dice, which is the common case.
   margin-top: auto;
+  // The toasts are clickable; the box around them is not. It is 380px wide and
+  // paints above the decision backdrop, so as a click target it covered the
+  // decision panel behind it - gaps and all - even between toasts. `.toast`
+  // opts back in below.
+  pointer-events: none;
+}
+
+// Readable over a decision, but never in its way.
+//
+// The stack has to sit above the backdrop (see above), and the backdrop's
+// z-index makes a stacking context - so the modal inside it cannot be raised
+// back over the toasts, and a wide decision panel reaches under the sidebar.
+// A toast then intercepted the click on the very decision it was reporting.
+//
+// This got much likelier when feedback started waiting for the walk: the toast
+// and the modal now arrive in the same frame, so they overlap for the toast's
+// whole life rather than the tail of it.
+//
+// Display-only is the right answer, not a lower z-index. A decision modal is
+// deliberately the only thing the player may act on while it is up, and a toast
+// dismisses itself anyway.
+//
+// On the toast, because the toast is what opts back in above. Switching only
+// the stack off left every toast still catching clicks; switching only the
+// toasts off left the box between them still catching them.
+.page:has(.decision-backdrop) .toast-stack .toast {
+  pointer-events: none;
 }
 
 .toast {

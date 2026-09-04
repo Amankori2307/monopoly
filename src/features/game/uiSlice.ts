@@ -1,7 +1,8 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { MAX_VISIBLE_TOASTS } from './game.constants';
 import type { Toast } from '../../components/game/overlays/overlays.interfaces';
-import type { KeyedBidInput, PendingSoundCue } from './auctionBid.interfaces';
+import type { KeyedBidInput } from './auctionBid.interfaces';
+import type { PendingFeedback, PendingSoundCue } from './feedback.interfaces';
 import { writeSoundPreference } from './soundPreference.utils';
 
 interface UiSliceState {
@@ -17,8 +18,17 @@ interface UiSliceState {
    * between the queued auctions of a bankruptcy.
    */
   auctionBidInput: KeyedBidInput | null;
-  /** Ephemeral action feedback. Never persisted - a reload starts clean. */
+  /** Ephemeral action feedback, on screen now. Never persisted. */
   toasts: Toast[];
+  /**
+   * What the last command had to say, still waiting on the board to catch up.
+   *
+   * A command resolves the whole turn at once, so its toasts and its sound used
+   * to be on screen while the token was still three spaces away - the outcome
+   * announced before the move that caused it. They wait here instead, and
+   * `useFeedbackGate` releases them once every token has arrived.
+   */
+  pendingFeedback: PendingFeedback;
   /**
    * The cue to sound, and an id so the same cue twice in a row sounds twice.
    * Null once nothing is pending.
@@ -28,9 +38,12 @@ interface UiSliceState {
   soundEnabled: boolean;
 }
 
+const noFeedback = (): PendingFeedback => ({ toasts: [], cue: null });
+
 export const uiInitialState: UiSliceState = {
   auctionBidInput: null,
   toasts: [],
+  pendingFeedback: noFeedback(),
   soundCue: null,
   // A pure default. The saved preference is read in makeStore, because a
   // module-level read happens once - so a store built later never saw a change,
@@ -54,21 +67,46 @@ const slice = createSlice({
       // to get wrong, and every caller would otherwise have to remember.
       writeSoundPreference(action.payload);
       if (!action.payload) {
-        // Nothing queued should sound after the switch goes off.
+        // Nothing queued should sound after the switch goes off - including a
+        // cue still waiting on a walk, which would otherwise fire on arrival.
         state.soundCue = null;
+        state.pendingFeedback.cue = null;
       }
     },
-    pushToasts(state, action: PayloadAction<Toast[]>) {
+    /**
+     * Holds what a command had to say until the board has caught up with it.
+     *
+     * Toasts append: a property command taken while another token is still
+     * walking must not push the walker's own feedback out of the queue.
+     *
+     * The cue has one slot and the newest wins - a sound is for the thing you
+     * just did, and there is only one channel to play it on. Within a single
+     * command the pick is already made by priority in `cueForEvents`, so this is
+     * only ever the rarer case of two commands landing before either is shown.
+     */
+    queueFeedback(state, action: PayloadAction<PendingFeedback>) {
+      state.pendingFeedback.toasts.push(...action.payload.toasts);
+      if (action.payload.cue) {
+        state.pendingFeedback.cue = action.payload.cue;
+      }
+    },
+    /** Puts the queue on screen. Called once every token has arrived. */
+    releaseFeedback(state) {
       // Newest last, capped: a single command can append several events, and an
       // unbounded stack would cover the board.
-      const merged = [...state.toasts, ...action.payload];
+      const merged = [...state.toasts, ...state.pendingFeedback.toasts];
       state.toasts = merged.slice(-MAX_VISIBLE_TOASTS);
+      if (state.pendingFeedback.cue) {
+        state.soundCue = state.pendingFeedback.cue;
+      }
+      state.pendingFeedback = noFeedback();
     },
     dismissToast(state, action: PayloadAction<string>) {
       state.toasts = state.toasts.filter((toast) => toast.id !== action.payload);
     },
     clearToasts(state) {
       state.toasts = [];
+      state.pendingFeedback = noFeedback();
     },
   },
 });
@@ -78,7 +116,8 @@ export const {
   setAuctionBidInput,
   setSoundCue,
   setSoundEnabled,
-  pushToasts,
+  queueFeedback,
+  releaseFeedback,
   dismissToast,
   clearToasts,
 } = slice.actions;

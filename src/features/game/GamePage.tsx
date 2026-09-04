@@ -26,6 +26,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { setSoundEnabled } from './uiSlice';
 import { useActiveGame } from './hooks/useActiveGame';
+import { useFeedbackGate } from './hooks/useFeedbackGate';
 import { useGameSounds } from './hooks/useGameSounds';
 import { useGameCommands } from './hooks/useGameCommands';
 import { useGameOverlays } from './hooks/useGameOverlays';
@@ -58,6 +59,8 @@ export function GamePage() {
     players,
     soundEnabled
   );
+  // Roll, then move, then outcome - nothing is said until the token arrives.
+  useFeedbackGate(isMoving);
 
   if (!activeGame) {
     return <GameUnavailable loadError={loadError} />;
@@ -75,7 +78,12 @@ export function GamePage() {
   return (
     <div className="app-shell" data-theme={activeGame.themeId}>
       <div className="page">
-        <div className="game-layout" data-testid={TEST_IDS.gameLayout}>
+        {/* data-moving publishes the walk, so a test can assert nothing slipped out mid-way. */}
+        <div
+          className="game-layout"
+          data-moving={isMoving ? 'true' : 'false'}
+          data-testid={TEST_IDS.gameLayout}
+        >
           <BoardGrid
             board={activeGame.board}
             centerSubtitle={BOARD_CENTER_SUBTITLE}

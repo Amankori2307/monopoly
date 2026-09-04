@@ -18,7 +18,7 @@ import {
 } from '../persistence/persistence';
 import { toToasts } from './toastFeed.utils';
 import { cueForEvents } from './soundCue.utils';
-import { pushToasts, setSoundCue } from './uiSlice';
+import { queueFeedback } from './uiSlice';
 
 interface GameSliceState {
   recentGames: StoredGameIndexEntry[];
@@ -147,12 +147,21 @@ export const runGameCommand =
       // result.events is what this command appended, so the feedback and the
       // game record are the same text by construction - and the sound comes off
       // the same batch, so a cue and its toast are always the same event.
-      dispatch(pushToasts(toToasts(result.events)));
+      //
+      // Queued rather than shown: the engine resolves the whole turn in one
+      // step, so at this instant the token has not walked anywhere yet and the
+      // rent notice would beat the player to the space they are paying for.
+      // `useFeedbackGate` releases the queue once the board has caught up. The
+      // thunk deliberately has no say in the timing - only the screen knows
+      // whether a token is still walking.
       const cue = cueForEvents(result.events);
-      if (cue) {
-        // The event's own id, so two of the same cue in a row sound twice.
-        dispatch(setSoundCue({ id: result.events[0]?.id ?? cue, cue }));
-      }
+      dispatch(
+        queueFeedback({
+          toasts: toToasts(result.events),
+          // The event's own id, so two of the same cue in a row sound twice.
+          cue: cue ? { id: result.events[0]?.id ?? cue, cue } : null,
+        })
+      );
       dispatch(setCommandError(saveFailure));
       dispatch(bootstrapRecentGames());
       return result;

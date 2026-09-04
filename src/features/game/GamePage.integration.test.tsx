@@ -176,6 +176,79 @@ describe('taking a turn from the page', () => {
       timeout: 3000,
     });
   });
+
+  /**
+   * The order the player sees: roll, walk, then what the space did about it.
+   *
+   * The engine resolves all three in one synchronous step, and the toasts used
+   * to go up with it - rent charged for a site the token had not reached yet.
+   * They queue instead, and the gate drains the queue when the walk settles.
+   */
+  it('holds the toast until the token has finished walking', async () => {
+    const game = seedGame();
+    const { store } = renderPage(game.id);
+    await screen.findByTestId(TEST_IDS.boardGrid);
+
+    fireEvent.click(screen.getByTestId(TEST_IDS.rollButton));
+
+    // The command has landed and has something to say...
+    await waitFor(() =>
+      expect(store.getState().ui.pendingFeedback.toasts.length).toBeGreaterThan(0)
+    );
+    // ...and while the walk is on, none of it is on screen.
+    expect(screen.getByTestId(TEST_IDS.gameLayout)).toHaveAttribute(
+      'data-moving',
+      'true'
+    );
+    expect(store.getState().ui.toasts).toEqual([]);
+
+    // Then the walk settles and everything arrives at once.
+    await waitFor(
+      () => {
+        expect(screen.getByTestId(TEST_IDS.gameLayout)).toHaveAttribute(
+          'data-moving',
+          'false'
+        );
+        expect(store.getState().ui.toasts.length).toBeGreaterThan(0);
+        expect(store.getState().ui.pendingFeedback.toasts).toEqual([]);
+      },
+      { timeout: 5000 }
+    );
+  });
+
+  // The invariant the fix is for, sampled the whole way through a turn rather
+  // than at two chosen moments: no toast is ever on screen mid-walk.
+  it('never shows a toast while a token is moving', async () => {
+    const game = seedGame();
+    const { store } = renderPage(game.id);
+    await screen.findByTestId(TEST_IDS.boardGrid);
+
+    const layout = screen.getByTestId(TEST_IDS.gameLayout);
+    let violations = 0;
+    const sample = () => {
+      if (
+        layout.getAttribute('data-moving') === 'true' &&
+        store.getState().ui.toasts.length > 0
+      ) {
+        violations += 1;
+      }
+    };
+
+    fireEvent.click(screen.getByTestId(TEST_IDS.rollButton));
+
+    // Polled by waitFor, which re-runs its callback until it stops throwing -
+    // so the sampling happens on every interval of the walk, not just at its
+    // ends. It settles on the toasts arriving, which is the walk being over.
+    await waitFor(
+      () => {
+        sample();
+        expect(store.getState().ui.toasts.length).toBeGreaterThan(0);
+      },
+      { interval: 10, timeout: 5000 }
+    );
+
+    expect(violations).toBe(0);
+  });
 });
 
 describe('a pending decision', () => {

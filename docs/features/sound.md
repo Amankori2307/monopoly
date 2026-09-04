@@ -22,12 +22,18 @@ the choice.
 engine        every event carries a GameEventCue, set where the thing happened
   ↓
 runGameCommand      cueForEvents(result.events) → the one cue worth hearing
-  ↓                 dispatch(setSoundCue({ id, cue }))
+  ↓                 dispatch(queueFeedback({ toasts, cue }))   ← queued, not played
+  ↓            ...the token walks to its space...
+useFeedbackGate     releaseFeedback() once isMoving clears → ui.soundCue
+  ↓
 useGameSounds       plays SOUND_FOR_CUE[cue], then clears it
 ```
 
 `result.events` is what a single command appended, which the toast feed already uses — so a sound and
-its toast are always the same event, the way a toast and the game record already are.
+its toast are always the same event, the way a toast and the game record already are. They are also
+**released together**: the cue waits out the walk in `ui.pendingFeedback` alongside its toasts, or
+the rent sting would sound while the token was still three spaces away. See
+[action-feedback.md](action-feedback.md).
 
 ## Key decisions
 
@@ -71,7 +77,9 @@ its toast are always the same event, the way a toast and the game record already
 
 `GameEvent.cue` is persisted, which took the save format to version 8; `v7ToV8` maps the three old
 tones onto their cues and drops the field. `ui.soundCue` and `ui.soundEnabled` are ephemeral slice
-state, and the mute is mirrored to `monopoly.sound.v1`.
+state, and the mute is mirrored to `monopoly.sound.v1`. A cue on its way to the screen sits in
+`ui.pendingFeedback.cue` first; switching the sound off clears that slot too, so a cue waiting on a
+walk cannot fire after the player has already muted.
 
 A note on migrations that this change taught: `v4ToV5` writes a **`tone`**, as it always did, because
 a migration reproduces the shape of the version it upgrades _to_ and nothing later. Pointing it at
