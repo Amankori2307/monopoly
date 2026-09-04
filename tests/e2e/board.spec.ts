@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { JAIL_BAND_FRACTION } from '../../src/domain/board/boardLayout.utils';
+import { JAIL_POSITION } from '../../src/domain/constants/game.constants';
 import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { CORNERS, findRoundedElements, startGame } from './helpers';
 
@@ -264,6 +266,50 @@ test('never clips a space name', async ({ page }) => {
   );
 
   expect(clipped).toEqual([]);
+});
+
+/**
+ * The Jail corner's two regions, measured.
+ *
+ * The band is one number - JAIL_BAND_FRACTION - reaching the stylesheet as a
+ * custom property and the token maths as a multiplier. This is what fails if
+ * they ever stop agreeing, which is the obvious way for this feature to rot.
+ */
+test('insets the Jail cell and wraps it in an L-shaped visiting band', async ({
+  page,
+}) => {
+  await startGame(page);
+
+  const geometry = await page.evaluate(
+    ([squareId, cellId]) => {
+      const square = document.querySelector(`[data-testid="${squareId}"]`);
+      const cell = document.querySelector(`[data-testid="${cellId}"]`);
+      if (!square || !cell) {
+        return null;
+      }
+      const s = square.getBoundingClientRect();
+      const c = cell.getBoundingClientRect();
+
+      return {
+        cellSquareness: Math.abs(c.width - c.height),
+        // Jail is bottom-left, so the cell hugs the square's top and right.
+        topAligned: Math.abs(c.top - s.top),
+        rightAligned: Math.abs(c.right - s.right),
+        // ...and is inset from the other two by the band.
+        leftInsetRatio: (c.left - s.left) / s.width,
+        bottomInsetRatio: (s.bottom - c.bottom) / s.height,
+      };
+    },
+    [`${TEST_IDS.boardSpace}-${JAIL_POSITION}`, TEST_IDS.jailCell] as const
+  );
+
+  expect(geometry).not.toBeNull();
+  expect(geometry?.cellSquareness).toBeLessThanOrEqual(1);
+  expect(geometry?.topAligned).toBeLessThanOrEqual(1);
+  expect(geometry?.rightAligned).toBeLessThanOrEqual(1);
+  // Both insets are the band, and the band is the one constant.
+  expect(geometry?.leftInsetRatio).toBeCloseTo(JAIL_BAND_FRACTION, 2);
+  expect(geometry?.bottomInsetRatio).toBeCloseTo(JAIL_BAND_FRACTION, 2);
 });
 
 /**

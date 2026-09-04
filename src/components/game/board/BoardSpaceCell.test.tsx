@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
-import { HOTEL_BUILD_LEVEL } from '../../../domain/constants/game.constants';
+import {
+  HOTEL_BUILD_LEVEL,
+  JAIL_POSITION,
+} from '../../../domain/constants/game.constants';
 import { BoardSide, SpaceKind } from '../../../domain/types/game.enums';
 import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import type { BoardSpace, StreetSpace } from '../../../domain/types/game.interfaces';
@@ -78,6 +81,31 @@ describe('BoardSpaceCell', () => {
     renderCell(corner);
 
     expect(screen.queryByTestId(TEST_IDS.spaceColorBar)).not.toBeInTheDocument();
+  });
+
+  // Jail is the one corner with interior structure. The other three keep the
+  // plain title, so the branch must stay narrow.
+  it('gives the Jail square its cell and visiting band', () => {
+    renderCell(indiaEditionBoard[JAIL_POSITION]);
+
+    expect(screen.getByTestId(TEST_IDS.jailCell)).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.jailVisitingBand)).toBeInTheDocument();
+  });
+
+  it('still names the Jail square in full for a screen reader', () => {
+    const jail = indiaEditionBoard[JAIL_POSITION];
+    renderCell(jail);
+
+    expect(
+      screen.getByRole('button', { name: `View details for ${jail.name}` })
+    ).toBeInTheDocument();
+  });
+
+  it('leaves the other corners on the plain title', () => {
+    renderCell(corner);
+
+    expect(screen.queryByTestId(TEST_IDS.jailCell)).not.toBeInTheDocument();
+    expect(screen.getByText(corner.name)).toBeInTheDocument();
   });
 
   // A mortgaged site collects no rent, so its dot is hollow - the colour is

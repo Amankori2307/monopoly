@@ -1,7 +1,5 @@
-import {
-  getBoardCellCenter,
-  getTokenCrowdOffset,
-} from '../../../domain/board/boardLayout.utils';
+import { getTokenPosition, tokenCrowdKey } from '../../../domain/board/boardLayout.utils';
+import { JAIL_POSITION } from '../../../domain/constants/game.constants';
 import type { PlayerState, ThemeToken } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { TokenPositions } from './board.interfaces';
@@ -21,18 +19,23 @@ interface BoardTokenLayerProps {
  * neighbours and shifted the board.
  */
 export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLayerProps) {
-  const occupants = new Map<number, number>();
+  const occupants = new Map<string, number>();
 
   return (
     <div className="board-token-layer" data-testid={TEST_IDS.boardTokenLayer}>
       {players.map((player) => {
         const space = positions[player.id] ?? player.position;
-        const { leftPercent, topPercent } = getBoardCellCenter(space);
+        // Both halves of the check, deliberately. The walk lags the engine, so
+        // a player already jailed in state but still crossing the board must
+        // not be drawn behind bars before they arrive.
+        const inJail = space === JAIL_POSITION && player.inJail;
 
-        // Cluster tokens that share a space so none is hidden behind another.
-        const crowdIndex = occupants.get(space) ?? 0;
-        occupants.set(space, crowdIndex + 1);
-        const { leftOffset, topOffset } = getTokenCrowdOffset(crowdIndex);
+        // Cluster tokens that share a space so none is hidden behind another -
+        // counted per region, so a jailed player never takes a visitor's slot.
+        const crowdKey = tokenCrowdKey(space, inJail);
+        const crowdIndex = occupants.get(crowdKey) ?? 0;
+        occupants.set(crowdKey, crowdIndex + 1);
+        const { leftPercent, topPercent } = getTokenPosition(space, crowdIndex, inJail);
 
         const token = findToken(player.tokenId);
 
@@ -45,8 +48,8 @@ export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLay
             role="img"
             // Base colour inline; the sphere shading is colour-agnostic CSS.
             style={{
-              left: `${leftPercent + leftOffset}%`,
-              top: `${topPercent + topOffset}%`,
+              left: `${leftPercent}%`,
+              top: `${topPercent}%`,
               backgroundColor: token?.color,
             }}
             title={player.name}

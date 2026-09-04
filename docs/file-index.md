@@ -80,15 +80,15 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Data
 
-| File                                                                       | What it does                                                                         |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)     | The 40 board spaces with prices, rents, and colour groups.                           |
-| [board/board.rules.test.ts](../src/domain/board/board.rules.test.ts)       | The board checked against section 13 of the ruleset doc, read as the fixture.        |
-| [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)     | Maps a board index (0-39) to its cell in the 11x11 CSS grid.                         |
-| [board/tokenMovement.utils.ts](../src/domain/board/tokenMovement.utils.ts) | Board geometry for the walk: steps and the path it passes through, either way round. |
-| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)     | Chance and Community Chest deck contents and effects.                                |
-| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts)   | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS.  |
-| [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)         | Which edge of the board a space sits on; drives which side its colour ribbon hugs.   |
+| File                                                                       | What it does                                                                                  |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [board/indiaEditionBoard.ts](../src/domain/board/indiaEditionBoard.ts)     | The 40 board spaces with prices, rents, and colour groups.                                    |
+| [board/board.rules.test.ts](../src/domain/board/board.rules.test.ts)       | The board checked against section 13 of the ruleset doc, read as the fixture.                 |
+| [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)     | Board index to grid cell, and where a token stands - including the Jail corner's two regions. |
+| [board/tokenMovement.utils.ts](../src/domain/board/tokenMovement.utils.ts) | Board geometry for the walk: steps and the path it passes through, either way round.          |
+| [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)     | Chance and Community Chest deck contents and effects.                                         |
+| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts)   | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS.           |
+| [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)         | Which edge of the board a space sits on; drives which side its colour ribbon hugs.            |
 
 ### Domain tests
 
@@ -192,14 +192,17 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Board
 
-| File                                                                                  | What it does                                                                           |
-| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)                     | The 11x11 board: centre plus all 40 space cells.                                       |
-| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx)           | One square: colour bar (streets only), icon, name, owner dot, buildings.               |
-| [board/BuildingPiece.tsx](../src/components/game/board/BuildingPiece.tsx)             | The house and hotel, drawn - a box cannot have a roof and a clip loses the outline.    |
-| [board/BoardSpaceCell.test.tsx](../src/components/game/board/BoardSpaceCell.test.tsx) | Accessible names, the owner dot, and the building pips.                                |
-| [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)                 | Decorative centre: deck markers and logo ribbon.                                       |
-| [board/BoardTokenLayer.tsx](../src/components/game/board/BoardTokenLayer.tsx)         | Player tokens drawn over the board, placed by grid cell so they cannot resize a space. |
+| File                                                                                    | What it does                                                                           |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [board/BoardGrid.tsx](../src/components/game/board/BoardGrid.tsx)                       | The 11x11 board: centre plus all 40 space cells.                                       |
+| [board/BoardSpaceCell.tsx](../src/components/game/board/BoardSpaceCell.tsx)             | One square: colour bar (streets only), icon, name, owner dot, buildings.               |
+| [board/BuildingPiece.tsx](../src/components/game/board/BuildingPiece.tsx)               | The house and hotel, drawn - a box cannot have a roof and a clip loses the outline.    |
+| [board/JailCorner.tsx](../src/components/game/board/JailCorner.tsx)                     | The barred cell and the Just Visiting band. Hands the stylesheet the band width.       |
+| [board/JailCorner.test.tsx](../src/components/game/board/JailCorner.test.tsx)           | Both labels, the name still contiguous, and the band constant reaching the CSS.        |
+| [board/BoardTokenLayer.test.tsx](../src/components/game/board/BoardTokenLayer.test.tsx) | Jailed vs visiting placement, per-region crowds, and the walk-lag guard.               |
+| [board/BoardSpaceCell.test.tsx](../src/components/game/board/BoardSpaceCell.test.tsx)   | Accessible names, the owner dot, and the building pips.                                |
+| [board/BoardCenter.tsx](../src/components/game/board/BoardCenter.tsx)                   | Decorative centre: deck markers and logo ribbon.                                       |
+| [board/BoardTokenLayer.tsx](../src/components/game/board/BoardTokenLayer.tsx)           | Player tokens drawn over the board, placed by grid cell so they cannot resize a space. |
 
 ### Panels
 

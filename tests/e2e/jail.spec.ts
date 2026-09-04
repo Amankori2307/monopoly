@@ -167,3 +167,85 @@ test('says which attempt the player is on', async ({ page }) => {
   const panel = page.getByTestId(TEST_IDS.decisionModal);
   await expect(panel).toContainText(new RegExp(`of ${MAX_JAIL_TURNS}`));
 });
+
+/**
+ * Being in jail and standing next to it are different things, and the board is
+ * where a player reads which. Until now it showed neither: both landed on the
+ * corner's exact centre, told apart only by the order the players happened to
+ * be iterated in.
+ */
+test('stands a jailed player behind bars and a visitor on the band', async ({ page }) => {
+  await startGame(page);
+
+  await page.evaluate((jail) => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const [jailed, visitor] = game.playerOrder;
+
+    game.players[jailed].inJail = true;
+    game.players[jailed].position = jail;
+    game.players[visitor].inJail = false;
+    game.players[visitor].position = jail;
+    game.activePlayerIndex = 0;
+    game.pendingDecision = { type: 'jail-choice', playerId: jailed };
+    localStorage.setItem(key, JSON.stringify(game));
+  }, JAIL_POSITION);
+
+  await page.reload();
+  await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
+
+  const placement = await page.evaluate(
+    ([cellId, squarePrefix, tokenPrefix]) => {
+      const centreOf = (element: Element | null) => {
+        if (!element) {
+          return null;
+        }
+        const box = element.getBoundingClientRect();
+        return { x: box.left + box.width / 2, y: box.top + box.height / 2, box };
+      };
+      const within = (
+        point: { x: number; y: number },
+        box: { left: number; right: number; top: number; bottom: number }
+      ) =>
+        point.x >= box.left &&
+        point.x <= box.right &&
+        point.y >= box.top &&
+        point.y <= box.bottom;
+
+      const cell = document.querySelector(`[data-testid="${cellId}"]`);
+      const square = document.querySelector(`[data-testid="${squarePrefix}"]`);
+      const tokens = Array.from(
+        document.querySelectorAll(`[data-testid^="${tokenPrefix}"]`)
+      );
+      if (!cell || !square || tokens.length < 2) {
+        return null;
+      }
+
+      const cellBox = cell.getBoundingClientRect();
+      const squareBox = square.getBoundingClientRect();
+      const centres = tokens
+        .map((token) => centreOf(token))
+        .filter((c): c is NonNullable<typeof c> => c !== null);
+
+      return {
+        inCell: centres.filter((c) => within(c, cellBox)).length,
+        inSquare: centres.filter((c) => within(c, squareBox)).length,
+        total: centres.length,
+      };
+    },
+    [
+      TEST_IDS.jailCell,
+      `${TEST_IDS.boardSpace}-${JAIL_POSITION}`,
+      TEST_IDS.spacePlayerToken,
+    ] as const
+  );
+
+  expect(placement).not.toBeNull();
+  expect(placement?.total).toBe(2);
+  // Both are on the Jail square...
+  expect(placement?.inSquare).toBe(2);
+  // ...but only the jailed one is behind the bars.
+  expect(placement?.inCell, 'the two are not in different regions').toBe(1);
+});

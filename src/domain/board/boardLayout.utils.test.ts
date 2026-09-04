@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { BOARD_SIZE, CORNER_POSITIONS, MAX_PLAYERS } from '../constants/game.constants';
+import {
+  BOARD_SIZE,
+  CORNER_POSITIONS,
+  JAIL_POSITION,
+  MAX_PLAYERS,
+} from '../constants/game.constants';
 import {
   BOARD_GRID_SIZE,
   boardIndexToGridPosition,
+  CORNER_CELL_PERCENT,
   getBoardCellCenter,
   getTokenCrowdOffset,
+  getTokenPosition,
+  JAIL_BAND_FRACTION,
+  tokenCrowdKey,
 } from './boardLayout.utils';
 
 describe('boardIndexToGridPosition', () => {
@@ -168,5 +177,139 @@ describe('getTokenCrowdOffset', () => {
   it('clamps an index beyond the maximum player count', () => {
     expect(getTokenCrowdOffset(99)).toEqual(getTokenCrowdOffset(MAX_PLAYERS - 1));
     expect(getTokenCrowdOffset(-3)).toEqual(getTokenCrowdOffset(0));
+  });
+});
+
+/**
+ * The Jail corner: one square, two places to stand.
+ *
+ * Bounds are expressed from the exported constants rather than from measured
+ * numbers, so re-tuning the band width re-tunes the test with it - the whole
+ * point of there being one constant.
+ */
+describe('getTokenPosition at the Jail corner', () => {
+  const centre = getBoardCellCenter(JAIL_POSITION);
+  const half = CORNER_CELL_PERCENT / 2;
+  const band = CORNER_CELL_PERCENT * JAIL_BAND_FRACTION;
+
+  // Jail is the bottom-left corner: x grows towards the board centre, y shrinks.
+  const cell = {
+    left: centre.leftPercent - half + band,
+    right: centre.leftPercent + half,
+    top: centre.topPercent - half,
+    bottom: centre.topPercent + half - band,
+  };
+  const square = {
+    left: centre.leftPercent - half,
+    right: centre.leftPercent + half,
+    top: centre.topPercent - half,
+    bottom: centre.topPercent + half,
+  };
+
+  /** Half a token, in board percent - the widest it gets on a small board. */
+  const TOKEN_HALF = 1.8;
+
+  const inside = (
+    box: { left: number; right: number; top: number; bottom: number },
+    at: { leftPercent: number; topPercent: number },
+    margin = 0
+  ) =>
+    at.leftPercent - margin >= box.left &&
+    at.leftPercent + margin <= box.right &&
+    at.topPercent - margin >= box.top &&
+    at.topPercent + margin <= box.bottom;
+
+  it('leaves every other square exactly as it was', () => {
+    expect(getTokenPosition(0, 0)).toEqual({
+      leftPercent: getBoardCellCenter(0).leftPercent + getTokenCrowdOffset(0).leftOffset,
+      topPercent: getBoardCellCenter(0).topPercent + getTokenCrowdOffset(0).topOffset,
+    });
+    expect(getTokenPosition(25, 3)).toEqual({
+      leftPercent: getBoardCellCenter(25).leftPercent + getTokenCrowdOffset(3).leftOffset,
+      topPercent: getBoardCellCenter(25).topPercent + getTokenCrowdOffset(3).topOffset,
+    });
+  });
+
+  // inJail is meaningless anywhere else, and must not quietly move a token.
+  it('ignores inJail away from the Jail square', () => {
+    [0, 20, 30, 7].forEach((index) => {
+      expect(getTokenPosition(index, 0, true)).toEqual(getTokenPosition(index, 0, false));
+    });
+  });
+
+  it('stands a jailed player inside the cell', () => {
+    expect(inside(cell, getTokenPosition(JAIL_POSITION, 0, true))).toBe(true);
+  });
+
+  it('stands a visitor outside the cell but inside the square', () => {
+    const at = getTokenPosition(JAIL_POSITION, 0, false);
+
+    expect(inside(square, at)).toBe(true);
+    expect(inside(cell, at)).toBe(false);
+  });
+
+  // The whole point of the split: the two must never resolve to one spot.
+  it('never puts a jailed player where a visitor stands', () => {
+    for (let jailed = 0; jailed < MAX_PLAYERS; jailed += 1) {
+      for (let visiting = 0; visiting < MAX_PLAYERS; visiting += 1) {
+        expect(getTokenPosition(JAIL_POSITION, jailed, true)).not.toEqual(
+          getTokenPosition(JAIL_POSITION, visiting, false)
+        );
+      }
+    }
+  });
+
+  it('fits a full table of jailed players in the cell, token width included', () => {
+    const seen = new Set<string>();
+
+    for (let index = 0; index < MAX_PLAYERS; index += 1) {
+      const at = getTokenPosition(JAIL_POSITION, index, true);
+      expect(inside(cell, at, TOKEN_HALF), `token ${index} escaped the cell`).toBe(true);
+      seen.add(`${at.leftPercent},${at.topPercent}`);
+    }
+
+    expect(seen.size).toBe(MAX_PLAYERS);
+  });
+
+  it('fits a full table of visitors on the band, and none of them in the cell', () => {
+    const seen = new Set<string>();
+
+    for (let index = 0; index < MAX_PLAYERS; index += 1) {
+      const at = getTokenPosition(JAIL_POSITION, index, false);
+      expect(inside(square, at, TOKEN_HALF), `visitor ${index} left the square`).toBe(
+        true
+      );
+      expect(inside(cell, at), `visitor ${index} wandered into the cell`).toBe(false);
+      seen.add(`${at.leftPercent},${at.topPercent}`);
+    }
+
+    expect(seen.size).toBe(MAX_PLAYERS);
+  });
+
+  // Parity with getTokenCrowdOffset, which clamps for the same reason.
+  it('clamps a crowd index beyond the table', () => {
+    expect(getTokenPosition(JAIL_POSITION, 99, true)).toEqual(
+      getTokenPosition(JAIL_POSITION, MAX_PLAYERS - 1, true)
+    );
+    expect(getTokenPosition(JAIL_POSITION, 99, false)).toEqual(
+      getTokenPosition(JAIL_POSITION, MAX_PLAYERS - 1, false)
+    );
+  });
+});
+
+/**
+ * Crowds are counted per region, or the first visitor takes the second slot of
+ * a cluster they are not standing in.
+ */
+describe('tokenCrowdKey', () => {
+  it('splits the two halves of the Jail square', () => {
+    expect(tokenCrowdKey(JAIL_POSITION, true)).not.toBe(
+      tokenCrowdKey(JAIL_POSITION, false)
+    );
+  });
+
+  it('splits nothing anywhere else', () => {
+    expect(tokenCrowdKey(7, true)).toBe(tokenCrowdKey(7, false));
+    expect(tokenCrowdKey(0, true)).toBe(tokenCrowdKey(0, false));
   });
 });

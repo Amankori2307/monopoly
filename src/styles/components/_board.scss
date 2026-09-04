@@ -418,6 +418,86 @@
 }
 
 // ---------------------------------------------------------------------------
+// The Jail corner
+//
+// A barred cell inset towards the board centre, and an L-shaped visiting band
+// along the two outer edges. --jail-band-size is set inline from
+// JAIL_BAND_FRACTION, so the band drawn here and the band the token maths
+// stands a piece on cannot drift apart.
+//
+// Jail is the bottom-left corner, so the band runs along the left and bottom
+// edges. The stylesheet has to assume that - it cannot read the grid - while
+// the TS derives its signs from boardIndexToGridPosition. board.rules.test.ts
+// and boardLayout.utils.test.ts both pin index 10 to that cell, so the
+// assumption cannot rot quietly.
+// ---------------------------------------------------------------------------
+.jail-corner {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--jail-visiting-bg);
+}
+
+.jail-cell {
+  position: absolute;
+  inset: 0 0 var(--jail-band-size) var(--jail-band-size);
+  display: grid;
+  // The word sits above the window rather than in the middle of it, as a
+  // printed board has it. Centred, it landed exactly under the first token of
+  // the jailed cluster - which is the centre of the cell - and an 18px piece
+  // covers an 18px word completely.
+  place-content: start center;
+  padding: 1px 2px 0;
+  border: 1px solid var(--border-space);
+  background: var(--jail-cell-bg);
+
+  // In front of the bars: an absolutely positioned element paints above
+  // in-flow content whatever the source order.
+  .space-name {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.jail-bars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  // Behind the word, which has to stay readable through them.
+  opacity: 0.5;
+  color: var(--jail-bars);
+  pointer-events: none;
+}
+
+// The words sit on the bottom arm, and the visiting pieces stand on them -
+// which is what a printed board does.
+.jail-visiting-band {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: var(--jail-band-size);
+  display: grid;
+  place-content: center;
+  height: var(--jail-band-size);
+  padding: 0 2px;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+// Restores "Jail / Just Visiting" as one contiguous string for anything reading
+// the square's text. Clipped rather than display:none, which would take it out
+// of the accessibility tree and out of textContent alike.
+.jail-name-joiner {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+// ---------------------------------------------------------------------------
 // Token overlay
 //
 // Tokens are drawn over the board, not inside the cells. In the flow they made

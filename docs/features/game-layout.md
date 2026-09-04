@@ -67,6 +67,44 @@ Composition:
 
 ## Board and card details
 
+### The Jail corner
+
+One square holding two places: a barred cell inset towards the board centre, and an L-shaped
+"Just Visiting" band along the two outer edges.
+[JailCorner](../../src/components/game/board/JailCorner.tsx) draws it;
+`getTokenPosition` in [boardLayout.utils.ts](../../src/domain/board/boardLayout.utils.ts) decides
+where a piece stands.
+
+Before this, nothing under `components/game/board/` knew `player.inJail` at all — a jailed player and
+a visitor were drawn at **identical coordinates**, told apart only by the order the players happened
+to be iterated in.
+
+- **Routing is `space === JAIL_POSITION && player.inJail`, and both halves matter.** The walk lags the
+  engine by a second or so, so a player the engine has already jailed is still crossing the board;
+  reading `inJail` alone would draw them behind bars before they arrived.
+- **The band is one number.** `JAIL_BAND_FRACTION` reaches the stylesheet as an inline
+  `--jail-band-size` and the token maths as a multiplier, so the band the eye sees and the band a
+  piece stands on cannot drift apart — the obvious way for this to rot. An e2e test measures the
+  cell's insets against that same constant.
+- **Jailed pieces cluster; visitors queue.** The cell reuses the ordinary crowd slots at 0.85 scale.
+  The band is a corridor, so visitors take a **one-dimensional** slot table signed from the elbow —
+  a second axis would put a piece through a wall. A lone visitor stands at the elbow, where a printed
+  board puts them, and a crowd grows both ways along the arms.
+- **Crowds are counted per region** (`tokenCrowdKey`), or the only visitor on the board would stand in
+  the second slot of a cluster they are not part of.
+- **Which way is "inward" is derived from the grid**, not written as "up and to the right". Where the
+  corner sits is a fact the layout already owns. The _stylesheet_ does have to assume bottom-left —
+  it cannot read the grid — and `board.rules.test.ts` pins index 10 there.
+- **The bars are drawn, not a `repeating-linear-gradient`.** Gradient stops are pixels and the square
+  is not, so the bar count would change with the screen: three on a phone, nine on a monitor.
+- **The word sits above the window, not in it.** Centred, it landed exactly under the first token of
+  the jailed cluster, and an 18px piece covers an 18px word completely.
+- **Both labels are split from `space.name`**, so the board data stays the single source of the
+  wording, and a visually-hidden separator keeps the square reading as the one contiguous name the
+  corner test asserts.
+- **The corner drops its glyph.** At ~63px the square cannot hold bars, a 34px icon and a word.
+  `CORNER_GLYPHS[Jail]` stays registered, because the deed card still uses it.
+
 ### Space icons
 
 Eleven glyphs, resolved by
@@ -230,15 +268,19 @@ local state: the selected space id for the title-deed modal.
 
 ## Tests
 
-| Level | File                                                                                     | Covers                                                                                  |
-| ----- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | Index → grid cell: corners, uniqueness, edges, wrapping.                                |
-| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts)         | The view models every panel receives.                                                   |
-| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                         | Three-column ordering; corner geometry; rail actions present and disabled.              |
-| Unit  | [BoardSpaceCell.test.tsx](../../src/components/game/board/BoardSpaceCell.test.tsx)       | The pieces are SVG, not boxes, and the hotel faces its ribbon's axis.                   |
-| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                                   | Pieces stand on the ribbon and fit along it; sharp corners with buildings up.           |
-| Unit  | [spaceIcon.registry.test.ts](../../src/components/game/icons/spaceIcon.registry.test.ts) | Every non-street space resolves a glyph; every kind covered; overrides hold their kind. |
-| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | The icons take theme ink: flipping `data-theme` must move their colour.                 |
+| Level | File                                                                                     | Covers                                                                                                    |
+| ----- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | Index → grid cell: corners, uniqueness, edges, wrapping.                                                  |
+| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts)         | The view models every panel receives.                                                                     |
+| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                         | Three-column ordering; corner geometry; rail actions present and disabled.                                |
+| Unit  | [BoardSpaceCell.test.tsx](../../src/components/game/board/BoardSpaceCell.test.tsx)       | The pieces are SVG, not boxes, and the hotel faces its ribbon's axis.                                     |
+| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                                   | Pieces stand on the ribbon and fit along it; sharp corners with buildings up.                             |
+| Unit  | [spaceIcon.registry.test.ts](../../src/components/game/icons/spaceIcon.registry.test.ts) | Every non-street space resolves a glyph; every kind covered; overrides hold their kind.                   |
+| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | The icons take theme ink: flipping `data-theme` must move their colour.                                   |
+| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | The Jail regions: jailed inside the cell, visitors on the band, never coinciding, a full table in bounds. |
+| Unit  | [JailCorner.test.tsx](../../src/components/game/board/JailCorner.test.tsx)               | The two labels, the whole name still contiguous, and the band width the geometry uses.                    |
+| Unit  | [BoardTokenLayer.test.tsx](../../src/components/game/board/BoardTokenLayer.test.tsx)     | Routing on `inJail`, per-region crowd slots, and a jailed player still walking.                           |
+| E2E   | [jail.spec.ts](../../tests/e2e/jail.spec.ts)                                             | A jailed player is inside the drawn cell and a visitor is not.                                            |
 
 ## Known gaps
 

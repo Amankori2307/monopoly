@@ -2,7 +2,7 @@ import type { CellCenter, CrowdOffset, GridPosition } from './boardLayout.interf
 
 export type { CellCenter, CrowdOffset, GridPosition } from './boardLayout.interfaces';
 
-import { BOARD_SIZE } from '../constants/game.constants';
+import { BOARD_SIZE, JAIL_POSITION } from '../constants/game.constants';
 
 /** The board renders as an 11x11 CSS grid: 4 corners plus 9 spaces per side. */
 export const BOARD_GRID_SIZE = 11;
@@ -100,4 +100,114 @@ export const getTokenCrowdOffset = (crowdIndex: number): CrowdOffset => {
     leftOffset: column * CROWD_STEP_PERCENT,
     topOffset: row * CROWD_STEP_PERCENT,
   };
+};
+
+// ---------------------------------------------------------------------------
+// The Jail corner
+//
+// One square holding two places: a barred cell for players actually in jail,
+// and an L-shaped visiting band along the two outer edges for everyone else.
+// Both the stylesheet and the token maths derive from JAIL_BAND_FRACTION, so
+// the band the eye sees and the band a token stands on cannot drift apart.
+// ---------------------------------------------------------------------------
+
+/** The visiting band's width, as a fraction of the corner cell's side. */
+export const JAIL_BAND_FRACTION = 0.34;
+
+/** A corner cell's side, in board percent. Derived, never written twice. */
+export const CORNER_CELL_PERCENT = (CORNER_TRACK / TOTAL_TRACKS) * 100;
+
+/**
+ * Tighter than an ordinary crowd, because the jail cell is two thirds of an
+ * already-small square. Eight tokens still clear its walls.
+ */
+const JAIL_CLUSTER_SCALE = 0.85;
+
+/** Spacing along the visiting band's midline, in board percent. */
+const JAIL_BAND_STEP_PERCENT = 2.2;
+
+/**
+ * Where visitors queue, signed from the elbow of the L.
+ *
+ * One dimension, not two: the band is a corridor, so a second axis would put a
+ * token through a wall. Zero first, so a lone visitor stands at the elbow -
+ * where a printed board puts them - and a crowd grows both ways along the arms.
+ */
+const JAIL_BAND_SLOTS: readonly number[] = [0, 1, -1, 2, -2, 3, -3, 4];
+
+/**
+ * Which way the board centre lies from the Jail corner, as unit steps.
+ *
+ * Derived from the grid rather than written as "up and to the right": where the
+ * corner sits is a fact the layout already owns, and a hardcoded direction here
+ * would be a second place to fix if the board were ever laid out the other way
+ * round. Column 1 means inward is +x; the bottom row means inward is -y.
+ */
+const jailInwardSigns = () => {
+  const { row, column } = boardIndexToGridPosition(JAIL_POSITION);
+  return {
+    x: column === 1 ? 1 : -1,
+    y: row === BOARD_GRID_SIZE ? -1 : 1,
+  };
+};
+
+/**
+ * Distinguishes the two halves of the Jail square when counting a crowd.
+ *
+ * Without it a jailed player and a visitor would draw slots from one tally, and
+ * the only visitor on the board would stand in the second slot of a cluster
+ * they are not part of.
+ */
+export const tokenCrowdKey = (spaceIndex: number, inJail: boolean): string =>
+  spaceIndex === JAIL_POSITION && inJail ? `${spaceIndex}:jail` : `${spaceIndex}`;
+
+/**
+ * Where a token stands, in board percent - the single call the token layer makes.
+ *
+ * Off the Jail square, and for anyone merely visiting it, this is the ordinary
+ * cell centre plus its crowd offset. `inJail` changes nothing anywhere else:
+ * no other square has two places to stand.
+ */
+export const getTokenPosition = (
+  spaceIndex: number,
+  crowdIndex: number,
+  inJail = false
+): CellCenter => {
+  const centre = getBoardCellCenter(spaceIndex);
+  const crowd = getTokenCrowdOffset(crowdIndex);
+
+  if (spaceIndex !== JAIL_POSITION) {
+    return {
+      leftPercent: centre.leftPercent + crowd.leftOffset,
+      topPercent: centre.topPercent + crowd.topOffset,
+    };
+  }
+
+  const inward = jailInwardSigns();
+  const halfBand = (CORNER_CELL_PERCENT * JAIL_BAND_FRACTION) / 2;
+
+  if (inJail) {
+    // The cell is the corner square inset by the band on its two outer edges,
+    // so its centre sits half a band's width towards the board centre.
+    return {
+      leftPercent:
+        centre.leftPercent + inward.x * halfBand + crowd.leftOffset * JAIL_CLUSTER_SCALE,
+      topPercent:
+        centre.topPercent + inward.y * halfBand + crowd.topOffset * JAIL_CLUSTER_SCALE,
+    };
+  }
+
+  // Visiting: stand on the band's midline, which runs along the two outer edges.
+  const elbowLeft = centre.leftPercent - inward.x * (CORNER_CELL_PERCENT / 2 - halfBand);
+  const elbowTop = centre.topPercent - inward.y * (CORNER_CELL_PERCENT / 2 - halfBand);
+  const slotIndex = Math.max(0, Math.min(crowdIndex, JAIL_BAND_SLOTS.length - 1));
+  const step = JAIL_BAND_SLOTS[slotIndex] * JAIL_BAND_STEP_PERCENT;
+  const distance = Math.abs(step);
+
+  // The sign picks the arm, never the direction: both arms run from the elbow
+  // towards the board centre, so both walk along `inward`. Signing the distance
+  // instead sent the first visitor straight out through the board's edge.
+  return step >= 0
+    ? { leftPercent: elbowLeft + inward.x * distance, topPercent: elbowTop }
+    : { leftPercent: elbowLeft, topPercent: elbowTop + inward.y * distance };
 };

@@ -9,6 +9,7 @@ import { getBoardSide } from '../../../domain/board/boardSide.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { MortgageStamp } from '../deed/MortgageStamp';
 import { HotelPiece, HousePiece } from './BuildingPiece';
+import { JailCorner } from './JailCorner';
 import { SpaceIcon } from '../icons/SpaceIcon';
 import { getCornerIcon, getSpaceIcon } from '../icons/spaceIcon.registry';
 import type { SpaceOwnerMark } from './board.interfaces';
@@ -63,8 +64,6 @@ export function BoardSpaceCell({
   // The top and bottom rows are portrait squares, so the word runs down them -
   // the same way their space names already do.
   const stampVariant = isPortraitSide(side) ? 'space-tall' : 'space-wide';
-  const cornerIcon = getCornerIcon(space);
-  const spaceIcon = getSpaceIcon(space);
   const className = cellClassName(space, side, isOccupied);
 
   return (
@@ -119,19 +118,43 @@ export function BoardSpaceCell({
 
       {/* Wrapper so the ribbon can sit on any edge while the text keeps the rest. */}
       <div className="space-body">
-        {cornerIcon ? (
-          <div className="corner-title">
-            <SpaceIcon className="corner-icon" glyph={cornerIcon} />
-            <strong className="space-name">{space.name}</strong>
-          </div>
-        ) : (
-          <div className="space-label">
-            {spaceIcon ? <SpaceIcon className="space-icon" glyph={spaceIcon} /> : null}
-            <strong className="space-name">{space.name}</strong>
-          </div>
-        )}
+        <CellBody space={space} />
       </div>
     </button>
+  );
+}
+
+/**
+ * What a square says: a corner title, a labelled row, or - for Jail alone - two
+ * regions of its own.
+ *
+ * Its own component rather than a chain of ternaries in the cell: three
+ * outcomes is where that stops being readable, and the linter agrees.
+ */
+function CellBody({ space }: { space: BoardSpace }) {
+  // Jail is the one corner with interior structure, so it owns its markup. Its
+  // glyph stays registered for the deed card; the square itself cannot hold
+  // bars, a 34px icon and a word at this size.
+  if (space.kind === SpaceKind.Jail) {
+    return <JailCorner name={space.name} />;
+  }
+
+  const cornerIcon = getCornerIcon(space);
+  if (cornerIcon) {
+    return (
+      <div className="corner-title">
+        <SpaceIcon className="corner-icon" glyph={cornerIcon} />
+        <strong className="space-name">{space.name}</strong>
+      </div>
+    );
+  }
+
+  const spaceIcon = getSpaceIcon(space);
+  return (
+    <div className="space-label">
+      {spaceIcon ? <SpaceIcon className="space-icon" glyph={spaceIcon} /> : null}
+      <strong className="space-name">{space.name}</strong>
+    </div>
   );
 }
 

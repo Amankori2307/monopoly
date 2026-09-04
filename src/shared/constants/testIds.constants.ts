@@ -20,6 +20,8 @@ export const TEST_IDS = {
   spaceBuildings: 'space-buildings',
   boardTokenLayer: 'board-token-layer',
   spacePlayerToken: 'space-player-token',
+  jailCell: 'jail-cell',
+  jailVisitingBand: 'jail-visiting-band',
 
   // Overlays
   decisionModal: 'decision-modal',

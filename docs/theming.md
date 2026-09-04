@@ -14,9 +14,6 @@ Two different things are called "theme" in this codebase, and keeping them apart
 They are joined by one string: the theme **id**. `ThemeConfig.id` must equal the key used in the
 SCSS `$themes` map. The React tree writes it to the DOM as `data-theme`, and CSS does the rest.
 
-> `ThemeConfig` still carries `accentColor` and `background` fields. They are **not used for
-> rendering** — SCSS owns presentation. Treat them as legacy until removed.
-
 ## How it works
 
 ```
@@ -49,14 +46,17 @@ token the next person will assume something reads.
 
 ### Board tokens
 
-Three different surfaces, easily confused:
+Easily confused with each other, and with `--surface-panel`:
 
-| Token              | Paints                                        |
-| ------------------ | --------------------------------------------- |
-| `--board-space-bg` | one of the 40 cells                           |
-| `--surface-board`  | `.board-card`, the slab under the grid        |
-| `--board-icon-ink` | the `currentColor` every space glyph inherits |
-| `--piece-outline`  | the edge around a house or hotel              |
+| Token                | Paints                                        |
+| -------------------- | --------------------------------------------- |
+| `--board-space-bg`   | one of the 40 cells                           |
+| `--surface-board`    | `.board-card`, the slab under the grid        |
+| `--board-icon-ink`   | the `currentColor` every space glyph inherits |
+| `--piece-outline`    | the edge around a house or hotel              |
+| `--jail-cell-bg`     | the Jail corner's barred cell                 |
+| `--jail-bars`        | the bars' `currentColor`                      |
+| `--jail-visiting-bg` | the L-shaped Just Visiting band               |
 
 `--board-icon-ink` is what made the glyphs themeable at all: they were `<img src>` files with their
 ink baked in, invisible on a dark cell and unreachable from CSS. They are inline SVG filled with
