@@ -20,8 +20,11 @@ export default defineConfig({
     outDir: './build',
   },
   server: {
+    // Opening a browser is right for `pnpm dev` and wrong everywhere else:
+    // Playwright starts this same server, and on CI there is no browser to
+    // open - the spawn just fails or hangs the job.
     port: 3000,
-    open: true,
+    open: !process.env.CI,
   },
   publicDir: 'public',
   test: {

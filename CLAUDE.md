@@ -188,6 +188,13 @@ pnpm deploy       # gh-pages → build/
 **Baseline as of the last verified run: `pnpm check-all` clean, 1058 unit tests and 122 e2e passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
+baseline is enforced rather than remembered. Two things there are load-bearing: `CI` flips
+`server.open` off in `vite.config.mjs` (there is no browser to open on a runner), and it flips
+`reuseExistingServer` off in `playwright.config.ts` — adopting a stray dev server would mean testing
+code the job never built. `pnpm/action-setup` is deliberately given no `version:`, so `packageManager`
+stays the one place pnpm is pinned.
+
 ---
 
 ## 7. Conventions
