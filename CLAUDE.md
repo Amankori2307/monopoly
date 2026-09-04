@@ -185,7 +185,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 907 unit tests and 107 e2e passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1040 unit tests and 119 e2e passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 ---
@@ -203,16 +203,16 @@ pnpm deploy       # gh-pages → build/
 **DRY — known duplication, fix on contact**
 | Duplicated | Locations |
 |---|---|
-| `availableThemes.find(...)` theme lookup | [gameEngine.ts:37](src/domain/rules/gameEngine.ts:37), [GamePage.tsx:63](src/features/game/GamePage.tsx:63), [HomePage.tsx:48](src/features/setup/HomePage.tsx:48) |
+| `availableThemes.find(...)` theme lookup | [engine/state.utils.ts:54](src/domain/rules/engine/state.utils.ts:54) (has the fallback, as `getThemeOrDefault`), [hooks/useActiveGame.ts:33](src/features/game/hooks/useActiveGame.ts:33), [hooks/useGameSetupForm.ts:68](src/features/setup/hooks/useGameSetupForm.ts:68). The other two should call `getThemeOrDefault` |
 | Two fallbacks for one value: `DEFAULT_CURRENCY_SYMBOL` (`game.constants.ts`) and `getThemeOrDefault(...).currencySymbol` (`gameEngine.ts`) | both resolve the currency symbol independently |
 
-_Resolved:_ the duplicated street colour-group hex maps are gone — colours are now theme tokens with generated `.group-*` classes (see [docs/theming.md](docs/theming.md)).
+_Resolved:_ the duplicated street colour-group hex maps are gone — colours are now theme tokens with generated `.group-*` classes (see [docs/theming.md](docs/theming.md)). So is the inline hex-to-rgb in the e2e suite: it is `tokenColor` in `tests/e2e/helpers.ts`, and assertions compare against a theme token rather than a literal `rgb(...)`.
 
 When you touch one of these, extract it (colors/icons → a shared board-presentation module; `formatMoney` + `isPropertySpace` → shared helpers) rather than adding a sixth copy.
 
 **Styling** — SCSS under `src/styles/`, entry `main.scss`, imported once in `App.tsx`. Layered: `abstracts` (tokens, mixins) → `themes` → `base` → `layout` → `components` → `pages`.
 
-- **Never hardcode a colour.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. The one sanctioned exception is a **player token colour**, applied inline from `ThemeToken.color` — it is theme _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
+- **Never hardcode a colour, and the board now proves it.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. `board.spec.ts` flips `data-theme` to `midnight` mid-run and fails on any board colour that does not move — the board's paper, grain and vignette are all tokens plus repeating gradients, with **no raster assets to ship or theme**. The theme guard also `@error`s on a token a theme defines that nothing reads. The one sanctioned exception is a **player token colour**, applied inline from `ThemeToken.color` — it is theme _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
 - Themes are token maps in `themes/_themes.scss`, emitted as `[data-theme="<id>"]` blocks. A compile-time guard fails the build if a theme misses a contract token. See [docs/theming.md](docs/theming.md).
 
 **Testing — mandatory, all three levels.** Every feature, entity, and behaviour ships with **unit + integration + e2e** coverage in the same change. Unit: pure logic, `SeededRandomSource` for dice, cover every `throw` branch. Integration: thunk → engine → persistence → store, and pages via `src/test/renderWithProviders.tsx`. E2E: the user journey in Playwright, queried by accessible role and name.

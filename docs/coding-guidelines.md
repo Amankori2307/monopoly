@@ -246,6 +246,7 @@ The mandate above is the standard going forward. The repository does **not** mee
 | Bankruptcy, win detection, the debt queue      | in engine       | —           | yes          |
 | Bankruptcy + building auctions                 | in engine       | —           | yes          |
 | Board cell, turn controls, error banner        | 3 files         | —           | yes          |
+| Board pieces, icons, the Jail corner           | 5 files         | —           | yes          |
 
 **The harness blockers are cleared, and so is the coverage gap they existed to unblock.** The
 thunks — the layer this section calls the highest-value one to test — now have 24 integration tests
