@@ -124,14 +124,20 @@ test('never covers the dice or the end-turn button', async ({ page }) => {
  * still three spaces short of the site it was paying for. They queue now, and
  * the queue drains when the walk settles.
  *
- * Sampled continuously rather than asserted at two chosen moments: the failure
- * is a window of a second or two, and checking before and after it would step
- * straight over the thing that is wrong. `data-moving` on the layout is the
- * walk, published for exactly this.
+ * What is asserted is the *arrival*, not mere co-presence: on the tick where the
+ * stack goes from empty to occupied, the walk must already be over. That is the
+ * whole guarantee, stated once.
  *
- * Each turn starts from an empty stack, waiting out the 4.2s a toast lives.
- * A toast left over from the previous turn is not this turn's outcome arriving
- * early - counting one would have failed a game that was behaving perfectly.
+ * Counting any toast visible during any walk instead - the obvious version - is
+ * wrong twice over. A toast lives 4.2s while a turn takes about one, so a
+ * perfectly-behaved game has last turn's toast on screen while this turn's token
+ * walks; that is not this turn's outcome arriving early. And `advanceGame` can
+ * take two actions in one call, which put a fresh toast up before a later walk.
+ * Both made the test fail on correct behaviour.
+ *
+ * Sampled at 16ms rather than checked before and after, because the failure is a
+ * window of a second or two and a two-point check steps straight over it.
+ * `data-moving` on the layout is the walk, published for exactly this.
  */
 test('never announces the outcome while the token is still walking', async ({ page }) => {
   test.setTimeout(120_000);
@@ -139,37 +145,33 @@ test('never announces the outcome while the token is still walking', async ({ pa
 
   await page.evaluate(
     ([layoutId, toastPrefix]) => {
-      const counters = { moving: 0, violations: 0, toasted: 0 };
+      const counters = { arrivals: 0, whileMoving: 0 };
       (window as unknown as { __feedbackOrder: typeof counters }).__feedbackOrder =
         counters;
+      let wasEmpty = true;
+
       window.setInterval(() => {
         const layout = document.querySelector(`[data-testid="${layoutId}"]`);
-        const toast = document.querySelector(`[data-testid^="${toastPrefix}-"]`);
-        if (toast) {
-          counters.toasted += 1;
+        const isEmpty =
+          document.querySelector(`[data-testid^="${toastPrefix}-"]`) === null;
+
+        // The empty -> occupied edge is a toast arriving. Anything already up
+        // stays up for seconds afterwards and is not an arrival.
+        if (wasEmpty && !isEmpty) {
+          counters.arrivals += 1;
+          if (layout?.getAttribute('data-moving') === 'true') {
+            counters.whileMoving += 1;
+          }
         }
-        if (layout?.getAttribute('data-moving') !== 'true') {
-          return;
-        }
-        counters.moving += 1;
-        if (toast) {
-          counters.violations += 1;
-        }
+        wasEmpty = isEmpty;
       }, 16);
     },
     [TEST_IDS.gameLayout, TEST_IDS.toast] as const
   );
 
-  const toasts = page.locator(`[data-testid^="${TEST_IDS.toast}-"]`);
-
   // Several turns, so the sampler sees walks of every length the dice give it,
   // and the rents and cards that only appear once the board has been crossed.
-  //
-  // The generous wait is not slack: each row's dismiss timer restarts whenever
-  // the stack changes, so a stack of three takes three times a toast's life to
-  // drain rather than one.
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await expect(toasts).toHaveCount(0, { timeout: 15_000 });
+  for (let attempt = 0; attempt < 6; attempt += 1) {
     await advanceGame(page);
   }
 
@@ -177,16 +179,16 @@ test('never announces the outcome while the token is still walking', async ({ pa
     () =>
       (
         window as unknown as {
-          __feedbackOrder: { moving: number; violations: number; toasted: number };
+          __feedbackOrder: { arrivals: number; whileMoving: number };
         }
       ).__feedbackOrder
   );
 
-  // Both guards, or "no violations" is vacuously true of a game that never
-  // moved a token or never said anything.
-  expect(counters.moving, 'the sampler never caught a token walking').toBeGreaterThan(0);
-  expect(counters.toasted, 'the sampler never caught a toast at all').toBeGreaterThan(0);
-  expect(counters.violations, 'a toast was on screen while a token was walking').toBe(0);
+  // Without this, "none arrived early" is vacuously true of a silent game.
+  expect(counters.arrivals, 'the sampler never caught a toast arriving').toBeGreaterThan(
+    0
+  );
+  expect(counters.whileMoving, 'a toast arrived while a token was walking').toBe(0);
 });
 
 /**
