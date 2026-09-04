@@ -48,15 +48,26 @@ token the next person will assume something reads.
 
 Easily confused with each other, and with `--surface-panel`:
 
-| Token                | Paints                                        |
-| -------------------- | --------------------------------------------- |
-| `--board-space-bg`   | one of the 40 cells                           |
-| `--surface-board`    | `.board-card`, the slab under the grid        |
-| `--board-icon-ink`   | the `currentColor` every space glyph inherits |
-| `--piece-outline`    | the edge around a house or hotel              |
-| `--jail-cell-bg`     | the Jail corner's barred cell                 |
-| `--jail-bars`        | the bars' `currentColor`                      |
-| `--jail-visiting-bg` | the L-shaped Just Visiting band               |
+| Token                 | Paints                                        |
+| --------------------- | --------------------------------------------- |
+| `--board-space-bg`    | one of the 40 cells                           |
+| `--surface-board`     | `.board-card`, the slab under the grid        |
+| `--board-icon-ink`    | the `currentColor` every space glyph inherits |
+| `--piece-outline`     | the edge around a house or hotel              |
+| `--jail-cell-bg`      | the Jail corner's barred cell                 |
+| `--jail-bars`         | the bars' `currentColor`                      |
+| `--jail-visiting-bg`  | the L-shaped Just Visiting band               |
+| `--board-field`       | the centre's printed field                    |
+| `--board-emboss`      | the card's lit top edge, and the name halo    |
+| `--board-shade`       | the card's shaded bottom edge                 |
+| `--board-paper-tooth` | the crossed grain gradients                   |
+| `--board-vignette`    | the corner falloff                            |
+| `--ribbon-keyline`    | the rule between a colour band and its cell   |
+| `--ribbon-sheen`      | the light half of a band's sheen              |
+
+The whole set is proven by one e2e test: it flips `data-theme` to `midnight` mid-run and asserts
+**every** board colour moves. Anything hardcoded — in a stylesheet or baked into an asset — does not,
+which is how the icons and five literals in `_board.scss` were found in the first place.
 
 `--board-icon-ink` is what made the glyphs themeable at all: they were `<img src>` files with their
 ink baked in, invisible on a dark cell and unreachable from CSS. They are inline SVG filled with

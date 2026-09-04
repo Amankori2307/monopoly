@@ -281,6 +281,8 @@ local state: the selected space id for the title-deed modal.
 | Unit  | [JailCorner.test.tsx](../../src/components/game/board/JailCorner.test.tsx)               | The two labels, the whole name still contiguous, and the band width the geometry uses.                    |
 | Unit  | [BoardTokenLayer.test.tsx](../../src/components/game/board/BoardTokenLayer.test.tsx)     | Routing on `inJail`, per-region crowd slots, and a jailed player still walking.                           |
 | E2E   | [jail.spec.ts](../../tests/e2e/jail.spec.ts)                                             | A jailed player is inside the drawn cell and a visitor is not.                                            |
+| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | Tinted stock and a distinct field; the grain overlay is inert to clicks.                                  |
+| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | **Every board colour follows the theme**: flip `data-theme` and none may stay put.                        |
 
 ## Known gaps
 

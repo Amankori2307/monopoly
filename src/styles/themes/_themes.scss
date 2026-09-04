@@ -29,13 +29,15 @@ $theme-contract: surface-app surface-panel surface-board surface-input surface-m
   surface-raised text-primary text-body text-muted text-inverse text-eyebrow accent
   accent-hover accent-strong accent-soft accent-contrast border-subtle border-input
   border-space border-dashed focus-ring shadow-panel shadow-board board-space-bg
-  board-space-hover board-icon-ink jail-cell-bg jail-bars jail-visiting-bg ribbon-bg
-  ribbon-border ribbon-outline ribbon-text ribbon-drop deck-community-bg deck-chance-bg
-  deck-marker-border deck-marker-shadow deck-marker-text decision-bg decision-border
-  badge-bg token-bg danger-bg error-text action-build action-sell action-mortgage
-  action-redeem action-text building-house building-house-roof building-hotel
-  building-hotel-roof building-window piece-outline button-primary button-primary-hover
-  button-primary-text button-secondary button-secondary-hover button-secondary-text;
+  board-space-hover board-icon-ink board-field board-emboss board-shade board-paper-tooth
+  board-vignette jail-cell-bg jail-bars jail-visiting-bg ribbon-bg ribbon-border
+  ribbon-outline ribbon-text ribbon-drop ribbon-keyline ribbon-sheen deck-community-bg
+  deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text decision-bg
+  decision-border badge-bg token-bg danger-bg error-text action-build action-sell
+  action-mortgage action-redeem action-text building-house building-house-roof
+  building-hotel building-hotel-roof building-window piece-outline button-primary
+  button-primary-hover button-primary-text button-secondary button-secondary-hover
+  button-secondary-text;
 
 $themes: (
   // -- India Edition: the shipped look. -------------------------------------
@@ -73,6 +75,11 @@ $themes: (
       board-space-bg: #fdfaf1,
       board-space-hover: #fff6e2,
       board-icon-ink: #4a5142,
+      board-field: #e2e8d6,
+      board-emboss: rgba(255, 255, 255, 0.72),
+      board-shade: rgba(46, 38, 18, 0.16),
+      board-paper-tooth: rgba(92, 74, 36, 0.045),
+      board-vignette: rgba(60, 50, 24, 0.1),
       jail-cell-bg: #f6ecd4,
       jail-bars: #3a3128,
       jail-visiting-bg: #f0a83c,
@@ -82,6 +89,8 @@ $themes: (
       ribbon-outline: #a22d28,
       ribbon-text: #fff9e6,
       ribbon-drop: rgba(76, 31, 27, 0.38),
+      ribbon-keyline: rgba(24, 29, 20, 0.35),
+      ribbon-sheen: rgba(255, 255, 255, 0.16),
       deck-community-bg: #77d7e5,
       deck-chance-bg: #ff9b2f,
       deck-marker-border: rgba(36, 64, 43, 0.75),
@@ -161,6 +170,11 @@ $themes: (
       board-space-bg: #1b2027,
       board-space-hover: #232b34,
       board-icon-ink: #8b97a6,
+      board-field: #141a20,
+      board-emboss: rgba(255, 255, 255, 0.06),
+      board-shade: rgba(0, 0, 0, 0.5),
+      board-paper-tooth: rgba(255, 255, 255, 0.028),
+      board-vignette: rgba(0, 0, 0, 0.4),
       jail-cell-bg: #232a33,
       jail-bars: #9aa6b5,
       jail-visiting-bg: #8a5a1c,
@@ -170,6 +184,8 @@ $themes: (
       ribbon-outline: #7d221c,
       ribbon-text: #ffeede,
       ribbon-drop: rgba(0, 0, 0, 0.55),
+      ribbon-keyline: rgba(0, 0, 0, 0.5),
+      ribbon-sheen: rgba(255, 255, 255, 0.08),
       deck-community-bg: #2f7f8d,
       deck-chance-bg: #b8701f,
       deck-marker-border: rgba(226, 233, 243, 0.32),

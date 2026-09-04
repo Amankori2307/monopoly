@@ -275,6 +275,88 @@ test('never clips a space name', async ({ page }) => {
 });
 
 /**
+ * Three papers, not one white sheet: a pale printed field ringed by lighter
+ * cells is most of what makes a board read as a board.
+ */
+test('paints the board as tinted card stock rather than flat white', async ({ page }) => {
+  await startGame(page);
+
+  const surfaces = await page.evaluate(() => {
+    const bg = (selector: string) => {
+      const element = document.querySelector(selector);
+      return element ? getComputedStyle(element).backgroundColor : null;
+    };
+    const grid = document.querySelector('.board-grid');
+    const overlay = grid ? getComputedStyle(grid, '::after') : null;
+
+    return {
+      cell: bg('.board-space'),
+      field: bg('.board-center'),
+      grain: overlay?.backgroundImage ?? null,
+      // Without this the overlay covers the whole board and nothing on it can
+      // be clicked - the one way this treatment can break the game outright.
+      grainPointerEvents: overlay?.pointerEvents ?? null,
+    };
+  });
+
+  expect(surfaces.cell).not.toBe('rgb(255, 255, 255)');
+  // A cell and the field are different papers.
+  expect(surfaces.cell).not.toBe(surfaces.field);
+  expect(surfaces.grain).toContain('repeating-linear-gradient');
+  expect(surfaces.grainPointerEvents).toBe('none');
+});
+
+/**
+ * The acceptance gate for every token in this work.
+ *
+ * Flip the theme and assert every board colour moves. Anything still hardcoded -
+ * in a stylesheet or baked into an asset - simply will not, which is precisely
+ * how the icons and five colours in _board.scss were found in the first place.
+ * `midnight` earns its keep here without being registered as selectable.
+ */
+test('themes every colour on the board', async ({ page }) => {
+  await startGame(page);
+
+  const perTheme = await page.evaluate(() => {
+    const read = () => {
+      const of = (selector: string, prop: 'backgroundColor' | 'color') => {
+        const element = document.querySelector(selector);
+        return element ? getComputedStyle(element)[prop] : null;
+      };
+      return {
+        card: of('.board-card', 'backgroundColor'),
+        cell: of('.board-space', 'backgroundColor'),
+        field: of('.board-center', 'backgroundColor'),
+        deck: of('.deck-marker', 'backgroundColor'),
+        deckInk: of('.deck-marker', 'color'),
+        ribbon: of('.board-logo-ribbon', 'backgroundColor'),
+        jailCell: of('.jail-cell', 'backgroundColor'),
+        jailBand: of('.jail-corner', 'backgroundColor'),
+        bars: of('.jail-bars', 'color'),
+        icon: of('.space-icon', 'color'),
+      };
+    };
+
+    const shell = document.querySelector('.app-shell') as HTMLElement;
+    const before = read();
+    shell.setAttribute('data-theme', 'midnight');
+    const after = read();
+    shell.setAttribute('data-theme', 'india-edition');
+    return { before, after };
+  });
+
+  const unmoved = Object.keys(perTheme.before).filter((key) => {
+    const from = perTheme.before[key as keyof typeof perTheme.before];
+    const to = perTheme.after[key as keyof typeof perTheme.after];
+    // A null means the element was not on the board, which would make its
+    // comparison vacuous - fail on that too.
+    return from === null || to === null || from === to;
+  });
+
+  expect(unmoved, 'these board colours do not follow the theme').toEqual([]);
+});
+
+/**
  * The Jail corner's two regions, measured.
  *
  * The band is one number - JAIL_BAND_FRACTION - reaching the stylesheet as a

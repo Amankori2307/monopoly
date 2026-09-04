@@ -1,6 +1,13 @@
 @use '../abstracts/tokens' as t;
 @use '../abstracts/mixins' as m;
 
+// The board as a physical slab: lit along its top edge, shaded along its
+// bottom. Depth here is shadow and emboss, never a radius - the sharp-corner
+// system is whole-DOM enforced, and a printed board has square corners anyway.
+//
+// --surface-board is never actually seen: the 11x11 grid fills this element and
+// the 40 cells plus the centre tile it completely. It is set correctly all the
+// same, because the day a gap appears the wrong colour behind it is worse.
 .board-card {
   width: 100%;
   aspect-ratio: 1;
@@ -9,7 +16,10 @@
   border: 0;
   border-radius: t.$radius-sharp;
   background: var(--surface-board);
-  box-shadow: var(--shadow-board);
+  box-shadow:
+    var(--shadow-board),
+    inset 0 1px 0 var(--board-emboss),
+    inset 0 -1px 0 var(--board-shade);
 }
 
 .board-grid {
@@ -25,6 +35,34 @@
   // only has to close the board's top and left. Each boundary then gets exactly
   // one 1px line, with no doubling anywhere.
   box-shadow: inset 1px 1px 0 var(--border-space);
+
+  // One overlay for the whole board's paper: grain across the cells, the colour
+  // ribbons and the centre alike, in a single paint. Forty per-cell gradients
+  // would tile visibly at every seam, and the card underneath is occluded so it
+  // cannot carry it.
+  //
+  // z-index 5 puts it level with the cell dividers and above them by source
+  // order, and below the token layer at 6. pointer-events is not optional: this
+  // covers the whole board, and without it nothing on the board is clickable.
+  &::after {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    content: '';
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        var(--board-paper-tooth) 0 1px,
+        transparent 1px 3px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        var(--board-paper-tooth) 0 1px,
+        transparent 1px 3px
+      ),
+      radial-gradient(ellipse at center, transparent 55%, var(--board-vignette) 100%);
+    pointer-events: none;
+  }
 }
 
 .board-center {
@@ -34,7 +72,9 @@
   place-items: center;
   overflow: hidden;
   isolation: isolate;
-  background: var(--surface-board);
+  // Its own paper: a pale printed field ringed by lighter cells is what makes a
+  // board read as a board rather than as a grid of white boxes.
+  background: var(--board-field);
   // The centre follows the same rule as a cell: draw your right and bottom edge.
   // Without it the right column's left edge and the bottom row's top edge - the
   // two boundaries the centre owns - would be the only ones with no line.
@@ -227,6 +267,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  // Printed ink on stock is not flat. This survives the .group-* utility only
+  // because that utility sets background-color rather than the shorthand -
+  // the shorthand would reset background-image, and utilities win here by
+  // design, so it would have looked like this rule was at fault.
+  background-image: linear-gradient(
+    var(--ribbon-sheen),
+    transparent 55%,
+    rgba(0, 0, 0, 0.08)
+  );
 
   .side-bottom &,
   .side-top & {
@@ -239,6 +288,23 @@
     width: t.$board-color-bar;
     height: auto;
     align-self: stretch;
+  }
+
+  // A rule between the band and the cell body, on the band's inner edge only.
+  // A side-agnostic `inset 0 0 0 1px` would double the cell divider along the
+  // outer edge, where the two meet. box-shadow changes neither the bounding box
+  // nor the radius, so the full-bleed and 0px probes are untouched.
+  .side-bottom & {
+    box-shadow: inset 0 -1px 0 var(--ribbon-keyline);
+  }
+  .side-top & {
+    box-shadow: inset 0 1px 0 var(--ribbon-keyline);
+  }
+  .side-right & {
+    box-shadow: inset -1px 0 0 var(--ribbon-keyline);
+  }
+  .side-left & {
+    box-shadow: inset 1px 0 0 var(--ribbon-keyline);
   }
 
   @include m.below(t.$breakpoint-tablet) {
@@ -343,8 +409,17 @@
   // side columns once the icon takes its share - so allow it to break, as
   // printed boards hyphenate long names.
   overflow-wrap: anywhere;
-  font-weight: 800;
-  line-height: 1.06;
+  // 700 rather than 800: uppercase is wider, and the narrower weight buys back
+  // most of what the capitals cost on the axis the clipping test measures.
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.04;
+  text-transform: uppercase;
+  // A halo, not an offset. The top and bottom rows set their names in
+  // vertical-rl and the bottom row rotates 180deg on top of that, so a
+  // directional `0 1px 0` turns with the glyphs and points the wrong way on two
+  // sides of the board. A halo needs no per-side branching.
+  text-shadow: 0 0 1px var(--board-emboss);
   text-wrap: balance;
 
   @include m.below(t.$breakpoint-tablet) {
@@ -412,8 +487,16 @@
     opacity: 0.82;
   }
 
+  // The four anchors are set in the display serif, as a printed board sets its
+  // corners. Safe here and nowhere else: corners are the widest cells on the
+  // board and their words are short, so the clipping budget the street names
+  // spend on three vertical lines is not at stake.
   .space-name {
     align-self: auto;
+    font-family: t.$font-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
   }
 }
 
