@@ -75,6 +75,36 @@ UI event → dispatch(runGameCommand({type:'rollTurnDice'}))   features/game/gam
 
 Every command runs through `runGameCommand`. Do not mutate game state in a component or a reducer — add a command to the engine instead.
 
+### The network is beside that path, never inside it
+
+**The engine is never awaited, and local persistence stays synchronous.** Online play is a
+replication layer that hangs off the end of the flow above, so a slow or broken connection can never
+delay or fail a move that has already been made.
+
+```
+… → setActiveGame(nextState) → React re-renders
+                             → session.publish(...)         fire-and-forget, last
+                                  ├─ accepted → nothing more to do
+                                  └─ conflict → adoptRemoteGame(theirs)   remote always wins
+
+somebody else moved  → doorbell (revision only) → session.fetch()
+                     → decodeGameState(...) → adoptRemoteGame(...)
+```
+
+Three rules hold it together, and each has a test that fails without it:
+
+- **The command is never replayed on a conflict.** Re-applying it onto a new base is how a bid of
+  ₹200 lands on top of a ₹250 that was already accepted.
+- **`adoptRemoteGame` re-saves `localStorage`.** `trySave` has already written the optimistic state,
+  so skipping this leaves a rejected move on disk and a refresh restores a phantom.
+- **A publish failure is not a command error.** The move happened; a connection problem must not
+  look like a refusal.
+
+A hot-seat game uses `LocalSession`, which accepts every publish and does nothing — so there is one
+command path rather than an `if (isOnline)` that can rot on one side. The session reaches thunks as
+`thunk.extraArgument`: Redux state would trip `serializableCheck` (a session holds a socket), and
+middleware is the wrong seam because every mutation is dispatched as a thunk.
+
 ---
 
 ## 4. The game engine contract
@@ -162,7 +192,9 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 - `GAME_STATE_VERSION = 8`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
 - **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
-- **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. `pendingDecision` is `.passthrough()`, so a decision's own payload survives — which is why the drawn Chance / Community Chest card rides inside the decision rather than in a field of its own. Add the field to the schema, or put it where it will survive.
+- **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. Add the field to the schema, or it will not survive a save.
+- **`pendingDecision` is a full discriminated union, and is no longer `.passthrough()`.** It was, so a decision could carry a payload the schema did not describe — fine on disk, where the only writer was this app, and exactly the wrong thing over a network: it was the one hole through which a peer could hang arbitrary keys off a decision before it reached the engine. Every payload now has a line, including the drawn card and a liquidation's `queued` debts (optional, because a save written before the queue existed comes back without it). Adding a field to a decision means adding it here too.
+- **One decoder, for disk and for the network.** [decodeGameState](src/features/persistence/decodeGameState.ts) migrates then validates, and both `loadGame` and any state arriving from another device go through it. Two decoders would drift the first time a shape changed, and only one of them would be the one an attacker sends to.
 - Every command save is a full-state write, then the index is rewritten sorted by `updatedAt`.
 
 ---
@@ -186,7 +218,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1093 unit tests, 124 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1116 unit tests, 124 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the

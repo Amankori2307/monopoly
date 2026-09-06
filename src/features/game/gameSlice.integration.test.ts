@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeStore } from '../../app/appStore';
+import type { GameSession } from '../multiplayer/gameSession.interfaces';
 import {
   AUCTION_START_PRICE,
   GAME_STATE_VERSION,
@@ -722,5 +723,105 @@ describe('a non-active debtor raising cash', () => {
     // The active player is untouched - the command acted on the debtor.
     expect(after.players[activeId].cash).toBe(created.players[activeId].cash);
     expect(storedGame(created.id).ownership[site.id].mortgaged).toBe(true);
+  });
+});
+
+/**
+ * The seam between the game and wherever its state lives.
+ *
+ * The constraint that shapes all of it: `runGameCommand` stays synchronous and
+ * the local save stays synchronous. Publishing happens beside the command path,
+ * never inside it - so a slow or broken network can never delay or fail a move
+ * that has already been made.
+ */
+describe('publishing a move', () => {
+  const onlineSession = (publish: GameSession['publish']): GameSession => ({
+    isOnline: true,
+    publish,
+    fetch: vi.fn().mockResolvedValue(null),
+    subscribe: vi.fn().mockReturnValue(() => undefined),
+    close: vi.fn(),
+  });
+
+  /** Reaches the registry the store handed its thunks. */
+  const registryOf = (store: ReturnType<typeof makeStore>) =>
+    (store.dispatch as unknown as (t: unknown) => unknown)(
+      (
+        _d: unknown,
+        _g: unknown,
+        extra: { session: { replace: (s: GameSession) => void } }
+      ) => extra.session
+    ) as { replace: (s: GameSession) => void };
+
+  const startedGame = async (store: ReturnType<typeof makeStore>) => {
+    await store.dispatch(createNewGame(input()));
+    return store.getState().game.activeGame!;
+  };
+
+  it('does not publish anything for a hot-seat game', async () => {
+    const store = makeStore();
+    await startedGame(store);
+    const publish = vi.fn();
+    // The default session is local; swapping in a spy that claims to be
+    // offline proves the isOnline gate, not the session type.
+    registryOf(store).replace({ ...onlineSession(publish), isOnline: false });
+
+    await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('publishes after the move is applied, at the revision it was based on', async () => {
+    const store = makeStore();
+    const game = await startedGame(store);
+    const publish = vi.fn().mockResolvedValue({ status: 'accepted', revision: 1 });
+    registryOf(store).replace(onlineSession(publish));
+
+    await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    const [call] = publish.mock.calls;
+    expect(call[0].baseRevision).toBe(0);
+    // What is published is the state AFTER the command, not before it.
+    expect(call[0].game.turnNumber).toBeGreaterThanOrEqual(game.turnNumber);
+    expect(call[0].command).toEqual({ type: GameCommandType.RollTurnDice });
+  });
+
+  it('applies the move locally even when publishing throws', async () => {
+    const store = makeStore();
+    await startedGame(store);
+    registryOf(store).replace(
+      onlineSession(vi.fn().mockRejectedValue(new Error('offline')))
+    );
+
+    const before = store.getState().game.activeGame!.turn.phase;
+    await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+    await Promise.resolve();
+
+    // A network failure is a connection problem, not a refused command, and
+    // the two must not look the same on screen.
+    expect(store.getState().game.activeGame!.turn.phase).not.toBe(before);
+    expect(store.getState().game.commandError).toBeNull();
+  });
+
+  it('adopts the remote state on a conflict, and does not replay the command', async () => {
+    const store = makeStore();
+    const game = await startedGame(store);
+    const theirs = { ...game, turnNumber: 99 };
+    const publish = vi
+      .fn()
+      .mockResolvedValue({ status: 'conflict', revision: 7, game: theirs });
+    registryOf(store).replace(onlineSession(publish));
+
+    await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+    await vi.waitFor(() => expect(store.getState().game.revision).toBe(7));
+
+    // Remote wins outright. Re-applying the command onto the new base is how a
+    // bid of 200 lands on top of a 250 that was already accepted.
+    expect(store.getState().game.activeGame!.turnNumber).toBe(99);
+    expect(publish).toHaveBeenCalledTimes(1);
+    // And the adopted state reaches disk - trySave already wrote the
+    // optimistic one, so a refresh would otherwise restore a phantom move.
+    expect(storedGame(game.id).turnNumber).toBe(99);
   });
 });

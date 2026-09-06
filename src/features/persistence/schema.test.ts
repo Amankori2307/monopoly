@@ -331,10 +331,12 @@ describe('in-flight state', () => {
   });
 });
 
-describe('the pending decision, which stays loose on purpose', () => {
-  // .passthrough() is what lets a decision carry its own payload through a
-  // round trip - the drawn card, a liquidation's queued debts.
-  it('keeps a payload the schema does not describe', () => {
+describe('the pending decision, described in full', () => {
+  // It used to be .passthrough(), so a decision could carry a payload the
+  // schema did not describe. On disk that was a fair trade - the only writer
+  // was this app. Over a network it is the one hole through which a peer could
+  // hang arbitrary keys off a decision, so the union is written out.
+  it('carries a liquidation queue through a round trip', () => {
     const result = corrupt((game) => {
       game.pendingDecision = {
         type: 'asset-liquidation',
@@ -342,7 +344,14 @@ describe('the pending decision, which stays loose on purpose', () => {
         amountDue: 100,
         creditorPlayerId: null,
         reason: 'rent',
-        queued: [{ playerId: game.playerOrder[1], amountDue: 50 }],
+        queued: [
+          {
+            playerId: game.playerOrder[1],
+            amountDue: 50,
+            creditorPlayerId: null,
+            reason: 'rent',
+          },
+        ],
       };
     });
 
@@ -352,6 +361,55 @@ describe('the pending decision, which stays loose on purpose', () => {
       queued: unknown[];
     };
     expect(decision.queued).toHaveLength(1);
+  });
+
+  it('accepts a liquidation saved before the queue existed', () => {
+    // The engine reads it as `queued ?? []`, so absent is legal and [] is not
+    // the same thing as missing.
+    const result = corrupt((game) => {
+      game.pendingDecision = {
+        type: 'asset-liquidation',
+        playerId: game.playerOrder[0],
+        amountDue: 100,
+        creditorPlayerId: null,
+        reason: 'rent',
+      };
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('refuses a queued debt that is missing half its record', () => {
+    // This is what the loose schema used to wave through: a debt with no
+    // creditor and no reason, which the liquidation panel would render blank.
+    expect(
+      corrupt((game) => {
+        game.pendingDecision = {
+          type: 'asset-liquidation',
+          playerId: game.playerOrder[0],
+          amountDue: 100,
+          creditorPlayerId: null,
+          reason: 'rent',
+          queued: [{ playerId: game.playerOrder[1], amountDue: 50 }],
+        };
+      }).success
+    ).toBe(false);
+  });
+
+  it('drops a key nobody described, rather than handing it to the engine', () => {
+    // The reason the union exists. A published state is parsed with this
+    // schema before it reaches the engine, so an injected key must not survive.
+    const result = corrupt((game) => {
+      game.pendingDecision = {
+        type: 'jail-choice',
+        playerId: game.playerOrder[0],
+        __injected: { pay: 0 },
+      };
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.pendingDecision).not.toHaveProperty('__injected');
   });
 
   it('still refuses a card draw with no card', () => {

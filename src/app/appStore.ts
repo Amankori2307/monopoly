@@ -2,6 +2,10 @@ import { configureStore } from '@reduxjs/toolkit';
 import { gameReducer } from '../features/game/gameSlice';
 import { readSoundPreference } from '../features/game/soundPreference.utils';
 import { uiInitialState, uiReducer } from '../features/game/uiSlice';
+import {
+  createSessionRegistry,
+  type ThunkExtra,
+} from '../features/multiplayer/sessionRegistry';
 
 const reducer = {
   game: gameReducer,
@@ -18,9 +22,17 @@ type PreloadedState = Parameters<typeof configureStore>[0]['preloadedState'];
  * cannot leak between renders. `preloadedState` lets a test start from a given
  * slice of state rather than dispatching its way there.
  */
-export const makeStore = (preloadedState?: PreloadedState) =>
-  configureStore({
+export const makeStore = (preloadedState?: PreloadedState) => {
+  // One registry per store, so two tests in one file cannot share a session.
+  // It reaches thunks as `extraArgument`: state would trip serializableCheck
+  // (a session holds a socket), and middleware is the wrong seam because every
+  // mutation is dispatched as a thunk.
+  const extra: ThunkExtra = { session: createSessionRegistry() };
+
+  return configureStore({
     reducer,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ thunk: { extraArgument: extra } }),
     // The sound preference is read here rather than in the slice's initial
     // state: that is evaluated once when the module loads, so a store built
     // afterwards never saw a change. An explicit preloadedState wins over this.
@@ -29,6 +41,7 @@ export const makeStore = (preloadedState?: PreloadedState) =>
       ...(preloadedState as object),
     } as PreloadedState,
   });
+};
 
 export const appStore = makeStore();
 

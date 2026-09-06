@@ -1,0 +1,55 @@
+import type { GameState, RuntimeGameCommand } from '../../domain/types/game.interfaces';
+
+/**
+ * What happened to a state this device tried to publish.
+ *
+ * A conflict is not a failure: somebody else moved first, and `game` is what is
+ * actually true. The caller adopts it and does NOT replay the command - putting
+ * a bid of 200 back on top of a 250 that already landed is the classic way to
+ * corrupt a shared game.
+ */
+export type PublishOutcome =
+  | { status: 'accepted'; revision: number }
+  | { status: 'conflict'; revision: number; game: GameState }
+  | { status: 'gone' }
+  | { status: 'failed'; message: string };
+
+/** What the app is told when a state arrives from somewhere else. */
+export interface RemoteGameUpdate {
+  revision: number;
+  game: GameState;
+}
+
+/**
+ * The seam between the game and wherever its state lives.
+ *
+ * `LocalSession` is a no-op that reports every publish accepted, so a hot-seat
+ * game runs through exactly the same code path as an online one and neither
+ * has a branch the other does not. Everything here returns a promise; nothing
+ * in the command path awaits one.
+ */
+export interface GameSession {
+  /** False for the local session, so no online UI is offered for a local game. */
+  readonly isOnline: boolean;
+
+  /** Push a state this device has already applied. */
+  publish(input: {
+    game: GameState;
+    baseRevision: number;
+    command: RuntimeGameCommand | null;
+  }): Promise<PublishOutcome>;
+
+  /** Ask for the authoritative state, on first load, on reconnect, or on a bell. */
+  fetch(): Promise<RemoteGameUpdate | null>;
+
+  /**
+   * Watch for somebody else's move. Returns the unsubscribe.
+   *
+   * The callback is given the revision only - the doorbell, not the payload -
+   * so the caller decides when to fetch.
+   */
+  subscribe(onRevision: (revision: number) => void): () => void;
+
+  /** Stop everything. Safe to call twice. */
+  close(): void;
+}

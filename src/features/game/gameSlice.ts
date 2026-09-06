@@ -17,6 +17,7 @@ import {
   saveGame,
 } from '../persistence/persistence';
 import { toToasts } from './toastFeed.utils';
+import type { ThunkExtra } from '../multiplayer/sessionRegistry';
 import { cueForEvents } from './soundCue.utils';
 import { queueFeedback } from './uiSlice';
 
@@ -26,6 +27,11 @@ interface GameSliceState {
   loadError: string | null;
   /** Last command the engine rejected. Surfaced to the player, then dismissed. */
   commandError: string | null;
+  /**
+   * The revision this device last agreed with, and the compare-and-set target
+   * for the next publish. Always 0 for a hot-seat game, where nothing reads it.
+   */
+  revision: number;
 }
 
 const initialState: GameSliceState = {
@@ -33,6 +39,7 @@ const initialState: GameSliceState = {
   activeGame: null,
   loadError: null,
   commandError: null,
+  revision: 0,
 };
 
 const slice = createSlice({
@@ -51,12 +58,37 @@ const slice = createSlice({
     setCommandError(state, action: PayloadAction<string | null>) {
       state.commandError = action.payload;
     },
+    setRevision(state, action: PayloadAction<number>) {
+      state.revision = action.payload;
+    },
   },
 });
 
 export const gameReducer = slice.reducer;
-export const { setRecentGames, setActiveGame, setLoadError, setCommandError } =
-  slice.actions;
+export const {
+  setRecentGames,
+  setActiveGame,
+  setLoadError,
+  setCommandError,
+  setRevision,
+} = slice.actions;
+
+/**
+ * Takes a state from another device as the truth, replacing whatever this one
+ * had.
+ *
+ * The local save is rewritten, which is not optional: `trySave` has already
+ * written the optimistic state, so skipping this would leave a move on disk
+ * that the table rejected - and a refresh would restore it.
+ */
+export const adoptRemoteGame =
+  (update: { game: GameState; revision: number }) => (dispatch: AppDispatch) => {
+    const saveFailure = trySave(update.game);
+    dispatch(setActiveGame(update.game));
+    dispatch(setRevision(update.revision));
+    dispatch(setCommandError(saveFailure));
+    dispatch(bootstrapRecentGames());
+  };
 
 export const bootstrapRecentGames = () => (dispatch: AppDispatch) => {
   try {
@@ -119,9 +151,51 @@ const trySave = (game: GameState): string | null => {
   }
 };
 
+/**
+ * Pushes a state that has already been applied locally, and adopts whatever
+ * comes back if somebody else got there first.
+ *
+ * Never rejects. A publish that fails is a connection problem, not a refused
+ * command, and the two must not look the same on screen.
+ */
+const publishInBackground = async (
+  dispatch: AppDispatch,
+  extra: ThunkExtra,
+  game: GameState,
+  command: RuntimeGameCommand,
+  baseRevision: number
+): Promise<void> => {
+  const session = extra.session.current;
+  if (!session.isOnline) {
+    return;
+  }
+
+  try {
+    const outcome = await session.publish({
+      game,
+      baseRevision,
+      command,
+    });
+
+    if (outcome.status === 'conflict') {
+      // Remote always wins, and the command is NOT replayed: re-applying it
+      // onto a new base is how a bid of 200 lands on top of a 250 that was
+      // already accepted.
+      dispatch(adoptRemoteGame({ game: outcome.game, revision: outcome.revision }));
+    }
+  } catch (error) {
+    // Swallowed on purpose; the session reports connection state separately.
+    logger.error('multiplayer', 'publishing failed', { error: String(error) });
+  }
+};
+
 export const runGameCommand =
   (command: RuntimeGameCommand) =>
-  (dispatch: AppDispatch, getState: () => { game: GameSliceState }) => {
+  (
+    dispatch: AppDispatch,
+    getState: () => { game: GameSliceState },
+    extra: ThunkExtra
+  ) => {
     const currentGame = getState().game.activeGame;
     if (!currentGame) {
       return null;
@@ -164,6 +238,24 @@ export const runGameCommand =
       );
       dispatch(setCommandError(saveFailure));
       dispatch(bootstrapRecentGames());
+
+      // Fire-and-forget, and deliberately last. The engine is never awaited
+      // and local persistence stays synchronous: the network is a replication
+      // layer beside the command path, not inside it. For a hot-seat game this
+      // is LocalSession and resolves to nothing, so there is one code path
+      // rather than an `if (isOnline)` that can rot on one side.
+      //
+      // Nothing here may throw into the caller - this runs after the move has
+      // already been applied and saved, so a network failure must not look
+      // like a rejected command.
+      void publishInBackground(
+        dispatch,
+        extra,
+        result.nextState,
+        command,
+        getState().game.revision
+      );
+
       return result;
     } catch (error) {
       const { message, stack } = describeError(error);

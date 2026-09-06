@@ -5,6 +5,7 @@ import {
   CardDeck,
   CardEffectKind,
   ColorGroup,
+  DeckName,
   GameEventCue,
   MoveDirection,
   GameStatus,
@@ -198,29 +199,83 @@ const tradeStateSchema = z.object({
 });
 
 /**
- * The pending decision stays loose, deliberately, and it is the only thing that
- * does.
+ * The pending decision, described in full.
  *
- * `.passthrough()` is what lets a decision carry its own payload through a
- * save/load round trip - the drawn card, a liquidation's queued debts - where
- * the surrounding `z.object` would strip an unknown key. The refinements below
- * guard the payloads the game cannot recover without.
+ * It used to be `.passthrough()` with two refinements, so that a decision could
+ * carry its own payload - the drawn card, a liquidation's queued debts - where
+ * the surrounding `z.object` would strip an unknown key. On disk that was a
+ * fair trade: the only writer was this app.
+ *
+ * Over a network it is not. A published state is validated with this schema
+ * before it reaches the engine, and `.passthrough()` is precisely the hole
+ * through which a peer could hang arbitrary keys off a decision. Writing the
+ * union out costs a few lines and closes it, and it now describes every payload
+ * rather than spot-checking two of them.
+ *
+ * Anything added to a decision needs a line here, exactly as the rest of the
+ * save already does.
  */
-const pendingDecisionSchema = z
-  .object({ type: z.nativeEnum(PendingDecisionType) })
-  .passthrough()
-  .refine(
-    (decision) =>
-      decision.type !== PendingDecisionType.CardDraw ||
-      typeof (decision as { card?: unknown }).card === 'object',
-    { message: 'A card-draw decision must carry the drawn card' }
-  )
-  .refine(
-    (decision) =>
-      decision.type !== PendingDecisionType.AssetLiquidation ||
-      typeof (decision as { amountDue?: unknown }).amountDue === 'number',
-    { message: 'A liquidation decision must carry the amount owed' }
-  );
+const debtRecordSchema = z.object({
+  playerId: z.string(),
+  amountDue: z.number(),
+  creditorPlayerId: z.string().nullable(),
+  reason: z.string(),
+});
+
+const pendingDecisionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal(PendingDecisionType.None) }),
+  z.object({
+    type: z.literal(PendingDecisionType.LandedUnownedProperty),
+    spaceId: z.string(),
+    playerId: z.string(),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.AuctionBid),
+    auctionId: z.string(),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.JailChoice),
+    playerId: z.string(),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.CardDraw),
+    playerId: z.string(),
+    deck: z.nativeEnum(DeckName),
+    // The game cannot recover this: the card has already left the deck.
+    card: deckCardSchema,
+  }),
+  debtRecordSchema.extend({
+    type: z.literal(PendingDecisionType.AssetLiquidation),
+    // Optional because a game saved before the queue existed comes back
+    // without it, and the engine already reads it as `queued ?? []`.
+    queued: z.array(debtRecordSchema).optional(),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.BuildingPlacement),
+    playerId: z.string(),
+    buildingKind: z.nativeEnum(BuildingKind),
+    paidAmount: z.number(),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.TradeResponse),
+    proposerPlayerId: z.string(),
+    recipientPlayerId: z.string(),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.BankruptcyResolution),
+    playerId: z.string(),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.SpeedDieBus),
+    playerId: z.string(),
+    whiteDice: z.tuple([z.number(), z.number()]),
+  }),
+  z.object({
+    type: z.literal(PendingDecisionType.SpeedDieDestination),
+    playerId: z.string(),
+  }),
+  z.object({ type: z.literal(PendingDecisionType.GameOver) }),
+]);
 
 // -- The game ----------------------------------------------------------------
 
