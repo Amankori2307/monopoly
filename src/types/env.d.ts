@@ -14,12 +14,13 @@ interface ImportMetaEnv {
   /** The Supabase project URL, e.g. https://<ref>.supabase.co */
   readonly VITE_SUPABASE_URL?: string;
   /**
-   * The Supabase anon key.
+   * The Supabase publishable key - what the dashboard used to call the anon
+   * key, and still the second argument to `createClient`. Either format works.
    *
    * Public by design: it is compiled into the JS bundle every visitor
    * downloads, so it is an identifier, not a secret. Row Level Security is the
-   * actual access control. A `service_role` key must never appear here, in a
-   * .env file, or in CI - it bypasses RLS entirely.
+   * actual access control. The `sb_secret_` key (formerly `service_role`) must
+   * never appear here, in a .env file, or in CI - it bypasses RLS entirely.
    */
   readonly VITE_SUPABASE_ANON_KEY?: string;
 }

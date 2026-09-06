@@ -12,7 +12,11 @@ import type { OnlineConfig } from './onlineConfig.interfaces';
  * which game they are playing.
  *
  * It also has to be safe to evaluate under Vitest, where `import.meta.env`
- * carries none of these. Throwing here would take all 1062 unit tests with it.
+ * carries none of these. Throwing here would take every unit test with it.
+ *
+ * The values live in `.env.production`, so `test` and `development` resolve to
+ * null and only a production build is online. That is deliberate: the unit
+ * suite and the ordinary e2e run must never reach the network.
  */
 
 /** An origin we are willing to send a game to. */
