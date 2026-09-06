@@ -13,6 +13,12 @@
 
 # misc
 .DS_Store
+# A plain `.env` is loaded in EVERY vite mode, `test` included - so one sitting
+# here would silently give all the unit tests a network-enabled config. Keep
+# real values in `.env.production`, which is committed on purpose: the anon key
+# it holds ships inside the public bundle anyway. A `service_role` key belongs
+# in none of these files.
+.env
 .env.local
 .env.development.local
 .env.test.local

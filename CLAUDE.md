@@ -186,7 +186,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1062 unit tests, 123 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1075 unit tests, 123 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -261,6 +261,18 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   and `robots.txt` used to advertise `monopoly.amankori.me`, which does not resolve - no `CNAME`
   exists and none should be added without DNS first, because setting a custom domain with no DNS
   behind it takes the working github.io URL down too.
+- **Configuration is read through `import.meta.env`, and absent configuration is not an error.**
+  The old CRA `REACT_APP_*` shim in `vite.config.mjs` is gone - nothing had read `process.env` in
+  years. [onlineConfig.utils.ts](src/features/multiplayer/onlineConfig.utils.ts) resolves the two
+  Supabase variables **once** and returns `null` when either is missing or the url is not a real
+  remote origin, so a build without them is exactly the offline hot-seat game rather than one that
+  fails at the network. Two traps: `src/types/env.d.ts` is hand-written because
+  `/// <reference types="vite/client" />` re-declares the `*.svg`/`*.png`/`*.wav`/`*.json` modules
+  that `src/types/assets.d.ts` already owns; and **a plain `.env` is loaded in every Vite mode,
+  `test` included** - one sitting in the repo would silently hand all the unit tests a
+  network-enabled config, so it is gitignored and `onlineConfig.test.ts` asserts this build is
+  offline under test. The anon key is public by design (it ships in the bundle) and RLS is the real
+  access control; a `service_role` key belongs in no .env, no bundle and no CI secret.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

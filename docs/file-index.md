@@ -145,6 +145,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [persistence/migrations.test.ts](../src/features/persistence/migrations.test.ts)                           | v1 saves upgrading, and future versions passing through untouched.                                            |
 | [persistence/persistence.errors.test.ts](../src/features/persistence/persistence.errors.test.ts)           | Quota failures, and a behind-version save being written back.                                                 |
 | [persistence/schema.ts](../src/features/persistence/schema.ts)                                             | Zod schemas validating anything read back out of storage.                                                     |
+| [multiplayer/onlineConfig.utils.ts](../src/features/multiplayer/onlineConfig.utils.ts)                     | Resolves the realtime backend config once, or `null`. Absent config means offline, never an error.            |
+| [multiplayer/onlineConfig.interfaces.ts](../src/features/multiplayer/onlineConfig.interfaces.ts)           | `OnlineConfig`: the validated project url and anon key.                                                       |
 | [persistence/schema.test.ts](../src/features/persistence/schema.test.ts)                                   | The corruption the schema now refuses at the boundary.                                                        |
 | [persistence/migrations.ts](../src/features/persistence/migrations.ts)                                     | Brings an older save up to the current GAME_STATE_VERSION, before validation.                                 |
 | [persistence/persistence.errors.ts](../src/features/persistence/persistence.errors.ts)                     | StorageWriteError: a write the browser refused, told apart from a bug.                                        |
@@ -375,6 +377,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [playwright.config.ts](../playwright.config.ts)         | E2E config; auto-starts the dev server on :3000. On CI it refuses to adopt one it did not start. |
 | [.claude/launch.json](../.claude/launch.json)           | Dev-server definition used by the in-editor browser preview.                                     |
 | [.github/workflows/ci.yml](../.github/workflows/ci.yml) | GitHub Actions: `check-all` + unit tests + build in one job, Playwright in another.              |
+| [.env.production.example](../.env.production.example)   | The two Supabase variables, and why the anon key is not a secret. Copy to `.env.production`.     |
 
 ## Assets and tools
 
@@ -390,10 +393,11 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## Other
 
-| File                                                        | What it does                                               |
-| ----------------------------------------------------------- | ---------------------------------------------------------- |
-| [src/reportWebVitals.ts](../src/reportWebVitals.ts)         | Optional web-vitals reporting hook. Not currently called.  |
-| [src/types/assets.d.ts](../src/types/assets.d.ts)           | Module declarations for importing images, audio, and JSON. |
-| [src/types/css-modules.d.ts](../src/types/css-modules.d.ts) | Module declarations for CSS/SCSS module imports.           |
+| File                                                        | What it does                                                                                        |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [src/reportWebVitals.ts](../src/reportWebVitals.ts)         | Optional web-vitals reporting hook. Not currently called.                                           |
+| [src/types/assets.d.ts](../src/types/assets.d.ts)           | Module declarations for importing images, audio, and JSON.                                          |
+| [src/types/env.d.ts](../src/types/env.d.ts)                 | Types `import.meta.env`. Hand-written, not `vite/client` - that would re-declare the asset modules. |
+| [src/types/css-modules.d.ts](../src/types/css-modules.d.ts) | Module declarations for CSS/SCSS module imports.                                                    |
 
 ---
