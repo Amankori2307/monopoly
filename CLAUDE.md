@@ -186,7 +186,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1075 unit tests, 123 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1093 unit tests, 124 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -240,6 +240,16 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 - **A migration writes the shape of its own version, not today's.** `v4ToV5` still writes a `tone` as plain strings, and `v7ToV8` converts it - pointing v5 at the current enum made v8 overwrite its own input with nothing.
 - **`GameCommandResult.events` is what this command appended**, and `saveRequired` is derived from whether the state changed. Both used to lie — `events` returned the whole capped history — so the toast feed diffed `history` itself. It no longer needs to.
 - **`asset-liquidation` is resolvable, and queues.** `settleDebt` clears it; selling buildings and mortgaging are how the cash is raised, and both deliberately leave `pendingDecision` alone. Several debts from one card all stand: the extras ride in the decision's own `queued` array, which survives a save because `pendingDecision` is the one part validated with `.passthrough()`. Read it as `queued ?? []` — a game saved before the queue existed comes back without it.
+- **The engine derives its actor from the state, never from the caller — and `getActivePlayer` is
+  the wrong source for three of them.** [actor.utils.ts](src/domain/rules/actor.utils.ts) states it
+  once: `decisionOwnerOf` (who must answer the pending decision - the trade's _recipient_, the
+  auction's _current bidder_, the liquidation's _debtor_), `getExpectedActorId` (that, or whoever's
+  turn it is), and `getAssetHolderId` (whose holdings a cash-raising command acts on: the debtor
+  during a liquidation, the active player otherwise). A `collect-from-each` card bills every player,
+  so the one who cannot pay is often not the active player - and `mortgageAsset` / `sellHouse` /
+  `sellHotel` read `getActivePlayer`, so that debtor was told they did not own their own site and
+  bankruptcy was their only exit. `decisionOwnerOf` is exhaustive over the twelve decision types on
+  purpose: a new one is a type error rather than a silent default to the active player.
 - **A mortgaged property still counts toward colour-set completeness and the railway/utility counts** — deliberate, and matches the printed rule.
 - **`movePlayerTo` takes a required `MoveDirection`**, and records it as `player.lastMove`. It has no default on purpose: two readers need it and neither can recover it. The GO salary is only paid going forward — the wrap test (`next < current`) is true of every backward move too — and the walking animation reads `lastMove` to know which way round the board to step. It used to infer direction from the position change, which cannot tell "back three spaces" from thirty-seven forward, and capped the walk at a dice roll so every longer move snapped.
 - **`sendPlayerToJail` goes through `movePlayerTo`, backward.** Backward is the truth of it: no salary is paid for the trip, so walking the token forward would show a journey that did not happen — and from a Chance space just past GO, Jail is a few spaces _ahead_, so it looked like an ordinary roll. Setting `position` directly is what left it with no direction to report.

@@ -435,6 +435,11 @@ The order of rescue when you cannot pay:
 | 11.2 | 2. Mortgage properties                       | ✅                           |
 | 11.3 | 3. Sell or trade properties to other players | ✅                           |
 
+**The debtor is not always the player whose turn it is.** A `collect-from-each` card bills everyone,
+so the player who cannot pay is often someone else at the table. The liquidation is theirs to answer
+and the cash is raised out of _their_ holdings — see `getAssetHolderId` in
+[actor.utils.ts](../src/domain/rules/actor.utils.ts).
+
 **Owing money you cannot pay works.** The debt raises an `asset-liquidation` decision naming the
 amount, the creditor and the reason. The panel lists every building you could sell and every site you
 could mortgage, and what each pays — buildings first, because a site whose colour set holds any

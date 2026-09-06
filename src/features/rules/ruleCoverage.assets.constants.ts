@@ -22,10 +22,14 @@ export const ASSET_RULE_COVERAGE: RuleCoverageMap = {
   '11.1': [
     'offers building sales inside the liquidation panel',
     'leaves a pending liquidation standing',
+    // The debtor is not always the active player - see actor.utils.
+    'sells a building off their own street',
   ],
   '11.2': [
     'lets the debtor mortgage a site and settle, paying the creditor',
     'a player who cannot pay can mortgage their way out',
+    'mortgages their own site',
+    'a debtor who is not the active player can mortgage their way out',
   ],
   '11.3': ['moves sites and cash both ways on acceptance'],
   '11.4': [

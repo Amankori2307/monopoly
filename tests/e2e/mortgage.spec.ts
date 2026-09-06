@@ -456,3 +456,92 @@ test("auctions a bankrupt player's sites, one after another", async ({ page }) =
   expect(state.queue).toEqual([]);
   expect(state.ownedCount).toBe(1);
 });
+
+/**
+ * Every liquidation fixture above makes the debtor the active player, which is
+ * why this went unnoticed: a collect-from-each card bills everyone, so the
+ * player who cannot pay is often *not* the one whose turn it is. The panel
+ * already named the right debtor and listed their sites; the engine command
+ * behind the button read the active player, so clicking Mortgage was refused
+ * with "<active player> does not own <site>" and bankruptcy was the only exit.
+ */
+test('a debtor who is not the active player can mortgage their way out', async ({
+  page,
+}) => {
+  await startGame(page);
+
+  const seeded = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    // The debtor is deliberately NOT the active player.
+    const [debtor, other] = game.playerOrder;
+    const streets = game.board.filter((s: { kind: string }) => s.kind === 'street');
+
+    Object.keys(game.ownership).forEach((id) => {
+      game.ownership[id] = { ownerPlayerId: null, mortgaged: false, buildLevel: 0 };
+    });
+    game.ownership[streets[0].id] = {
+      ownerPlayerId: debtor,
+      mortgaged: false,
+      buildLevel: 0,
+    };
+
+    game.players[debtor].cash = 10;
+    game.activePlayerIndex = game.playerOrder.indexOf(other);
+    game.pendingDecision = {
+      type: 'asset-liquidation',
+      playerId: debtor,
+      // Small enough that one mortgage clears it, so the test can assert the
+      // debtor got all the way out rather than only that cash moved.
+      amountDue: 20,
+      creditorPlayerId: other,
+      reason: 'a card they could not pay',
+      queued: [],
+    };
+    game.turn = {
+      phase: 'await_decision',
+      doublesCount: 0,
+      lastRoll: [3, 4],
+      canRollAgain: false,
+      reason: 'a card',
+      speedDieFace: null,
+      pendingMonopolyAdvance: false,
+    };
+    localStorage.setItem(key, JSON.stringify(game));
+
+    return {
+      debtorName: game.players[debtor].name as string,
+      activeName: game.players[other].name as string,
+      mortgageValue: streets[0].mortgageValue as number,
+    };
+  });
+
+  await page.reload();
+  await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
+
+  const panel = page.getByTestId(TEST_IDS.liquidationDecision);
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText(seeded.debtorName);
+
+  await page.locator(`[data-testid^="${TEST_IDS.liquidationMortgage}-"]`).first().click();
+
+  // The mortgage went through: no refusal banner, and the debt panel now shows
+  // enough cash raised to settle.
+  await expect(page.getByTestId(TEST_IDS.commandError)).toBeHidden();
+  await expect(page.getByTestId(TEST_IDS.liquidationSettle)).toBeEnabled();
+
+  const cash = await page.evaluate((debtorName: string) => {
+    const key = Object.keys(localStorage).find((k) =>
+      k.startsWith('monopoly.game.')
+    ) as string;
+    const game = JSON.parse(localStorage.getItem(key) as string);
+    const debtor = Object.values(game.players).find(
+      (p) => (p as { name: string }).name === debtorName
+    ) as { cash: number };
+    return debtor.cash;
+  }, seeded.debtorName);
+
+  expect(cash).toBe(10 + seeded.mortgageValue);
+});

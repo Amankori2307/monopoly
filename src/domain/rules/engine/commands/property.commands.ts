@@ -15,6 +15,7 @@ import {
   updateSpaceOwnership,
 } from '../state.utils';
 import { resumeTurnAfterDecision } from '../turn.utils';
+import { getAssetHolder } from '../../actor.utils';
 import type { CommandHandlers } from './command.interfaces';
 
 /**
@@ -77,7 +78,11 @@ export const propertyCommands: CommandHandlers = {
   },
   [GameCommandType.MortgageAsset]: (state, command, _randomSource) => {
     let nextState = state;
-    const activePlayer = getActivePlayer(nextState);
+    // The asset holder, not the active player: a collect-from-each card can
+    // leave someone who is not the active player owing money, and mortgaging
+    // is the documented way out. Reading getActivePlayer here told that debtor
+    // they did not own their own site, so their only exit was bankruptcy.
+    const activePlayer = getAssetHolder(nextState);
     const space = getSpaceById(nextState, command.spaceId);
     if (!isOwnableSpace(space)) {
       throw new Error(`${space.name} cannot be mortgaged.`);

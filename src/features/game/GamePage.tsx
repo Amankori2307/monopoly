@@ -9,6 +9,7 @@ import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { selectSpaceOwnerMarks } from './boardOwnership.utils';
 import { GameOverlayLayer } from './GameOverlayLayer';
+import { getAssetHolderId } from '../../domain/rules/actor.utils';
 import { selectSitePanel } from './sitePanel.utils';
 import {
   BOARD_CENTER_SUBTITLE,
@@ -18,7 +19,6 @@ import {
 import { GameUnavailable } from './GameUnavailable';
 import {
   makeTokenFinder,
-  selectActivePlayer,
   selectCanEndTurn,
   selectCanRollDice,
   selectPlayerSummaries,
@@ -66,7 +66,6 @@ export function GamePage() {
     return <GameUnavailable loadError={loadError} />;
   }
 
-  const activePlayer = selectActivePlayer(activeGame);
   const findToken = makeTokenFinder(theme);
   const summaries = selectPlayerSummaries(activeGame, theme);
   const selectedSummary =
@@ -169,9 +168,14 @@ export function GamePage() {
           selectedSummary={selectedSummary}
           isMoving={isMoving}
           soundEnabled={soundEnabled}
+          // The asset holder, not the active player. While a liquidation is
+          // pending the debtor is the one who has to raise cash, and a
+          // collect-from-each card can bill someone whose turn it is not -
+          // so showing the active player's sites left that debtor with no way
+          // to mortgage and bankruptcy as their only exit.
           sitePanel={selectSitePanel(
             activeGame,
-            activePlayer.id,
+            getAssetHolderId(activeGame),
             selectedSpace,
             ownerMarks
           )}

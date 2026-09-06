@@ -666,3 +666,61 @@ describe('the sound cue a command leaves behind', () => {
     expect(store.getState().ui.toasts.length).toBeGreaterThan(0);
   });
 });
+
+/**
+ * A collect-from-each card bills every player, so a player whose turn it is
+ * not can be left owing money they cannot pay. Mortgaging is the documented
+ * way out of that, and it used to act on the active player - so the debtor was
+ * told they did not own their own site. This asserts the whole path: thunk,
+ * engine, store and the saved copy.
+ */
+describe('a non-active debtor raising cash', () => {
+  it('mortgages their own site and the save agrees', async () => {
+    const store = makeStore();
+    await store.dispatch(createNewGame(input()));
+
+    const created = store.getState().game.activeGame as NonNullable<
+      ReturnType<typeof store.getState>['game']['activeGame']
+    >;
+    const activeId = created.playerOrder[created.activePlayerIndex];
+    const debtorId = created.playerOrder.find((id) => id !== activeId) as string;
+    const site = created.board.find(
+      (space) => space.kind === SpaceKind.Street
+    ) as (typeof created.board)[number] & { mortgageValue: number };
+
+    store.dispatch(
+      setActiveGame({
+        ...created,
+        ownership: {
+          ...created.ownership,
+          [site.id]: {
+            ...created.ownership[site.id],
+            ownerPlayerId: debtorId,
+          },
+        },
+        pendingDecision: {
+          type: PendingDecisionType.AssetLiquidation,
+          playerId: debtorId,
+          amountDue: 100,
+          creditorPlayerId: activeId,
+          reason: 'a card they could not pay',
+          queued: [],
+        },
+        turn: { ...created.turn, phase: TurnPhase.AwaitDecision },
+      })
+    );
+
+    const cashBefore = store.getState().game.activeGame!.players[debtorId].cash;
+
+    await store.dispatch(
+      runGameCommand({ type: GameCommandType.MortgageAsset, spaceId: site.id })
+    );
+
+    const after = store.getState().game.activeGame!;
+    expect(after.ownership[site.id].mortgaged).toBe(true);
+    expect(after.players[debtorId].cash).toBe(cashBefore + site.mortgageValue);
+    // The active player is untouched - the command acted on the debtor.
+    expect(after.players[activeId].cash).toBe(created.players[activeId].cash);
+    expect(storedGame(created.id).ownership[site.id].mortgaged).toBe(true);
+  });
+});

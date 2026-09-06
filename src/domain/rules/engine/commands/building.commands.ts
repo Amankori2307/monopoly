@@ -30,6 +30,7 @@ import {
   updateSpaceOwnership,
 } from '../state.utils';
 import { resumeTurnAfterDecision } from '../turn.utils';
+import { getAssetHolder } from '../../actor.utils';
 import type { CommandHandlers } from './command.interfaces';
 
 /**
@@ -113,7 +114,10 @@ const sellHouseHandler = (
   _randomSource: RandomSource
 ): GameState => {
   let nextState = state;
-  const activePlayer = getActivePlayer(nextState);
+  // The asset holder, not the active player: selling buildings is how a debtor
+  // raises cash during a liquidation, and that debtor is not always whoever's
+  // turn it is - a collect-from-each card can bill anyone.
+  const activePlayer = getAssetHolder(nextState);
   const space = getSpaceById(nextState, command.spaceId);
   const blocked = sellBlockedReason(nextState, command.spaceId, activePlayer.id);
   if (blocked) {
