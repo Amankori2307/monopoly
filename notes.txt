@@ -1,18 +1,6 @@
+make it mobile resposive
+deploy on my domain
 
-
-
-Build a better UI and theme
-- Use better icons
-- Mail the jail / visiting only proper
-
-
-Actual Houses and Hotel
-
-
-I have made the game working, now I have to make the game playable, so that it is actually usable
-
-
-
-
-
-
+Supabase:
+DB password: pZ$zRLIu1Rz!VkNE
+API Key: sb_publishable_bW-3Vm8qgi4za6s37x5R5A_TFwCJuK-

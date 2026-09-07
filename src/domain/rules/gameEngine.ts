@@ -1,5 +1,7 @@
-import { communityChestCards, chanceCards } from '../cards/indiaEditionCards';
-import { indiaEditionBoard, indiaEditionRulesetId } from '../board/indiaEditionBoard';
+import { STANDARD_RULESET_ID } from '../constants/board.constants';
+import { buildBoard } from '../themes/buildBoard.utils';
+import { buildCards } from '../themes/buildCards.utils';
+import { getThemeOrDefault } from '../themes/themes.registry';
 import {
   GAME_STATE_VERSION,
   HOTELS_AVAILABLE,
@@ -164,7 +166,13 @@ export const createGameState = (
 ): GameState => {
   const players = createPlayers(input);
   const playerOrder = chooseFirstPlayerOrder(Object.keys(players), randomSource);
-  const board = indiaEditionBoard;
+  // The board is the theme's, not a constant. This used to be
+  // `indiaEditionBoard` outright, so the ruleset picker on the home page chose
+  // a name and a currency and then dealt the same forty Indian cities whatever
+  // it said.
+  const theme = getThemeOrDefault(input.themeId);
+  const board = buildBoard(theme);
+  const cards = buildCards(theme);
   const now = input.createdAt;
   const name =
     input.name?.trim() ||
@@ -175,7 +183,7 @@ export const createGameState = (
     id: input.gameId ?? randomUUID(),
     name,
     themeId: input.themeId,
-    rulesetId: indiaEditionRulesetId,
+    rulesetId: STANDARD_RULESET_ID,
     status: GameStatus.InProgress,
     createdAt: now,
     updatedAt: now,
@@ -191,8 +199,8 @@ export const createGameState = (
       hotelsAvailable: HOTELS_AVAILABLE,
     },
     decks: {
-      chance: shuffle(chanceCards, randomSource),
-      communityChest: shuffle(communityChestCards, randomSource),
+      chance: shuffle(cards.chance, randomSource),
+      communityChest: shuffle(cards.communityChest, randomSource),
     },
     turn: {
       phase: TurnPhase.AwaitRoll,

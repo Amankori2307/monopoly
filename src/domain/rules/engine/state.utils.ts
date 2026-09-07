@@ -7,9 +7,8 @@ import type {
   OwnershipState,
   PlayerId,
   PlayerState,
-  ThemeConfig,
 } from '../../types/game.interfaces';
-import { availableThemes, indiaEditionTheme } from '../../themes/indiaEditionTheme';
+import { getThemeOrDefault } from '../../themes/themes.registry';
 import { randomUUID } from '../id.utils';
 
 /**
@@ -51,8 +50,9 @@ export const createEvent = (
 export const money = (state: GameState, amount: number): string =>
   `${getThemeOrDefault(state.themeId).currencySymbol}${amount}`;
 
-export const getThemeOrDefault = (themeId: string): ThemeConfig =>
-  availableThemes.find((theme) => theme.id === themeId) ?? indiaEditionTheme;
+// Re-exported rather than reimplemented: this was one of three copies of
+// `availableThemes.find(...)` that CLAUDE.md's DRY table has been tracking.
+export { getThemeOrDefault } from '../../themes/themes.registry';
 
 /**
  * Identifies one throw of the dice.

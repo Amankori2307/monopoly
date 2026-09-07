@@ -8,11 +8,7 @@ import { useIsRollingDice } from '../../components/game/hooks/useIsRollingDice';
 import { useTableState } from '../multiplayer/hooks/useTableState';
 import { GameSidebar } from '../../components/game/layout/GameSidebar';
 import { selectBoardViewModels } from './boardViewModels.selectors';
-import {
-  BOARD_CENTER_SUBTITLE,
-  BOARD_CENTER_TITLE,
-  TOAST_DISMISS_MS,
-} from './game.constants';
+import { TOAST_DISMISS_MS } from './game.constants';
 import { GameUnavailable } from './GameUnavailable';
 import { selectCanEndTurn, selectCanRollDice } from './gameView.selectors';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -87,8 +83,8 @@ export function GamePage() {
         >
           <BoardGrid
             board={activeGame.board}
-            centerSubtitle={BOARD_CENTER_SUBTITLE}
-            centerTitle={BOARD_CENTER_TITLE}
+            centerSubtitle={theme.boardCenter.subtitle}
+            centerTitle={theme.boardCenter.title}
             findToken={findToken}
             onSelectSpace={overlays.selectSpace}
             ownerMarks={ownerMarks}

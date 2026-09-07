@@ -19,3 +19,14 @@ export const UTILITY_RENT_MULTIPLIER_BOTH = 10;
  */
 export const INCOME_TAX_AMOUNT = 200;
 export const SUPER_TAX_AMOUNT = 100;
+
+/**
+ * The rules every edition plays by.
+ *
+ * One id rather than one per theme, because the rules genuinely are the same:
+ * rent, building, mortgaging, jail and bankruptcy are identical across every
+ * licensed edition - only the names and the currency change. A second ruleset
+ * id would be a claim that a London game plays differently from an Indian one,
+ * which is not true and which nothing in the engine would honour.
+ */
+export const STANDARD_RULESET_ID = 'standard-2021';

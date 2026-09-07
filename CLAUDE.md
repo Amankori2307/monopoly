@@ -398,6 +398,18 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   recognise - that is its DNS-rebinding protection - so an ngrok URL answers "Blocked request. This
   host is not allowed." The tunnel domains are allowed in **`online` mode only**; `pnpm dev`, the
   server the e2e suite starts, keeps the protection.
+- **A theme is one file, and the economics are not in it.** `src/domain/themes/<name>.theme.ts`
+  carries what makes an edition _that_ edition - its name, currency, pieces, the forty square names
+  and the board's centre - and `themes.registry.ts` lists it. Prices, rents and rules live once in
+  [boardLayout.constants.ts](src/domain/themes/boardLayout.constants.ts), because they genuinely are
+  the same: Old Kent Road, Mediterranean Avenue and Guwahati are all the cheapest brown at 60 renting
+  2, in every licensed edition. That split is what keeps a new theme to forty strings and stops two
+  editions drifting into two subtly different games. **The ruleset picker used to select nothing** -
+  `createGameState` read `indiaEditionBoard` outright - so it set a name and a currency and then
+  dealt the same forty Indian cities whatever it said. The cards are built from the theme too; they
+  used to hardcode `DEFAULT_CURRENCY_SYMBOL`, so a London board would have promised rupees. Still
+  outside the theme file: its **palette**, which stays in `styles/themes/_themes.scss` keyed by the
+  theme's `id` - moving it in is the next phase, so today a theme is that file plus one SCSS block.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

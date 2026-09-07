@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { availableThemes } from '../../../domain/themes/indiaEditionTheme';
-import type { GameState, ThemeConfig } from '../../../domain/types/game.interfaces';
+import type { GameTheme } from '../../../domain/themes/theme.interfaces';
+import { getThemeOrDefault } from '../../../domain/themes/themes.registry';
+import type { GameState } from '../../../domain/types/game.interfaces';
 import { resolveCurrencySymbol } from '../../../shared/utils/money.utils';
 import { logger } from '../../../shared/utils/logger.utils';
 import { selectHasAvailableAction } from '../gameView.selectors';
@@ -12,7 +13,8 @@ export interface UseActiveGameResult {
   commandError: string | null;
   currencySymbol: string;
   loadError: string | null;
-  theme: ThemeConfig | undefined;
+  /** Never undefined: an unknown themeId falls back to the default. */
+  theme: GameTheme;
 }
 
 /**
@@ -29,8 +31,12 @@ export const useActiveGame = (gameId: string): UseActiveGameResult => {
     dispatch(loadGameById(gameId));
   }, [dispatch, gameId]);
 
+  // getThemeOrDefault rather than a find of its own: this was one of the three
+  // copies of the lookup CLAUDE.md's DRY table tracked, and it is the one that
+  // could return undefined - so the board's centre and its currency had to be
+  // written as constants because nothing could be relied on to supply them.
   const theme = useMemo(
-    () => availableThemes.find((candidate) => candidate.id === activeGame?.themeId),
+    () => getThemeOrDefault(activeGame?.themeId ?? ''),
     [activeGame?.themeId]
   );
 

@@ -1,3 +1,4 @@
+import { BOARD_LAYOUT } from '../../../domain/themes/boardLayout.constants';
 import { SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import type { SpaceGlyph } from './spaceIcon.interfaces';
@@ -27,17 +28,28 @@ export const KIND_GLYPHS: Partial<Record<SpaceKind, SpaceGlyph>> = {
  * The two spaces that need something other than their kind's default: one of
  * two utilities, one of two taxes.
  *
- * Keyed by **index**, not by display name. The name is what the board prints
- * and what the ruleset doc pins, so renaming a space is an ordinary edit - and
- * when this map was keyed by name, such an edit silently dropped the icon with
- * no test failing. Indices are positional and stable by construction
- * (indiaEditionBoard: "index 7 is always space-7"), and the registry test
- * asserts each one still holds the kind it was written for.
+ * Derived from the shared layout rather than written out. It used to be a
+ * literal `{ 12: electricCompany, 38: superTax }`, which was really a fact
+ * about the India board wearing an index for a key - correct, but only because
+ * there was one board. The layout says which utility and which tax each square
+ * is, so this now holds for every edition by construction.
+ *
+ * Keyed by index rather than by display name for the original reason, which
+ * still stands: the name is what the board prints and what the ruleset doc
+ * pins, so renaming a square is an ordinary edit - and when this map was keyed
+ * by name, such an edit silently dropped the icon with no test failing.
  */
-const INDEX_GLYPH_OVERRIDES: Record<number, SpaceGlyph> = {
-  12: SPACE_GLYPHS.electricCompany,
-  38: SPACE_GLYPHS.superTax,
-};
+const INDEX_GLYPH_OVERRIDES: Record<number, SpaceGlyph> = BOARD_LAYOUT.reduce<
+  Record<number, SpaceGlyph>
+>((overrides, square, index) => {
+  if (square.kind === SpaceKind.Utility && square.utility === 'electric') {
+    overrides[index] = SPACE_GLYPHS.electricCompany;
+  }
+  if (square.kind === SpaceKind.Tax && square.tax === 'super') {
+    overrides[index] = SPACE_GLYPHS.superTax;
+  }
+  return overrides;
+}, {});
 
 export const getSpaceIcon = (space: BoardSpace): SpaceGlyph | undefined =>
   INDEX_GLYPH_OVERRIDES[space.index] ?? KIND_GLYPHS[space.kind];
