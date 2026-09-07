@@ -38,6 +38,61 @@
 }
 
 // ---------------------------------------------------------------------------
+// The same decision, for everyone who is not answering it
+// ---------------------------------------------------------------------------
+//
+// No backdrop, and that is the point: somebody else's turn must not read as a
+// frozen screen. This player can still open a deed, read the log, look at
+// holdings - so the panel sits in the corner rather than over the board.
+.decision-spectator {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 35;
+  width: min(calc(100vw - 40px), 380px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  // Belt and braces with the <fieldset disabled>: that makes every control
+  // inert, this catches the parts of a panel that are not controls at all.
+  pointer-events: none;
+  animation: modal-rise 0.22s cubic-bezier(0.22, 0.7, 0.3, 1);
+
+  fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .decision-card {
+    margin: 0;
+  }
+
+  // Nothing here is actionable, so it should not look actionable either.
+  button {
+    opacity: 0.55;
+  }
+}
+
+.decision-spectator-waiting {
+  @include m.mono-label;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: t.$radius-sharp;
+  background: var(--surface-muted);
+  color: var(--text-eyebrow);
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  .decision-spectator {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Side drawer
 // ---------------------------------------------------------------------------
 .drawer-backdrop {

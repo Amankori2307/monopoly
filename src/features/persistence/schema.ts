@@ -11,6 +11,7 @@ import {
   GameStatus,
   PendingDecisionType,
   SpaceKind,
+  TableMode,
   TurnPhase,
 } from '../../domain/types/game.enums';
 
@@ -313,9 +314,11 @@ export const gameStateSchema = z
       // A new key in this object would be stripped on load without a line here.
       speedDieFace: z.string().nullable(),
       pendingMonopolyAdvance: z.boolean(),
+      lastRollId: z.string().nullable(),
     }),
     pendingDecision: pendingDecisionSchema,
     useSpeedDie: z.boolean(),
+    tableMode: z.nativeEnum(TableMode),
     tradeState: tradeStateSchema.nullable(),
     pendingAuctionSpaceIds: z.array(z.string()),
     auctionState: auctionStateSchema.nullable(),

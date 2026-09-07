@@ -36,6 +36,7 @@ const seedLandedOnUnowned = async (page: Page) => {
       reason: 'Decide on the site',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 

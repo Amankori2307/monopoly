@@ -39,6 +39,7 @@ const jailActivePlayer = async (page: Page) => {
       reason: null,
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
     return { cash: game.players[playerId].cash as number };

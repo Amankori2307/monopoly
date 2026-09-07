@@ -25,6 +25,7 @@ export const TEST_IDS = {
 
   // Overlays
   decisionModal: 'decision-modal',
+  decisionSpectator: 'decision-spectator',
   activityButton: 'activity-button',
   activityDrawer: 'activity-drawer',
   playerDetailDrawer: 'player-detail-drawer',

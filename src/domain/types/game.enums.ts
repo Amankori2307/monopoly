@@ -98,6 +98,19 @@ export enum CardEffectKind {
   PayEach = 'pay-each',
 }
 
+/**
+ * Whether one browser is playing every seat, or each seat is its own device.
+ *
+ * On GameState rather than per-device, and that is a correctness point rather
+ * than a convenience: every device has to agree. If a client decided this for
+ * itself, one of them could declare itself hot-seat and take control of every
+ * seat at the table.
+ */
+export enum TableMode {
+  HotSeat = 'hot-seat',
+  Online = 'online',
+}
+
 export enum GameCommandType {
   CreateGame = 'createGame',
   RollTurnDice = 'rollTurnDice',

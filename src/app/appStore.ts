@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { gameReducer } from '../features/game/gameSlice';
 import { readSoundPreference } from '../features/game/soundPreference.utils';
 import { uiInitialState, uiReducer } from '../features/game/uiSlice';
+import { seatReducer } from '../features/multiplayer/seatSlice';
 import {
   createSessionRegistry,
   type ThunkExtra,
@@ -10,6 +11,7 @@ import {
 const reducer = {
   game: gameReducer,
   ui: uiReducer,
+  seat: seatReducer,
 };
 
 /** Whatever configureStore itself accepts, so callers may pass a partial tree. */

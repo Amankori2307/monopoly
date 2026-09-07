@@ -202,6 +202,28 @@ const v7ToV8 = (raw: Record<string, unknown>): Record<string, unknown> => {
   };
 };
 
+/**
+ * v8 -> v9: a table mode, and an id for the last throw of the dice.
+ *
+ * Both exist for online play, and both are pure defaults for a save written
+ * before it: every existing game is hot-seat, and `lastRollId` starts null
+ * because nothing has been rolled since the id existed - the dice on screen are
+ * a record of a throw this device already animated.
+ *
+ * Writes v9's shape and no later one's, per the rule this file learned the hard
+ * way at v4/v8.
+ */
+const v8ToV9 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const turn = (raw.turn ?? {}) as Record<string, unknown>;
+
+  return {
+    ...raw,
+    tableMode: 'hot-seat',
+    turn: { ...turn, lastRollId: null },
+    version: 9,
+  };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
@@ -210,6 +232,7 @@ const MIGRATIONS: Record<number, Migration> = {
   5: v5ToV6,
   6: v6ToV7,
   7: v7ToV8,
+  8: v8ToV9,
 };
 
 /**

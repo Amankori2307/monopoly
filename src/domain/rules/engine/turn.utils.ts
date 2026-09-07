@@ -59,6 +59,7 @@ export const advanceToNextTurn = (state: GameState): GameState => {
       phase: nextPlayer.inJail ? TurnPhase.AwaitDecision : TurnPhase.AwaitRoll,
       doublesCount: 0,
       lastRoll: null,
+      lastRollId: null,
       canRollAgain: false,
       speedDieFace: null,
       pendingMonopolyAdvance: false,

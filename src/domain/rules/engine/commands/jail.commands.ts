@@ -13,7 +13,13 @@ import { rollDie } from '../../rng';
 import { returnJailCardToDeck } from '../cards.utils';
 import { resolveBankPayment } from '../money.utils';
 import { movePlayerTo, resolveCurrentSpace } from '../movement.utils';
-import { appendEvents, createEvent, getActivePlayer, updatePlayer } from '../state.utils';
+import {
+  appendEvents,
+  createEvent,
+  createRollId,
+  getActivePlayer,
+  updatePlayer,
+} from '../state.utils';
 import type { CommandHandlers } from './command.interfaces';
 
 /**
@@ -106,6 +112,7 @@ export const jailCommands: CommandHandlers = {
         phase: TurnPhase.ResolvingMovement,
         doublesCount: 0,
         lastRoll: [dieOne, dieTwo],
+        lastRollId: createRollId(),
         canRollAgain: false,
         reason: null,
         // Only the white dice get a player out of Jail, so no Speed Die here.

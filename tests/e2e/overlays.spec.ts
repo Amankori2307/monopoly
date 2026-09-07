@@ -644,6 +644,7 @@ test('never offers a purchase the player cannot afford', async ({ page }) => {
       reason: null,
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
     return { name: street.name as string };

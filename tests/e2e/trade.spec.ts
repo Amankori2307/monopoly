@@ -40,6 +40,7 @@ const seedOneSiteEach = async (page: Page) => {
       reason: 'done',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 
@@ -243,6 +244,7 @@ test.describe('a trade is made of real deeds', () => {
         reason: 'done',
         speedDieFace: null,
         pendingMonopolyAdvance: false,
+        lastRollId: null,
       };
       localStorage.setItem(key, JSON.stringify(game));
 

@@ -15,6 +15,7 @@ import type {
   MortgageChoice,
   MoveDirection,
   SpeedDieFace,
+  TableMode,
   GameCommandType,
   GameEventCue,
   GameStatus,
@@ -186,6 +187,18 @@ export interface TurnState {
    * it cannot simply run inline, and has to survive until the turn is clear.
    */
   pendingMonopolyAdvance: boolean;
+  /**
+   * Identifies the throw that produced `lastRoll`, so every device can replay
+   * the same tumble exactly once.
+   *
+   * An explicit id rather than something derived: `history[0].id` changes on
+   * every command, not every roll, so a die would re-tumble on an unrelated
+   * move - and matching the history's wording is the regex trap CLAUDE.md
+   * section 8 already records as fixed once.
+   *
+   * Null before the first roll of a game.
+   */
+  lastRollId: string | null;
 }
 
 import type { PendingDecision } from './decisions.interfaces';
@@ -320,6 +333,11 @@ export interface GameState {
    * rule has it agreed before play starts, not switched on mid-game.
    */
   useSpeedDie: boolean;
+  /**
+   * One browser playing every seat, or a seat per device. Shared state, not a
+   * per-device setting - see TableMode.
+   */
+  tableMode: TableMode;
 }
 
 export interface StoredGameIndexEntry {
@@ -351,6 +369,8 @@ export interface CreateGameInput {
   createdAt: string;
   /** Agreed before the game starts, and fixed for its lifetime. */
   useSpeedDie?: boolean;
+  /** Defaults to hot-seat, which is every game created from the home page. */
+  tableMode?: TableMode;
 }
 
 export type GameCommand =

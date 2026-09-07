@@ -53,6 +53,15 @@ export const money = (state: GameState, amount: number): string =>
 export const getThemeOrDefault = (themeId: string): ThemeConfig =>
   availableThemes.find((theme) => theme.id === themeId) ?? indiaEditionTheme;
 
+/**
+ * Identifies one throw of the dice.
+ *
+ * Its own id rather than something derived from the history: `history[0].id`
+ * changes on every command, not every roll, so a die keyed off it would
+ * re-tumble on an unrelated move.
+ */
+export const createRollId = (): string => crypto.randomUUID();
+
 export const getPlayerById = (state: GameState, playerId: PlayerId): PlayerState =>
   state.players[playerId];
 

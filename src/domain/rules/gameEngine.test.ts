@@ -446,6 +446,7 @@ describe('the extra roll survives a decision', () => {
         // behind when a decision blocks the turn.
         canRollAgain: false,
         lastRoll: [3, 3],
+        lastRollId: 'roll-doubles',
         reason: 'Decide whether to buy.',
         speedDieFace: null,
         pendingMonopolyAdvance: false,

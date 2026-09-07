@@ -13,7 +13,7 @@ import {
   speedDieSteps,
 } from '../../speedDie.utils';
 import { advanceAndResolve, sendPlayerToJail } from '../movement.utils';
-import { appendEvents, createEvent, getActivePlayer } from '../state.utils';
+import { appendEvents, createEvent, createRollId, getActivePlayer } from '../state.utils';
 import {
   advanceToNextTurn,
   applyPendingMonopolyAdvance,
@@ -63,6 +63,7 @@ export const turnCommands: CommandHandlers = {
         phase: TurnPhase.ResolvingMovement,
         doublesCount: nextDoublesCount,
         lastRoll: [dieOne, dieTwo],
+        lastRollId: createRollId(),
         canRollAgain: false,
         speedDieFace,
         // Mr. Monopoly's advance is owed once the landed space has resolved.

@@ -42,6 +42,7 @@ const seedCompleteSet = async (page: Page, levels: number[] = [0, 0]) => {
       reason: 'done',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 
@@ -177,6 +178,7 @@ test('offers building sales inside the liquidation panel', async ({ page }) => {
       reason: 'rent',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
   });
@@ -250,6 +252,7 @@ test('auctions the last house when two players could use it', async ({ page }) =
       reason: 'done',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 

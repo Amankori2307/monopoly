@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { Viewer } from '../multiplayer/viewer.interfaces';
+import { ViewerKind } from '../multiplayer/viewer.enums';
+import { HOT_SEAT_VIEWER } from '../multiplayer/viewer.utils';
 import { createGameState, executeGameCommand } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
 import {
@@ -448,5 +451,66 @@ describe('the jail panel and the turn', () => {
     // And what is left to do is end the turn, which is now uncovered.
     expect(selectCanEndTurn(spent)).toBe(true);
     expect(selectHasAvailableAction(spent)).toBe(true);
+  });
+});
+
+/**
+ * Turn gating. The default viewer is the hot seat, so every existing caller and
+ * every local game behaves exactly as it did before seats existed - which is
+ * what the untouched tests above assert.
+ */
+describe('gating a turn on who is looking', () => {
+  const seated = (playerId: string): Viewer => ({
+    kind: ViewerKind.Seated,
+    playerId,
+  });
+
+  it('lets the player whose turn it is roll', () => {
+    const game = createGame();
+    const active = game.playerOrder[game.activePlayerIndex];
+
+    expect(selectCanRollDice(game, seated(active))).toBe(true);
+  });
+
+  it('refuses the roll to everybody else', () => {
+    const game = createGame();
+    const other = game.playerOrder.find(
+      (id) => id !== game.playerOrder[game.activePlayerIndex]
+    ) as string;
+
+    expect(selectCanRollDice(game, seated(other))).toBe(false);
+  });
+
+  it('refuses the roll to a spectator', () => {
+    expect(selectCanRollDice(createGame(), { kind: ViewerKind.Spectator })).toBe(false);
+  });
+
+  it('is unchanged for a hot-seat game', () => {
+    const game = createGame();
+
+    expect(selectCanRollDice(game)).toBe(selectCanRollDice(game, HOT_SEAT_VIEWER));
+    expect(selectCanRollDice(game, HOT_SEAT_VIEWER)).toBe(true);
+  });
+
+  it('gates ending a turn on the expected actor, not merely the active player', () => {
+    const game = createGame();
+    const active = game.playerOrder[game.activePlayerIndex];
+    const other = game.playerOrder.find((id) => id !== active) as string;
+    const finished: GameState = {
+      ...game,
+      turn: { ...game.turn, phase: TurnPhase.TurnComplete },
+    };
+
+    expect(selectCanEndTurn(finished, seated(active))).toBe(true);
+    expect(selectCanEndTurn(finished, seated(other))).toBe(false);
+  });
+
+  it('still reports an available action when only another player has one', () => {
+    // It is a deadlock detector, not a turn gate. Pointing it at the local
+    // player would make every device whose turn it is not log an error, every
+    // turn.
+    const game = createGame();
+
+    expect(selectHasAvailableAction(game)).toBe(true);
   });
 });

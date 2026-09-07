@@ -7,7 +7,12 @@ import {
   HOUSES_AVAILABLE,
   STARTING_CASH,
 } from '../constants/game.constants';
-import { GameStatus, PendingDecisionType, TurnPhase } from '../types/game.enums';
+import {
+  GameStatus,
+  PendingDecisionType,
+  TableMode,
+  TurnPhase,
+} from '../types/game.enums';
 import type {
   BoardSpace,
   CreateGameInput,
@@ -190,6 +195,7 @@ export const createGameState = (
       phase: TurnPhase.AwaitRoll,
       doublesCount: 0,
       lastRoll: null,
+      lastRollId: null,
       canRollAgain: false,
       reason: null,
       speedDieFace: null,
@@ -208,6 +214,7 @@ export const createGameState = (
     ],
     winnerPlayerId: null,
     useSpeedDie: input.useSpeedDie ?? false,
+    tableMode: input.tableMode ?? TableMode.HotSeat,
   };
 };
 

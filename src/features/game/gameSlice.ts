@@ -65,6 +65,7 @@ const slice = createSlice({
 });
 
 export const gameReducer = slice.reducer;
+export { initialState as gameInitialState };
 export const {
   setRecentGames,
   setActiveGame,

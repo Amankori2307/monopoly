@@ -1,6 +1,11 @@
 import { ActivityButton } from '../../components/game/overlays/ActivityButton';
 import { ActivityDrawer } from '../../components/game/overlays/ActivityDrawer';
 import { DecisionModal } from '../../components/game/overlays/DecisionModal';
+import { DecisionSpectatorLayer } from '../../components/game/overlays/DecisionSpectatorLayer';
+import { DecisionAudience } from './decisionAudience.enums';
+import { decisionActorId, decisionAudienceOf } from './decisionAudience';
+import type { Viewer } from '../multiplayer/viewer.interfaces';
+import { viewerControls } from '../multiplayer/viewer.utils';
 import type { SitePanelViewModel } from '../../components/game/overlays/overlays.interfaces';
 import { PlayerDetailDrawer } from '../../components/game/overlays/PlayerDetailDrawer';
 import type { PlayerSummary } from '../../components/game/panels/panels.interfaces';
@@ -28,6 +33,8 @@ interface GameOverlayLayerProps {
   overlays: UseGameOverlaysResult;
   selectedSummary: PlayerSummary | null;
   sitePanel: SitePanelViewModel;
+  /** Who is at this screen - the hot seat, one seat, or a spectator. */
+  viewer: Viewer;
 }
 
 /**
@@ -47,10 +54,25 @@ export function GameOverlayLayer({
   overlays,
   selectedSummary,
   sitePanel,
+  viewer,
   soundEnabled,
 }: GameOverlayLayerProps) {
   const tradeBuilder = overlays.tradeTargetPlayerId
     ? selectTradeBuilder(activeGame, findToken, overlays.tradeTargetPlayerId)
+    : null;
+
+  // One decision, two presentations. Resolved here rather than in either
+  // component so the owner and the table cannot end up looking at different
+  // states of the same game.
+  const decision = isMoving ? null : selectDecisionViewModel(activeGame, findToken);
+  const decisionOwnerId = decisionActorId(activeGame);
+  // Game over belongs to the whole table - there is no owner, and the panel is
+  // how anybody gets back to the home page. Everything else is one seat's.
+  const isOwner =
+    decisionAudienceOf(activeGame) === DecisionAudience.Everyone ||
+    viewerControls(viewer, decisionOwnerId);
+  const ownerName = decisionOwnerId
+    ? (activeGame.players[decisionOwnerId]?.name ?? null)
     : null;
 
   return (
@@ -119,14 +141,30 @@ export function GameOverlayLayer({
       ) : null}
 
       {/* Suppressed while a token walks, so a decision cannot appear before the
-          move that caused it has finished. */}
-      <DecisionModal
-        bidField={commands.bidField}
-        soundEnabled={soundEnabled}
-        currencySymbol={currencySymbol}
-        decision={isMoving ? null : selectDecisionViewModel(activeGame, findToken)}
-        handlers={commands.decisionHandlers}
-      />
+          move that caused it has finished.
+
+          Everyone sees the decision; only its owner can answer it. The owner
+          gets the modal, unchanged and still non-dismissible - the turn cannot
+          advance until they answer, so an escape hatch would only strand them.
+          Everyone else gets the same panel, inert. */}
+      {isOwner ? (
+        <DecisionModal
+          bidField={commands.bidField}
+          soundEnabled={soundEnabled}
+          currencySymbol={currencySymbol}
+          decision={decision}
+          handlers={commands.decisionHandlers}
+        />
+      ) : (
+        <DecisionSpectatorLayer
+          bidField={commands.bidField}
+          soundEnabled={soundEnabled}
+          currencySymbol={currencySymbol}
+          decision={decision}
+          handlers={commands.decisionHandlers}
+          ownerName={ownerName}
+        />
+      )}
     </>
   );
 }

@@ -37,6 +37,7 @@ const seedFace = async (
         reason: 'speed die',
         speedDieFace,
         pendingMonopolyAdvance: false,
+        lastRollId: null,
       };
       localStorage.setItem(key, JSON.stringify(game));
     },

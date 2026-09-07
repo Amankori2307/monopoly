@@ -54,6 +54,7 @@ const seedUnpayableDebt = async (
       reason: 'rent',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 
@@ -344,6 +345,7 @@ test('works through every debt one card leaves behind', async ({ page }) => {
       reason: 'birthday money',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
   });
@@ -419,6 +421,7 @@ test("auctions a bankrupt player's sites, one after another", async ({ page }) =
       reason: 'Super Tax',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 
@@ -508,6 +511,7 @@ test('a debtor who is not the active player can mortgage their way out', async (
       reason: 'a card',
       speedDieFace: null,
       pendingMonopolyAdvance: false,
+      lastRollId: null,
     };
     localStorage.setItem(key, JSON.stringify(game));
 

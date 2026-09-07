@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { GAME_STATE_VERSION } from '../../domain/constants/game.constants';
+import { createGameState } from '../../domain/rules/gameEngine';
+import { SeededRandomSource } from '../../domain/rules/rng';
 import { migrateSavedGame, needsMigration } from './migrations';
+import { gameStateSchema } from './schema';
 
 /**
  * A migration reads data written by an older build, so these fixtures are
@@ -278,5 +281,74 @@ describe('giving players a recorded direction', () => {
     const migrated = migrateSavedGame({ version: 6 }) as { version: number };
 
     expect(migrated.version).toBe(GAME_STATE_VERSION);
+  });
+});
+
+/**
+ * v8 -> v9 adds a table mode and an id for the last throw. Both are pure
+ * defaults: every save written before online play existed is a hot-seat game,
+ * and nothing has been rolled since roll ids existed.
+ */
+describe('giving an older save a table mode', () => {
+  /** A real current game, wound back to what v8 wrote. */
+  const v8Save = () => {
+    const game = JSON.parse(
+      JSON.stringify(
+        createGameState(
+          {
+            name: 'v8 Save',
+            playerConfigs: [
+              { name: 'Asha', tokenId: 'elephant' },
+              { name: 'Vikram', tokenId: 'train' },
+            ],
+            themeId: 'india-edition',
+            createdAt: '2026-09-01T00:00:00.000Z',
+          },
+          new SeededRandomSource(11)
+        )
+      )
+    );
+    delete game.tableMode;
+    delete game.turn.lastRollId;
+    return { ...game, version: 8 };
+  };
+
+  it('marks it hot-seat, because that is what it was', () => {
+    const migrated = migrateSavedGame(v8Save()) as { tableMode: string };
+
+    // The dangerous alternative would be defaulting to online: one device could
+    // then claim every seat at a table nobody else knows exists.
+    expect(migrated.tableMode).toBe('hot-seat');
+  });
+
+  it('starts the roll id at null rather than inventing one', () => {
+    const migrated = migrateSavedGame(v8Save()) as {
+      turn: { lastRollId: unknown };
+    };
+
+    // The dice on screen record a throw this device already animated. Giving
+    // it an id would make every device re-tumble on load.
+    expect(migrated.turn.lastRollId).toBeNull();
+  });
+
+  it('leaves the rest of the turn alone', () => {
+    const before = v8Save();
+    const migrated = migrateSavedGame(before) as {
+      turn: Record<string, unknown>;
+    };
+
+    expect(migrated.turn.phase).toBe(before.turn.phase);
+    expect(migrated.turn.doublesCount).toBe(before.turn.doublesCount);
+  });
+
+  it('brings the save all the way to the current version', () => {
+    const migrated = migrateSavedGame(v8Save()) as { version: number };
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+  });
+
+  it('produces something the schema accepts', () => {
+    // The real contract: a v8 save on someone's disk still loads.
+    expect(gameStateSchema.safeParse(migrateSavedGame(v8Save())).success).toBe(true);
   });
 });

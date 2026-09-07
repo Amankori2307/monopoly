@@ -60,6 +60,7 @@ const seedDrawnCard = async (
         reason: 'Card drawn',
         speedDieFace: null,
         pendingMonopolyAdvance: false,
+        lastRollId: null,
       };
       localStorage.setItem(key, JSON.stringify(game));
 

@@ -189,7 +189,7 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 ## 5. Persistence
 
 - Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
-- `GAME_STATE_VERSION = 8`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
+- `GAME_STATE_VERSION = 9`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
 - **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. Add the field to the schema, or it will not survive a save.
@@ -218,7 +218,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1127 unit tests, 124 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1166 unit tests, 124 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -324,6 +324,22 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   redundant fetch. A 30s poll is the backstop, because a socket that is up but silently not
   delivering is the failure these transports really have. See
   [docs/features/multiplayer.md](docs/features/multiplayer.md).
+- **Who may act is one union and one predicate.** `Viewer` is `HotSeat | Seated | Spectator` and
+  `viewerControls(viewer, playerId)` is the only place the question is answered
+  ([viewer.utils.ts](src/features/multiplayer/viewer.utils.ts)). Hot-seat is a **member of the
+  union**, not `viewer.playerId === activePlayer.id` - that shortcut breaks in exactly the two places
+  it matters, because the auction's current bidder rotates independently of the turn and a trade's
+  recipient is never the active player. `resolveViewer` fails closed to Spectator, never to the
+  active player. `tableMode` lives on `GameState` because every device has to agree: per-device, one
+  client could declare itself hot-seat and take the whole table. The seat _claim_ is per-device in
+  `localStorage`, because "which of you am I" is the one genuinely local fact.
+- **The decision on screen is not always `pendingDecision`.** The Jail panel is derived from
+  `player.inJail`, so it appears while `pendingDecision` is `None`. That is why the overlay asks
+  `decisionActorId` (which falls back to the active player) rather than `decisionOwnerOf` (which
+  correctly reports "no decision owner") - getting it the other way round showed a jailed player an
+  inert copy of their own only move. Every decision type needs a row in `AUDIENCE_FOR_DECISION`;
+  `decisionAudience.guard.test.ts` fails until it has one, the same tactic as `SOUND_FOR_CUE`.
+  Game over is the one `Everyone` row - there is no owner and everybody needs the button.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

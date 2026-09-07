@@ -7,22 +7,16 @@ import { ToastStack } from '../../components/game/overlays/ToastStack';
 import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
-import { selectSpaceOwnerMarks } from './boardOwnership.utils';
 import { GameOverlayLayer } from './GameOverlayLayer';
-import { getAssetHolderId } from '../../domain/rules/actor.utils';
-import { selectSitePanel } from './sitePanel.utils';
+import { useViewer } from '../multiplayer/hooks/useViewer';
+import { selectBoardViewModels } from './boardViewModels.selectors';
 import {
   BOARD_CENTER_SUBTITLE,
   BOARD_CENTER_TITLE,
   TOAST_DISMISS_MS,
 } from './game.constants';
 import { GameUnavailable } from './GameUnavailable';
-import {
-  makeTokenFinder,
-  selectCanEndTurn,
-  selectCanRollDice,
-  selectPlayerSummaries,
-} from './gameView.selectors';
+import { selectCanEndTurn, selectCanRollDice } from './gameView.selectors';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { setSoundEnabled } from './uiSlice';
 import { useActiveGame } from './hooks/useActiveGame';
@@ -61,18 +55,14 @@ export function GamePage() {
   );
   // Roll, then move, then outcome - nothing is said until the token arrives.
   useFeedbackGate(isMoving);
+  const viewer = useViewer(activeGame);
 
   if (!activeGame) {
     return <GameUnavailable loadError={loadError} />;
   }
 
-  const findToken = makeTokenFinder(theme);
-  const summaries = selectPlayerSummaries(activeGame, theme);
-  const selectedSummary =
-    summaries.find((summary) => summary.player.id === overlays.selectedPlayerId) ?? null;
-  const selectedSpace =
-    activeGame.board.find((space) => space.id === overlays.selectedSpaceId) ?? null;
-  const ownerMarks = selectSpaceOwnerMarks(activeGame, findToken);
+  const { findToken, summaries, selectedSummary, ownerMarks, sitePanel } =
+    selectBoardViewModels(activeGame, theme, overlays);
 
   return (
     <div className="app-shell" data-theme={activeGame.themeId}>
@@ -143,12 +133,12 @@ export function GamePage() {
 
             <TurnControls
               soundEnabled={soundEnabled}
-              canEndTurn={selectCanEndTurn(activeGame)}
+              canEndTurn={selectCanEndTurn(activeGame, viewer)}
               // Not while a token is walking. A double puts the turn straight
               // into AwaitExtraRollOrEnd, so Roll went live mid-walk - and the
               // second roll then restarted the walk from wherever the token had
               // got to, cutting both legs short.
-              canRoll={selectCanRollDice(activeGame) && !isMoving}
+              canRoll={selectCanRollDice(activeGame, viewer) && !isMoving}
               canRollAgain={activeGame.turn.canRollAgain}
               speedDieFace={activeGame.turn.speedDieFace}
               lastRoll={activeGame.turn.lastRoll}
@@ -168,17 +158,11 @@ export function GamePage() {
           selectedSummary={selectedSummary}
           isMoving={isMoving}
           soundEnabled={soundEnabled}
-          // The asset holder, not the active player. While a liquidation is
-          // pending the debtor is the one who has to raise cash, and a
-          // collect-from-each card can bill someone whose turn it is not -
-          // so showing the active player's sites left that debtor with no way
-          // to mortgage and bankruptcy as their only exit.
-          sitePanel={selectSitePanel(
-            activeGame,
-            getAssetHolderId(activeGame),
-            selectedSpace,
-            ownerMarks
-          )}
+          // The asset holder, not the active player: during a liquidation the
+          // debtor raises the cash, and a collect-from-each card can bill
+          // someone whose turn it is not. See actor.utils.
+          sitePanel={sitePanel}
+          viewer={viewer}
         />
       </div>
     </div>

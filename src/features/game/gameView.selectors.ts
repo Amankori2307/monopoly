@@ -7,6 +7,9 @@ import {
 } from '../../domain/rules/holdings.utils';
 import {} from '../../domain/rules/buildings.utils';
 import { getTradableSites } from '../../domain/rules/trade.utils';
+import { getExpectedActorId } from '../../domain/rules/actor.utils';
+import type { Viewer } from '../multiplayer/viewer.interfaces';
+import { HOT_SEAT_VIEWER, viewerControls } from '../multiplayer/viewer.utils';
 import { selectDecisionViewModel } from './decisionViewModel.selectors';
 
 export { selectDecisionViewModel } from './decisionViewModel.selectors';
@@ -72,11 +75,15 @@ export const selectPlayerSummaries = (
   });
 };
 
-export const selectCanEndTurn = (game: GameState) =>
+export const selectCanEndTurn = (game: GameState, viewer: Viewer = HOT_SEAT_VIEWER) =>
   // A finished game leaves the phase at TurnComplete, which would otherwise
   // read as "you may end your turn" - and the engine throws on every command
   // once the game is complete, so the control has to go.
   game.status === GameStatus.InProgress &&
+  // Whose turn it is to act, which is not always whose turn it is - see
+  // actor.utils. A device that is not them gets a disabled control rather than
+  // a command the engine will refuse.
+  viewerControls(viewer, getExpectedActorId(game)) &&
   (game.turn.phase === TurnPhase.TurnComplete ||
     game.turn.phase === TurnPhase.AwaitExtraRollOrEnd);
 
@@ -101,10 +108,15 @@ const BLOCKING_DECISIONS: ReadonlySet<PendingDecisionType> = new Set([
 const hasBlockingDecision = (game: GameState) =>
   BLOCKING_DECISIONS.has(game.pendingDecision.type);
 
-export const selectCanRollDice = (game: GameState) => {
+export const selectCanRollDice = (game: GameState, viewer: Viewer = HOT_SEAT_VIEWER) => {
   const player = selectActivePlayer(game);
 
   if (player.isBankrupt || hasBlockingDecision(game)) {
+    return false;
+  }
+  // Only the player whose turn it is may roll it. The default viewer is the
+  // hot seat, so a local game is unchanged.
+  if (!viewerControls(viewer, player.id)) {
     return false;
   }
   // A jailed player's roll is a decision action, not a dock action. The jail
@@ -119,12 +131,17 @@ export const selectCanRollDice = (game: GameState) => {
 };
 
 /**
- * True when the player has nothing at all they can do. Should never happen -
- * it is a deadlock - so it is logged loudly wherever it is observed.
+ * True when *somebody* at the table has something they can do. Should always be
+ * true - false is a deadlock - so it is logged loudly wherever it is observed.
+ *
+ * Deliberately looks through the hot-seat viewer even in an online game. It is
+ * a deadlock detector, not a turn gate: pointing it at the local player would
+ * make it false on every device whose turn it is not, and every one of them
+ * would log an error every turn.
  */
 export const selectHasAvailableAction = (game: GameState) =>
-  selectCanRollDice(game) ||
-  selectCanEndTurn(game) ||
+  selectCanRollDice(game, HOT_SEAT_VIEWER) ||
+  selectCanEndTurn(game, HOT_SEAT_VIEWER) ||
   // Only whether a decision exists, so it needs no theme to colour it with.
   selectDecisionViewModel(game, () => undefined) !== null;
 
