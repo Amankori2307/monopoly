@@ -26,6 +26,9 @@ export const createLocalSession = (): GameSession => ({
   // Nobody to tell.
   announce: () => Promise.resolve(),
 
+  // Everyone is here, by definition - they are all sharing this screen.
+  onHere: () => () => undefined,
+
   // Nobody else can move, so the bell never rings. Returning a working
   // unsubscribe rather than a no-op keeps the caller's cleanup honest.
   subscribe: () => () => undefined,

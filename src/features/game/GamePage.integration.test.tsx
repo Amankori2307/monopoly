@@ -13,6 +13,7 @@ import type { GameState } from '../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { saveGame } from '../persistence/persistence';
+import { selectHasAvailableAction } from './gameView.selectors';
 import { runGameCommand } from './gameSlice';
 import { GamePage } from './GamePage';
 
@@ -171,16 +172,18 @@ describe('taking a turn from the page', () => {
       { timeout: 10000 }
     );
 
-    // Either the extra roll is offered, or the turn had no extra roll to give -
-    // both are settled states, neither is mid-walk.
-    await waitFor(
-      () => {
-        const canRollAgain = store.getState().game.activeGame?.turn.canRollAgain;
-        const rollButton = screen.getByTestId(TEST_IDS.rollButton);
-        expect(canRollAgain ? !rollButton.hasAttribute('disabled') : true).toBe(true);
-      },
-      { timeout: 5000 }
-    );
+    // Once the walk has settled the player is not stranded. Which affordance is
+    // live depends entirely on what the dice did - the roll button, "Take extra
+    // roll" after a double, plain End Turn, or a decision modal for the space
+    // they landed on - and the dice here are real rather than seeded.
+    //
+    // This used to assert the *roll* button came back whenever canRollAgain was
+    // set, which is not how the extra roll works: a double leaves the phase at
+    // AwaitExtraRollOrEnd, where the roll button is deliberately closed and the
+    // end-turn button carries the extra roll. It only fired when a double
+    // actually came up, so it passed by luck and failed at random. The
+    // invariant that holds for every outcome is that *something* is available.
+    expect(selectHasAvailableAction(store.getState().game.activeGame!)).toBe(true);
   });
 
   it('shows the roll in the activity feed as a toast', async () => {

@@ -219,7 +219,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1202 unit tests, 127 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1209 unit tests, 127 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -351,6 +351,19 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
 - **`pnpm test:online` writes real rows to the real project**, so it is not part of `test:e2e`. It
   serves the **production build**, because `.env.production` is the only place the Supabase config
   lives - `development` resolves none on purpose, so the ordinary suite can never reach the network.
+- **Pause, do not fork.** A move made while the table is unreachable is a move nobody else will ever
+  see, and each further one drifts this device deeper into a private game that cannot be reconciled.
+  `runGameCommand` refuses outright when an online session's connection is not live
+  ([connection.utils.ts](src/features/multiplayer/connection.utils.ts)) - a visible stall is worse to
+  look at and far better to recover from than a silent split. A local game is never blocked. The
+  banner and the refusal read the same sentence, like every other `*BlockedReason`, and there is
+  **one** banner rather than two: a second would fight the first for the strip above the decision
+  backdrop, the only place either is visible while a modal is up.
+- **Presence is a broadcast, never a column.** A heartbeat that bumped `revision` would wake every
+  device several times a minute to fetch a state that had not changed. It is keyed by **device**, not
+  by seat, because a player who reconnects from their phone is a different device holding the same
+  seat. An empty presence set means "no information" rather than "nobody is here" - reading it as
+  absence would mark every player at a hot-seat table as away.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

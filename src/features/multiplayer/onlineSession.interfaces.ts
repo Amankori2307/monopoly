@@ -8,4 +8,6 @@ export interface OnlineSessionOptions {
   joinCode: string;
   /** Which seat this device publishes as, recorded in the audit log. */
   seatId: string | null;
+  /** Identifies this browser, so presence can key on it rather than the seat. */
+  deviceId: string;
 }

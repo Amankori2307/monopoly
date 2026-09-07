@@ -10,5 +10,7 @@ export interface Doorbell {
   onRing: (listener: (revision: number) => void) => () => void;
   /** Tell the other devices. Never throws - the move is already stored. */
   ring: (revision: number) => Promise<void>;
+  /** The seats whose devices are connected right now. Returns the unsubscribe. */
+  onHere: (listener: (seatIds: string[]) => void) => () => void;
   close: () => void;
 }

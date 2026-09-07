@@ -36,8 +36,14 @@ interface BroadcastChannel {
   unsubscribe: () => unknown;
 }
 
-export const createDoorbell = (config: OnlineConfig, gameId: string): Doorbell => {
+export const createDoorbell = (
+  config: OnlineConfig,
+  gameId: string,
+  /** Announced to the others so they can see who is actually here. */
+  presence: { deviceId: string; seatId: string | null }
+): Doorbell => {
   const listeners = new Set<(revision: number) => void>();
+  const hereListeners = new Set<(seatIds: string[]) => void>();
   let channel: BroadcastChannel | null = null;
   let disconnect: (() => void) | null = null;
   let ready: Promise<void> | null = null;
@@ -54,15 +60,43 @@ export const createDoorbell = (config: OnlineConfig, gameId: string): Doorbell =
         const client = new realtime.RealtimeClient(`${config.url}/realtime/v1`, {
           params: { apikey: config.anonKey },
         });
-        channel = client
-          .channel(`game:${gameId}`)
+        const joined = client
+          .channel(`game:${gameId}`, {
+            // Keyed by device, not by seat: a player who reconnects from their
+            // phone is a different device holding the same seat, and keying by
+            // seat would have the two overwrite each other.
+            config: { presence: { key: presence.deviceId } },
+          })
           .on('broadcast', { event: BELL_EVENT }, (message: { payload?: unknown }) => {
             const revision = (message.payload as { revision?: unknown })?.revision;
             if (typeof revision === 'number') {
               listeners.forEach((listener) => listener(revision));
             }
           })
-          .subscribe() as unknown as BroadcastChannel;
+          .on('presence', { event: 'sync' }, () => {
+            const state = (
+              joined as unknown as {
+                presenceState: () => Record<string, Array<{ seatId?: string | null }>>;
+              }
+            ).presenceState();
+            const seatIds = Object.values(state)
+              .flat()
+              .map((entry) => entry.seatId)
+              .filter((seatId): seatId is string => Boolean(seatId));
+            hereListeners.forEach((listener) => listener(seatIds));
+          });
+
+        channel = joined.subscribe((status: string) => {
+          // Presence is tracked only once the channel is actually joined -
+          // tracking earlier is silently dropped.
+          if (status === 'SUBSCRIBED') {
+            void (
+              joined as unknown as {
+                track: (payload: unknown) => unknown;
+              }
+            ).track({ seatId: presence.seatId, at: Date.now() });
+          }
+        }) as unknown as BroadcastChannel;
         disconnect = () => client.disconnect();
       })
       .catch((error) => {
@@ -84,6 +118,19 @@ export const createDoorbell = (config: OnlineConfig, gameId: string): Doorbell =
       return () => listeners.delete(listener);
     },
 
+    /**
+     * Who is connected right now.
+     *
+     * Presence rather than a column, because a heartbeat must never bump the
+     * revision - every device would then wake every other device several times
+     * a minute to fetch a state that had not changed.
+     */
+    onHere(listener) {
+      hereListeners.add(listener);
+      void ensureChannel();
+      return () => hereListeners.delete(listener);
+    },
+
     async ring(revision) {
       try {
         await ensureChannel();
@@ -103,6 +150,7 @@ export const createDoorbell = (config: OnlineConfig, gameId: string): Doorbell =
     close() {
       closed = true;
       listeners.clear();
+      hereListeners.clear();
       void channel?.unsubscribe();
       channel = null;
       ready = null;

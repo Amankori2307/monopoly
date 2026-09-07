@@ -57,7 +57,10 @@ export const createOnlineSession = (options: OnlineSessionOptions): GameSession 
   let closed = false;
   let poll: ReturnType<typeof setInterval> | null = null;
 
-  const doorbell = createDoorbell(config, gameId);
+  const doorbell = createDoorbell(config, gameId, {
+    deviceId: options.deviceId,
+    seatId: options.seatId,
+  });
 
   const fetchGame = async (): Promise<RemoteGameUpdate | null> => {
     const row = (await rpc.fetchGame(config, { gameId, joinCode })) as {
@@ -130,6 +133,8 @@ export const createOnlineSession = (options: OnlineSessionOptions): GameSession 
     fetch: fetchGame,
 
     announce: (revision: number) => doorbell.ring(revision),
+
+    onHere: (listener: (seatIds: string[]) => void) => doorbell.onHere(listener),
 
     subscribe(onRevision: (revision: number) => void): () => void {
       const stopListening = doorbell.onRing(onRevision);

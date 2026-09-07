@@ -8,6 +8,14 @@ interface PlayersPanelProps {
   currencySymbol: string;
   onSelectPlayer: (playerId: PlayerId) => void;
   summaries: PlayerSummary[];
+  /**
+   * Seats with a device connected right now.
+   *
+   * Empty means "no presence information" rather than "nobody is here" - a
+   * hot-seat game has no such thing, and reading empty as absence would mark
+   * every player at a local table as away.
+   */
+  connectedSeatIds?: ReadonlySet<string>;
 }
 
 /**
@@ -23,6 +31,7 @@ export function PlayersPanel({
   currencySymbol,
   onSelectPlayer,
   summaries,
+  connectedSeatIds,
 }: PlayersPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const toggle = () => setIsExpanded((expanded) => !expanded);
@@ -58,6 +67,11 @@ export function PlayersPanel({
             <PlayerCard
               currencySymbol={currencySymbol}
               isInteractive={isExpanded}
+              isAway={
+                connectedSeatIds !== undefined &&
+                connectedSeatIds.size > 0 &&
+                !connectedSeatIds.has(summary.player.id)
+              }
               key={summary.player.id}
               onOpen={onSelectPlayer}
               summary={summary}

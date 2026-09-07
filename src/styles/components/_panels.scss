@@ -135,3 +135,18 @@
     border-bottom: 0;
   }
 }
+
+// A seat whose device is not connected. Never applied in a hot-seat game -
+// everyone there is sharing one screen, so the question has no meaning.
+.player-card.is-away {
+  opacity: 0.62;
+
+  .player-card-name::after {
+    content: ' away';
+    color: var(--text-muted);
+    font-family: t.$font-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}

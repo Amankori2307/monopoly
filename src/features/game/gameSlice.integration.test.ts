@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeStore } from '../../app/appStore';
 import type { GameSession } from '../multiplayer/gameSession.interfaces';
+import { setConnection } from '../multiplayer/seatSlice';
+import { ConnectionState } from '../multiplayer/viewer.enums';
 import {
   AUCTION_START_PRICE,
   GAME_STATE_VERSION,
@@ -741,11 +743,24 @@ describe('publishing a move', () => {
     publish,
     fetch: vi.fn().mockResolvedValue(null),
     announce: vi.fn().mockResolvedValue(undefined),
+    onHere: vi.fn().mockReturnValue(() => undefined),
     subscribe: vi.fn().mockReturnValue(() => undefined),
     close: vi.fn(),
   });
 
   /** Reaches the registry the store handed its thunks. */
+  /**
+   * Swaps in a session AND reports the table reachable.
+   *
+   * Both, because a command is refused outright while the connection is not
+   * live - see offlineBlockedReason. That is the "pause, do not fork" rule, and
+   * `attachOnlineSession` sets the same flag in the app.
+   */
+  const goOnline = (store: ReturnType<typeof makeStore>, session: GameSession) => {
+    registryOf(store).replace(session);
+    store.dispatch(setConnection(ConnectionState.Live));
+  };
+
   const registryOf = (store: ReturnType<typeof makeStore>) =>
     (store.dispatch as unknown as (t: unknown) => unknown)(
       (
@@ -766,7 +781,7 @@ describe('publishing a move', () => {
     const publish = vi.fn();
     // The default session is local; swapping in a spy that claims to be
     // offline proves the isOnline gate, not the session type.
-    registryOf(store).replace({ ...onlineSession(publish), isOnline: false });
+    goOnline(store, { ...onlineSession(publish), isOnline: false });
 
     await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
 
@@ -777,7 +792,7 @@ describe('publishing a move', () => {
     const store = makeStore();
     const game = await startedGame(store);
     const publish = vi.fn().mockResolvedValue({ status: 'accepted', revision: 1 });
-    registryOf(store).replace(onlineSession(publish));
+    goOnline(store, onlineSession(publish));
 
     await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
 
@@ -792,9 +807,7 @@ describe('publishing a move', () => {
   it('applies the move locally even when publishing throws', async () => {
     const store = makeStore();
     await startedGame(store);
-    registryOf(store).replace(
-      onlineSession(vi.fn().mockRejectedValue(new Error('offline')))
-    );
+    goOnline(store, onlineSession(vi.fn().mockRejectedValue(new Error('offline'))));
 
     const before = store.getState().game.activeGame!.turn.phase;
     await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
@@ -813,7 +826,7 @@ describe('publishing a move', () => {
     const publish = vi
       .fn()
       .mockResolvedValue({ status: 'conflict', revision: 7, game: theirs });
-    registryOf(store).replace(onlineSession(publish));
+    goOnline(store, onlineSession(publish));
 
     await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
     await vi.waitFor(() => expect(store.getState().game.revision).toBe(7));
@@ -896,5 +909,64 @@ describe('adopting a state from another device', () => {
     await fresh.dispatch(adoptRemoteGame({ game: created, revision: 9 }));
 
     expect(fresh.getState().ui.pendingFeedback.toasts).toEqual([]);
+  });
+});
+
+/**
+ * The rule that keeps a shared game shareable: a device that cannot reach the
+ * table stops making moves rather than building a private game on the side.
+ */
+describe('a table this device cannot reach', () => {
+  const unreachable = (): GameSession => ({
+    isOnline: true,
+    publish: vi.fn().mockResolvedValue({ status: 'failed', message: 'offline' }),
+    fetch: vi.fn().mockResolvedValue(null),
+    announce: vi.fn().mockResolvedValue(undefined),
+    onHere: vi.fn().mockReturnValue(() => undefined),
+    subscribe: vi.fn().mockReturnValue(() => undefined),
+    close: vi.fn(),
+  });
+
+  it('refuses the move rather than making it locally', async () => {
+    const store = makeStore();
+    await store.dispatch(createNewGame(input()));
+    const before = store.getState().game.activeGame!;
+    (store.dispatch as unknown as (t: unknown) => unknown)(
+      (
+        _d: unknown,
+        _g: unknown,
+        extra: { session: { replace: (s: GameSession) => void } }
+      ) => extra.session.replace(unreachable())
+    );
+    store.dispatch(setConnection(ConnectionState.Offline));
+
+    await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+
+    // Nothing moved, and the player is told why - a silent stall is the failure
+    // this whole app already has a banner for.
+    expect(store.getState().game.activeGame!.turn.phase).toBe(before.turn.phase);
+    expect(store.getState().game.commandError).toMatch(/reachable/i);
+  });
+
+  it('marks the connection degraded when a publish does not land', async () => {
+    const store = makeStore();
+    await store.dispatch(createNewGame(input()));
+    (store.dispatch as unknown as (t: unknown) => unknown)(
+      (
+        _d: unknown,
+        _g: unknown,
+        extra: { session: { replace: (s: GameSession) => void } }
+      ) => extra.session.replace(unreachable())
+    );
+    store.dispatch(setConnection(ConnectionState.Live));
+
+    await store.dispatch(runGameCommand({ type: GameCommandType.RollTurnDice }));
+    await vi.waitFor(() =>
+      expect(store.getState().seat.connection).toBe(ConnectionState.Degraded)
+    );
+
+    // The move itself stands: it was applied and saved before the publish was
+    // even attempted, and undoing it would be worse than reporting the split.
+    expect(store.getState().game.activeGame!.turn.phase).not.toBe('await_roll');
   });
 });

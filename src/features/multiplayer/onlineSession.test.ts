@@ -49,6 +49,7 @@ const session = () =>
     gameId: 'game-1',
     joinCode: 'ABC123',
     seatId: 'player-1',
+    deviceId: 'device-1',
   });
 
 const respondWith = (body: unknown, ok = true) =>

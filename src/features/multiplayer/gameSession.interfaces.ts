@@ -53,6 +53,15 @@ export interface GameSession {
   announce(revision: number): Promise<void>;
 
   /**
+   * Who is connected right now, by seat. Returns the unsubscribe.
+   *
+   * Presence rather than a database column, because a heartbeat must never bump
+   * the revision - every device would then wake every other one several times a
+   * minute to fetch a state that had not changed.
+   */
+  onHere(listener: (seatIds: string[]) => void): () => void;
+
+  /**
    * Watch for somebody else's move. Returns the unsubscribe.
    *
    * The callback is given the revision only - the doorbell, not the payload -

@@ -18,6 +18,9 @@ import {
 } from '../persistence/persistence';
 import { toToasts } from './toastFeed.utils';
 import type { ThunkExtra } from '../multiplayer/sessionRegistry';
+import { offlineBlockedReason } from '../multiplayer/connection.utils';
+import { setConnection } from '../multiplayer/seatSlice';
+import { ConnectionState } from '../multiplayer/viewer.enums';
 import { eventsSince, newestEventId } from './remoteEvents.utils';
 import { cueForEvents } from './soundCue.utils';
 import { queueFeedback } from './uiSlice';
@@ -218,10 +221,29 @@ const publishInBackground = async (
       // Remote always wins, and the command is NOT replayed: re-applying it
       // onto a new base is how a bid of 200 lands on top of a 250 that was
       // already accepted.
+      dispatch(setConnection(ConnectionState.Live));
       dispatch(adoptRemoteGame({ game: outcome.game, revision: outcome.revision }));
+      return;
     }
+
+    if (outcome.status === 'accepted') {
+      dispatch(setConnection(ConnectionState.Live));
+      dispatch(setRevision(outcome.revision));
+      return;
+    }
+
+    // Either the table is gone or we could not reach it. Both mean this device
+    // must stop writing: the move is already applied locally, so carrying on
+    // would build a private game nobody else will ever see.
+    dispatch(
+      setConnection(
+        outcome.status === 'gone' ? ConnectionState.Offline : ConnectionState.Degraded
+      )
+    );
   } catch (error) {
-    // Swallowed on purpose; the session reports connection state separately.
+    // Never rethrown: the move is already applied and saved, so a connection
+    // problem must not surface as a refused command.
+    dispatch(setConnection(ConnectionState.Degraded));
     logger.error('multiplayer', 'publishing failed', { error: String(error) });
   }
 };
@@ -230,11 +252,25 @@ export const runGameCommand =
   (command: RuntimeGameCommand) =>
   (
     dispatch: AppDispatch,
-    getState: () => { game: GameSliceState },
+    getState: () => { game: GameSliceState; seat: { connection: ConnectionState } },
     extra: ThunkExtra
   ) => {
     const currentGame = getState().game.activeGame;
     if (!currentGame) {
+      return null;
+    }
+
+    // Pause, do not fork. In an online game a move made while the table is
+    // unreachable is a move nobody else will ever see - and the longer it goes
+    // on the further this device drifts into a private game that cannot be
+    // reconciled. A visible stall is worse to look at and far better to
+    // recover from than a silent split.
+    const blocked = offlineBlockedReason(
+      extra.session.current.isOnline,
+      getState().seat.connection
+    );
+    if (blocked) {
+      dispatch(setCommandError(blocked));
       return null;
     }
 

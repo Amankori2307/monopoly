@@ -267,6 +267,7 @@ export const attachOnlineSession =
         gameId: input.gameId,
         joinCode: input.joinCode,
         seatId: input.seatId,
+        deviceId: readDeviceId(),
       })
     );
     if (input.seatId) {

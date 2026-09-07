@@ -52,6 +52,7 @@ describe('createSessionRegistry', () => {
     publish: vi.fn().mockResolvedValue({ status: 'accepted', revision: 1 }),
     fetch: vi.fn().mockResolvedValue(null),
     announce: vi.fn().mockResolvedValue(undefined),
+    onHere: vi.fn().mockReturnValue(() => undefined),
     subscribe: vi.fn().mockReturnValue(() => undefined),
     close: vi.fn(),
   });

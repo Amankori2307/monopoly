@@ -1,16 +1,12 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { BoardGrid } from '../../components/game/board/BoardGrid';
 import { useAnimatedTokenPositions } from '../../components/game/hooks/useAnimatedTokenPositions';
-import { CommandErrorBanner } from '../../components/game/panels/CommandErrorBanner';
-import { ToastStack } from '../../components/game/overlays/ToastStack';
-import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
-import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { GameOverlayLayer } from './GameOverlayLayer';
 import { useIsRollingDice } from '../../components/game/hooks/useIsRollingDice';
-import { useTableSync } from '../multiplayer/hooks/useTableSync';
-import { useViewer } from '../multiplayer/hooks/useViewer';
+import { useTableState } from '../multiplayer/hooks/useTableState';
+import { GameSidebar } from '../../components/game/layout/GameSidebar';
 import { selectBoardViewModels } from './boardViewModels.selectors';
 import {
   BOARD_CENTER_SUBTITLE,
@@ -62,10 +58,16 @@ export function GamePage() {
   );
   // Roll, then move, then outcome - nothing is said until the token arrives.
   useFeedbackGate(isMoving);
-  const viewer = useViewer(activeGame);
-  // Somebody else's move arrives here: the bell carries a revision, this
-  // fetches and adopts. A local game's session never rings.
-  useTableSync(useAppSelector((state) => state.game.revision));
+  const { viewer, connectionMessage, connectedSeatIds } = useTableState(
+    activeGame,
+    useAppSelector((state) => state.game.revision)
+  );
+  const bannerProps = {
+    isDismissible: !connectionMessage,
+    message: connectionMessage ?? commandError,
+    onDismiss: commands.dismissError,
+    title: connectionMessage ? 'Waiting for the table' : undefined,
+  };
 
   if (!activeGame) {
     return <GameUnavailable loadError={loadError} />;
@@ -94,70 +96,27 @@ export function GamePage() {
             tokenPositions={tokenPositions}
           />
 
-          <aside className="game-side" data-testid={TEST_IDS.gameSidebar}>
-            <PlayersPanel
-              currencySymbol={currencySymbol}
-              onSelectPlayer={overlays.openPlayer}
-              summaries={summaries}
-            />
-
-            <div className="game-side-scroll">
-              <CommandErrorBanner
-                message={commandError}
-                onDismiss={commands.dismissError}
-              />
-
-              <div className="button-row">
-                <Link className="secondary-button" to="/">
-                  Home
-                </Link>
-                <Link className="secondary-button" to="/rules">
-                  Rules
-                </Link>
-                {/* Beside the other two rather than tucked away: nine sounds
-                    need an off switch a player can find. */}
-                <button
-                  aria-pressed={!soundEnabled}
-                  className="secondary-button"
-                  data-testid={TEST_IDS.soundToggle}
-                  onClick={() => dispatch(setSoundEnabled(!soundEnabled))}
-                  title={soundEnabled ? 'Turn sound off' : 'Turn sound on'}
-                  type="button"
-                >
-                  {soundEnabled ? '🔊 Sound' : '🔇 Muted'}
-                </button>
-              </div>
-            </div>
-
-            {/*
-              In the sidebar's own flow, immediately above the dice. Floating it
-              over the board meant it always covered something - first the dice
-              themselves, then the deed card and the board's left column. Here it
-              occupies space nothing else wants.
-            */}
-            <ToastStack
-              dismissAfterMs={TOAST_DISMISS_MS}
-              onDismiss={commands.dismissToast}
-              toasts={commands.toasts}
-            />
-
-            <TurnControls
-              soundEnabled={soundEnabled}
-              canEndTurn={selectCanEndTurn(activeGame, viewer)}
-              // Not while a token is walking. A double puts the turn straight
-              // into AwaitExtraRollOrEnd, so Roll went live mid-walk - and the
-              // second roll then restarted the walk from wherever the token had
-              // got to, cutting both legs short.
-              canRoll={selectCanRollDice(activeGame, viewer) && !isMoving}
-              canRollAgain={activeGame.turn.canRollAgain}
-              speedDieFace={activeGame.turn.speedDieFace}
-              lastRoll={activeGame.turn.lastRoll}
-              lastRollId={activeGame.turn.lastRollId}
-              onEndTurn={commands.endTurn}
-              onRoll={commands.rollDice}
-              rollLabel="Roll dice"
-            />
-          </aside>
+          <GameSidebar
+            bannerProps={bannerProps}
+            canEndTurn={selectCanEndTurn(activeGame, viewer)}
+            // Not while a token is walking. A double puts the turn straight
+            // into AwaitExtraRollOrEnd, so Roll went live mid-walk - and the
+            // second roll then restarted the walk from wherever the token had
+            // got to, cutting both legs short.
+            canRoll={selectCanRollDice(activeGame, viewer) && !isMoving}
+            connectedSeatIds={connectedSeatIds}
+            currencySymbol={currencySymbol}
+            onDismissToast={commands.dismissToast}
+            onEndTurn={commands.endTurn}
+            onRoll={commands.rollDice}
+            onSelectPlayer={overlays.openPlayer}
+            onToggleSound={() => dispatch(setSoundEnabled(!soundEnabled))}
+            soundEnabled={soundEnabled}
+            summaries={summaries}
+            toastDismissAfterMs={TOAST_DISMISS_MS}
+            toasts={commands.toasts}
+            turn={activeGame.turn}
+          />
         </div>
 
         <GameOverlayLayer

@@ -10,6 +10,8 @@ interface PlayerCardProps {
   isInteractive: boolean;
   onOpen: (playerId: string) => void;
   summary: PlayerSummary;
+  /** True when this seat's device is not connected. Never true locally. */
+  isAway?: boolean;
 }
 
 /**
@@ -21,12 +23,14 @@ export function PlayerCard({
   isInteractive,
   onOpen,
   summary,
+  isAway = false,
 }: PlayerCardProps) {
   const { player, token, propertyCount, netWorth, mortgagedCount, setProgress } = summary;
 
   return (
     <article
-      className="player-card"
+      className={`player-card ${isAway ? 'is-away' : ''}`}
+      data-away={isAway ? 'true' : undefined}
       data-testid={scopedTestId(TEST_IDS.playerCard, player.id)}
       style={{ borderLeftColor: token?.color }}
     >
