@@ -18,6 +18,7 @@ import {
 } from '../persistence/persistence';
 import { toToasts } from './toastFeed.utils';
 import type { ThunkExtra } from '../multiplayer/sessionRegistry';
+import { eventsSince, newestEventId } from './remoteEvents.utils';
 import { cueForEvents } from './soundCue.utils';
 import { queueFeedback } from './uiSlice';
 
@@ -32,6 +33,11 @@ interface GameSliceState {
    * for the next publish. Always 0 for a hot-seat game, where nothing reads it.
    */
   revision: number;
+  /**
+   * The newest event this device has already spoken about, so a state arriving
+   * from another device can be diffed into toasts and a cue.
+   */
+  seenEventId: string | null;
 }
 
 const initialState: GameSliceState = {
@@ -40,6 +46,7 @@ const initialState: GameSliceState = {
   loadError: null,
   commandError: null,
   revision: 0,
+  seenEventId: null,
 };
 
 const slice = createSlice({
@@ -51,6 +58,11 @@ const slice = createSlice({
     },
     setActiveGame(state, action: PayloadAction<GameState | null>) {
       state.activeGame = action.payload;
+      // Whatever is in a game's history when it becomes the active one has
+      // already happened as far as this device is concerned. Marking it here -
+      // the one choke point every game passes through - is what stops joining
+      // a game in progress firing a toast for every event that preceded you.
+      state.seenEventId = action.payload?.history[0]?.id ?? null;
     },
     setLoadError(state, action: PayloadAction<string | null>) {
       state.loadError = action.payload;
@@ -60,6 +72,9 @@ const slice = createSlice({
     },
     setRevision(state, action: PayloadAction<number>) {
       state.revision = action.payload;
+    },
+    setSeenEventId(state, action: PayloadAction<string | null>) {
+      state.seenEventId = action.payload;
     },
   },
 });
@@ -72,6 +87,7 @@ export const {
   setLoadError,
   setCommandError,
   setRevision,
+  setSeenEventId,
 } = slice.actions;
 
 /**
@@ -83,12 +99,32 @@ export const {
  * that the table rejected - and a refresh would restore it.
  */
 export const adoptRemoteGame =
-  (update: { game: GameState; revision: number }) => (dispatch: AppDispatch) => {
+  (update: { game: GameState; revision: number }) =>
+  (dispatch: AppDispatch, getState: () => { game: GameSliceState }) => {
+    const seenEventId = getState().game.seenEventId;
     const saveFailure = trySave(update.game);
     dispatch(setActiveGame(update.game));
     dispatch(setRevision(update.revision));
     dispatch(setCommandError(saveFailure));
     dispatch(bootstrapRecentGames());
+
+    // Say what happened. Toasts and the cue are built from `result.events`,
+    // which only the device that ran the command has - without this a remote
+    // player watches the board change in silence and never learns what the
+    // rent was for. Queued rather than shown, like every other command's
+    // feedback, so it waits for the token to finish walking.
+    const unseen = eventsSince(update.game, seenEventId);
+    dispatch(setSeenEventId(newestEventId(update.game)));
+    if (unseen.length === 0) {
+      return;
+    }
+    const cue = cueForEvents(unseen);
+    dispatch(
+      queueFeedback({
+        toasts: toToasts(unseen),
+        cue: cue ? { id: unseen[0]?.id ?? cue, cue } : null,
+      })
+    );
   };
 
 export const bootstrapRecentGames = () => (dispatch: AppDispatch) => {
@@ -238,6 +274,7 @@ export const runGameCommand =
         })
       );
       dispatch(setCommandError(saveFailure));
+      dispatch(setSeenEventId(newestEventId(result.nextState)));
       dispatch(bootstrapRecentGames());
 
       // Fire-and-forget, and deliberately last. The engine is never awaited

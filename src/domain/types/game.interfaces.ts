@@ -359,6 +359,14 @@ export interface StoredGameIndexEntry {
 export interface CreatePlayerInput {
   name: string;
   tokenId: TokenId;
+  /**
+   * Fixes this player's id, rather than letting creation assign one.
+   *
+   * The lobby needs it: a seat is claimed on a device before the game exists,
+   * and the claim has to still name the right player the instant it does.
+   * Mirrors `CreateGameInput.gameId`, which exists for the same reason.
+   */
+  playerId?: PlayerId;
 }
 
 export interface CreateGameInput {

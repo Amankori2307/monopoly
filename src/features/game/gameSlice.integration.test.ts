@@ -20,6 +20,7 @@ import { loadGame, saveGame } from '../persistence/persistence';
 import { SOUND_PREFERENCE_KEY } from './soundPreference.utils';
 import { releaseFeedback, setSoundEnabled } from './uiSlice';
 import {
+  adoptRemoteGame,
   bootstrapRecentGames,
   createNewGame,
   loadGameById,
@@ -823,5 +824,76 @@ describe('publishing a move', () => {
     // And the adopted state reaches disk - trySave already wrote the
     // optimistic one, so a refresh would otherwise restore a phantom move.
     expect(storedGame(game.id).turnNumber).toBe(99);
+  });
+});
+
+/**
+ * A remote player has to be told what happened. Toasts and the cue are built
+ * from `result.events`, which only the device that ran the command has - so
+ * without a diff the board changes in silence.
+ */
+describe('adopting a state from another device', () => {
+  it('announces only what happened since this device last spoke', async () => {
+    const store = makeStore();
+    await store.dispatch(createNewGame(input()));
+    const created = store.getState().game.activeGame!;
+
+    // Two new events on top of whatever creation logged.
+    const theirs = {
+      ...created,
+      history: [
+        {
+          id: 'event-new-2',
+          turnNumber: 1,
+          createdAt: '2026-09-01T00:00:00.000Z',
+          message: 'Vikram paid rent',
+          cue: GameEventCue.Rent,
+        },
+        {
+          id: 'event-new-1',
+          turnNumber: 1,
+          createdAt: '2026-09-01T00:00:00.000Z',
+          message: 'Vikram rolled',
+          cue: GameEventCue.None,
+        },
+        ...created.history,
+      ],
+    };
+
+    await store.dispatch(adoptRemoteGame({ game: theirs, revision: 4 }));
+
+    const queued = store.getState().ui.pendingFeedback.toasts;
+    expect(queued.map((toast) => toast.message)).toEqual([
+      'Vikram rolled',
+      'Vikram paid rent',
+    ]);
+    // Queued, not shown: it still waits for the token to finish walking.
+    expect(store.getState().ui.pendingFeedback.cue).not.toBeNull();
+  });
+
+  it('says nothing when it has already spoken about everything', async () => {
+    const store = makeStore();
+    await store.dispatch(createNewGame(input()));
+    const created = store.getState().game.activeGame!;
+
+    await store.dispatch(adoptRemoteGame({ game: created, revision: 2 }));
+    store.dispatch(releaseFeedback());
+
+    await store.dispatch(adoptRemoteGame({ game: created, revision: 3 }));
+
+    expect(store.getState().ui.pendingFeedback.toasts).toEqual([]);
+  });
+
+  it('does not replay a game it is seeing for the first time', async () => {
+    // Joining a game in progress must not fire a toast per event of a history
+    // that happened before you arrived.
+    const store = makeStore();
+    await store.dispatch(createNewGame(input()));
+    const created = store.getState().game.activeGame!;
+    const fresh = makeStore();
+
+    await fresh.dispatch(adoptRemoteGame({ game: created, revision: 9 }));
+
+    expect(fresh.getState().ui.pendingFeedback.toasts).toEqual([]);
   });
 });

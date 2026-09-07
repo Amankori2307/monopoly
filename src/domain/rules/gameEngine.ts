@@ -135,7 +135,9 @@ const chooseFirstPlayerOrder = (
 const createPlayers = (input: CreateGameInput): Record<PlayerId, PlayerState> =>
   input.playerConfigs.reduce<Record<PlayerId, PlayerState>>(
     (accumulator, playerConfig, index) => {
-      const playerId = `player-${index + 1}`;
+      // The caller may fix the id: a lobby seat is claimed before the game
+      // exists, and that claim has to still name the right player afterwards.
+      const playerId = playerConfig.playerId ?? `player-${index + 1}`;
       accumulator[playerId] = {
         id: playerId,
         name: playerConfig.name,
