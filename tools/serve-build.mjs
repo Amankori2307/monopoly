@@ -13,6 +13,10 @@
  * production build is compiled for, because a base mismatch is its own class
  * of bug and testing without one would not find it.
  *
+ * Binds all interfaces, so another computer on the same network can reach it -
+ * the invite link is built from `window.location`, so it comes out with the
+ * right host automatically.
+ *
  * Usage: node tools/serve-build.mjs [port]
  */
 import { createServer } from 'node:http';
@@ -87,6 +91,6 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(PORT, 'localhost', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`serving build/ at http://localhost:${PORT}${BASE}`);
 });

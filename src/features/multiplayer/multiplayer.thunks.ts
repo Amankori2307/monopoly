@@ -24,6 +24,7 @@ import {
 import { rpc } from './supabaseRpc';
 import type { ThunkExtra } from './sessionRegistry.interfaces';
 import { ConnectionState } from './viewer.enums';
+import { randomUUID } from '../../domain/rules/id.utils';
 
 /**
  * Creating, joining and starting an online game.
@@ -50,7 +51,7 @@ export const createOnlineLobby =
   (host: { name: string; tokenId: string }) =>
   async (dispatch: AppDispatch): Promise<{ gameId: string; joinCode: string }> => {
     const config = requireConfig();
-    const gameId = crypto.randomUUID();
+    const gameId = randomUUID();
     const joinCode = createJoinCode();
     const deviceId = readDeviceId();
     const seat: LobbySeat = {

@@ -10,6 +10,7 @@ import type {
   ThemeConfig,
 } from '../../types/game.interfaces';
 import { availableThemes, indiaEditionTheme } from '../../themes/indiaEditionTheme';
+import { randomUUID } from '../id.utils';
 
 /**
  * State plumbing: the small, boring operations every other engine module is
@@ -35,7 +36,7 @@ export const createEvent = (
   message: string,
   cue: GameEventCue = GameEventCue.None
 ): GameEvent => ({
-  id: crypto.randomUUID(),
+  id: randomUUID(),
   turnNumber,
   createdAt: new Date().toISOString(),
   message,
@@ -60,7 +61,7 @@ export const getThemeOrDefault = (themeId: string): ThemeConfig =>
  * changes on every command, not every roll, so a die keyed off it would
  * re-tumble on an unrelated move.
  */
-export const createRollId = (): string => crypto.randomUUID();
+export const createRollId = (): string => randomUUID();
 
 export const getPlayerById = (state: GameState, playerId: PlayerId): PlayerState =>
   state.players[playerId];

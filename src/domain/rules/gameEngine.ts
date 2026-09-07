@@ -44,6 +44,7 @@ import { propertyCommands } from './engine/commands/property.commands';
 import { speedDieCommands } from './engine/commands/speedDie.commands';
 import { tradeCommands } from './engine/commands/trade.commands';
 import { turnCommands } from './engine/commands/turn.commands';
+import { randomUUID } from './id.utils';
 
 /**
  * Every command, in one table.
@@ -171,7 +172,7 @@ export const createGameState = (
 
   return {
     version: GAME_STATE_VERSION,
-    id: input.gameId ?? crypto.randomUUID(),
+    id: input.gameId ?? randomUUID(),
     name,
     themeId: input.themeId,
     rulesetId: indiaEditionRulesetId,

@@ -1,5 +1,6 @@
 import type { GameId, PlayerId } from '../../domain/types/game.interfaces';
 import { logger } from '../../shared/utils/logger.utils';
+import { randomUUID } from '../../domain/rules/id.utils';
 
 /**
  * Which seat this device holds, per game.
@@ -30,13 +31,13 @@ export const readDeviceId = (): string => {
     if (existing) {
       return existing;
     }
-    const created = crypto.randomUUID();
+    const created = randomUUID();
     window.localStorage.setItem(DEVICE_ID_KEY, created);
     return created;
   } catch (error) {
     logger.debug('multiplayer', 'could not persist a device id', { error });
     // A per-session id still works for everything except surviving a reload.
-    return crypto.randomUUID();
+    return randomUUID();
   }
 };
 

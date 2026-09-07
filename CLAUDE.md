@@ -207,7 +207,8 @@ quietly writing a second lockfile. Reach for a script below rather than `npx`.
 
 ```bash
 pnpm dev          # Vite dev server on :3000 (offline - no online play)
-pnpm dev:online   # dev server on :3200 WITH the Supabase config, for lobby work
+pnpm dev:online   # dev server on :3200 WITH the Supabase config, bound to 0.0.0.0
+pnpm tunnel       # ngrok over :3200, for a device that is not on this network
 pnpm build        # production build → build/
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
@@ -385,6 +386,18 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   which logged "this game is damaged" every thirty seconds for a perfectly healthy table and, worse,
   threw before reporting the revision - so a lobby could never be refreshed by the poll at all. The
   poll reads the row rather than the game; the caller only ever needs the revision.
+- **`crypto.randomUUID` is secure-context only, and the engine depends on it for every event id.**
+  It is there on localhost and https and **undefined** on a plain-http address like
+  `http://192.168.1.5:3200` - which is exactly how another computer reaches `pnpm dev:online`. So the
+  whole game broke there, online or not, on the first event created.
+  [id.utils.ts](src/domain/rules/id.utils.ts) falls back to a real v4 built from `getRandomValues`,
+  which carries no such restriction; the shape matters as much as the entropy, because a game id goes
+  into a Postgres `uuid` column. `navigator.clipboard` is restricted the same way, which is why the
+  invite link's Copy is already wrapped in a try/catch and the link stays selectable.
+- **A tunnel needs `server.allowedHosts`.** Vite refuses a request whose `Host` header it does not
+  recognise - that is its DNS-rebinding protection - so an ngrok URL answers "Blocked request. This
+  host is not allowed." The tunnel domains are allowed in **`online` mode only**; `pnpm dev`, the
+  server the e2e suite starts, keeps the protection.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

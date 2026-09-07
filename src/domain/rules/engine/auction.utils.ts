@@ -16,6 +16,7 @@ import {
   updateSpaceOwnership,
 } from './state.utils';
 import { resumeTurnAfterDecision } from './turn.utils';
+import { randomUUID } from '../id.utils';
 
 /**
  * The auction loop, and the queue behind it.
@@ -186,7 +187,7 @@ export const startAuction = (
     ? playersWhoCouldBuild(state, building.buildingKind)
     : state.playerOrder.filter((playerId) => !state.players[playerId].isBankrupt);
   const auctionState: AuctionState = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     spaceId,
     buildingKind: building?.buildingKind,
     startPrice: building?.startPrice ?? AUCTION_START_PRICE,
