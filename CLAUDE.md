@@ -206,7 +206,8 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 quietly writing a second lockfile. Reach for a script below rather than `npx`.
 
 ```bash
-pnpm dev          # Vite dev server on :3000
+pnpm dev          # Vite dev server on :3000 (offline - no online play)
+pnpm dev:online   # dev server on :3200 WITH the Supabase config, for lobby work
 pnpm build        # production build → build/
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
@@ -348,6 +349,11 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   first fetch came back sent an array containing only itself and **deleted the host**. Found with two
   real browsers. The merge is done in SQL under the row lock now (migration 0003), and the lobby also
   refuses to offer any control until `phase !== null`, because "not read yet" is not "empty".
+- **`pnpm dev` cannot play online, and that is deliberate.** It runs in `development` mode, which
+  resolves no Supabase config, because the e2e suite starts that same server and must never reach the
+  network. So there is no "Play online" button on :3000 - which reads as a missing feature rather
+  than a policy, and cost a round trip. Use `pnpm dev:online` (:3200, `--mode online`, reading
+  `.env.online`) to work on the lobby with hot reload, or serve a production build.
 - **`pnpm test:online` writes real rows to the real project**, so it is not part of `test:e2e`. It
   serves the **production build**, because `.env.production` is the only place the Supabase config
   lives - `development` resolves none on purpose, so the ordinary suite can never reach the network.
