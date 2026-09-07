@@ -218,7 +218,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1116 unit tests, 124 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1127 unit tests, 124 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -315,6 +315,15 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   network-enabled config, so it is gitignored and `onlineConfig.test.ts` asserts this build is
   offline under test. The anon key is public by design (it ships in the bundle) and RLS is the real
   access control; a `service_role` key belongs in no .env, no bundle and no CI secret.
+- **The realtime doorbell is a broadcast, and it cannot be `postgres_changes`.** Realtime evaluates
+  RLS before forwarding a row change, and `games` deliberately has RLS on with **no policies** - so a
+  `postgres_changes` channel subscribes happily and then delivers nothing at all. Verified against
+  the live project. Making it work would need `grant select` plus a permissive policy, which is the
+  exact hole the RPC design closes. Broadcast touches no table; the bell carries only a revision, and
+  the state still comes from `fetch_game`, which needs the join code - so a spoofed bell costs one
+  redundant fetch. A 30s poll is the backstop, because a socket that is up but silently not
+  delivering is the failure these transports really have. See
+  [docs/features/multiplayer.md](docs/features/multiplayer.md).
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---
