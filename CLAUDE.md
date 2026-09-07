@@ -364,6 +364,21 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   by seat, because a player who reconnects from their phone is a different device holding the same
   seat. An empty presence set means "no information" rather than "nobody is here" - reading it as
   absence would mark every player at a hot-seat table as away.
+- **Replacing the live session must be announced, and an effect must not depend on state its own
+  handler changes.** Two bugs from the same root, both found only by driving two real browsers. The
+  session registry is a plain mutable holder, so swapping it re-renders nothing - an effect that
+  subscribed on the first render stayed attached to the **local** session and never heard a bell, so
+  the host sat watching an empty lobby while the guest was already seated. `sessionEpoch` in the seat
+  slice is the signal; piggy-backing on `connection` looked equivalent and was not, because attaching
+  often sets it to the value it already had. Then, keying the lobby's subscription on `connection`
+  made the bell handler **cancel itself**: it calls `openOnlineTable`, which sets Connecting, which
+  tore the effect down and marked its own in-flight promise cancelled - so the guest never followed
+  the host into the game. Depend on `session`, whose identity changes only when it is genuinely
+  replaced.
+- **A lobby's state is not a game.** `OnlineSession.fetch` and the 30s poll both used to decode it,
+  which logged "this game is damaged" every thirty seconds for a perfectly healthy table and, worse,
+  threw before reporting the revision - so a lobby could never be refreshed by the poll at all. The
+  poll reads the row rather than the game; the caller only ever needs the revision.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

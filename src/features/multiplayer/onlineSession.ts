@@ -28,6 +28,9 @@ export type { OnlineSessionOptions } from './onlineSession.interfaces';
 /** How long to sit on a stale view before fetching anyway. */
 const POLL_INTERVAL_MS = 30_000;
 
+/** A game row that has seats but is not a game yet. */
+const LOBBY_PHASE = 'lobby';
+
 /** Small enough to type over the phone, and no ambiguous characters. */
 const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -65,11 +68,21 @@ export const createOnlineSession = (options: OnlineSessionOptions): GameSession 
   const fetchGame = async (): Promise<RemoteGameUpdate | null> => {
     const row = (await rpc.fetchGame(config, { gameId, joinCode })) as {
       revision: number;
+      phase: string;
       state: unknown;
     } | null;
 
     // Null means no such game, or a wrong code - deliberately the same answer.
     if (!row) {
+      return null;
+    }
+
+    // A lobby's state is not a game yet, so there is nothing to decode. The
+    // poll used to try anyway and log "this game is damaged" every thirty
+    // seconds for a table that was perfectly healthy - and, worse, threw before
+    // it could report the revision, so a lobby could never be refreshed by the
+    // poll at all.
+    if (row.phase === LOBBY_PHASE) {
       return null;
     }
     return decodeRemote(row.state, row.revision);
@@ -144,8 +157,16 @@ export const createOnlineSession = (options: OnlineSessionOptions): GameSession 
       // actually have, and a bell that never rings leaves the game looking
       // frozen with nothing on screen to explain why.
       poll ??= setInterval(() => {
-        void fetchGame()
-          .then((update) => update && onRevision(update.revision))
+        // Reads the row rather than the game: a lobby has no state to decode,
+        // and the caller only ever needs the revision anyway.
+        void rpc
+          .fetchGame(config, { gameId, joinCode })
+          .then((row) => {
+            const revision = (row as { revision?: unknown } | null)?.revision;
+            if (typeof revision === 'number') {
+              onRevision(revision);
+            }
+          })
           .catch(() => undefined);
       }, POLL_INTERVAL_MS);
 

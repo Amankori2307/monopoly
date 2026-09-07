@@ -32,13 +32,10 @@ export const useLobby = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { seats, phase, lobbyError, seatId, connection } = useAppSelector(
-    (state) => state.seat
-  );
-  // The registry is not React state, so swapping the session does not re-render
-  // on its own. `connection` is what `attachOnlineSession` sets, so reading it
-  // here is what makes the subscription below re-run against the new session
-  // rather than staying attached to the local one that never rings.
+  const { seats, phase, lobbyError, seatId } = useAppSelector((state) => state.seat);
+  // Re-renders when the session is replaced - see useSession - so the
+  // subscription below attaches to the online session rather than staying on
+  // the local one that never rings.
   const session = useSession();
   const [name, setName] = useState('');
   const [tokenId, setTokenId] = useState('');
@@ -86,7 +83,14 @@ export const useLobby = () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [connection, dispatch, gameId, joinCode, navigate, session]);
+    // Deliberately NOT keyed on `connection`. The handler below calls
+    // openOnlineTable, which sets connection to Connecting - so an effect that
+    // depended on it tore itself down mid-flight, marked its own pending
+    // promise cancelled, and swallowed the navigate. The guest sat in the lobby
+    // while the host was already playing. `session` changes identity only when
+    // the session is genuinely replaced, which is the thing worth re-subscribing
+    // for.
+  }, [dispatch, gameId, joinCode, navigate, session]);
 
   // Prefill from the seat this device already holds, so a reload is not a
   // blank form.

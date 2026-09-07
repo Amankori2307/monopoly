@@ -19,6 +19,7 @@ import {
   setJoinCode,
   setLobby,
   setLobbyError,
+  sessionReplaced,
 } from './seatSlice';
 import { rpc } from './supabaseRpc';
 import type { ThunkExtra } from './sessionRegistry.interfaces';
@@ -273,5 +274,9 @@ export const attachOnlineSession =
     if (input.seatId) {
       writeSeatClaim(input.gameId, input.seatId);
     }
+    // Not `setConnection` alone: attaching often sets it to the value it
+    // already had, so nothing re-rendered and every subscriber stayed on the
+    // local session. This is the signal that the session itself changed.
+    dispatch(sessionReplaced());
     dispatch(setConnection(ConnectionState.Live));
   };

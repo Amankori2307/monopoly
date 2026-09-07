@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useAppSelector } from '../../../app/hooks';
 import { useSession } from './useSession';
 
 /**
@@ -12,10 +11,10 @@ import { useSession } from './useSession';
  */
 export const usePresence = (): ReadonlySet<string> => {
   const [here, setHere] = useState<ReadonlySet<string>>(new Set());
+  // `useSession` re-renders when the session is replaced, so its identity is
+  // the right dependency - and unlike `connection` it does not change while a
+  // fetch is in flight, which would tear this down and re-attach for nothing.
   const session = useSession();
-  // The registry is not React state, so this is what re-runs the effect when
-  // the session is swapped - see useLobby for the same reason.
-  const connection = useAppSelector((state) => state.seat.connection);
 
   useEffect(() => {
     if (!session.isOnline) {
@@ -23,7 +22,7 @@ export const usePresence = (): ReadonlySet<string> => {
       return;
     }
     return session.onHere((seatIds) => setHere(new Set(seatIds)));
-  }, [connection, session]);
+  }, [session]);
 
   return here;
 };

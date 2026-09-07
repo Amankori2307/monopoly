@@ -25,6 +25,17 @@ interface SeatSliceState {
   phase: string | null;
   /** Set when a lobby cannot be reached, or the code is wrong. */
   lobbyError: string | null;
+  /**
+   * Bumped every time the live session is replaced.
+   *
+   * The registry is not React state - a session holds a socket - so swapping it
+   * re-renders nothing on its own. Without this, an effect that subscribed
+   * during the first render stayed attached to the LOCAL session forever and
+   * never heard a bell. Piggy-backing on `connection` looked like it worked and
+   * did not: attaching sets it to Live, which is often the value it already
+   * had, so no re-render happened at all.
+   */
+  sessionEpoch: number;
 }
 
 const initialState: SeatSliceState = {
@@ -35,6 +46,7 @@ const initialState: SeatSliceState = {
   seats: [],
   phase: null,
   lobbyError: null,
+  sessionEpoch: 0,
 };
 
 const slice = createSlice({
@@ -64,6 +76,10 @@ const slice = createSlice({
     setLobbyError(state, action: PayloadAction<string | null>) {
       state.lobbyError = action.payload;
     },
+    /** Say the live session has been replaced, so subscribers re-attach. */
+    sessionReplaced(state) {
+      state.sessionEpoch += 1;
+    },
     /** Leaving a game: forget the seat, keep the device id. */
     leaveTable(state) {
       state.seatId = null;
@@ -84,6 +100,7 @@ export const {
   setJoinCode,
   setLobby,
   setLobbyError,
+  sessionReplaced,
   leaveTable,
 } = slice.actions;
 export { initialState as seatInitialState };
