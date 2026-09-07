@@ -42,3 +42,14 @@ export const TOKEN_STEP_VOLUME = 0.35;
  * enough for the floor interval without loading the clip needlessly often.
  */
 export const TOKEN_STEP_POOL_SIZE = 4;
+
+/**
+ * How long a device waits for its own roll to land before releasing the button.
+ *
+ * The engine is synchronous, so locally this never fires: the roll id arrives in
+ * the same tick. It exists for the online case, where a refused command or a
+ * publish that never answers would otherwise leave the button disabled forever -
+ * exactly the "stuck on Rolling..." dead end this dock has already been fixed
+ * for once. Generous, because firing early would allow a double submit.
+ */
+export const DICE_SUBMIT_WATCHDOG_MS = 4000;

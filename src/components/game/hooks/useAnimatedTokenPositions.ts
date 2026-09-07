@@ -16,6 +16,7 @@ import {
   TOKEN_STEP_VOLUME,
   TOKEN_WALK_BUDGET_MS,
   TOKEN_WALK_WATCHDOG_SLACK_MS,
+  DICE_ROLL_DURATION_MS,
 } from '../diceDock.constants';
 
 /** The hook's result, named and placed per docs/conventions.md section 5. */
@@ -75,7 +76,20 @@ const stepIntervalFor = (steps: number): number => {
 export const useAnimatedTokenPositions = (
   players: PlayerState[],
   /** False when the player has muted the game, so the steps fall silent too. */
-  soundEnabled = true
+  soundEnabled = true,
+  /**
+   * True while the dice are still tumbling, when the token must not set off.
+   *
+   * The tumble runs after the commit now, so the engine has already moved the
+   * player by the time the faces start spinning - and without this the token
+   * would arrive before the dice showed what sent it there.
+   *
+   * Holding does NOT bypass the watchdog. A hold that never cleared would leave
+   * `isMoving` true forever, which gates the Roll button and withholds every
+   * decision modal - the exact unplayable state this hook already has a
+   * backstop for. So a watchdog is armed while holding too.
+   */
+  hold = false
 ): UseAnimatedTokenPositionsResult => {
   const displayRef = useRef<TokenPositions>(positionsOf(players));
   const [displayPositions, setDisplayPositions] = useState<TokenPositions>(
@@ -151,6 +165,32 @@ export const useAnimatedTokenPositions = (
     setDisplayPositions(settled);
 
     /**
+     * Held: the dice are still tumbling, so nothing sets off yet. The effect
+     * re-runs when the hold clears and the walk starts from here.
+     *
+     * The watchdog is armed anyway, and that is the point - a hold that never
+     * cleared would otherwise strand every token and leave the game unplayable
+     * with nothing on screen explaining why.
+     */
+    if (hold) {
+      if (walks.length > 0) {
+        const longest = Math.max(
+          ...walks.map((walk) => walk.path.length * walk.interval)
+        );
+        watchdogRef.current = window.setTimeout(
+          () => {
+            timersRef.current.forEach((timer) => window.clearTimeout(timer));
+            timersRef.current.clear();
+            displayRef.current = positionsOf(players);
+            setDisplayPositions(displayRef.current);
+          },
+          DICE_ROLL_DURATION_MS + longest + TOKEN_WALK_WATCHDOG_SLACK_MS
+        );
+      }
+      return;
+    }
+
+    /**
      * The last resort, because a walk that never ends is a game that cannot be
      * played: `isMoving` gates the Roll button and withholds every decision
      * modal, so a token stuck mid-walk leaves the player with nothing to click
@@ -221,7 +261,7 @@ export const useAnimatedTokenPositions = (
 
     // players is intentionally excluded: positionsKey is its meaningful identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [positionsKey, soundEnabled]);
+  }, [hold, positionsKey, soundEnabled]);
 
   /**
    * Derived, not stored.

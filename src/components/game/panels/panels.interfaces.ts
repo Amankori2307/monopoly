@@ -130,6 +130,8 @@ export interface JailDecisionViewModel {
   attemptsUsed: number;
   /** The engine's last throw, so the panel's dice settle on it. */
   lastRoll: number[] | null;
+  /** Identifies the throw, so every device replays it exactly once. */
+  lastRollId: string | null;
 }
 
 export interface CardDrawDecisionViewModel {

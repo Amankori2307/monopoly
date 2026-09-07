@@ -12,6 +12,8 @@ interface JailDecisionProps {
   currencySymbol: string;
   /** The engine's last throw, which the dice settle on once the tumble ends. */
   lastRoll: number[] | null;
+  /** Identifies the throw, so every device replays it exactly once. */
+  lastRollId: string | null;
   onAttemptJailRoll: () => void;
   onPayFine: () => void;
   onUseJailCard: () => void;
@@ -43,6 +45,7 @@ export function JailDecision({
   canUseJailCard,
   currencySymbol,
   lastRoll,
+  lastRollId,
   onAttemptJailRoll,
   onPayFine,
   onUseJailCard,
@@ -51,11 +54,12 @@ export function JailDecision({
 }: JailDecisionProps) {
   const attempt = Math.min(attemptsUsed + 1, MAX_JAIL_TURNS);
   const isLastAttempt = attempt === MAX_JAIL_TURNS;
-  const { displayValues, isRolling, roll } = useDiceRoller({
+  const { displayValues, isRolling, isSubmitting, roll } = useDiceRoller({
     // The panel is only rendered while the attempt is still available, so
     // whether it may be taken is already decided by then.
     canRoll: true,
     lastRoll,
+    lastRollId,
     onRoll: onAttemptJailRoll,
     soundEnabled,
     soundSrc: diceRollSound,
@@ -81,15 +85,15 @@ export function JailDecision({
         <button
           className="primary-button"
           data-testid={TEST_IDS.jailRollButton}
-          disabled={isRolling}
+          disabled={isRolling || isSubmitting}
           onClick={roll}
           type="button"
         >
-          {isRolling ? 'Rolling…' : 'Roll for doubles'}
+          {isRolling || isSubmitting ? 'Rolling…' : 'Roll for doubles'}
         </button>
         <button
           className="secondary-button"
-          disabled={isRolling}
+          disabled={isRolling || isSubmitting}
           onClick={onPayFine}
           type="button"
         >
@@ -97,7 +101,7 @@ export function JailDecision({
         </button>
         <button
           className="secondary-button"
-          disabled={!canUseJailCard || isRolling}
+          disabled={!canUseJailCard || isRolling || isSubmitting}
           onClick={onUseJailCard}
           title={canUseJailCard ? '' : 'No Get Out of Jail Free card to use'}
           type="button"

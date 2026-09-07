@@ -158,8 +158,21 @@ describe('taking a turn from the page', () => {
       { timeout: 3000 }
     );
 
-    // Either the walk finishes and the extra roll is offered, or the turn had no
-    // extra roll to give - both are settled states, neither is mid-walk.
+    // Wait for the walk itself to settle rather than for a wall-clock budget:
+    // the tumble runs before the walk now, so any fixed timeout here is a race
+    // that gets tighter every time the animation is retimed. `data-moving` is
+    // the board's own statement that it has finished.
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(TEST_IDS.gameLayout)).toHaveAttribute(
+          'data-moving',
+          'false'
+        ),
+      { timeout: 10000 }
+    );
+
+    // Either the extra roll is offered, or the turn had no extra roll to give -
+    // both are settled states, neither is mid-walk.
     await waitFor(
       () => {
         const canRollAgain = store.getState().game.activeGame?.turn.canRollAgain;

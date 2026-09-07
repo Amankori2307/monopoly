@@ -52,6 +52,7 @@ const jailDecision = (game: GameState, activePlayer: PlayerState): DecisionViewM
   canUseJailCard: activePlayer.jailFreeCards.length > 0,
   attemptsUsed: activePlayer.jailTurnsServed,
   lastRoll: game.turn.lastRoll,
+  lastRollId: game.turn.lastRollId,
 });
 
 /**

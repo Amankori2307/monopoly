@@ -8,6 +8,7 @@ import { PlayersPanel } from '../../components/game/panels/PlayersPanel';
 import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { GameOverlayLayer } from './GameOverlayLayer';
+import { useIsRollingDice } from '../../components/game/hooks/useIsRollingDice';
 import { useViewer } from '../multiplayer/hooks/useViewer';
 import { selectBoardViewModels } from './boardViewModels.selectors';
 import {
@@ -49,9 +50,14 @@ export function GamePage() {
   // Sounds whatever the last command did. Mounted here because the page is
   // where the game is being played.
   useGameSounds();
+  // Held while the dice tumble: the engine has already moved the player by the
+  // time the faces start spinning, so without this the token would arrive
+  // before the dice showed what sent it there.
+  const isRollingDice = useIsRollingDice(activeGame?.turn.lastRollId ?? null);
   const { positions: tokenPositions, isMoving } = useAnimatedTokenPositions(
     players,
-    soundEnabled
+    soundEnabled,
+    isRollingDice
   );
   // Roll, then move, then outcome - nothing is said until the token arrives.
   useFeedbackGate(isMoving);
@@ -142,6 +148,7 @@ export function GamePage() {
               canRollAgain={activeGame.turn.canRollAgain}
               speedDieFace={activeGame.turn.speedDieFace}
               lastRoll={activeGame.turn.lastRoll}
+              lastRollId={activeGame.turn.lastRollId}
               onEndTurn={commands.endTurn}
               onRoll={commands.rollDice}
               rollLabel="Roll dice"

@@ -24,12 +24,17 @@ const renderPanel = (overrides: Partial<Parameters<typeof JailDecision>[0]> = {}
   const onAttemptJailRoll = vi.fn();
   const onPayFine = vi.fn();
   const onUseJailCard = vi.fn();
-  render(
+  const props = (extra: Partial<Parameters<typeof JailDecision>[0]> = {}) => ({
+    ...overrides,
+    ...extra,
+  });
+  const view = render(
     <JailDecision
       attemptsUsed={0}
       canUseJailCard={false}
       currencySymbol="₹"
       lastRoll={null}
+      lastRollId={null}
       soundEnabled
       onAttemptJailRoll={onAttemptJailRoll}
       onPayFine={onPayFine}
@@ -38,7 +43,25 @@ const renderPanel = (overrides: Partial<Parameters<typeof JailDecision>[0]> = {}
       {...overrides}
     />
   );
-  return { onAttemptJailRoll, onPayFine, onUseJailCard };
+  /** Re-renders with a new throw, the way the engine's state would arrive. */
+  const rerender = (extra: Partial<Parameters<typeof JailDecision>[0]>) =>
+    view.rerender(
+      <JailDecision
+        attemptsUsed={0}
+        canUseJailCard={false}
+        currencySymbol="₹"
+        lastRoll={null}
+        lastRollId={null}
+        soundEnabled
+        onAttemptJailRoll={onAttemptJailRoll}
+        onPayFine={onPayFine}
+        onUseJailCard={onUseJailCard}
+        playerName="Asha"
+        {...props(extra)}
+      />
+    );
+
+  return { onAttemptJailRoll, onPayFine, onUseJailCard, rerender };
 };
 
 describe('the ways out of Jail', () => {
@@ -50,14 +73,15 @@ describe('the ways out of Jail', () => {
     expect(screen.getByRole('button', { name: /jail card/i })).toBeEnabled();
   });
 
-  it('rolls for doubles when asked, once the dice have settled', () => {
+  it('rolls for doubles the moment it is asked', () => {
     const { onAttemptJailRoll } = renderPanel();
 
     fireEvent.click(screen.getByTestId(TEST_IDS.jailRollButton));
 
-    // The dice tumble first, exactly as they do for an ordinary roll.
-    expect(onAttemptJailRoll).not.toHaveBeenCalled();
-    act(() => vi.advanceTimersByTime(DICE_ROLL_DURATION_MS));
+    // The tumble runs after the commit now, exactly as it does for an ordinary
+    // roll: the engine decides the throw, and every device animates the id it
+    // stamped. Waiting 520ms to dispatch would mean the other players saw the
+    // faces snap to a result with no throw at all.
     expect(onAttemptJailRoll).toHaveBeenCalledOnce();
   });
 
@@ -118,11 +142,13 @@ describe('the attempt counter', () => {
  * is behind this modal's backdrop. It goes through the same `useDiceRoller` now.
  */
 describe('rolling for doubles', () => {
-  it('plays the dice sound', () => {
+  it('plays the dice sound when the throw comes back', () => {
     const play = vi.spyOn(window.HTMLMediaElement.prototype, 'play');
-    renderPanel();
+    const { rerender } = renderPanel();
 
-    fireEvent.click(screen.getByTestId(TEST_IDS.jailRollButton));
+    // The sound belongs to the tumble, and the tumble belongs to the throw - so
+    // it sounds on every device, not only on the one that clicked.
+    act(() => rerender({ lastRoll: [2, 4], lastRollId: 'roll-1' }));
 
     expect(play).toHaveBeenCalled();
   });
@@ -148,12 +174,16 @@ describe('rolling for doubles', () => {
   });
 
   it('tumbles while it rolls, and stops when it lands', () => {
-    renderPanel();
+    const { rerender } = renderPanel();
     const button = screen.getByTestId(TEST_IDS.jailRollButton);
 
     fireEvent.click(button);
+    // Locked immediately - this device is waiting for its own command.
     expect(button).toHaveTextContent('Rolling');
     expect(button).toBeDisabled();
+
+    act(() => rerender({ lastRoll: [2, 4], lastRollId: 'roll-1' }));
+    expect(button).toHaveTextContent('Rolling');
 
     act(() => vi.advanceTimersByTime(DICE_ROLL_DURATION_MS));
     expect(button).toHaveTextContent('Roll for doubles');

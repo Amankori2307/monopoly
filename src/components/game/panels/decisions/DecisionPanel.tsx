@@ -92,6 +92,7 @@ export function DecisionPanel({
           canUseJailCard={decision.canUseJailCard}
           currencySymbol={currencySymbol}
           lastRoll={decision.lastRoll}
+          lastRollId={decision.lastRollId}
           onAttemptJailRoll={handlers.onAttemptJailRoll}
           onPayFine={handlers.onPayJailFine}
           onUseJailCard={handlers.onUseJailCard}

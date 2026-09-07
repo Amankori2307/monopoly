@@ -11,6 +11,8 @@ interface TurnControlsProps {
   /** The Speed Die's face this turn, or null in a game without one. */
   speedDieFace: SpeedDieFace | null;
   lastRoll: number[] | null;
+  /** Identifies the throw, so every device replays it exactly once. */
+  lastRollId: string | null;
   onEndTurn: () => void;
   onRoll: () => void;
   rollLabel: string;
@@ -25,6 +27,7 @@ export function TurnControls({
   canRoll,
   canRollAgain,
   lastRoll,
+  lastRollId,
   onEndTurn,
   onRoll,
   rollLabel,
@@ -48,6 +51,7 @@ export function TurnControls({
         canRoll={canRoll}
         speedDieFace={speedDieFace}
         lastRoll={lastRoll}
+        lastRollId={lastRollId}
         onRoll={onRoll}
         rollLabel={rollLabel}
       />

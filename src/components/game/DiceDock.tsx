@@ -7,6 +7,8 @@ import { useDiceRoller } from './hooks/useDiceRoller';
 interface DiceDockProps {
   canRoll: boolean;
   lastRoll: number[] | null;
+  /** Identifies the throw, so every device replays it exactly once. */
+  lastRollId: string | null;
   onRoll: () => void;
   rollLabel: string;
   /** False when the player has muted the game. */
@@ -19,14 +21,16 @@ interface DiceDockProps {
 export function DiceDock({
   canRoll,
   lastRoll,
+  lastRollId,
   onRoll,
   rollLabel,
   soundEnabled,
   speedDieFace,
 }: DiceDockProps) {
-  const { displayValues, isRolling, roll } = useDiceRoller({
+  const { displayValues, isRolling, isSubmitting, roll } = useDiceRoller({
     canRoll,
     lastRoll,
+    lastRollId,
     onRoll,
     soundEnabled,
     soundSrc: diceRollSound,
@@ -48,11 +52,12 @@ export function DiceDock({
       <button
         className="dice-roll-button"
         data-testid={TEST_IDS.rollButton}
-        disabled={!canRoll || isRolling}
+        // Both flags: the animation, and this device's own in-flight lock.
+        disabled={!canRoll || isRolling || isSubmitting}
         onClick={roll}
         type="button"
       >
-        {isRolling ? 'Rolling…' : rollLabel}
+        {isRolling || isSubmitting ? 'Rolling…' : rollLabel}
       </button>
     </section>
   );
