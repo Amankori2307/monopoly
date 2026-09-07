@@ -43,6 +43,16 @@ export interface GameSession {
   fetch(): Promise<RemoteGameUpdate | null>;
 
   /**
+   * Ring the bell for a write that did not go through `publish` - a seat claim,
+   * or the host starting the game.
+   *
+   * Without it those writes are invisible until somebody's poll comes round,
+   * which in a lobby means watching a stale table for up to thirty seconds
+   * while your friend wonders why you have not appeared.
+   */
+  announce(revision: number): Promise<void>;
+
+  /**
    * Watch for somebody else's move. Returns the unsubscribe.
    *
    * The callback is given the revision only - the doorbell, not the payload -

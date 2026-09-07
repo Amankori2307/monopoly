@@ -9,6 +9,7 @@ import { TurnControls } from '../../components/game/panels/TurnControls';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { GameOverlayLayer } from './GameOverlayLayer';
 import { useIsRollingDice } from '../../components/game/hooks/useIsRollingDice';
+import { useTableSync } from '../multiplayer/hooks/useTableSync';
 import { useViewer } from '../multiplayer/hooks/useViewer';
 import { selectBoardViewModels } from './boardViewModels.selectors';
 import {
@@ -62,6 +63,9 @@ export function GamePage() {
   // Roll, then move, then outcome - nothing is said until the token arrives.
   useFeedbackGate(isMoving);
   const viewer = useViewer(activeGame);
+  // Somebody else's move arrives here: the bell carries a revision, this
+  // fetches and adopts. A local game's session never rings.
+  useTableSync(useAppSelector((state) => state.game.revision));
 
   if (!activeGame) {
     return <GameUnavailable loadError={loadError} />;

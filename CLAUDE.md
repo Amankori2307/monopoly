@@ -212,13 +212,14 @@ pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
 pnpm test:e2e     # playwright (tests/e2e), auto-starts dev server
 pnpm test:routing # builds, then playwright (tests/routing) against a static host
+pnpm test:online  # builds, then playwright (tests/online) against the REAL project
 pnpm lint         # eslint (config: .eslintrc.json)
 pnpm check-all    # typecheck + lint + prettier, in one
 pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1170 unit tests, 124 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1202 unit tests, 127 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -342,6 +343,14 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   inert copy of their own only move. Every decision type needs a row in `AUDIENCE_FOR_DECISION`;
   `decisionAudience.guard.test.ts` fails until it has one, the same tactic as `SOUND_FOR_CUE`.
   Game over is the one `Everyone` row - there is no owner and everybody needs the button.
+- **A client never sends the whole seats list.** `claim_seat` used to take the array and store it,
+  which made every claim a last-writer-wins overwrite of everybody - a guest that clicked before its
+  first fetch came back sent an array containing only itself and **deleted the host**. Found with two
+  real browsers. The merge is done in SQL under the row lock now (migration 0003), and the lobby also
+  refuses to offer any control until `phase !== null`, because "not read yet" is not "empty".
+- **`pnpm test:online` writes real rows to the real project**, so it is not part of `test:e2e`. It
+  serves the **production build**, because `.env.production` is the only place the Supabase config
+  lives - `development` resolves none on purpose, so the ordinary suite can never reach the network.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

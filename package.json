@@ -26,6 +26,7 @@
     "test:watch": "nx test --watch",
     "test:e2e": "playwright test",
     "test:routing": "pnpm build && playwright test --config playwright.prod.config.ts",
+    "test:online": "pnpm build && playwright test --config playwright.online.config.ts",
     "predeploy": "pnpm run build",
     "deploy": "gh-pages -d build",
     "lint": "nx lint",

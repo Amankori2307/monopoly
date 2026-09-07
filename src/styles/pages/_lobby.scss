@@ -1,0 +1,110 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+// ---------------------------------------------------------------------------
+// The table before the game starts.
+//
+// Built out of the same objects as the rest of the game - panels, the mono
+// label, the sharp corner - so arriving here from an invite link does not feel
+// like a different app.
+// ---------------------------------------------------------------------------
+
+.lobby-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+  align-items: start;
+  gap: t.$gap-xl;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: t.$gap-xl t.$gap-lg;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lobby-panel h1 {
+  margin: 0 0 t.$gap-lg;
+  font-family: t.$font-serif;
+  font-size: 1.6rem;
+}
+
+// The empty chairs are drawn, not counted: somebody waiting for friends needs
+// to see there is room.
+.lobby-seats {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 t.$gap-lg;
+  padding: 0;
+  list-style: none;
+}
+
+.lobby-seat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: t.$radius-sharp;
+  background: var(--surface-muted);
+
+  &.is-mine {
+    border-left: 4px solid var(--accent);
+  }
+
+  &.is-empty {
+    border-style: dashed;
+    background: none;
+    color: var(--text-muted);
+  }
+}
+
+.lobby-seat-token {
+  font-size: 1.2rem;
+}
+
+.lobby-seat-name {
+  flex: 1 1 auto;
+  font-weight: 600;
+}
+
+.lobby-seat-you {
+  @include m.mono-label;
+  color: var(--text-eyebrow);
+}
+
+.lobby-claim {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: t.$gap-lg;
+
+  @include m.below(t.$breakpoint-tablet) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The invite
+// ---------------------------------------------------------------------------
+.invite-code {
+  margin: 6px 0 t.$gap-md;
+  font-family: t.$font-mono;
+  font-size: 2rem;
+  font-weight: 500;
+  // It gets read out loud, so it needs the room between characters.
+  letter-spacing: 0.18em;
+  color: var(--text-primary);
+}
+
+.invite-link-row {
+  display: flex;
+  gap: 8px;
+
+  .text-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: t.$font-mono;
+    font-size: 0.78rem;
+  }
+}

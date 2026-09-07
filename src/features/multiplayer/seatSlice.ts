@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { GameId, PlayerId } from '../../domain/types/game.interfaces';
 import { readDeviceId, readSeatClaim, writeSeatClaim } from './seatClaim.utils';
+import type { LobbySeat } from './lobby.interfaces';
 import { ConnectionState } from './viewer.enums';
 
 /**
@@ -18,6 +19,12 @@ interface SeatSliceState {
   connection: ConnectionState;
   /** The join code for the open online game - the invite link's payload. */
   joinCode: string | null;
+  /** The table as it stands, before the game exists. */
+  seats: LobbySeat[];
+  /** Null until a lobby has been fetched; 'lobby' or the game's own phase. */
+  phase: string | null;
+  /** Set when a lobby cannot be reached, or the code is wrong. */
+  lobbyError: string | null;
 }
 
 const initialState: SeatSliceState = {
@@ -25,6 +32,9 @@ const initialState: SeatSliceState = {
   deviceId: '',
   connection: ConnectionState.Offline,
   joinCode: null,
+  seats: [],
+  phase: null,
+  lobbyError: null,
 };
 
 const slice = createSlice({
@@ -46,16 +56,34 @@ const slice = createSlice({
     setJoinCode(state, action: PayloadAction<string | null>) {
       state.joinCode = action.payload;
     },
+    setLobby(state, action: PayloadAction<{ seats: LobbySeat[]; phase: string | null }>) {
+      state.seats = action.payload.seats;
+      state.phase = action.payload.phase;
+      state.lobbyError = null;
+    },
+    setLobbyError(state, action: PayloadAction<string | null>) {
+      state.lobbyError = action.payload;
+    },
     /** Leaving a game: forget the seat, keep the device id. */
     leaveTable(state) {
       state.seatId = null;
       state.joinCode = null;
+      state.seats = [];
+      state.phase = null;
+      state.lobbyError = null;
       state.connection = ConnectionState.Offline;
     },
   },
 });
 
 export const seatReducer = slice.reducer;
-export const { restoreSeat, claimSeat, setConnection, setJoinCode, leaveTable } =
-  slice.actions;
+export const {
+  restoreSeat,
+  claimSeat,
+  setConnection,
+  setJoinCode,
+  setLobby,
+  setLobbyError,
+  leaveTable,
+} = slice.actions;
 export { initialState as seatInitialState };

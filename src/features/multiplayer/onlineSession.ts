@@ -129,6 +129,8 @@ export const createOnlineSession = (options: OnlineSessionOptions): GameSession 
 
     fetch: fetchGame,
 
+    announce: (revision: number) => doorbell.ring(revision),
+
     subscribe(onRevision: (revision: number) => void): () => void {
       const stopListening = doorbell.onRing(onRevision);
 

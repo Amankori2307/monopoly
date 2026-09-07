@@ -740,6 +740,7 @@ describe('publishing a move', () => {
     isOnline: true,
     publish,
     fetch: vi.fn().mockResolvedValue(null),
+    announce: vi.fn().mockResolvedValue(undefined),
     subscribe: vi.fn().mockReturnValue(() => undefined),
     close: vi.fn(),
   });

@@ -13,6 +13,9 @@ import { trimPlayerNames, validateSetupDraft } from '../setupValidation.utils';
 
 export interface UseGameSetupFormResult {
   formError: string | null;
+  /** The host's own name and token, for opening an online table. */
+  firstPlayer: () => { name: string; tokenId: string };
+  setFormError: (message: string | null) => void;
   gameName: string;
   playerCount: number;
   playerNames: string[];
@@ -92,6 +95,17 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
   }, [playerNames, playerTokens]);
 
   return {
+    /**
+     * The host's own name and token, for opening an online table.
+     *
+     * Reuses the form the player has already filled in rather than asking
+     * again on the lobby screen - they are one flow, not two.
+     */
+    firstPlayer: () => ({
+      name: trimPlayerNames(playerNames)[0] || 'Player 1',
+      tokenId: playerTokens[0],
+    }),
+    setFormError,
     formError,
     gameName,
     playerCount,

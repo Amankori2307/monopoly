@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isOnlineEnabled } from '../multiplayer/onlineConfig.utils';
+import { createOnlineLobby } from '../multiplayer/multiplayer.thunks';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { PlayerConfigRow } from '../../components/setup/PlayerConfigRow';
 import { RecentGamesList } from '../../components/setup/RecentGamesList';
@@ -17,6 +19,25 @@ export function HomePage() {
   const recentGames = useAppSelector((state) => state.game.recentGames);
   const loadError = useAppSelector((state) => state.game.loadError);
   const form = useGameSetupForm();
+  // Opening a table is a network round trip, so the button has to be able to
+  // say it is busy - a second click would open a second table.
+  const [isOpeningTable, setIsOpeningTable] = useState(false);
+
+  /** Opens an online table with this device as its first seat. */
+  const openTable = async () => {
+    setIsOpeningTable(true);
+    try {
+      const host = form.firstPlayer();
+      const { gameId, joinCode } = await dispatch(createOnlineLobby(host));
+      navigate(`/lobby/${gameId}?code=${encodeURIComponent(joinCode)}`);
+    } catch (error) {
+      form.setFormError(
+        error instanceof Error ? error.message : 'Could not open an online table.'
+      );
+    } finally {
+      setIsOpeningTable(false);
+    }
+  };
 
   useEffect(() => {
     dispatch(bootstrapRecentGames());
@@ -95,6 +116,20 @@ export function HomePage() {
                 <button className="primary-button" type="submit">
                   Create game
                 </button>
+                {/* Only offered when this build has a server to reach. An
+                    offline build must not render a control that cannot work -
+                    see onlineConfig. */}
+                {isOnlineEnabled() ? (
+                  <button
+                    className="secondary-button"
+                    data-testid={TEST_IDS.playOnlineButton}
+                    disabled={isOpeningTable}
+                    onClick={() => void openTable()}
+                    type="button"
+                  >
+                    Play online
+                  </button>
+                ) : null}
               </div>
             </form>
           </section>

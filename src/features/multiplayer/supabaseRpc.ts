@@ -118,13 +118,22 @@ export const rpc = {
       p_command: input.command ?? null,
     }),
 
+  /**
+   * Sends ONE seat, never the whole table.
+   *
+   * It used to send the array, which made every claim a last-writer-wins
+   * overwrite of everybody - a client that had not finished loading sent an
+   * array containing only itself and the other players vanished. The merge is
+   * done in SQL under the row lock now; see migration 0003.
+   */
   claimSeat: (
     config: OnlineConfig,
-    input: { gameId: string; joinCode: string; seats: unknown[] }
+    input: { gameId: string; joinCode: string; seat: unknown; maxPlayers: number }
   ) =>
     callRpc<unknown>(config, 'claim_seat', {
       p_game_id: input.gameId,
       p_join_code: input.joinCode,
-      p_seats: input.seats,
+      p_seat: input.seat,
+      p_max_players: input.maxPlayers,
     }),
 };

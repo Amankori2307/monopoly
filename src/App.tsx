@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import { GamePage } from './features/game/GamePage';
 import { RulesPage } from './features/rules/RulesPage';
 import { HomePage } from './features/setup/HomePage';
+import { LobbyPage } from './features/lobby/LobbyPage';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 function App() {
@@ -26,6 +27,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/game/:gameId" element={<GamePage />} />
+          {/* The invite link. The same URL after the game starts sends the
+              follower into the game rather than a lobby that is gone. */}
+          <Route path="/lobby/:gameId" element={<LobbyPage />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

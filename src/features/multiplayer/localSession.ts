@@ -23,6 +23,9 @@ export const createLocalSession = (): GameSession => ({
   // There is no elsewhere to fetch from.
   fetch: () => Promise.resolve(null),
 
+  // Nobody to tell.
+  announce: () => Promise.resolve(),
+
   // Nobody else can move, so the bell never rings. Returning a working
   // unsubscribe rather than a no-op keeps the caller's cleanup honest.
   subscribe: () => () => undefined,
