@@ -225,7 +225,13 @@ pnpm deploy       # gh-pages → build/
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
-baseline is enforced rather than remembered. Two things there are load-bearing: `CI` flips
+baseline is enforced rather than remembered. A push to `master` that passes both jobs then
+**deploys** to https://amankori2307.github.io/monopoly/ - the built tree is force-pushed to the
+`gh-pages` branch, which is where Pages serves this repo from (`build_type: legacy`, source
+`gh-pages` at root), so no repository setting is involved. The deploy has its own concurrency group
+with `cancel-in-progress: false`, because the top-level group cancels on a new push and a deploy
+interrupted mid-push is how a half-written tree ends up being served. `pnpm deploy` still exists for
+publishing by hand. Two things there are load-bearing: `CI` flips
 `server.open` off in `vite.config.mjs` (there is no browser to open on a runner), and it flips
 `reuseExistingServer` off in `playwright.config.ts` — adopting a stray dev server would mean testing
 code the job never built. `pnpm/action-setup` is deliberately given no `version:`, so `packageManager`

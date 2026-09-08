@@ -103,3 +103,73 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # Publishes to https://amankori2307.github.io/monopoly/ on every push to
+  # master, and only after both jobs above are green - a red build must not
+  # reach the live site.
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [check, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # Its own group, and NOT cancel-in-progress: the top-level group cancels on
+    # a new push, and a deploy interrupted mid-push is how a half-written tree
+    # ends up being served.
+    concurrency:
+      group: deploy-pages
+      cancel-in-progress: false
+    permissions:
+      # To push the built tree to the gh-pages branch. Nothing else.
+      contents: write
+    environment:
+      name: github-pages
+      url: https://amankori2307.github.io/monopoly/
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Production mode, which is the only mode that resolves the Supabase
+      # config - see .env.production. It is also the only mode compiled for the
+      # /monopoly/ base path the site is served from.
+      - name: Build
+        run: pnpm build
+
+      - name: Publish to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Pages serves this repo from the gh-pages branch at root, so the
+          # built tree is the branch. `.nojekyll` stops Pages running Jekyll
+          # over it, which would drop any file or folder starting with `_`.
+          touch build/.nojekyll
+
+          cd build
+          git init -q
+          git checkout -q -b gh-pages
+          git add -A
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -q -m "Deploy ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
+
+          # Force-pushed as a single fresh commit. The branch is build output,
+          # not history worth keeping, and this stops it growing without bound.
+          git push -q --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            gh-pages
+
+      - name: Say where it went
+        run: |
+          echo "Deployed https://amankori2307.github.io/monopoly/" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "From \`${GITHUB_SHA::7}\`." >> "$GITHUB_STEP_SUMMARY"
