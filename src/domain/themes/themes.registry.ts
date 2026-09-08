@@ -1,5 +1,7 @@
 import { indiaTheme } from './india.theme';
 import { internationalTheme } from './international.theme';
+import { usTheme } from './us.theme';
+import { worldTheme } from './world.theme';
 import type { GameTheme } from './theme.interfaces';
 
 /**
@@ -13,7 +15,12 @@ import type { GameTheme } from './theme.interfaces';
  *
  * Order matters only in that the first is the default.
  */
-export const availableThemes: readonly GameTheme[] = [indiaTheme, internationalTheme];
+export const availableThemes: readonly GameTheme[] = [
+  indiaTheme,
+  internationalTheme,
+  usTheme,
+  worldTheme,
+];
 
 /** The one a game falls back to when its saved `themeId` names nothing. */
 export const defaultTheme: GameTheme = indiaTheme;

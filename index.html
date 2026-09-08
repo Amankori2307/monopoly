@@ -54,10 +54,30 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Loaded without blocking the render, which is not a micro-optimisation:
+      a stylesheet is render-blocking by default, so when fonts.googleapis.com
+      is slow to answer the whole page waits on it. On a stalling connection
+      that is thirty seconds of blank screen, and in the e2e suite it was thirty
+      seconds per page load - a two-minute run became twenty minutes and started
+      failing tests that had nothing wrong with them.
+
+      `media="print"` makes it non-blocking; the onload swaps it to `all` once it
+      has arrived. The <noscript> copy keeps the fonts for a reader without JS,
+      where blocking is the only option available.
+    -->
     <link
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;500;600;700;800&display=swap"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;500;600;700;800&display=swap"
+      />
+    </noscript>
     <title>Monopoly - Board Game</title>
   </head>
   <body>

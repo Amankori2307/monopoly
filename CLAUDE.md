@@ -398,6 +398,16 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   recognise - that is its DNS-rebinding protection - so an ngrok URL answers "Blocked request. This
   host is not allowed." The tunnel domains are allowed in **`online` mode only**; `pnpm dev`, the
   server the e2e suite starts, keeps the protection.
+- **Never trust a slow e2e run without checking what else is on the machine.** A suite that runs in
+  1.3 minutes took twenty, with different tests failing each time and no code cause: four stray Vite
+  servers and orphaned nx daemons from earlier sessions were competing for the CPU. `pgrep -fl vite`
+  and `lsof -ti:3000` first, before reading anything into the failures - and measure load _during_ a
+  run, not after, and not on the Playwright process, which only orchestrates while Chromium works.
+- **The font stylesheet is loaded non-blocking**, and that is not a micro-optimisation. A
+  render-blocking third-party stylesheet means a blank page for however long Google takes to answer,
+  which on a stalling connection is thirty seconds. The e2e browser also resolves both font hosts to
+  nothing (`--host-resolver-rules` in `playwright.config.ts`): a test should not be able to pass or
+  fail on somebody else's CDN.
 - **A theme is one file, and the economics are not in it.** `src/domain/themes/<name>.theme.ts`
   carries what makes an edition _that_ edition - its name, currency, pieces, the forty square names
   and the board's centre - and `themes.registry.ts` lists it. Prices, rents and rules live once in

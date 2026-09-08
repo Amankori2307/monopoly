@@ -139,6 +139,8 @@ $themes: (
   // A palette of its own is the next phase - this edition currently differs in
   // its names, its currency and its pieces, which is what phase one was for.
   'international-edition': $india-palette,
+  'us-edition': $india-palette,
+  'world-edition': $india-palette,
 
   // -- Midnight: proves the engine works end to end. -------------------------
   // Not yet registered in src/domain/themes, so it is not selectable in the UI.
