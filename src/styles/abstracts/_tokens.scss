@@ -72,6 +72,9 @@ $stack-peek: 15px;
 // reads as a fanned deck rather than a cropped list.
 $stack-tuck: 7px;
 $stack-inset: 9px;
+// The fan's taper on a phone. At $stack-inset the deepest of eight slivers is
+// inset 63px each side, which is most of a phone-width card.
+$stack-inset-phone: 3px;
 $stack-strip-height: 5px;
 $stack-expanded-max-height: 420px;
 // Most of the sidebar the player stack may claim. Eight expanded cards are
@@ -102,6 +105,27 @@ $token-move-easing: cubic-bezier(0.45, 1, 0.55, 0);
 $breakpoint-board: 1250px;
 $breakpoint-tablet: 720px;
 $breakpoint-mobile: 620px;
+// A phone, as distinct from the small tablet $breakpoint-mobile already covers.
+// The board at this width gives roughly 30px street cells, and a space name
+// cannot be set in one at any size - see components/_board.scss.
+$breakpoint-phone: 560px;
+// A viewport this short is a phone or a small tablet held sideways. It is a
+// HEIGHT threshold on purpose: width cannot tell a landscape phone from a small
+// desktop window, and it is the height that breaks the board. Used only by the
+// landscape-compact mixin.
+$breakpoint-short: 560px;
+
+// Below this BOARD width a space name cannot be set legibly - the squares are
+// under ~42px and the name lands near 7px. A board-width threshold rather than a
+// viewport one on purpose: in landscape the board is sized by viewport HEIGHT, so
+// a 844x390 phone has an 844px-wide window and a 380px board. Used by a container
+// query in components/_board.scss, not by a media query.
+$board-name-floor: 520px;
+
+// The shell's padding on a phone. A token because pages/_rules.scss negates it
+// to bleed the booklet full width, and the two must stay derived from one value
+// - they were two independent 10px literals that cancelled by coincidence.
+$shell-pad-phone: 10px;
 
 // Every street colour group. Drives both the theme contract and the .group-* classes,
 // so adding a group here is the single place it needs to be declared.

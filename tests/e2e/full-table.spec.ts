@@ -1,7 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MAX_PLAYERS } from '../../src/domain/constants/game.constants';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { startGame } from './helpers';
+import { startGame, VIEWPORTS } from './helpers';
+// Every assertion below is about the DESKTOP arrangement, so this spec pins the
+// viewport rather than inheriting the config's default. Declarative rather than
+// a call in each test: a test added later cannot forget it.
+test.use({ viewport: VIEWPORTS.desktop });
 
 /**
  * A full table is where the layout is under the most pressure: eight tokens

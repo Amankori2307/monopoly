@@ -15,6 +15,7 @@ import { renderWithProviders } from '../../test/renderWithProviders';
 import { saveGame } from '../persistence/persistence';
 import { selectHasAvailableAction } from './gameView.selectors';
 import { runGameCommand } from './gameSlice';
+import { setAppearance } from './uiSlice';
 import { GamePage } from './GamePage';
 
 /**
@@ -68,6 +69,58 @@ describe('loading the game named in the route', () => {
     renderPage(game.id);
 
     expect(await screen.findByTestId(TEST_IDS.boardGrid)).toBeInTheDocument();
+  });
+
+  /**
+   * `is-game` is what turns the shell into a fixed app frame on a phone - the
+   * board pinned at the top, one scrolling region, the dice in a bar at the
+   * bottom. Without it the whole phone layout is inert, and jsdom does no
+   * layout, so the class is the only part of that assertable here. The geometry
+   * it produces is covered in tests/e2e/mobile.spec.ts.
+   */
+  it('marks the shell as the game frame', async () => {
+    const game = seedGame();
+
+    const { container } = renderPage(game.id);
+
+    await screen.findByTestId(TEST_IDS.boardGrid);
+    expect(container.querySelector('.app-shell')).toHaveClass('is-game');
+  });
+
+  /**
+   * The appearance is a per-device preference, so it reaches `data-theme`
+   * instead of the game's own edition id. Before appearances existed the
+   * attribute was the edition id outright, and the default has to stay exactly
+   * that rather than merely similar to it.
+   */
+  it('paints the shell in the edition by default', async () => {
+    const game = seedGame();
+
+    const { container } = renderPage(game.id);
+
+    await screen.findByTestId(TEST_IDS.boardGrid);
+    expect(container.querySelector('.app-shell')).toHaveAttribute(
+      'data-theme',
+      indiaEditionTheme.id
+    );
+  });
+
+  it('paints the shell in the chosen appearance instead', async () => {
+    const game = seedGame();
+
+    const { container, store } = renderPage(game.id);
+    await screen.findByTestId(TEST_IDS.boardGrid);
+
+    act(() => {
+      store.dispatch(setAppearance('aesthetic'));
+    });
+
+    // The board keeps its own edition - only the colours are overridden.
+    expect(container.querySelector('.app-shell')).toHaveAttribute(
+      'data-theme',
+      'aesthetic'
+    );
+    expect(store.getState().game.activeGame?.themeId).toBe(indiaEditionTheme.id);
   });
 
   it('shows both players', async () => {

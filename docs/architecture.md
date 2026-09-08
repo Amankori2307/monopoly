@@ -32,6 +32,8 @@ Forbidden: anything `domain → *`. If `src/domain/` ever imports React, Redux, 
 ```
 styles/
   abstracts/   tokens (fonts, radii, spacing, breakpoints, board geometry) + mixins
+               breakpoints: $breakpoint-board/-tablet/-mobile/-phone, plus $breakpoint-short
+               for the height-based landscape-compact() mixin
   themes/      the theme engine - token maps -> [data-theme] custom properties
   base/        reset, typography
   layout/      app shell, page, shared grids

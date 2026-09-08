@@ -71,6 +71,8 @@ export const TEST_IDS = {
   spaceOwnerDot: 'space-owner-dot',
   toast: 'toast',
   soundToggle: 'sound-toggle',
+  appearanceSelect: 'appearance-select',
+  appearanceToggle: 'appearance-toggle',
   liquidationDecision: 'liquidation-decision',
   liquidationMortgage: 'liquidation-mortgage',
   liquidationSell: 'liquidation-sell',

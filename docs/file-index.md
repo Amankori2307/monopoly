@@ -109,6 +109,8 @@ File-naming rules are in [conventions.md](conventions.md).
 | [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.                                     |
 | [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.                                       |
 | [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.                                      |
+| [board/boardTracks.guard.test.ts](../src/domain/board/boardTracks.guard.test.ts)     | `$board-corner-track` in the SCSS and `CORNER_TRACK` in the TS still agree.              |
+| [styles/themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)      | Every token in `$theme-contract` is actually read by something.                          |
 | [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Steps and paths both ways, wrapping past GO either way, and a full round.                |
 | [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping.                         |
 | [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)           | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard. |
@@ -159,6 +161,9 @@ File-naming rules are in [conventions.md](conventions.md).
 | [persistence/decodeGameState.ts](../src/features/persistence/decodeGameState.ts)                                  | Migrate-then-validate, shared by disk loads and anything arriving from another device.                        |
 | [persistence/decodeGameState.interfaces.ts](../src/features/persistence/decodeGameState.interfaces.ts)            | `DecodedGameState`: the game, and whether migrations ran.                                                     |
 | [multiplayer/onlineConfig.utils.ts](../src/features/multiplayer/onlineConfig.utils.ts)                            | Resolves the realtime backend config once, or `null`. Absent config means offline, never an error.            |
+| [appearance/useAppearance.ts](../src/features/appearance/useAppearance.ts)                                        | The appearance preference and everything a page does with it: `data-theme`, label, select, cycle.             |
+| [appearance/appearancePreference.utils.ts](../src/features/appearance/appearancePreference.utils.ts)              | Reads and writes `monopoly.appearance.v1`, validating the stored id. Guarded like every other storage call.   |
+| [appearance/appearancePreference.utils.test.ts](../src/features/appearance/appearancePreference.utils.test.ts)    | The default, the round trip, an unrecognised id, and storage that throws.                                     |
 | [multiplayer/onlineConfig.interfaces.ts](../src/features/multiplayer/onlineConfig.interfaces.ts)                  | `OnlineConfig`: the validated project url and anon key.                                                       |
 | [multiplayer/gameSession.interfaces.ts](../src/features/multiplayer/gameSession.interfaces.ts)                    | `GameSession`: publish, fetch, subscribe, close - and what a publish can come back as.                        |
 | [multiplayer/localSession.ts](../src/features/multiplayer/localSession.ts)                                        | The hot-seat session: accepts every publish, does nothing. One command path, not two.                         |
@@ -183,7 +188,9 @@ File-naming rules are in [conventions.md](conventions.md).
 | [multiplayer/hooks/useTableState.ts](../src/features/multiplayer/hooks/useTableState.ts)                          | Viewer, connection message and presence, as one hook.                                                         |
 | [multiplayer/hooks/usePresence.ts](../src/features/multiplayer/hooks/usePresence.ts)                              | Which seats have a device connected. Empty means no information.                                              |
 | [multiplayer/hooks/useConnectionMessage.ts](../src/features/multiplayer/hooks/useConnectionMessage.ts)            | The same sentence the command path refuses with.                                                              |
-| [components/game/layout/GameSidebar.tsx](../src/components/game/layout/GameSidebar.tsx)                           | The column beside the board: players, banner, toasts, dice.                                                   |
+| [components/game/layout/GameSidebar.tsx](../src/components/game/layout/GameSidebar.tsx)                           | The column beside the board: players, banner, then the sticky footer of toasts and dice.                      |
+| [components/setup/AppearanceField.tsx](../src/components/setup/AppearanceField.tsx)                               | The appearance select on the home page. A display preference, deliberately outside the game form.             |
+| [components/game/layout/GameSidebar.test.tsx](../src/components/game/layout/GameSidebar.test.tsx)                 | The footer groups toasts above the dice, and the activity button sits in the control row.                     |
 | [lobby/LobbyPage.tsx](../src/features/lobby/LobbyPage.tsx)                                                        | The table before the game starts; the invite link's destination.                                              |
 | [lobby/useLobby.ts](../src/features/lobby/useLobby.ts)                                                            | Reading the table, taking a seat, starting the game.                                                          |
 | [components/lobby/LobbySeats.tsx](../src/components/lobby/LobbySeats.tsx)                                         | Who is seated, and the empty chairs drawn rather than counted.                                                |
@@ -344,6 +351,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | File                                                                                        | What it does                                                                            |
 | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts)              | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
+| [constants/appearance.constants.ts](../src/shared/constants/appearance.constants.ts)        | The selectable appearances, and `AppearanceId` derived from that list.                  |
 | [utils/logger.enums.ts](../src/shared/utils/logger.enums.ts)                                | Log severity levels.                                                                    |
 | [utils/logger.interfaces.ts](../src/shared/utils/logger.interfaces.ts)                      | One captured log entry.                                                                 |
 | [utils/logger.utils.ts](../src/shared/utils/logger.utils.ts)                                | App log: console + capped ring + localStorage, exposed as `window.monopolyLog`.         |
@@ -351,9 +359,11 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [shared/components/ErrorBoundary.test.tsx](../src/shared/components/ErrorBoundary.test.tsx) | The fallback, the log entry, and the full-reload way out.                               |
 | [utils/logger.utils.test.ts](../src/shared/utils/logger.utils.test.ts)                      | Ring cap, persistence, error filtering, storage-failure safety.                         |
 | [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                                  | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
+| [utils/appearance.utils.ts](../src/shared/utils/appearance.utils.ts)                        | Resolves an appearance to a `data-theme`, cycles it, and names it.                      |
 | [utils/audio.utils.ts](../src/shared/utils/audio.utils.ts)                                  | `playSound` (a `play()` returning nothing must not throw) and a round-robin clip pool.  |
 | [utils/audio.utils.test.ts](../src/shared/utils/audio.utils.test.ts)                        | Every way play() can fail, and the pool round-robin.                                    |
 | [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)                        | Unit tests for money formatting.                                                        |
+| [utils/appearance.utils.test.ts](../src/shared/utils/appearance.utils.test.ts)              | The `edition` fallback, the cycle wrapping, and the labels.                             |
 | [hooks/useEscapeKey.ts](../src/shared/hooks/useEscapeKey.ts)                                | Escape-to-dismiss for overlays, with listener cleanup.                                  |
 | [hooks/useEscapeKey.test.ts](../src/shared/hooks/useEscapeKey.test.ts)                      | Unit tests, including that the listener is removed on unmount.                          |
 
@@ -378,7 +388,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [components/\_mortgage-stamp.scss](../src/styles/components/_mortgage-stamp.scss) | The mortgage watermark's placement and opacity, on a deed and on a board square.             |
 | [components/\_auction.scss](../src/styles/components/_auction.scss)               | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                   |
 | [components/\_player.scss](../src/styles/components/_player.scss)                 | Player cards, metrics, owned-property cards.                                                 |
-| [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Three-column game layout, turn panel, activity list, responsive rules.                       |
+| [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Two-column game layout, the phone app frame, and the landscape arrangement.                  |
 | [pages/\_home.scss](../src/styles/pages/_home.scss)                               | The setup screen: the deed-band masthead, the ruleset glance, the form and the saved games.  |
 | [pages/\_rules.scss](../src/styles/pages/_rules.scss)                             | Rules booklet typography and tables.                                                         |
 
@@ -393,10 +403,12 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [src/test/renderWithProviders.test.tsx](../src/test/renderWithProviders.test.tsx)         | Proves each render gets its own store and that `preloadedState` reaches a selector.                               |
 | [src/setupTests.ts](../src/setupTests.ts)                                                 | Vitest setup; jest-dom matchers and a `localStorage` reset before each test.                                      |
 | [src/setupTests.test.ts](../src/setupTests.test.ts)                                       | Proves the storage reset actually runs between tests.                                                             |
-| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                                           | Shared `startGame` / `advanceGame` helpers and corner reference data.                                             |
+| [tests/e2e/helpers.ts](../tests/e2e/helpers.ts)                                           | Shared `startGame` / `advanceGame` helpers, corner reference data, and the named `VIEWPORTS`.                     |
 | [tests/e2e/setup.spec.ts](../tests/e2e/setup.spec.ts)                                     | Creating a game and landing on a resumable route.                                                                 |
 | [tests/e2e/board.spec.ts](../tests/e2e/board.spec.ts)                                     | Corner geometry, title deed, ribbon placement, dividers, outlines, theming.                                       |
-| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                                   | Two-column layout, site-panel actions, dice placement, player stack.                                              |
+| [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                                   | Two-column layout, site-panel actions, dice placement, player stack. Pins the desktop viewport.                   |
+| [tests/e2e/mobile.spec.ts](../tests/e2e/mobile.spec.ts)                                   | The phone frame and landscape: no page scroll, board and Roll together, hidden names, touch targets.              |
+| [tests/e2e/appearance.spec.ts](../tests/e2e/appearance.spec.ts)                           | Choosing an appearance repaints the board, keeps the edition, and survives a reload.                              |
 | [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)                               | Decision modal, activity drawer, player detail drawer, dice roll.                                                 |
 | [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)                           | Eight-player layout: token cluster stays on the board, dice stay reachable.                                       |
 | [tests/e2e/mortgage.spec.ts](../tests/e2e/mortgage.spec.ts)                               | Mortgaging out of a debt, the dead end without assets, and the site panel.                                        |

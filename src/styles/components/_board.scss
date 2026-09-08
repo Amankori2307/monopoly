@@ -12,6 +12,17 @@
   width: 100%;
   aspect-ratio: 1;
   padding: 0;
+  // A container, so everything drawn ON the board can be sized as a fraction of
+  // the BOARD rather than of the viewport. $token-size is a vw clamp, and vw
+  // stops tracking the board the moment the board is sized by height - which is
+  // exactly what a landscape phone does. cqw is the same number for width and
+  // height here, because the board is square.
+  container-type: inline-size;
+  // Overridden in the phone frame and in landscape (pages/_game.scss). Kept as
+  // the viewport clamp at desktop widths on purpose: the board geometry tests
+  // are calibrated against these values, and nothing above the phone
+  // breakpoint has the problem cqw solves.
+  --token-size: #{t.$token-size};
   overflow: hidden;
   border: 0;
   border-radius: t.$radius-sharp;
@@ -241,8 +252,11 @@
     background: var(--board-space-hover);
   }
 
+  // Was a flat 5px: a viewport-independent literal that tracked nothing, so it
+  // was 5px on a 700px board and 5px on a 355px one. cqw is a fraction of the
+  // BOARD, so the type now shrinks and grows with the squares it sits in.
   @include m.below(t.$breakpoint-tablet) {
-    font-size: 5px;
+    font-size: clamp(5px, 1.4cqw, 0.67rem);
   }
 }
 
@@ -423,7 +437,69 @@
   text-wrap: balance;
 
   @include m.below(t.$breakpoint-tablet) {
-    font-size: 5px;
+    font-size: clamp(5px, 1.4cqw, 0.67rem);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// On a small board, the board is a map rather than a document.
+//
+// A street cell is about 30px wide when the board is 375px. There is no size at
+// which a name can be set in one - it was 5px, which is not reading, it is
+// texture. So the text goes and the square keeps what identifies it at a
+// glance: its colour ribbon, its glyph, the owner's dot, and any buildings
+// standing on it. The name is one tap away, in the title-deed card that a
+// square already opens.
+//
+// This is a CONTAINER query, not a media query, and that distinction is the
+// whole point. The threshold is a fact about the BOARD - how wide a square is -
+// and the board's width is not a function of the viewport's. In landscape the
+// board is sized by viewport HEIGHT, so a 844x390 phone has an 844px window and
+// a 380px board: a viewport-width rule left 6.72px names on a board every bit
+// as small as the portrait one it correctly cleared.
+//
+// Only the visible text is hidden. The cell's accessible name is an explicit
+// aria-label on the button (see BoardSpaceCell), so screen readers and
+// role-based queries are untouched.
+//
+// Note for whoever maintains board.spec.ts: its "never clips a space name" scan
+// measures scrollWidth against clientWidth, and a display:none element reports
+// zero for both. That test runs at the desktop viewport, where the board is
+// 648px, the names are visible and it means something. Run it on a small board
+// and it passes for the wrong reason.
+// ---------------------------------------------------------------------------
+@container (max-width: #{t.$board-name-floor}) {
+  .space-label .space-name,
+  .corner-title .space-name {
+    display: none;
+  }
+
+  // The glyph is the only thing identifying the square now, so it takes the
+  // room the name gave up. Only .space-label's padding is relaxed - the corner
+  // titles keep their own place-content, because the Jail cell overrides it to
+  // `start center` to keep its label clear of the bars.
+  .space-label {
+    padding: 1px;
+  }
+
+  .space-icon {
+    width: clamp(11px, 5.4cqw, 19px);
+    height: clamp(11px, 5.4cqw, 19px);
+    opacity: 0.9;
+  }
+
+  .space-railway,
+  .space-tax,
+  .space-utility {
+    .space-icon {
+      width: clamp(12px, 6cqw, 23px);
+      height: clamp(12px, 6cqw, 23px);
+    }
+  }
+
+  .corner-title .corner-icon {
+    width: clamp(16px, 9cqw, 34px);
+    height: clamp(16px, 9cqw, 34px);
   }
 }
 
@@ -605,8 +681,8 @@
 // works over any player colour.
 .token-chip {
   position: absolute;
-  width: t.$token-size;
-  height: t.$token-size;
+  width: var(--token-size);
+  height: var(--token-size);
   border: 0;
   border-radius: t.$token-radius;
   background-image:
@@ -658,8 +734,11 @@
   position: absolute;
   // Above the cell's ::after divider, which sits at z-index 5.
   z-index: 6;
-  width: 7px;
-  height: 7px;
+  // A fraction of the board rather than a literal, so it stays the same size
+  // relative to the square it marks. 7px was a quarter of a phone cell and a
+  // ninth of a desktop one.
+  width: clamp(5px, 1.1cqw, 7px);
+  height: clamp(5px, 1.1cqw, 7px);
   border: 1px solid transparent;
   border-radius: t.$token-radius;
   box-shadow: 0 0 0 1px var(--surface-panel);
@@ -736,20 +815,23 @@
   }
 }
 
+// Board-relative rather than a second set of literals: a house has to keep its
+// proportion to the ribbon it stands on, and the ribbon is a fraction of the
+// board. These were flat 5px/9px, which was right at one board size only.
 @include m.below(t.$breakpoint-tablet) {
   .building-house {
-    width: 5px;
-    height: 5px;
+    width: clamp(4px, 1.15cqw, 8px);
+    height: clamp(4px, 1.15cqw, 8px);
   }
 
   .building-hotel {
-    width: 9px;
-    height: 5px;
+    width: clamp(7px, 2.1cqw, 15px);
+    height: clamp(4px, 1.15cqw, 8px);
 
     .side-left &,
     .side-right & {
-      width: 5px;
-      height: 9px;
+      width: clamp(4px, 1.15cqw, 8px);
+      height: clamp(7px, 2.1cqw, 15px);
     }
   }
 

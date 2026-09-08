@@ -1,4 +1,5 @@
 @use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
 
 .primary-button,
 .secondary-button,
@@ -7,7 +8,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 42px;
+  // 44px is the touch-target minimum; .activity-button and .dice-roll-button
+  // were already there and these two were the odd ones out.
+  min-height: 44px;
   padding: 10px 15px;
   border: 0;
   border-radius: t.$radius-sharp;
@@ -45,4 +48,24 @@
 .danger-button {
   background: var(--danger-bg);
   color: var(--text-inverse);
+}
+
+// The appearance control names itself, until there is no room to.
+//
+// Not cosmetic: with the name, the sidebar's link row wrapped to a second line,
+// and the second line of a scroll region whose last child is a sticky bar sits
+// exactly behind that bar - so the control was invisible until you scrolled.
+// The full text stays in the button's accessible name.
+.appearance-toggle-label {
+  @include m.below(t.$breakpoint-phone) {
+    display: none;
+  }
+}
+
+// Icon-only, the button shrinks to its glyph - 42px, just under the touch
+// minimum its own min-height already respects.
+@include m.below(t.$breakpoint-phone) {
+  .secondary-button:has(.appearance-toggle-label) {
+    min-width: 44px;
+  }
 }

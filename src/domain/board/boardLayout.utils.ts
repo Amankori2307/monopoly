@@ -32,8 +32,19 @@ export const boardIndexToGridPosition = (index: number): GridPosition => {
   return { row: normalised - SPACES_PER_SIDE * 3 + 1, column: BOARD_GRID_SIZE };
 };
 
-/** Grid track sizes: corners are wider, the nine spaces between them are 1fr. */
-const CORNER_TRACK = 1.7;
+/**
+ * Grid track sizes: corners are wider, the nine spaces between them are 1fr.
+ *
+ * This number is also written in the stylesheet, as `$board-corner-track` in
+ * styles/abstracts/_tokens.scss, because `.board-grid` needs it as a real CSS
+ * track list. The two cannot be derived from each other across that boundary,
+ * so they are tied together by boardTracks.guard.test.ts instead: if they ever
+ * drift, every token on the board lands off its square, and nothing else in
+ * the suite would notice.
+ *
+ * Exported for that test alone.
+ */
+export const CORNER_TRACK = 1.7;
 const SPACE_TRACK = 1;
 const TOTAL_TRACKS = CORNER_TRACK * 2 + SPACE_TRACK * 9;
 

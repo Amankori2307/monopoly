@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { gameReducer } from '../features/game/gameSlice';
 import { readSoundPreference } from '../features/game/soundPreference.utils';
+import { readAppearancePreference } from '../features/appearance/appearancePreference.utils';
 import { uiInitialState, uiReducer } from '../features/game/uiSlice';
 import { seatReducer } from '../features/multiplayer/seatSlice';
 import {
@@ -39,7 +40,11 @@ export const makeStore = (preloadedState?: PreloadedState) => {
     // state: that is evaluated once when the module loads, so a store built
     // afterwards never saw a change. An explicit preloadedState wins over this.
     preloadedState: {
-      ui: { ...uiInitialState, soundEnabled: readSoundPreference() },
+      ui: {
+        ...uiInitialState,
+        soundEnabled: readSoundPreference(),
+        appearance: readAppearancePreference(),
+      },
       ...(preloadedState as object),
     } as PreloadedState,
   });

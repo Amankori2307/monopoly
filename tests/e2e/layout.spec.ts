@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { PropertyAction } from '../../src/domain/types/game.enums';
 import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { startGame } from './helpers';
+import { startGame, VIEWPORTS } from './helpers';
+// Every assertion below is about the DESKTOP arrangement, so this spec pins the
+// viewport rather than inheriting the config's default. Declarative rather than
+// a call in each test: a test added later cannot forget it.
+test.use({ viewport: VIEWPORTS.desktop });
 
 test('lays out the board and sidebar in two columns', async ({ page }) => {
   await startGame(page);

@@ -2,13 +2,15 @@
 @use '../abstracts/mixins' as m;
 
 .app-shell {
-  min-height: 100vh;
+  // dvh, not vh: on a mobile browser vh includes the address bar that is not
+  // actually there, so a 100vh shell is always taller than the window.
+  min-height: 100dvh;
   padding: clamp(14px, 2.2vw, 36px);
   background: var(--surface-app);
   color: var(--text-primary);
 
   @include m.below(t.$breakpoint-tablet) {
-    padding: 10px;
+    padding: t.$shell-pad-phone;
   }
 }
 
@@ -32,9 +34,12 @@
   }
 }
 
+// .player-metrics used to be in this list and is not any more: collapsing to
+// one column is right for a form field and wrong for a pair of labelled
+// figures, which is what turned the player card into four stacked rows and
+// about 300px of height on a phone. It owns its layout in components/_player.scss.
 .field-grid.two,
-.two-column,
-.player-metrics {
+.two-column {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;

@@ -17,6 +17,13 @@ interface PlayerCardProps {
 /**
  * One player at a glance: what they are worth, what they hold, and how close
  * they are to a colour set. Clicking opens their full holdings.
+ *
+ * Four numbers do not need four rows. This used to stack the name, a labelled
+ * net worth, and then cash and sites one per line - about 300px of card on a
+ * phone for a name and three figures, because `.player-metrics` shared the
+ * generic two-column grid that collapses to one column below the tablet
+ * breakpoint. The header now pairs the name with the headline figure on one
+ * line and the secondary metrics run inline beneath it.
  */
 export function PlayerCard({
   currencySymbol,
@@ -41,40 +48,62 @@ export function PlayerCard({
         style={{ background: token?.color }}
       />
 
-      {/* Only reachable once expanded; the overlay covers it while collapsed. */}
+      <div className="player-card-head">
+        <strong className="player-card-name">
+          {token?.emoji} {player.name}
+        </strong>
+
+        {/* Net worth leads: cash alone misleads when a player is property-rich.
+            It keeps its label because the card also shows cash, and the two are
+            the same number until somebody buys something. */}
+        <span className="player-card-worth">
+          <span className="eyebrow">Net worth</span>
+          <strong data-testid={scopedTestId(TEST_IDS.playerNetWorth, player.id)}>
+            {formatMoney(netWorth, currencySymbol)}
+          </strong>
+        </span>
+      </div>
+
+      {/* A description list, so each label is tied to its own figure rather
+          than to a position in a flat grid. */}
+      <dl className="player-metrics">
+        <div>
+          <dt>Cash</dt>
+          <dd>{formatMoney(player.cash, currencySymbol)}</dd>
+        </div>
+        <div>
+          <dt>Sites</dt>
+          {/* The mortgaged count used to be appended here as text. It is a badge
+              now, so saying it twice on one card would be noise. */}
+          <dd data-testid={scopedTestId(TEST_IDS.playerSiteCount, player.id)}>
+            {propertyCount}
+          </dd>
+        </div>
+      </dl>
+
+      <ColorGroupPips progress={setProgress} />
+      <PlayerBadges mortgagedCount={mortgagedCount} player={player} />
+
+      {/*
+        The whole card is the target, and the chevron is what says so.
+        This was an EMPTY unstyled button with no rules anywhere, so it rendered
+        as a tiny default browser pill in the corner of the card - a control
+        that looked like a rendering artefact. Rendered last so the overlay
+        paints above the content it covers; while the stack is collapsed the
+        stack's own expand overlay sits above this one, which is what tabIndex
+        is tracking.
+      */}
       <button
         aria-label={`View ${player.name} holdings`}
         className="player-card-open"
         onClick={() => onOpen(player.id)}
         tabIndex={isInteractive ? 0 : -1}
         type="button"
-      />
-
-      <strong className="player-card-name">
-        {token?.emoji} {player.name}
-      </strong>
-
-      {/* Net worth leads: cash alone misleads when a player is property-rich. */}
-      <div className="player-card-worth">
-        <span className="eyebrow">Net worth</span>
-        <strong data-testid={scopedTestId(TEST_IDS.playerNetWorth, player.id)}>
-          {formatMoney(netWorth, currencySymbol)}
-        </strong>
-      </div>
-
-      <div className="player-metrics">
-        <span>Cash</span>
-        <strong>{formatMoney(player.cash, currencySymbol)}</strong>
-        <span>Sites</span>
-        {/* The mortgaged count used to be appended here as text. It is a badge
-            now, so saying it twice on one card would be noise. */}
-        <strong data-testid={scopedTestId(TEST_IDS.playerSiteCount, player.id)}>
-          {propertyCount}
-        </strong>
-      </div>
-
-      <ColorGroupPips progress={setProgress} />
-      <PlayerBadges mortgagedCount={mortgagedCount} player={player} />
+      >
+        <span aria-hidden="true" className="player-card-chevron">
+          ›
+        </span>
+      </button>
     </article>
   );
 }

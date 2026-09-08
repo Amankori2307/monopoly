@@ -135,7 +135,11 @@
   }
 
   @include m.below(t.$breakpoint-mobile) {
-    margin-inline: -10px;
+    // Negates the shell's phone padding so the booklet bleeds full width. Both
+    // sides must come from the one token: these were two independent 10px
+    // literals that cancelled by coincidence, so changing the shell's padding
+    // silently left the booklet inset or overhanging.
+    margin-inline: -#{t.$shell-pad-phone};
     padding: 28px 20px;
 
     td {

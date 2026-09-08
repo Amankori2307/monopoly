@@ -11,13 +11,18 @@ import { RulesMoney } from '../../components/rules/RulesMoney';
 import { RulesSpeedDie } from '../../components/rules/RulesSpeedDie';
 import { RulesStart } from '../../components/rules/RulesStart';
 import { RulesTurn } from '../../components/rules/RulesTurn';
+import { defaultTheme } from '../../domain/themes/themes.registry';
+import { useAppearance } from '../appearance/useAppearance';
 import { useHashScroll } from './hooks/useHashScroll';
 
 export function RulesPage() {
   useHashScroll();
+  // The booklet had no data-theme at all, so it always rendered in the default
+  // palette - an appearance the player had chosen stopped at the door.
+  const look = useAppearance(defaultTheme.id);
 
   return (
-    <div className="app-shell rules-shell">
+    <div className="app-shell rules-shell" data-theme={look.dataTheme}>
       <main className="rules-page">
         <header className="rules-header">
           <div>

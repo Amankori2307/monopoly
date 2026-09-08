@@ -1,4 +1,3 @@
-make it mobile resposive
 deploy on my domain
 
 Supabase:

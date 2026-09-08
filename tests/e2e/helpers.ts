@@ -2,6 +2,26 @@ import { expect, type Page } from '@playwright/test';
 import { DICE_ROLL_DURATION_MS } from '../../src/components/game/diceDock.constants';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 
+/**
+ * Viewports the layout is designed against.
+ *
+ * These are named and exported rather than written inline, because the specs
+ * now come in two kinds and each has to say which it is. The desktop geometry
+ * suites - layout.spec.ts, full-table.spec.ts - used to rely on Playwright's
+ * implicit default, so "this asserts the DESKTOP layout" was nowhere in the
+ * code: the moment a phone layout existed, those assertions were one config
+ * edit away from silently testing the wrong thing.
+ */
+export const VIEWPORTS = {
+  desktop: { width: 1280, height: 720 },
+  /** iPhone-class portrait, the narrowest phone still worth supporting. */
+  phone: { width: 375, height: 812 },
+  /** The smallest viewport the reset admits (`body { min-width: 320px }`). */
+  phoneSmall: { width: 320, height: 568 },
+  /** The same phone turned sideways: wide, and very short. */
+  phoneLandscape: { width: 812, height: 375 },
+} as const;
+
 /** Board indices of the four corner spaces, with their expected labels. */
 export const CORNERS = [
   { index: 0, label: 'GO' },

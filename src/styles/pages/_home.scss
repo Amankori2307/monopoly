@@ -210,3 +210,19 @@
   color: var(--text-muted);
   font-size: 0.78rem;
 }
+
+// A display preference, not a field of the game being created - so it sits on
+// its own row under the identity grid rather than inside it, with a line saying
+// what it actually affects.
+.appearance-field {
+  display: grid;
+  gap: 5px;
+
+  .select-input {
+    max-width: 260px;
+  }
+
+  .helper-text {
+    margin: 0;
+  }
+}

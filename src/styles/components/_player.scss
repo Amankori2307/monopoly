@@ -1,4 +1,5 @@
 @use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
 
 // ---------------------------------------------------------------------------
 // Player card stack
@@ -80,23 +81,24 @@
       height: t.$stack-peek;
     }
 
-    > strong,
-    // Net worth is the headline figure; cash sits below it as a secondary metric.
-.player-card-worth {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px;
-      margin: 4px 0 8px;
-
-      strong {
-        font-family: t.$font-serif;
-        font-size: 1.25rem;
-      }
+    // A sliver reads as colour, not as a cropped line of text. This block was
+    // a copy-paste accident: the selector list `> strong, .player-card-worth`
+    // carried a byte-identical duplicate of the base .player-card-worth rule
+    // further down this file, so a 15px sliver was being told to lay its name
+    // out as a flex row rather than to hide it. Only the clip to $stack-peek
+    // hid the result, and only .player-metrics said what was meant.
+    .player-card-head,
+    .player-metrics,
+    .group-pips,
+    .player-badges {
+      opacity: 0;
     }
 
-    .player-metrics {
-      opacity: 0;
+    // And no chevron. The stack's own expand overlay owns the click while
+    // collapsed - four slivers each painting one read as four broken controls
+    // stacked on each other.
+    .player-card-open {
+      display: none;
     }
   }
 
@@ -104,6 +106,17 @@
   @for $index from 2 through t.$max-players {
     .player-card:nth-of-type(#{$index}) {
       margin-inline: ($index - 1) * t.$stack-inset;
+    }
+  }
+
+  // The fan is a luxury a phone cannot afford. At eight players the deepest
+  // sliver is inset 63px each side, which on a 355px card leaves 230px - the
+  // taper stopped reading as depth and started reading as a broken card.
+  @include m.below(t.$breakpoint-phone) {
+    @for $index from 2 through t.$max-players {
+      .player-card:nth-of-type(#{$index}) {
+        margin-inline: ($index - 1) * t.$stack-inset-phone;
+      }
     }
   }
 
@@ -165,46 +178,127 @@
 .player-card {
   position: relative;
   overflow: hidden;
-  padding: 14px 14px 14px 16px;
+  // The right inset is where the chevron sits, so it never lands on a figure.
+  padding: 11px 40px 11px 14px;
   border: 1px solid var(--border-input);
   // Left edge is tinted with the player's token colour, set inline from
   // ThemeToken.color so each player is identifiable at a glance.
   border-left: 5px solid var(--border-input);
   border-radius: t.$radius-sharp;
   background: var(--surface-raised);
-
-  > strong {
-    display: block;
-    margin-bottom: 10px;
-    font-family: t.$font-serif;
-    font-size: 1.04rem;
-  }
 }
 
-// Net worth is the headline figure; cash sits below it as a secondary metric.
-.player-card-worth {
+// Name and headline figure on ONE line. They used to be two stacked blocks with
+// a 10px gap between them, above two more rows of metrics.
+.player-card-head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  margin: 4px 0 8px;
+}
+
+.player-card-name {
+  min-width: 0;
+  font-family: t.$font-serif;
+  font-size: 1.02rem;
+  line-height: 1.2;
+}
+
+.player-card-worth {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  text-align: right;
+  // The figure must not wrap under its own label.
+  white-space: nowrap;
 
   strong {
     font-family: t.$font-serif;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
+    line-height: 1.1;
   }
 }
 
-.player-metrics {
-  gap: 5px 12px;
-  color: var(--text-muted);
-  font-size: 0.75rem;
+// ---------------------------------------------------------------------------
+// The way in to a player's holdings.
+//
+// The whole card is the target - a chevron alone is a 22px tap on a phone - and
+// the chevron is what says so. There was no rule for this button anywhere and
+// no content in it, so it rendered as a tiny default browser pill: a control
+// that read as a rendering artefact rather than as something to press.
+// ---------------------------------------------------------------------------
+.player-card-open {
+  position: absolute;
+  inset: 0;
+  // Above the card's content, below the collapsed stack's own expand overlay.
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-inline-end: 9px;
+  border: 0;
+  background: none;
+  cursor: pointer;
 
-  strong {
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    // Inset, or the ring is clipped by the card's own overflow: hidden.
+    outline-offset: -2px;
+  }
+}
+
+.player-card-chevron {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border-input);
+  border-radius: t.$radius-sharp;
+  background: var(--button-secondary);
+  color: var(--button-secondary-text);
+  font-size: 1.05rem;
+  line-height: 1;
+  transition: background 120ms ease;
+}
+
+.player-card-open:hover .player-card-chevron,
+.player-card-open:focus-visible .player-card-chevron {
+  background: var(--button-secondary-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-card-chevron {
+    transition: none;
+  }
+}
+
+// Secondary figures, inline. These used to borrow `.player-metrics` from the
+// generic two-column grid in layout/_shell.scss - which collapses to ONE column
+// below the tablet breakpoint, so on a phone two figures became four stacked
+// rows and the card grew to about 300px. A pair of labelled figures is a row.
+.player-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin: 7px 0 0;
+
+  > div {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  dt {
+    @include m.mono-label(0.6rem, 0.1em);
+
+    color: var(--text-muted);
+  }
+
+  dd {
+    margin: 0;
     color: var(--text-primary);
-    font-family: t.$font-mono;
-    font-size: 0.75rem;
-    text-align: right;
+    font: 500 0.8rem t.$font-mono;
   }
 }
 

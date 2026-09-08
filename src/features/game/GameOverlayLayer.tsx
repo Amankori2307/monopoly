@@ -1,4 +1,3 @@
-import { ActivityButton } from '../../components/game/overlays/ActivityButton';
 import { ActivityDrawer } from '../../components/game/overlays/ActivityDrawer';
 import { DecisionModal } from '../../components/game/overlays/DecisionModal';
 import { DecisionSpectatorLayer } from '../../components/game/overlays/DecisionSpectatorLayer';
@@ -77,11 +76,9 @@ export function GameOverlayLayer({
 
   return (
     <>
-      <ActivityButton
-        eventCount={activeGame.history.length}
-        onOpen={overlays.openActivity}
-      />
-
+      {/* The activity BUTTON is rendered by GameSidebar, in the turn-control
+          row: floating bottom-left, it sat exactly on top of that row on a
+          phone. Only the drawer is an overlay. */}
       <ActivityDrawer
         events={activeGame.history}
         isOpen={overlays.isActivityOpen}

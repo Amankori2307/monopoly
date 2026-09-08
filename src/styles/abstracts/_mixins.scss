@@ -18,3 +18,19 @@
   background: var(--surface-panel);
   box-shadow: var(--shadow-panel);
 }
+
+/// A wide-but-short viewport: a phone or a small tablet held sideways.
+///
+/// Deliberately not `below()`. The distinguishing fact is the HEIGHT - a narrow
+/// tall phone must not match, and neither must a desktop window - so this needs
+/// all three terms. The max-width keeps it clear of the desktop layout, which
+/// already fits at $breakpoint-board and above.
+///
+/// This is the one place a landscape phone is described. Before it, the board's
+/// height cap applied only above $breakpoint-board and was REPLACED by a plain
+/// width cap below it, so 812x375 rendered a 776px-tall board in a 375px window.
+@mixin landscape-compact {
+  @media (max-width: t.$breakpoint-board) and (max-height: t.$breakpoint-short) and (orientation: landscape) {
+    @content;
+  }
+}

@@ -32,9 +32,8 @@ $theme-contract: surface-app surface-panel surface-board surface-input surface-m
   board-space-hover board-icon-ink board-field board-emboss board-shade board-paper-tooth
   board-vignette jail-cell-bg jail-bars jail-visiting-bg ribbon-bg ribbon-border
   ribbon-outline ribbon-text ribbon-drop ribbon-keyline ribbon-sheen deck-community-bg
-  deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text decision-bg
-  decision-border badge-bg token-bg danger-bg error-text action-build action-sell
-  action-mortgage action-redeem action-text building-house building-house-roof
+  deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text badge-bg danger-bg
+  error-text action-build action-mortgage building-house building-house-roof
   building-hotel building-hotel-roof building-window piece-outline button-primary
   button-primary-hover button-primary-text button-secondary button-secondary-hover
   button-secondary-text;
@@ -95,19 +94,12 @@ $india-palette: (
   deck-marker-shadow: rgba(38, 73, 44, 0.18),
   deck-marker-text: #1b3929,
 
-  decision-bg: #fff2dc,
-  decision-border: #ca4334,
-
   badge-bg: #e5d37e,
-  token-bg: #f1df9d,
   danger-bg: #2b3127,
   error-text: #9a2e24,
 
   action-build: #1f7a3d,
-  action-sell: #e0b90c,
   action-mortgage: #c8382c,
-  action-redeem: #2547a8,
-  action-text: #fffaf0,
   building-house: #1f7a3d,
   building-house-roof: #15592c,
   building-hotel: #c8382c,
@@ -131,6 +123,120 @@ $india-palette: (
   group-dark-blue: #2c46a8,
 );
 
+// ---------------------------------------------------------------------------
+// Aesthetic: modern, sharp, clear, minimal.
+//
+// An APPEARANCE rather than an edition - it carries no board names, no currency
+// and no pieces, only colour. See features/appearance.
+//
+// The idea is a neutral shell with colour only where colour carries meaning.
+// The chrome is cool near-white with hairline borders and near-black ink; the
+// street groups stay vivid, because they are the one thing on the board a
+// player actually has to read at a glance. So the eight group colours are the
+// only saturated things here, and the printed-paper treatment the India board
+// leans on - the tooth, the vignette, the emboss - is dialled almost out.
+//
+// Deliberately light. The dice, the modal scrims and the drop shadows are still
+// hardcoded in their partials (white dice, dark translucent scrims, ink-tinted
+// shadows), so a DARK appearance cannot be honest until those are tokenised -
+// which is what has kept `midnight` below out of the picker.
+// ---------------------------------------------------------------------------
+$aesthetic-palette: (
+  surface-app: #f4f5f7,
+  surface-panel: #ffffff,
+  surface-board: #ffffff,
+  surface-input: #ffffff,
+  surface-muted: #f1f2f5,
+  surface-raised: #ffffff,
+
+  text-primary: #0d0f14,
+  text-body: #2b2e36,
+  text-muted: #6f747e,
+  text-inverse: #ffffff,
+  text-eyebrow: #8a8f9a,
+
+  // The brand mark is ink, not red. A single near-black accent is what makes
+  // the rest read as minimal rather than merely pale.
+  accent: #14161c,
+  accent-hover: #262932,
+  accent-strong: #0a0b0f,
+  accent-soft: #eceef2,
+  accent-contrast: #ffffff,
+
+  border-subtle: rgba(13, 15, 20, 0.09),
+  border-input: #dcdee4,
+  // Hairline cell dividers: the board is held together by lines here rather
+  // than by the weight of its paper.
+  border-space: rgba(13, 15, 20, 0.17),
+  border-dashed: #d7d9e0,
+
+  focus-ring: #2f6bff,
+  // Tight and shallow. A 24px/52px drop is the printed-slab look; minimal wants
+  // the surface to sit just off the page.
+  shadow-panel: 0 1px 2px rgba(13, 15, 20, 0.06),
+  shadow-board: (
+    0 1px 2px rgba(13, 15, 20, 0.05),
+    0 10px 28px rgba(13, 15, 20, 0.07),
+  ),
+  board-space-bg: #ffffff,
+  board-space-hover: #f0f2f6,
+  board-icon-ink: #3d4149,
+  // Still a different paper from the cells - a board with one flat surface
+  // stops reading as a board at all - just a far quieter one.
+  board-field: #f4f5f8,
+  board-emboss: rgba(255, 255, 255, 0.9),
+  board-shade: rgba(13, 15, 20, 0.05),
+  board-paper-tooth: rgba(13, 15, 20, 0.017),
+  board-vignette: rgba(13, 15, 20, 0.03),
+  jail-cell-bg: #eceef3,
+  jail-bars: #8b909b,
+  jail-visiting-bg: #f7f8fa,
+
+  ribbon-bg: #14161c,
+  ribbon-border: #ffffff,
+  ribbon-outline: #0a0b0f,
+  ribbon-text: #ffffff,
+  ribbon-drop: rgba(13, 15, 20, 0.2),
+  ribbon-keyline: rgba(13, 15, 20, 0.3),
+  ribbon-sheen: rgba(255, 255, 255, 0.1),
+  deck-community-bg: #cfe3ff,
+  deck-chance-bg: #ffe2bb,
+  deck-marker-border: rgba(13, 15, 20, 0.22),
+  deck-marker-shadow: rgba(13, 15, 20, 0.07),
+  deck-marker-text: #2b2e36,
+
+  badge-bg: #eceef2,
+  danger-bg: #fdeceb,
+  error-text: #bf332e,
+
+  action-build: #15805a,
+  action-mortgage: #2f6bff,
+  building-house: #15805a,
+  building-house-roof: #0e6144,
+  building-hotel: #d93b40,
+  building-hotel-roof: #a82a2f,
+  building-window: #ffffff,
+  piece-outline: rgba(13, 15, 20, 0.32),
+  // Blue for the action you want taken, per docs/conventions.md - the accent is
+  // the board's brand mark and never a button.
+  button-primary: #2f6bff,
+  button-primary-hover: #1f56dd,
+  button-primary-text: #ffffff,
+  button-secondary: #eceef2,
+  button-secondary-hover: #dfe2e9,
+  button-secondary-text: #14161a,
+
+  // The one place saturation earns its keep.
+  group-brown: #8a6244,
+  group-light-blue: #74c2ea,
+  group-pink: #e0699f,
+  group-orange: #ef8933,
+  group-red: #e04146,
+  group-yellow: #efc138,
+  group-green: #1d9b67,
+  group-dark-blue: #2f5fe0,
+);
+
 $themes: (
   // -- India Edition: the shipped look. -------------------------------------
   'india-edition': $india-palette,
@@ -141,6 +247,12 @@ $themes: (
   'international-edition': $india-palette,
   'us-edition': $india-palette,
   'world-edition': $india-palette,
+
+  // -- Aesthetic: an appearance, selectable from the home page. --------------
+  // Not an edition: no theme is registered in src/domain/themes for this id.
+  // It reaches [data-theme] through the appearance preference instead, so it
+  // recolours whichever edition is being played. See features/appearance.
+  'aesthetic': $aesthetic-palette,
 
   // -- Midnight: proves the engine works end to end. -------------------------
   // Not yet registered in src/domain/themes, so it is not selectable in the UI.
@@ -201,19 +313,12 @@ $themes: (
       deck-marker-shadow: rgba(0, 0, 0, 0.5),
       deck-marker-text: #0e1116,
 
-      decision-bg: #262019,
-      decision-border: #e2574a,
-
       badge-bg: #3a4250,
-      token-bg: #333c48,
       danger-bg: #0e1116,
       error-text: #ff8b7d,
 
       action-build: #2e9257,
-      action-sell: #c9a227,
       action-mortgage: #d4483c,
-      action-redeem: #4a6fd4,
-      action-text: #f4f7fb,
       building-house: #2e9257,
       building-house-roof: #1f6b3e,
       building-hotel: #d4483c,

@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { EDITION_APPEARANCE } from '../../shared/constants/appearance.constants';
+import { APPEARANCE_PREFERENCE_KEY } from '../appearance/appearancePreference.utils';
 import type { Toast } from '../../components/game/overlays/overlays.interfaces';
 import { GameEventCue } from '../../domain/types/game.enums';
 import { MAX_VISIBLE_TOASTS } from './game.constants';
@@ -7,6 +9,7 @@ import {
   dismissToast,
   queueFeedback,
   releaseFeedback,
+  setAppearance,
   setAuctionBidInput,
   setSoundEnabled,
   uiReducer,
@@ -240,5 +243,38 @@ describe('the toast stack', () => {
     state = uiReducer(state, clearToasts());
 
     expect(state.auctionBidInput).toEqual({ key: 'a:p1:0', amount: 120 });
+  });
+});
+
+describe('the appearance preference', () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('defaults to following the edition', () => {
+    expect(initial().appearance).toBe(EDITION_APPEARANCE);
+  });
+
+  it('records the chosen appearance', () => {
+    const state = uiReducer(initial(), setAppearance('aesthetic'));
+
+    expect(state.appearance).toBe('aesthetic');
+  });
+
+  /**
+   * Written by the reducer rather than by a thunk, the same as the sound
+   * preference: one value with no ordering to get wrong, and no caller left to
+   * remember. So the store and the disk cannot disagree.
+   */
+  it('writes through to storage so the choice survives a reload', () => {
+    uiReducer(initial(), setAppearance('aesthetic'));
+
+    expect(localStorage.getItem(APPEARANCE_PREFERENCE_KEY)).toBe('aesthetic');
+  });
+
+  it('leaves the sound preference alone', () => {
+    const state = uiReducer(initial(), setAppearance('aesthetic'));
+
+    expect(state.soundEnabled).toBe(initial().soundEnabled);
   });
 });

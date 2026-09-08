@@ -151,6 +151,23 @@
   margin-bottom: 20px;
   background: var(--border-subtle);
 
+  // Two columns, not one. Collapsing these to a single column turned four
+  // figures into four tall rows - about 340px of stats before the first deed,
+  // in a drawer whose whole job is showing the deeds. A cell is ~155px wide at
+  // 360px, which a mono label and a figure fit; the padding tightens instead.
+  @include m.below(t.$breakpoint-phone) {
+    margin-bottom: 14px;
+
+    span {
+      padding: 8px 10px;
+      font-size: 0.6rem;
+    }
+
+    strong {
+      font-size: 0.9rem;
+    }
+  }
+
   span {
     display: grid;
     gap: 4px;
@@ -556,9 +573,15 @@
   gap: 4px;
   margin: 0;
   padding: 0;
-  max-height: 48vh;
+  max-height: 48dvh;
   overflow-y: auto;
   list-style: none;
+
+  // These are the board's own space names, and "Chennai Central Railway
+  // Station" does not go in a 160px button at any font size.
+  @include m.below(t.$breakpoint-phone) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
   button {
     width: 100%;

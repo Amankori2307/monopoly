@@ -13,6 +13,8 @@ import { GameUnavailable } from './GameUnavailable';
 import { selectCanEndTurn, selectCanRollDice } from './gameView.selectors';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { setSoundEnabled } from './uiSlice';
+import { defaultTheme } from '../../domain/themes/themes.registry';
+import { useAppearance } from '../appearance/useAppearance';
 import { useActiveGame } from './hooks/useActiveGame';
 import { useFeedbackGate } from './hooks/useFeedbackGate';
 import { useGameSounds } from './hooks/useGameSounds';
@@ -40,6 +42,10 @@ export function GamePage() {
   // Display positions lag the engine while a token walks to its new space.
   const dispatch = useAppDispatch();
   const soundEnabled = useAppSelector((state) => state.ui.soundEnabled);
+  // Before the early return, like every other hook here. Falls back to the
+  // default edition's id purely so the call is unconditional - nothing renders
+  // when there is no game to render.
+  const look = useAppearance(activeGame?.themeId ?? defaultTheme.id);
   // Sounds whatever the last command did. Mounted here because the page is
   // where the game is being played.
   useGameSounds();
@@ -73,7 +79,11 @@ export function GamePage() {
     selectBoardViewModels(activeGame, theme, overlays);
 
   return (
-    <div className="app-shell" data-theme={activeGame.themeId}>
+    // is-game is what turns the shell into a fixed app frame on a phone: board
+    // pinned at the top, one scrolling region, dice in a bar at the bottom. A
+    // modifier class rather than a :has() selector, because only this page wants
+    // it and an explicit class is cheaper to read and to assert on.
+    <div className="app-shell is-game" data-theme={look.dataTheme}>
       <div className="page">
         {/* data-moving publishes the walk, so a test can assert nothing slipped out mid-way. */}
         <div
@@ -93,6 +103,7 @@ export function GamePage() {
           />
 
           <GameSidebar
+            appearanceLabel={look.label}
             bannerProps={bannerProps}
             canEndTurn={selectCanEndTurn(activeGame, viewer)}
             // Not while a token is walking. A double puts the turn straight
@@ -102,8 +113,11 @@ export function GamePage() {
             canRoll={selectCanRollDice(activeGame, viewer) && !isMoving}
             connectedSeatIds={connectedSeatIds}
             currencySymbol={currencySymbol}
+            eventCount={activeGame.history.length}
+            onCycleAppearance={look.cycle}
             onDismissToast={commands.dismissToast}
             onEndTurn={commands.endTurn}
+            onOpenActivity={overlays.openActivity}
             onRoll={commands.rollDice}
             onSelectPlayer={overlays.openPlayer}
             onToggleSound={() => dispatch(setSoundEnabled(!soundEnabled))}

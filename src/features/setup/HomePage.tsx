@@ -10,6 +10,8 @@ import { SetupHero } from '../../components/setup/SetupHero';
 import { SpeedDieToggle } from '../../components/setup/SpeedDieToggle';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
+import { AppearanceField } from '../../components/setup/AppearanceField';
+import { useAppearance } from '../appearance/useAppearance';
 import { useGameSetupForm } from './hooks/useGameSetupForm';
 
 /** Wiring only: form state lives in useGameSetupForm, rendering in components/setup. */
@@ -19,6 +21,9 @@ export function HomePage() {
   const recentGames = useAppSelector((state) => state.game.recentGames);
   const loadError = useAppSelector((state) => state.game.loadError);
   const form = useGameSetupForm();
+  // The picked edition, unless an appearance overrides its colours - so the
+  // setup screen previews exactly what the game will look like.
+  const look = useAppearance(form.themeId);
   // Opening a table is a network round trip, so the button has to be able to
   // say it is busy - a second click would open a second table.
   const [isOpeningTable, setIsOpeningTable] = useState(false);
@@ -67,7 +72,7 @@ export function HomePage() {
   const currencySymbol = form.selectedTheme.currencySymbol;
 
   return (
-    <div className="app-shell" data-theme={form.themeId}>
+    <div className="app-shell" data-theme={look.dataTheme}>
       <div className="page">
         <SetupHero currencySymbol={currencySymbol} themeName={form.selectedTheme.name} />
 
@@ -88,6 +93,8 @@ export function HomePage() {
                 playerCountNotice={form.playerCountNotice}
                 themeId={form.themeId}
               />
+
+              <AppearanceField appearance={look.appearance} onChange={look.select} />
 
               <SpeedDieToggle
                 currencySymbol={currencySymbol}

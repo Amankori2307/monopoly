@@ -221,7 +221,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1209 unit tests, 127 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1347 unit tests, 154 e2e and 4 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -263,6 +263,10 @@ When you touch one of these, extract it (colors/icons → a shared board-present
 
 - **Never hardcode a colour, and the board now proves it.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. `board.spec.ts` flips `data-theme` to `midnight` mid-run and fails on any board colour that does not move — the board's paper, grain and vignette are all tokens plus repeating gradients, with **no raster assets to ship or theme**. The theme guard also `@error`s on a token a theme defines that nothing reads. The one sanctioned exception is a **player token colour**, applied inline from `ThemeToken.color` — it is theme _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
 - Themes are token maps in `themes/_themes.scss`, emitted as `[data-theme="<id>"]` blocks. A compile-time guard fails the build if a theme misses a contract token. See [docs/theming.md](docs/theming.md).
+- **An appearance is not an edition.** An edition (`src/domain/themes/`) names the forty squares, the currency and the pieces; an **appearance** is only a palette, and it overrides `data-theme` for whichever edition is being played. It is a per-device preference stored under `monopoly.appearance.v1` - the same standing as the sound switch - so adding one needs **no `GAME_STATE_VERSION` bump and no migration**. `edition` is a sentinel, not a palette: it resolves to the edition's own id. One hook answers all of it, [useAppearance](src/features/appearance/useAppearance.ts) - three pages ask, and answering it in each is how two of them disagree.
+- **Every breakpoint goes through a mixin, and one of them is a height query.** `below()` for widths; `landscape-compact()` for a wide-but-short viewport, which needs all three of `max-width`, `max-height` and `orientation` — width alone cannot tell a landscape phone from a small desktop window, and it is the height that breaks the board. Tokens: `$breakpoint-board` (1250) / `-tablet` (720) / `-mobile` (620) / `-phone` (560), plus `$breakpoint-short`. Never write a bare `@media` width query.
+- **Anything drawn on the board is sized in `cqw`, not `vw`.** `.board-card` is a `container-type: inline-size` container and publishes `--token-size`. `vw` tracks the viewport, which stops agreeing with the board as soon as the board is capped by `dvh` — and in landscape the board is sized by _height_, so `vw` tracks nothing it is drawn on. Desktop keeps the original `vw` clamps deliberately: `board.spec.ts`'s 21 geometry tests are calibrated against them.
+- **Use `dvh`, never `vh`.** `vh` includes mobile browser chrome that is not there, so a `100vh` shell is always taller than the window.
 
 **Testing — mandatory, all three levels.** Every feature, entity, and behaviour ships with **unit + integration + e2e** coverage in the same change. Unit: pure logic, `SeededRandomSource` for dice, cover every `throw` branch. Integration: thunk → engine → persistence → store, and pages via `src/test/renderWithProviders.tsx`. E2E: the user journey in Playwright, queried by accessible role and name.
 
@@ -426,6 +430,68 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   used to hardcode `DEFAULT_CURRENCY_SYMBOL`, so a London board would have promised rupees. Still
   outside the theme file: its **palette**, which stays in `styles/themes/_themes.scss` keyed by the
   theme's `id` - moving it in is the next phase, so today a theme is that file plus one SCSS block.
+- **The board's grid tracks are written twice and must agree.** `$board-corner-track: 1.7fr` in
+  `_tokens.scss` lays the squares out; `CORNER_TRACK = 1.7` in
+  [boardLayout.utils.ts](src/domain/board/boardLayout.utils.ts) computes every token's `left`/`top`
+  **percentage**. Neither can be derived from the other across the Sass/TypeScript boundary, so a
+  change to one alone leaves every piece sitting slightly off its square — on a board whose whole
+  point is pieces on squares. Nothing tied them together until
+  [boardTracks.guard.test.ts](src/domain/board/boardTracks.guard.test.ts), which reads the SCSS.
+- **`margin: 0 auto` shrink-wraps a flex item, beating `align-self: stretch`.** `.page` carries it,
+  so the moment `.app-shell` became a flex column for the phone frame the whole layout collapsed and
+  the board measured **263px wide in a 375px viewport**. The frame resets the margin and sets a
+  width. `.game-layout`'s `align-items: start` does the same thing on the cross axis once the layout
+  is a column. Both cost a measurement to find and nothing to fix.
+- **A flex item shrinks before it overflows, so a column that should scroll silently compresses.**
+  Releasing the player stack's inner scroller for the phone frame squeezed the region and spilled its
+  cards _out_ of it, over the sticky action bar, with `.game-side` reporting
+  `scrollHeight === clientHeight` — no scroll, and the last card permanently underneath the bar.
+  `.game-side > * { flex: 0 0 auto }` is what makes the column genuinely taller than its box, which
+  is the only thing a sticky bar can stick over. The e2e test asserts the overflow, not just the
+  clearance.
+- **The theme contract's guard has a third direction the Sass cannot check.** It `@error`s on a
+  palette missing a contract token and on one defining a token outside the contract, but not on a
+  token that is in the contract, defined everywhere, and **read by nothing** - Sass cannot scan the
+  other stylesheets. Six were living there (`decision-bg`, `decision-border`, `token-bg`,
+  `action-sell`, `action-redeem`, `action-text`), and every palette had to invent values for them.
+  [themeContract.guard.test.ts](src/styles/themeContract.guard.test.ts) closes it, so **add a
+  contract token in the same change as the rule that reads it, not before.**
+- **A dark appearance is not honest yet.** The dice are a hardcoded white gradient with near-black
+  pips, the modal scrims are dark translucent, and the drop shadows are ink-tinted - all correct
+  under a light palette and wrong under a dark one. That, not the engine, is what keeps `midnight`
+  out of `APPEARANCES`; it is fully defined and one row away.
+- **A shared grid utility is not a layout.** `.player-metrics` sat in the
+  `.field-grid.two, .two-column, .player-metrics` list in `layout/_shell.scss`, which collapses to
+  one column below `$breakpoint-tablet`. Right for a form field, wrong for a pair of labelled
+  figures: two figures became four stacked rows and the player card grew to about **300px** on a
+  phone for a name and three numbers. It is a `<dl>` of explicit pairs owning its own layout now,
+  and the card is ~88px.
+- **`.player-card-open` had no rules anywhere and no content**, so the control that opens a
+  player's holdings rendered as a tiny default browser pill - it read as a rendering artefact
+  rather than as something to press. It is an `inset: 0` overlay over the whole card (so the tap is
+  well past 44px) with a visible chevron, hidden on collapsed slivers because the stack's own
+  expand overlay owns the click there.
+- **The board hides its space names on a `@container` query, not a media query.** The threshold
+  (`$board-name-floor`, 520px) is a fact about the **board's** width, and that is not a function of
+  the viewport's: landscape sizes the board by viewport _height_, so an 844×390 phone has an 844px
+  window and a 380px board. The first attempt keyed on viewport width, reported "not a phone", and
+  left 6.72px names on a board exactly as small as the portrait one it had correctly cleared. If a
+  rule is about how big the board is, ask the board.
+- **The phone board hides its space names, which makes one existing test vacuous.**
+  `board.spec.ts`'s "never clips a space name" scan compares `scrollWidth` to `clientWidth`, and a
+  `display: none` element reports zero for both. That spec — and `layout.spec.ts` and
+  `full-table.spec.ts` — now pin `VIEWPORTS.desktop` via `test.use`. Do not remove those: the
+  assertions are about the desktop arrangement and would otherwise pass for the wrong reason.
+- **The square's name survives as its `aria-label`.** Hiding `.space-name` is safe precisely because
+  `BoardSpaceCell` sets an explicit `aria-label`, so `getByRole('button', { name: /View details
+for/ })` and every screen reader are untouched. Never move that name into the visible text alone.
+- **`.rules-booklet` negates the shell's phone padding to bleed full width.** Both sides now come
+  from `$shell-pad-phone`; they were two independent `10px` literals that cancelled by coincidence,
+  so changing the shell's padding left the booklet inset or overhanging.
+- **The activity button lives in `.turn-controls`, not with the overlays.** It is `position: fixed`
+  on desktop, so its DOM position is invisible there — which is what lets it sit in the bar and go
+  `position: static` on a phone, where floating bottom-left put it exactly on top of the dice. A
+  `transform` or `filter` on `.turn-controls` would trap it; don't add one.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

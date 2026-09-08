@@ -1,32 +1,6 @@
 @use '../abstracts/tokens' as t;
 @use '../abstracts/mixins' as m;
 
-.game-header {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 30px;
-  margin: 0 2px t.$gap-lg;
-
-  > div:first-child {
-    max-width: 700px;
-  }
-
-  .button-row {
-    justify-content: flex-end;
-  }
-
-  @include m.below(t.$breakpoint-tablet) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-
-    .button-row {
-      justify-content: flex-start;
-    }
-  }
-}
-
 // Two columns: board | player sidebar. The property-action rail that used to
 // hold the first column is gone - every action it listed needs a spaceId, and
 // the site panel is where one exists.
@@ -60,6 +34,18 @@
   }
 }
 
+// The toasts and the dice, as one box.
+//
+// `display: contents` rather than a real box, so this wrapper is invisible to
+// the desktop layout: the margin-top:auto on .toast-stack keeps pushing the
+// pair to the bottom of .game-side exactly as it did before the element
+// existed. It becomes a real, sticky box only inside the phone frame below,
+// which is the whole reason it is here - toasts have to travel WITH the dice,
+// and CLAUDE.md records that adjacency as load-bearing.
+.game-side-footer {
+  display: contents;
+}
+
 // Sits at the bottom of the column. The auto margin that pushes the pair down
 // is on .toast-stack, which now sits directly above it.
 .turn-controls {
@@ -67,6 +53,10 @@
   align-items: center;
   gap: 12px;
   padding-top: 4px;
+  // Three dice with the speed die, plus a nowrap "Take extra roll", measures
+  // more than a phone is wide and this row could not wrap. It never wraps on
+  // desktop, where there is room.
+  flex-wrap: wrap;
 }
 
 .turn-controls .end-turn-button {
@@ -104,49 +94,229 @@
     max-width: min(100%, 820px);
   }
 
-  .decision-card,
-  .activity-panel {
+  .decision-card {
     grid-column: 1 / -1;
   }
 }
 
-.player-panel,
-.holdings-panel,
-.activity-panel {
-  padding: 18px;
-}
+// ---------------------------------------------------------------------------
+// The phone frame
+//
+// A phone gets an app frame rather than a page: the board pinned at the top,
+// the sidebar as the ONE scrolling region, and the dice in a bar stuck to the
+// bottom. Stacked as a page, the board and the Roll button were never on
+// screen together - you scrolled away from the board to roll, then back to see
+// what happened.
+//
+// This block must stay BEFORE the landscape block: a small phone held sideways
+// (667x375) matches both, and the landscape grid has to win.
+// ---------------------------------------------------------------------------
+@include m.below(t.$breakpoint-tablet) {
+  .app-shell.is-game {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    padding: 0;
+    // The frame itself never scrolls; .game-side does.
+    overflow: hidden;
+  }
 
-.turn-panel {
-  padding: 18px;
-  border-top: 5px solid var(--accent);
+  // `margin: 0 auto` on a flex item beats align-self:stretch and shrink-wraps
+  // it to its content, so the whole frame collapsed - the board measured 263px
+  // wide in a 375px viewport until this reset the margin and set a width.
+  .app-shell.is-game > .page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
 
-  .panel-heading {
-    margin-bottom: 6px;
+  // align-items:stretch is not redundant: the desktop rule sets `start`, which
+  // shrink-wraps children on the CROSS axis once this is a column, and that
+  // shrink-wrapped the board too.
+  .app-shell.is-game .game-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0;
+  }
+
+  // Capped by height as well as width, so a short phone still leaves room for
+  // the cards and the bar. Below $breakpoint-board the height term had been
+  // replaced by a plain width cap, which is the bug this restores.
+  .app-shell.is-game .board-card {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: min(100%, 54dvh);
+    margin-inline: auto;
+    // A fraction of the board, not of the viewport. The default is a vw clamp,
+    // and once the board is capped by dvh the two stop agreeing - the piece
+    // then no longer matches the square it stands on.
+    --token-size: clamp(9px, 3.1cqw, 18px);
+  }
+
+  // THE scroll container, and the only one: overscroll-behavior stops a flick
+  // at the end of the list from dragging the frame behind it.
+  .app-shell.is-game .game-side {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    gap: t.$gap-sm;
+    padding: t.$gap-sm t.$gap-sm 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .app-shell.is-game .game-side-scroll {
+    overflow: visible;
+  }
+
+  // One scroll container, not two nested ones. .game-side has a definite height
+  // again inside the frame, so $player-stack-max-share silently came back and
+  // gave the cards their own scrollbar inside the sidebar's - two nested
+  // scrollers under one thumb.
+  .app-shell.is-game .player-stack-region {
+    max-height: none;
+  }
+
+  .app-shell.is-game .player-stack-scroll {
+    overflow: visible;
+  }
+
+  // Nothing in the column may shrink.
+  //
+  // This is what makes the sidebar actually scroll. A flex item shrinks before
+  // it overflows, so with the inner scroller released the stack was squeezed to
+  // the space available and its cards spilled OUT of it - over the sticky bar,
+  // with .game-side reporting scrollHeight === clientHeight and no scroll to
+  // clear them with. At natural height the column is genuinely taller than its
+  // box, which is the only thing that gives the bar something to stick over.
+  .app-shell.is-game .game-side > * {
+    flex: 0 0 auto;
+  }
+
+  // Sticky, not fixed. The last child of the scroll container sticks to its
+  // bottom edge, so nothing needs to know the bar's height: the last player
+  // card can always be scrolled clear of it, which a fixed bar and a guessed
+  // padding-bottom cannot promise.
+  .app-shell.is-game .game-side-footer {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    flex-direction: column;
+    gap: t.$gap-sm;
+    margin-top: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    // Content scrolls behind the bar, so it cannot be transparent.
+    background: var(--surface-app);
+  }
+
+  // The dock was pinned right by an auto margin, which fights a wrapping row.
+  .app-shell.is-game .dice-dock {
+    margin-left: 0;
+  }
+
+  // In the bar, where a phone game keeps its log. It floats over the board on
+  // desktop; here that put it exactly on top of the turn controls.
+  .app-shell.is-game .activity-button {
+    position: static;
   }
 }
 
-.turn-token {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: t.$radius-sharp;
-  background: var(--token-bg);
-  font-size: 1.35rem;
-}
+// ---------------------------------------------------------------------------
+// Landscape
+//
+// A wide, short viewport is the one place the two-column layout genuinely fits,
+// so it gets one: board left, sized by HEIGHT, sidebar right.
+// ---------------------------------------------------------------------------
+@include m.landscape-compact {
+  .app-shell.is-game {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    padding: t.$gap-xs;
+    overflow: hidden;
+  }
 
-.turn-location {
-  margin: 0 0 15px;
-  color: var(--text-muted);
-  font-size: 0.84rem;
-}
+  .app-shell.is-game > .page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
 
-.activity-panel .event-list {
-  max-height: 310px;
-  overflow: auto;
-  padding-right: 5px;
+  // `auto` first track: the board's width follows from its height and its
+  // aspect-ratio, so the sidebar takes whatever is left.
+  .app-shell.is-game .game-layout {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: t.$gap-sm;
+  }
 
-  @include m.below(t.$breakpoint-tablet) {
-    max-height: 240px;
+  // Height-driven, which is the whole point: the board takes the full column
+  // height and derives its width from aspect-ratio, so it always fits.
+  .app-shell.is-game .board-card {
+    width: auto;
+    height: 100%;
+    max-width: none;
+    margin-inline: 0;
+    // The case that makes vw plainly wrong: the board is sized by HEIGHT here,
+    // so a viewport-width clamp tracks nothing it is drawn on.
+    --token-size: clamp(9px, 3.1cqw, 18px);
+  }
+
+  .app-shell.is-game .game-side {
+    height: auto;
+    min-height: 0;
+    gap: t.$gap-sm;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .app-shell.is-game .game-side-scroll {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .app-shell.is-game .player-stack-region {
+    max-height: none;
+  }
+
+  .app-shell.is-game .player-stack-scroll {
+    overflow: visible;
+  }
+
+  // See the portrait block: a shrinking flex item spills its content over the
+  // bar instead of making the column scroll.
+  .app-shell.is-game .game-side > * {
+    flex: 0 0 auto;
+  }
+
+  .app-shell.is-game .game-side-footer {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    flex-direction: column;
+    gap: t.$gap-sm;
+    margin-top: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface-app);
+  }
+
+  .app-shell.is-game .activity-button {
+    position: static;
   }
 }

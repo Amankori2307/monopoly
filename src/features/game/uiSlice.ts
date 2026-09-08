@@ -4,6 +4,9 @@ import type { Toast } from '../../components/game/overlays/overlays.interfaces';
 import type { KeyedBidInput } from './auctionBid.interfaces';
 import type { PendingFeedback, PendingSoundCue } from './feedback.interfaces';
 import { writeSoundPreference } from './soundPreference.utils';
+import type { AppearanceId } from '../../shared/constants/appearance.constants';
+import { EDITION_APPEARANCE } from '../../shared/constants/appearance.constants';
+import { writeAppearancePreference } from '../appearance/appearancePreference.utils';
 
 interface UiSliceState {
   /**
@@ -36,6 +39,15 @@ interface UiSliceState {
   soundCue: PendingSoundCue | null;
   /** Whether sound plays at all. Remembered across games, not per save. */
   soundEnabled: boolean;
+  /**
+   * Which palette the board is drawn in. Remembered across games, not per save.
+   *
+   * A preference rather than game state on purpose: two devices in one online
+   * game may look at it differently, so there is nothing here for them to
+   * agree on - unlike `tableMode`, which is on GameState precisely because
+   * every device has to agree about it.
+   */
+  appearance: AppearanceId;
 }
 
 const noFeedback = (): PendingFeedback => ({ toasts: [], cue: null });
@@ -49,6 +61,7 @@ export const uiInitialState: UiSliceState = {
   // module-level read happens once - so a store built later never saw a change,
   // which is exactly what the integration test caught.
   soundEnabled: true,
+  appearance: EDITION_APPEARANCE,
 };
 
 const slice = createSlice({
@@ -72,6 +85,12 @@ const slice = createSlice({
         state.soundCue = null;
         state.pendingFeedback.cue = null;
       }
+    },
+    setAppearance(state, action: PayloadAction<AppearanceId>) {
+      state.appearance = action.payload;
+      // Written here rather than in a thunk, the same as the sound preference:
+      // one value, no ordering to get wrong, and no caller left to remember.
+      writeAppearancePreference(action.payload);
     },
     /**
      * Holds what a command had to say until the board has caught up with it.
@@ -113,6 +132,7 @@ const slice = createSlice({
 
 export const uiReducer = slice.reducer;
 export const {
+  setAppearance,
   setAuctionBidInput,
   setSoundCue,
   setSoundEnabled,

@@ -93,6 +93,46 @@ describe('PlayerCard', () => {
     );
   });
 
+  /**
+   * The control that opens the holdings drawer used to be an EMPTY button with
+   * no styles anywhere, so it rendered as a tiny default browser pill in the
+   * corner of the card - a control that read as a rendering artefact. It needs
+   * a visible mark of its own; the geometry is asserted in mobile.spec.ts.
+   */
+  it('gives the holdings control a visible mark rather than an empty box', () => {
+    renderCard();
+
+    const open = screen.getByRole('button', { name: 'View Asha holdings' });
+    expect(open).toHaveClass('player-card-open');
+
+    const chevron = open.querySelector('.player-card-chevron');
+    expect(chevron).not.toBeNull();
+    expect(chevron?.textContent?.trim()).not.toBe('');
+    // Decorative: the button already carries the name.
+    expect(chevron).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  /**
+   * Each label belongs to its own figure. They used to be a flat sequence in a
+   * two-column grid borrowed from the generic form layout, which collapsed to
+   * one column on a phone and turned two figures into four stacked rows.
+   */
+  it('pairs each secondary label with its own figure', () => {
+    renderCard({ propertyCount: 3, player: { ...summary().player, cash: 500 } });
+
+    const pairs = Array.from(document.querySelectorAll('.player-metrics > div')).map(
+      (pair) => [
+        pair.querySelector('dt')?.textContent,
+        pair.querySelector('dd')?.textContent,
+      ]
+    );
+
+    expect(pairs).toEqual([
+      ['Cash', 'M500'],
+      ['Sites', '3'],
+    ]);
+  });
+
   it('renders no pips when the player holds nothing', () => {
     renderCard();
 

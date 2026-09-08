@@ -5,24 +5,139 @@
 
 ## What it does
 
-Arranges the game screen in three columns: property actions on the left, the board in the
-middle, and the player sidebar on the right, with the dice docked bottom-right. It collapses to
-a single column on narrower screens.
+Arranges the game screen in **two** columns: the board on the left and the player sidebar on the
+right, with the dice at the bottom of the sidebar, level with the board's lower edge. On a phone it
+becomes a fixed app frame, and on a phone held sideways it goes back to two columns.
 
 ## How it works
 
-`.game-layout` is a CSS grid: `<rail width> minmax(0, 1fr) minmax(320px, 380px)`. The board is
-square (`aspect-ratio: 1`) and capped by viewport height (`max-width: calc(100dvh - 72px)`) so it
-never grows taller than the window, then centred in its column.
+`.game-layout` is a CSS grid: `minmax(0, 1fr) minmax(320px, 380px)`. The board is square
+(`aspect-ratio: 1`) and capped by viewport height (`max-width: calc(100dvh - 72px)`) so it never
+grows taller than the window, then centred in its column.
 
 Composition:
 
-| Region    | Component                                                                                          |
-| --------- | -------------------------------------------------------------------------------------------------- |
-| Left rail | [ActionRail](../../src/components/game/panels/ActionRail.tsx)                                      |
-| Board     | [BoardGrid](../../src/components/game/board/BoardGrid.tsx) → `BoardCenter` + 40 × `BoardSpaceCell` |
-| Sidebar   | `TurnPanel`, `DecisionPanel`, `HintsPanel`, `PlayersPanel`, `HoldingsPanel`, `ActivityPanel`       |
-| Dice      | [DiceDock](../../src/components/game/DiceDock.tsx), fixed bottom-right                             |
+| Region   | Component                                                                                                                                                                                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Board    | [BoardGrid](../../src/components/game/board/BoardGrid.tsx) → `BoardCenter` + 40 × `BoardSpaceCell`                                                                                                         |
+| Sidebar  | [GameSidebar](../../src/components/game/layout/GameSidebar.tsx) → `PlayersPanel`, the links row, then the footer                                                                                           |
+| Footer   | `.game-side-footer` → [ToastStack](../../src/components/game/overlays/ToastStack.tsx) + [TurnControls](../../src/components/game/panels/TurnControls.tsx) (which holds `DiceDock` and the activity button) |
+| Overlays | [GameOverlayLayer](../../src/features/game/GameOverlayLayer.tsx) — drawers, the deed card, the decision modal                                                                                              |
+
+## Responsive behaviour
+
+Three arrangements, from one set of components. Breakpoints are tokens in
+[\_tokens.scss](../../src/styles/abstracts/_tokens.scss) and reached through `below()` and
+`landscape-compact()` in [\_mixins.scss](../../src/styles/abstracts/_mixins.scss).
+
+| Viewport                                    | Arrangement                                                                  |
+| ------------------------------------------- | ---------------------------------------------------------------------------- |
+| `$breakpoint-board` (1250px) and above      | Two columns, board capped by viewport height, page scrolls if it must.       |
+| 1250px down to `$breakpoint-tablet` (720px) | One column; the sidebar's middle becomes a 2-up grid, then 1-up below 720px. |
+| Below `$breakpoint-tablet`, portrait        | The **phone frame** — see below.                                             |
+| Wide and short (`landscape-compact`)        | Two columns again, board sized by **height**.                                |
+
+### The phone frame
+
+`.app-shell.is-game` becomes a `100dvh` flex column that never scrolls. Inside it the board is
+pinned at the top, `.game-side` is the **one** scroll container, and `.game-side-footer` is its
+sticky last child holding the toasts and the dice.
+
+- **The board is capped by height as well as width** (`max-width: min(100%, 54dvh)`). This is the
+  bug the frame fixes: below `$breakpoint-board` the height term used to be _replaced_ by a plain
+  `min(100%, 820px)` width cap, so a phone held sideways rendered a **776×776 board in a 375px-tall
+  window**, with the dice 1082px down a 1162px page.
+- **The bar is `position: sticky; bottom: 0`, not fixed.** As the last child of the scroll container
+  it sticks to the bottom edge, so nothing has to know its height — a fixed bar plus a guessed
+  `padding-bottom` cannot promise that the last player card can be scrolled clear of it.
+- **Nothing in the column may shrink** (`.game-side > * { flex: 0 0 auto }`). A flex item shrinks
+  before it overflows, so with the player stack's own scroller released the cards were squeezed and
+  spilled _out_ of their box over the bar, with `.game-side` reporting
+  `scrollHeight === clientHeight` and no scroll to clear them with. At natural height the column is
+  genuinely taller than its box, which is the only thing that gives the bar something to stick over.
+- **One scroll container, not two nested ones.** `.game-side` regains a definite height inside the
+  frame, so `$player-stack-max-share` silently came back and gave the cards their own scrollbar
+  inside the sidebar's — two scrollers under one thumb. It is released here.
+- **The activity button joins the bar.** It is `position: fixed` bottom-left on a desktop, which on a
+  phone landed exactly on top of the turn controls. It is now rendered inside `.turn-controls` (as
+  its `leading` slot) and simply goes `position: static` in the frame. Moving it in the DOM changes
+  nothing above the breakpoint, because a fixed element ignores where it sits — but note that a
+  `transform` or `filter` on `.turn-controls` would trap it.
+- **`.game-side-footer` is `display: contents` above the breakpoint**, so the desktop layout is
+  untouched: the `margin-top: auto` on `.toast-stack` still pins the pair to the bottom of the
+  column exactly as it did before the wrapper existed.
+
+Two traps, both found by measuring rather than by reading:
+
+- **`.page { margin: 0 auto }` shrink-wraps the moment `.app-shell` becomes flex.** `auto` inline
+  margins beat `align-self: stretch` on a flex item, so the frame collapsed and the board measured
+  **263px wide in a 375px viewport**. The frame resets the margin and sets `width: 100%`.
+- **`.game-layout`'s `align-items: start`** shrink-wraps children on the _cross_ axis once the
+  layout is `flex-direction: column`, which shrink-wrapped the board too. The frame sets `stretch`.
+
+The phone block must stay **before** the landscape block in `_game.scss`: a small phone held
+sideways (667×375) matches both, and the landscape grid has to win.
+
+### The player card is four figures, not four rows
+
+The card pairs the name with the headline figure on one line, runs cash and sites inline beneath
+it, and is about **88px** tall. It used to be roughly **300px** on a phone.
+
+- **`.player-metrics` no longer borrows the generic two-column grid.** It was in the
+  `.field-grid.two, .two-column, .player-metrics` list in
+  [\_shell.scss](../../src/styles/layout/_shell.scss), which collapses to a single column below
+  `$breakpoint-tablet`. That is right for a form field and wrong for a pair of labelled figures: it
+  turned two figures into four stacked rows. The metrics are a `<dl>` of explicit pairs now, so each
+  label is tied to its own value rather than to a position in a flat grid.
+- **The card is the target and the chevron says so.** `.player-card-open` had **no rules anywhere in
+  the stylesheet and no content**, so it rendered as a tiny default browser pill in the corner of
+  the card - a control that read as a rendering artefact. It is an `inset: 0` overlay (so the tap is
+  the whole card, well past 44px) carrying a visible chevron on a `--button-secondary` ground.
+  Collapsed slivers hide it: the stack's own expand overlay owns the click there, and four slivers
+  each painting a chevron read as four broken controls stacked on each other.
+- **The drawer's four figures stay a 2x2 grid.** Collapsing `.drawer-stats` to one column - which
+  this responsive work did at first - produced about 340px of stats before the first deed, in a
+  drawer whose whole job is showing deeds. The padding tightens on a phone instead.
+- **A collapsed sliver hides its content rather than relying on the clip.** The
+  `.player-stack.is-collapsed` block carried a byte-identical duplicate of the base
+  `.player-card-worth` rule inside its selector list, so a 15px sliver was being told to lay its
+  name out as a flex row; only the `max-height` clip hid the result, and only `.player-metrics`
+  said what was meant.
+
+### Landscape is a height query, not a width one
+
+`landscape-compact` is `(max-width: $breakpoint-board) and (max-height: $breakpoint-short) and
+(orientation: landscape)`. All three terms are needed: width alone cannot tell a landscape phone
+from a small desktop window, and it is the **height** that breaks the board. The board takes
+`height: 100%` and derives its width from `aspect-ratio`, so it always fits.
+
+### A small board is a map, not a document
+
+Below a **board width** of `$board-name-floor` (520px) the squares **drop their name text**. A
+street cell is about 30px wide when the board is 375px and the name was set at a hardcoded `5px`,
+which is texture rather than type. What stays is what identifies a square at a glance: the colour
+ribbon, the glyph, the owner's dot, buildings, and the tokens. The name is one tap away in the
+title-deed card a square already opens.
+
+- **It is a `@container` query on `.board-card`, not a media query**, and the distinction is the
+  whole point. The threshold is a fact about the _board_ — how wide a square is — and the board's
+  width is not a function of the viewport's. Landscape sizes the board by viewport **height**, so an
+  844×390 phone has an 844px-wide window and a 380px board: a viewport-width rule reported "not a
+  phone" and left **6.72px** names on a board every bit as small as the portrait one it correctly
+  cleared. Found by looking at it in landscape, not by reading the rule.
+
+- **Only the visible text is hidden.** The cell's accessible name is an explicit `aria-label` on the
+  button ([BoardSpaceCell](../../src/components/game/board/BoardSpaceCell.tsx)), so screen readers
+  and role-based queries are untouched.
+- **`board.spec.ts`'s "never clips a space name" scan is vacuous at phone width.** It measures
+  `scrollWidth` against `clientWidth`, and a `display: none` element reports zero for both. That
+  spec pins the desktop viewport for exactly this reason — do not remove it.
+- **Board decorations are sized in `cqw`, not `vw`.** `.board-card` is a `container-type:
+inline-size` container and publishes a `--token-size` custom property. `vw` tracks the _viewport_,
+  which stops agreeing with the board the moment the board is capped by `dvh` — and in landscape the
+  board is sized by height, so `vw` tracks nothing it is drawn on. The desktop values are
+  deliberately left as the original `vw` clamps, because the board geometry tests are calibrated
+  against them and nothing above the phone breakpoint has the problem `cqw` solves.
 
 ## Key decisions
 
@@ -268,21 +383,25 @@ local state: the selected space id for the title-deed modal.
 
 ## Tests
 
-| Level | File                                                                                     | Covers                                                                                                    |
-| ----- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | Index → grid cell: corners, uniqueness, edges, wrapping.                                                  |
-| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts)         | The view models every panel receives.                                                                     |
-| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                         | Three-column ordering; corner geometry; rail actions present and disabled.                                |
-| Unit  | [BoardSpaceCell.test.tsx](../../src/components/game/board/BoardSpaceCell.test.tsx)       | The pieces are SVG, not boxes, and the hotel faces its ribbon's axis.                                     |
-| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                                   | Pieces stand on the ribbon and fit along it; sharp corners with buildings up.                             |
-| Unit  | [spaceIcon.registry.test.ts](../../src/components/game/icons/spaceIcon.registry.test.ts) | Every non-street space resolves a glyph; every kind covered; overrides hold their kind.                   |
-| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | The icons take theme ink: flipping `data-theme` must move their colour.                                   |
-| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | The Jail regions: jailed inside the cell, visitors on the band, never coinciding, a full table in bounds. |
-| Unit  | [JailCorner.test.tsx](../../src/components/game/board/JailCorner.test.tsx)               | The two labels, the whole name still contiguous, and the band width the geometry uses.                    |
-| Unit  | [BoardTokenLayer.test.tsx](../../src/components/game/board/BoardTokenLayer.test.tsx)     | Routing on `inJail`, per-region crowd slots, and a jailed player still walking.                           |
-| E2E   | [jail.spec.ts](../../tests/e2e/jail.spec.ts)                                             | A jailed player is inside the drawn cell and a visitor is not.                                            |
-| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | Tinted stock and a distinct field; the grain overlay is inert to clicks.                                  |
-| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | **Every board colour follows the theme**: flip `data-theme` and none may stay put.                        |
+| Level | File                                                                                     | Covers                                                                                                                                                                     |
+| ----- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | Index → grid cell: corners, uniqueness, edges, wrapping.                                                                                                                   |
+| Unit  | [gameView.selectors.test.ts](../../src/features/game/gameView.selectors.test.ts)         | The view models every panel receives.                                                                                                                                      |
+| E2E   | [layout.spec.ts](../../tests/e2e/layout.spec.ts)                                         | Two-column ordering; dice docked beside the board; players top, controls bottom. Pins the desktop viewport.                                                                |
+| E2E   | [mobile.spec.ts](../../tests/e2e/mobile.spec.ts)                                         | The phone frame and landscape: no page scroll, board and Roll together, the bar clear of the last card, names hidden but addressable, 44px targets, a turn played through. |
+| Unit  | [boardTracks.guard.test.ts](../../src/domain/board/boardTracks.guard.test.ts)            | `$board-corner-track` and `CORNER_TRACK` still agree, so no token drifts off its square.                                                                                   |
+| Unit  | [GameSidebar.test.tsx](../../src/components/game/layout/GameSidebar.test.tsx)            | The footer groups toasts above the dice, and the activity button sits in the control row.                                                                                  |
+| Unit  | [PlayerCard.test.tsx](../../src/components/game/panels/PlayerCard.test.tsx)              | Each metric label is paired with its own figure; the holdings control carries a visible mark.                                                                              |
+| Unit  | [BoardSpaceCell.test.tsx](../../src/components/game/board/BoardSpaceCell.test.tsx)       | The pieces are SVG, not boxes, and the hotel faces its ribbon's axis.                                                                                                      |
+| E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                                   | Pieces stand on the ribbon and fit along it; sharp corners with buildings up.                                                                                              |
+| Unit  | [spaceIcon.registry.test.ts](../../src/components/game/icons/spaceIcon.registry.test.ts) | Every non-street space resolves a glyph; every kind covered; overrides hold their kind.                                                                                    |
+| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | The icons take theme ink: flipping `data-theme` must move their colour.                                                                                                    |
+| Unit  | [boardLayout.utils.test.ts](../../src/domain/board/boardLayout.utils.test.ts)            | The Jail regions: jailed inside the cell, visitors on the band, never coinciding, a full table in bounds.                                                                  |
+| Unit  | [JailCorner.test.tsx](../../src/components/game/board/JailCorner.test.tsx)               | The two labels, the whole name still contiguous, and the band width the geometry uses.                                                                                     |
+| Unit  | [BoardTokenLayer.test.tsx](../../src/components/game/board/BoardTokenLayer.test.tsx)     | Routing on `inJail`, per-region crowd slots, and a jailed player still walking.                                                                                            |
+| E2E   | [jail.spec.ts](../../tests/e2e/jail.spec.ts)                                             | A jailed player is inside the drawn cell and a visitor is not.                                                                                                             |
+| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | Tinted stock and a distinct field; the grain overlay is inert to clicks.                                                                                                   |
+| E2E   | [board.spec.ts](../../tests/e2e/board.spec.ts)                                           | **Every board colour follows the theme**: flip `data-theme` and none may stay put.                                                                                         |
 
 ## Known gaps
 

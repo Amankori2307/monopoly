@@ -1,8 +1,17 @@
+import type { ReactNode } from 'react';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { SpeedDieFace } from '../../../domain/types/game.enums';
 import { DiceDock } from '../DiceDock';
 
 interface TurnControlsProps {
+  /**
+   * Rendered first in the row. The activity button goes here so that on a phone
+   * it sits IN the bar rather than floating over it - floating, it landed
+   * exactly on top of this row. A slot rather than a hardcoded child, because
+   * on desktop the same button is `position: fixed` and this row is only where
+   * it happens to live in the DOM.
+   */
+  leading?: ReactNode;
   /** False when the player has muted the game. */
   soundEnabled: boolean;
   canEndTurn: boolean;
@@ -28,6 +37,7 @@ export function TurnControls({
   canRollAgain,
   lastRoll,
   lastRollId,
+  leading,
   onEndTurn,
   onRoll,
   rollLabel,
@@ -36,6 +46,7 @@ export function TurnControls({
 }: TurnControlsProps) {
   return (
     <div className="turn-controls" data-testid={TEST_IDS.turnControls}>
+      {leading}
       {canEndTurn ? (
         <button
           className="primary-button end-turn-button"

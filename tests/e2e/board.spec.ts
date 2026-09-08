@@ -2,7 +2,18 @@ import { expect, test } from '@playwright/test';
 import { JAIL_BAND_FRACTION } from '../../src/domain/board/boardLayout.utils';
 import { JAIL_POSITION } from '../../src/domain/constants/game.constants';
 import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
-import { CORNERS, findRoundedElements, startGame, tokenColor } from './helpers';
+import {
+  CORNERS,
+  findRoundedElements,
+  startGame,
+  tokenColor,
+  VIEWPORTS,
+} from './helpers';
+
+// The board's geometry is measured here, so the viewport has to be stated. Below
+// $breakpoint-phone the squares deliberately drop their names, which would make
+// the clipping scan below pass for the wrong reason - see the note on it.
+test.use({ viewport: VIEWPORTS.desktop });
 
 test('shows a title deed with the street colour band and rent schedule', async ({
   page,
@@ -251,6 +262,11 @@ test('runs space names along the long axis of each cell', async ({ page }) => {
 
 // Long names must wrap into further lines instead of being clipped -
 // "Chennai Central Railway Station" and "Bhubaneshwar" both used to overflow.
+//
+// This measures scrollWidth against clientWidth, and a `display: none` element
+// reports zero for both - so it only means something where the names are
+// actually rendered. On a phone they are hidden by design, and this test would
+// pass vacuously. Do not drop the desktop viewport this spec pins.
 test('never clips a space name', async ({ page }) => {
   await startGame(page);
 
