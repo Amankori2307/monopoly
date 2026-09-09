@@ -6,7 +6,13 @@ interface DeedPrimaryStatsProps {
   price: number;
 }
 
-/** Site value and mortgage value - shown on every ownable space. */
+/**
+ * Price and mortgage value - shown on every ownable space.
+ *
+ * 'Site value' named a kind of square, on a card that is also the deed for a
+ * railway and a utility. 'Price' is what the printed deed says, and it is true
+ * of all three in every edition.
+ */
 export function DeedPrimaryStats({
   currencySymbol,
   mortgageValue,
@@ -15,7 +21,7 @@ export function DeedPrimaryStats({
   return (
     <div className="deed-primary-stats">
       <span>
-        Site value<strong>{formatMoney(price, currencySymbol)}</strong>
+        Price<strong>{formatMoney(price, currencySymbol)}</strong>
       </span>
       <span>
         Mortgage value<strong>{formatMoney(mortgageValue, currencySymbol)}</strong>

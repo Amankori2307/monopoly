@@ -59,7 +59,7 @@ const badgesFor = (player: PlayerState, mortgagedCount: number): Badge[] => {
     badges.push({
       id: 'mortgaged',
       label: mortgagedCount > 1 ? `${mortgagedCount} mortgaged` : '1 mortgaged',
-      title: 'Mortgaged sites collect no rent until they are redeemed',
+      title: 'Mortgaged property collects no rent until it is redeemed',
       tone: 'mortgaged',
     });
   }

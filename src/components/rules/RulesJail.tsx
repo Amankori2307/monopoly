@@ -21,7 +21,7 @@ export function RulesJail() {
         <li>Try to roll doubles. If you do, move by that roll and your turn ends.</li>
       </ol>
       <p>
-        You have up to three turns to roll doubles. If you fail on your third turn, pay
+        You have up to three turns to roll doubles. If you fail on your third turn, pay{' '}
         {money(JAIL_FINE)} and use that final roll to move. While in Jail, you can still
         collect rent, auction, build, mortgage, and trade.
       </p>

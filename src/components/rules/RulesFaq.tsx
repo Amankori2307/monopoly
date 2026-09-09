@@ -82,7 +82,7 @@ export function RulesFaq() {
         <dt>Does a mortgaged {nouns.site} still count towards my color set?</dt>
         <dd>
           Yes. Mortgaging is a loan, not a sale. Own all three of a color set and mortgage
-          one, and the other two still charge doubled rent. The same applies to
+          one, and the other two still charge doubled rent. The same applies to{' '}
           {nouns.railway} and utility counts.
         </dd>
 

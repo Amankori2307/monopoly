@@ -65,7 +65,7 @@ export function RulesBoard() {
             <tr>
               <td>Income Tax / Super Tax</td>
               <td>
-                Pay the Bank {money(INCOME_TAX_AMOUNT)} / {money(SUPER_TAX_AMOUNT)}
+                Pay the Bank {money(INCOME_TAX_AMOUNT)} / {money(SUPER_TAX_AMOUNT)}{' '}
                 respectively.
               </td>
             </tr>

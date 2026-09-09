@@ -129,7 +129,7 @@ describe('PlayerCard', () => {
 
     expect(pairs).toEqual([
       ['Cash', 'M500'],
-      ['Sites', '3'],
+      ['Owned', '3'],
     ]);
   });
 

@@ -66,7 +66,7 @@ export function PlayerDetailDrawer({
           Cash<strong>{formatMoney(player.cash, currencySymbol)}</strong>
         </span>
         <span>
-          Sites<strong>{propertyCount}</strong>
+          Owned<strong>{propertyCount}</strong>
         </span>
         <span>
           Mortgaged<strong>{mortgagedCount}</strong>

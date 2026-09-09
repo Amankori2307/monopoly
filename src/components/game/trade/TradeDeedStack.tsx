@@ -40,7 +40,7 @@ export function TradeDeedStack({
   side,
 }: TradeDeedStackProps) {
   if (sites.length === 0) {
-    return <p className="trade-empty">No sites to trade.</p>;
+    return <p className="trade-empty">Nothing to trade.</p>;
   }
 
   return (

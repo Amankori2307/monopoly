@@ -100,7 +100,7 @@ export function LiquidationDecision({
 
       {hasSitesLeft ? (
         <>
-          <p className="deed-rent-title">Mortgage a site to raise cash</p>
+          <p className="deed-rent-title">Mortgage a property to raise cash</p>
           <ul className="liquidation-sites">
             {mortgageableSites.map((site) => (
               <li key={site.spaceId}>
@@ -126,7 +126,7 @@ export function LiquidationDecision({
           {playerName} has nothing left to mortgage and cannot cover this debt.
           {creditorName
             ? ` Everything they hold passes to ${creditorName}.`
-            : ' Their sites return to the Bank.'}
+            : ' Everything they hold returns to the Bank.'}
         </p>
       )}
 

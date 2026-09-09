@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { GENERIC_NOUNS } from '../../domain/themes/nouns.constants';
 import { RULES_SECTIONS } from '../../components/rules/rulesSections.constants';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { RulesPage } from './RulesPage';
@@ -20,6 +21,59 @@ describe('RulesPage', () => {
       screen.getByRole('navigation', { name: 'Main' }).querySelector('a')
     ).not.toBeNull();
     expect(screen.getByRole('link', { name: 'Play' })).toBeInTheDocument();
+  });
+
+  /**
+   * Three run-together words shipped in the booklet - "The same applies
+   * tostation", "Pay the Bank 200 / 100respectively", "If you fail on your
+   * third turn, pay50" - all from a JSX interpolation sitting on its own line,
+   * which eats the newline that was standing in for the space. It reads as a
+   * typo and it is invisible in review, because the source looks right.
+   *
+   * Checked per element, over that element's OWN text nodes only. The whole
+   * container's textContent glues adjacent blocks together - two table cells
+   * become "stationRent rises", a dd and the next h2 become "502. Take your
+   * turn" - so it reports the bug everywhere and is useless. An interpolation
+   * and the words around it are always siblings inside one element, which is
+   * exactly what this joins.
+   */
+  const ownText = (element: Element): string =>
+    Array.from(element.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent ?? '')
+      .join('');
+
+  const bookletTexts = (): string[] => {
+    const { container } = renderWithProviders(<RulesPage />);
+    return Array.from(container.querySelectorAll('*')).map(ownText);
+  };
+
+  it('never runs a word into an interpolated one', () => {
+    // The nouns are the checkable case: every one arrives from the theme
+    // through an interpolation, so a letter immediately either side of one is
+    // always this bug.
+    const nouns = Object.values(GENERIC_NOUNS);
+    const texts = bookletTexts();
+
+    nouns.forEach((noun) => {
+      // "stations" legitimately extends "station", so a noun that is the start
+      // of another noun cannot be checked on its trailing edge.
+      const extended = nouns.some((other) => other !== noun && other.startsWith(noun));
+      texts.forEach((text) => {
+        expect(text).not.toMatch(new RegExp(`[a-z]${noun}\\b`));
+        if (!extended) {
+          expect(text).not.toMatch(new RegExp(`\\b${noun}[a-z]`));
+        }
+      });
+    });
+  });
+
+  it('never runs a word into an interpolated amount', () => {
+    bookletTexts().forEach((text) => {
+      expect(text).not.toMatch(/[a-z]\d/);
+      // A digit may only be followed by an ordinal suffix or a multiplier.
+      expect(text.replace(/\d(?:st|nd|rd|th|x|×)/g, '')).not.toMatch(/\d[a-z]/);
+    });
   });
 
   // The sections were extracted into separate components; every nav link must

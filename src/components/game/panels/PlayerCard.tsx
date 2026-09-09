@@ -72,7 +72,11 @@ export function PlayerCard({
           <dd>{formatMoney(player.cash, currencySymbol)}</dd>
         </div>
         <div>
-          <dt>Sites</dt>
+          {/* Not 'Sites': propertyCount is every ownable square, railways
+              and utilities included, so a street-word was wrong on every
+              board - and 'site' is the codebase's own word for a street, not
+              any edition's. */}
+          <dt>Owned</dt>
           {/* The mortgaged count used to be appended here as text. It is a badge
               now, so saying it twice on one card would be noise. */}
           <dd data-testid={scopedTestId(TEST_IDS.playerSiteCount, player.id)}>

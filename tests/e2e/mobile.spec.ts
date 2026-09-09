@@ -190,7 +190,7 @@ test.describe('a phone in portrait', () => {
     const text = await page.locator('.player-card').first().innerText();
     expect(text).toMatch(/Net worth/i);
     expect(text).toMatch(/Cash/i);
-    expect(text).toMatch(/Sites/i);
+    expect(text).toMatch(/Owned/i);
   });
 
   /**
