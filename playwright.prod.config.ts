@@ -1,10 +1,10 @@
 import { defineConfig } from '@playwright/test';
 
-// Its own port, not 3200. `pnpm dev:online` and `pnpm tunnel` both use 3200,
-// and `reuseExistingServer` below is on locally - so a dev server left running
-// got ADOPTED by this suite, substituting a host WITH history fallback for the
-// static host whose lack of one is the entire point here. The first test caught
-// it (it asserts the host really 404s), but it failed pointing at nothing.
+// Its own port, and not one anything else uses. `reuseExistingServer` is on
+// locally, so a server left running on a shared port got ADOPTED by this suite -
+// substituting a host WITH history fallback for the static host whose lack of
+// one is the entire point here. The first test caught it (it asserts the host
+// really 404s), but it failed pointing at nothing.
 const PORT = 3300;
 
 /**
@@ -25,6 +25,18 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}/monopoly/`,
     trace: 'on-first-retry',
+    launchOptions: {
+      /**
+       * This suite serves the PRODUCTION build, which has always carried a real
+       * Supabase config from `.env.production` - so it has always been an
+       * online build. It got away with it because none of its tests visits an
+       * online route, which is luck rather than a guarantee. Blackholed at the
+       * resolver, like the e2e suite, so it stays luck-free.
+       */
+      args: [
+        '--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND,MAP fonts.gstatic.com ~NOTFOUND,MAP *.supabase.co ~NOTFOUND,MAP supabase.co ~NOTFOUND',
+      ],
+    },
   },
   webServer: {
     command: `node tools/serve-build.mjs ${PORT}`,

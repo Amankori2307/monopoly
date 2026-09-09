@@ -12,40 +12,44 @@ import { openChooser } from './helpers';
  * of showing an empty table.
  */
 
-test('offers no online choice when the build has no server', async ({ page }) => {
+test('offers every way to play, whatever the build can reach', async ({ page }) => {
   await openChooser(page);
 
-  // Playing on this device always works, so it is always offered.
+  // All three, always. Where you play is the player's choice, not a property
+  // of the build - hiding the online doors made the ordinary dev server look
+  // like it was missing a feature rather than following a policy.
   await expect(page.getByTestId(TEST_IDS.chooserPlayLocal)).toBeVisible();
-  // Never render a control that cannot work - see onlineConfig.
-  await expect(page.getByTestId(TEST_IDS.chooserHostOnline)).toHaveCount(0);
-  await expect(page.getByTestId(TEST_IDS.chooserJoinOnline)).toHaveCount(0);
+  await expect(page.getByTestId(TEST_IDS.chooserHostOnline)).toBeVisible();
+  await expect(page.getByTestId(TEST_IDS.chooserJoinOnline)).toBeVisible();
 });
 
 /**
- * The choices are hidden, but a URL can still be typed or bookmarked. An
- * offline build has to say what is wrong rather than render a form that cannot
- * submit - or, worse, blank.
+ * The e2e build resolves a real config but cannot resolve the backend's HOST -
+ * playwright.config.ts blackholes it. So these assert what a player sees when
+ * the table cannot be reached, which is the failure that actually happens.
  */
-test('says hosting cannot work in a build with no server', async ({ page }) => {
+test('says hosting cannot reach a server rather than failing silently', async ({
+  page,
+}) => {
   await page.goto('/#/host');
 
-  await expect(page.getByTestId(TEST_IDS.noServerPanel)).toBeVisible();
-  await expect(page.getByRole('link', { name: /Play on this device/i })).toBeVisible();
+  await expect(page.getByTestId(TEST_IDS.openTableButton)).toBeEnabled();
+  await page.getByTestId(TEST_IDS.openTableButton).click();
+
+  await expect(page.locator('.error-text')).toBeVisible();
 });
 
-/**
- * The join screen keeps its field and disables it with the reason on screen,
- * rather than swapping in a panel - see JoinPage. Hosting swaps, because a
- * whole form that cannot submit is a different thing from one field.
- */
-test('says joining cannot work in a build with no server', async ({ page }) => {
+test('says joining cannot reach a server rather than blaming the code', async ({
+  page,
+}) => {
   await page.goto('/#/join');
+  await page.getByTestId(TEST_IDS.joinCodeInput).fill('ABC234');
 
-  await expect(page.getByTestId(TEST_IDS.joinSubmitButton)).toBeDisabled();
-  await expect(page.getByTestId(TEST_IDS.joinBlockedReason)).toContainText(
-    /cannot play online/i
-  );
+  // A full, valid code, so the reason cannot be the code's.
+  await expect(page.getByTestId(TEST_IDS.joinSubmitButton)).toBeEnabled();
+  await page.getByTestId(TEST_IDS.joinSubmitButton).click();
+
+  await expect(page.locator('.error-text')).toContainText(/could not reach|cannot play/i);
 });
 
 test('says a table is not there rather than showing an empty one', async ({ page }) => {

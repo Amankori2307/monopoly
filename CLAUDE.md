@@ -214,9 +214,9 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 quietly writing a second lockfile. Reach for a script below rather than `npx`.
 
 ```bash
-pnpm dev          # Vite dev server on :3000 (offline - no online play)
-pnpm dev:online   # dev server on :3200 WITH the Supabase config, bound to 0.0.0.0
-pnpm tunnel       # ngrok over :3200, for a device that is not on this network
+pnpm dev          # Vite dev server on :3000 - the only one, and online-capable
+pnpm tunnel       # ngrok over :3000, for a device that is not on this network
+                  #   needs: ALLOW_TUNNEL_HOSTS=1 pnpm dev -- --host 0.0.0.0
 pnpm build        # production build → build/
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
@@ -229,7 +229,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1405 unit tests, 181 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1405 unit tests, 183 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -368,22 +368,29 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   first fetch came back sent an array containing only itself and **deleted the host**. Found with two
   real browsers. The merge is done in SQL under the row lock now (migration 0003), and the lobby also
   refuses to offer any control until `phase !== null`, because "not read yet" is not "empty".
-- **There is no `start`, and `dev`/`dev:online` are not a duplicate pair.** `start` was
-  byte-identical to `dev` (`nx serve`) and referenced by nothing - it is gone. The two dev servers
-  stay, because online-vs-offline is a _runtime_ choice (`LocalSession` vs `OnlineSession`) but the
-  _config_ is resolved once at module load from `import.meta.env` and is therefore fixed by Vite's
-  mode. `test:routing` has its own port (3300) rather than sharing 3200 with `dev:online` and
-  `tunnel`: `reuseExistingServer` is on locally, so a dev server left running got adopted by that
-  suite - a host WITH history fallback standing in for the static host whose lack of one is the
-  whole point. Its first test catches it, but it failed pointing at nothing.
-- **`pnpm dev` cannot play online, and that is deliberate.** It runs in `development` mode, which
-  resolves no Supabase config, because the e2e suite starts that same server and must never reach the
-  network. So there is no "Play online" button on :3000 - which reads as a missing feature rather
-  than a policy, and cost a round trip. Use `pnpm dev:online` (:3200, `--mode online`, reading
-  `.env.online`) to work on the lobby with hot reload, or serve a production build.
-- **`pnpm test:online` writes real rows to the real project**, so it is not part of `test:e2e`. It
-  serves the **production build**, because `.env.production` is the only place the Supabase config
-  lives - `development` resolves none on purpose, so the ordinary suite can never reach the network.
+- **There is one dev script, and the offline promise is enforced rather than assumed.** There were
+  three (`start`, `dev`, `dev:online`); `start` was byte-identical to `dev` and `dev:online` existed
+  only because `onlineConfig` resolves once at module load, so the _build_ decided whether online
+  play was on offer. That made the kind of game a property of the build rather than a choice the
+  player makes, and meant `pnpm dev` could not host a table at all. Now `.env.development` (which
+  `test` mode never loads, so `onlineConfig.test.ts` keeps its meaning) gives the one dev server a
+  config, and **the browser cannot resolve the backend host**: both Playwright configs blackhole it
+  via `--host-resolver-rules`, and [offline.spec.ts](tests/e2e/offline.spec.ts) fails if that hole
+  ever opens. That matters because the old guarantee was only "the config is absent" - one test
+  (`lobby.spec.ts`'s "says a table is not there") already reached `fetch_game` and went green, and
+  `pnpm test:routing` has always served a production build with a real config, escaping purely
+  because no test there visits an online route. `allowedHosts` for a tunnel is now
+  `ALLOW_TUNNEL_HOSTS=1`, so protection stays on by default.
+- **Where you play is the player's choice, not the build's.** The chooser offers On this device /
+  Host online / Join a game **always**. The two online tiles used to be hidden unless
+  `isOnlineEnabled()`, which is why `pnpm dev` looked like it was missing a feature. A build
+  genuinely without a backend now says so on the screen you land on, and `JoinPage` distinguishes
+  "no game with that code" from "this copy cannot play online" - it used to report the former for
+  both. The one gate that **stays** is in `useTableRejoin`: `attachOnlineSession` goes through
+  `requireConfig()`, which throws, and a throw inside an effect reaches nothing but `ErrorBoundary`.
+- **`pnpm test:online` writes real rows to the real project**, so it is not part of `test:e2e`, and
+  it is the only suite whose browser is allowed to resolve the backend at all. It serves the
+  production build.
 - **Pause, do not fork.** A move made while the table is unreachable is a move nobody else will ever
   see, and each further one drifts this device deeper into a private game that cannot be reconciled.
   `runGameCommand` refuses outright when an online session's connection is not live
@@ -414,7 +421,7 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   poll reads the row rather than the game; the caller only ever needs the revision.
 - **`crypto.randomUUID` is secure-context only, and the engine depends on it for every event id.**
   It is there on localhost and https and **undefined** on a plain-http address like
-  `http://192.168.1.5:3200` - which is exactly how another computer reaches `pnpm dev:online`. So the
+  `http://192.168.1.5:3000` - which is exactly how another computer reaches a tunnelled dev server. So the
   whole game broke there, online or not, on the first event created.
   [id.utils.ts](src/domain/rules/id.utils.ts) falls back to a real v4 built from `getRandomValues`,
   which carries no such restriction; the shape matters as much as the entropy, because a game id goes
@@ -422,8 +429,8 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   invite link's Copy is already wrapped in a try/catch and the link stays selectable.
 - **A tunnel needs `server.allowedHosts`.** Vite refuses a request whose `Host` header it does not
   recognise - that is its DNS-rebinding protection - so an ngrok URL answers "Blocked request. This
-  host is not allowed." The tunnel domains are allowed in **`online` mode only**; `pnpm dev`, the
-  server the e2e suite starts, keeps the protection.
+  host is not allowed." It is opt-in through `ALLOW_TUNNEL_HOSTS=1` rather than a second dev script,
+  so the server the e2e suite starts keeps the protection.
 - **Never trust a slow e2e run without checking what else is on the machine.** A suite that runs in
   1.3 minutes took twenty, with different tests failing each time and no code cause: four stray Vite
   servers and orphaned nx daemons from earlier sessions were competing for the CPU. `pgrep -fl vite`

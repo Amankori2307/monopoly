@@ -10,13 +10,17 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
  * "Blocked request. This host is not allowed." A leading dot matches the domain
  * and its subdomains, which is what a tunnel's generated name needs.
  *
- * Only ever applied in `online` mode. `pnpm dev` - the server the e2e suite
- * starts - keeps the protection, because it has no business being tunnelled.
+ * Opt-in through an env var rather than a second dev script: there is one dev
+ * server now, and the protection stays on for it by default - including for the
+ * server the e2e suite starts. To tunnel:
+ *
+ *   ALLOW_TUNNEL_HOSTS=1 pnpm dev -- --host 0.0.0.0
+ *   pnpm tunnel
  */
 const TUNNEL_HOSTS = ['.ngrok-free.app', '.ngrok.app', '.ngrok-free.dev', '.ngrok.io'];
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   base: process.env.NODE_ENV === 'production' ? '/monopoly/' : '/',
   build: {
     outDir: './build',
@@ -27,8 +31,9 @@ export default defineConfig(({ mode }) => ({
     // open - the spawn just fails or hangs the job.
     port: 3000,
     open: !process.env.CI,
-    // Tunnelled only in the mode that is meant to be reachable from outside.
-    allowedHosts: mode === 'online' ? TUNNEL_HOSTS : undefined,
+    // Tunnelled only when asked for. `mode` used to decide this, which is why
+    // there was a second dev script at all.
+    allowedHosts: process.env.ALLOW_TUNNEL_HOSTS ? TUNNEL_HOSTS : undefined,
   },
   publicDir: 'public',
   test: {

@@ -5,15 +5,10 @@ import { VIEWPORTS } from './helpers';
 /**
  * Typing in a code somebody read out.
  *
- * The dev server resolves no Supabase config on purpose, so nothing here
- * reaches the network - which is exactly why the field renders and disables
- * rather than disappearing. The entry point obeys "never render a control that
- * cannot work" (the chooser omits the Join tile entirely in an offline build,
- * asserted in lobby.spec.ts); this screen is only reachable by URL, and on it
- * a labelled field whose button says why is better than a bare sentence.
- *
- * It also gives the whole typing journey a home in the offline build, which is
- * the only build the ordinary suite has.
+ * The dev server resolves a real config, and the browser cannot resolve the
+ * backend's host - playwright.config.ts blackholes it, so the offline promise
+ * is enforced rather than assumed. That leaves the typing behaviour fully
+ * testable and the network genuinely unreachable.
  */
 
 test.use({ viewport: VIEWPORTS.desktop });
@@ -80,16 +75,17 @@ test('asks for a code when the field is empty', async ({ page }) => {
  * A build with no server says so on the screen, not in a console - the same
  * contract lobby.spec.ts asserts for the chooser's missing tiles.
  */
-test('says a build with no server cannot join, on the control itself', async ({
+test('lets a full code be sent, and says when the table cannot be reached', async ({
   page,
 }) => {
   await page.goto('/#/join');
   await field(page).fill('ABC234');
 
-  // A full, valid code and still refused - so the reason has to be the
-  // build's, not the code's.
-  await expect(page.getByTestId(TEST_IDS.joinSubmitButton)).toBeDisabled();
-  await expect(page.getByTestId(TEST_IDS.joinBlockedReason)).toContainText(
-    /cannot play online/i
-  );
+  // The build resolves a config now, so a valid code is sendable - what it
+  // cannot do in this suite is resolve the backend's host, which
+  // playwright.config.ts blackholes on purpose.
+  await expect(page.getByTestId(TEST_IDS.joinSubmitButton)).toBeEnabled();
+  await page.getByTestId(TEST_IDS.joinSubmitButton).click();
+
+  await expect(page.locator('.error-text')).toBeVisible();
 });

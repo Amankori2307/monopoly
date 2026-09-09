@@ -2,6 +2,32 @@ import { defineConfig } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
 
+/**
+ * The suite does not reach the internet, and this is what makes that true
+ * rather than merely intended.
+ *
+ * `fonts.googleapis.com` is blackholed because index.html pulls fonts from it:
+ * fine for a reader, fatal for a test run - when it was slow to answer, a
+ * two-minute suite became twenty with tests failing that had nothing wrong with
+ * them. Diagnosed by the process sitting at 2% CPU for eighteen minutes; it was
+ * not computing, it was waiting.
+ *
+ * `supabase.co` is blackholed because the dev server now RESOLVES a real
+ * backend config - there is one dev script, and the player picks local or
+ * online inside the game. Before this, the offline guarantee was "the config is
+ * absent", which is a circumstance rather than a guarantee: one test
+ * (`lobby.spec.ts`'s "says a table is not there") reached `fetch_game` and
+ * still went green, so CI would have POSTed to a live project on every push
+ * while proving nothing. At the resolver, a test cannot reach the backend
+ * whatever the config says.
+ */
+const OFFLINE_RESOLVER_RULES = [
+  'MAP fonts.googleapis.com ~NOTFOUND',
+  'MAP fonts.gstatic.com ~NOTFOUND',
+  'MAP *.supabase.co ~NOTFOUND',
+  'MAP supabase.co ~NOTFOUND',
+].join(',');
+
 export default defineConfig({
   testDir: './tests/e2e',
   // A `.only` left in a spec silently shrinks the suite to one test, and the
@@ -15,23 +41,7 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     launchOptions: {
-      /**
-       * The suite does not reach the internet.
-       *
-       * index.html pulls its fonts from Google. That is fine for a reader and
-       * fatal for a test run: when fonts.googleapis.com is slow to answer, every
-       * page load waits on it, and a two-minute suite became twenty minutes with
-       * tests failing that had nothing wrong with them. Diagnosed by the process
-       * sitting at 2% CPU for eighteen minutes - it was not computing, it was
-       * waiting.
-       *
-       * Resolving those hosts to nothing makes the browser fail instantly
-       * instead, which is both faster and honest: a test should not be able to
-       * pass or fail on somebody else's CDN.
-       */
-      args: [
-        '--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND,MAP fonts.gstatic.com ~NOTFOUND',
-      ],
+      args: [`--host-resolver-rules=${OFFLINE_RESOLVER_RULES}`],
     },
   },
   webServer: {

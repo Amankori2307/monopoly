@@ -80,11 +80,15 @@ describe('ChooserPage', () => {
     expect(resume).toHaveTextContent('Online');
   });
 
-  // Never render a control that cannot work: this build resolves no server.
-  it('offers no online choices in a build with no server', () => {
+  /**
+   * All three, always. Where you play is the player's choice; it used to be a
+   * property of the build, so a copy without a backend simply had no door.
+   */
+  it('offers every way to play', () => {
     renderWithProviders(<ChooserPage />);
 
-    expect(screen.queryByTestId(TEST_IDS.chooserHostOnline)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(TEST_IDS.chooserJoinOnline)).not.toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.chooserPlayLocal)).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.chooserHostOnline)).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.chooserJoinOnline)).toBeInTheDocument();
   });
 });

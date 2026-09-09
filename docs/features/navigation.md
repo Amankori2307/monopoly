@@ -65,10 +65,11 @@ every page
   that is easy to reach by accident — a bare `<a href="#faq">` is a route, not an anchor.
 - **`/new` keeps the masthead.** It follows the ruleset picked in the form below it, which is its
   documented purpose, so it belongs with the form rather than on the front door.
-- **The chooser hides the online choices in a build with no server** rather than disabling them —
-  never render a control that cannot work. `/host` typed directly answers with a panel; `/join`
-  keeps its field and disables it with the reason on screen, because one field with a reason beats
-  a bare sentence, and because it gives the whole typing journey a home in the offline build.
+- **The chooser offers all three choices, always.** The online two used to be hidden behind
+  `isOnlineEnabled()`, which made the _kind_ of game a property of the build rather than a choice
+  the player makes — and meant the ordinary dev server could not offer online play at all. A build
+  genuinely without a backend says so on the screen you land on, and `/join` distinguishes "no game
+  with that code" from "this copy cannot play online"; it used to report the former for both.
 
 ## State and data
 

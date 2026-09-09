@@ -6,7 +6,6 @@ import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { defaultTheme } from '../../domain/themes/themes.registry';
 import { bootstrapRecentGames } from '../game/gameSlice';
 import { savedGameBlockedReasons, savedGameModeLabels } from './savedGames.utils';
-import { isOnlineEnabled } from '../multiplayer/onlineConfig.utils';
 import { AppShell } from '../shell/AppShell';
 
 /**
@@ -69,7 +68,7 @@ export function ChooserPage() {
 
         {loadError ? <div className="error-text">{loadError}</div> : null}
 
-        <PlayChoices isOnline={isOnlineEnabled()} />
+        <PlayChoices />
       </div>
     </AppShell>
   );

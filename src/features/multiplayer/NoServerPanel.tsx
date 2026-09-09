@@ -18,8 +18,9 @@ export function NoServerPanel({ title }: NoServerPanelProps) {
       <section className="panel" data-testid={TEST_IDS.noServerPanel}>
         <h1>{title}</h1>
         <p className="masthead-lede">
-          This copy of the game was built without a game server, so online play is not
-          available. Games on this device work as usual.
+          This copy was built without a game server, so there is nothing to host a table
+          on. Everything else works: a game on this device plays exactly the same, and
+          saves itself as you go.
         </p>
         <Link className="primary-button" to="/new">
           Play on this device

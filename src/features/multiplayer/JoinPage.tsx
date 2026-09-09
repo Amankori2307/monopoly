@@ -44,7 +44,14 @@ export function JoinPage() {
     try {
       const found = await dispatch(resolveJoinCode(code));
       if (found === 'missing') {
-        setError('No game with that code. Check it and try again.');
+        // Two different failures, two different sentences. This said "no game
+        // with that code" whatever the cause, which is a lie when the real
+        // reason is that this build has no server to ask.
+        setError(
+          isOnlineEnabled()
+            ? 'No game with that code. Check it and try again.'
+            : TABLE_MESSAGES.offlineBuild
+        );
         return;
       }
       // Already playing: the lobby is gone, so go where the game is. The
