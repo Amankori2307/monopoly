@@ -47,6 +47,7 @@ src/App.tsx                      routes only
        game/gameSlice.ts         thunks: bridge UI ⇄ engine ⇄ storage
        game/uiSlice.ts           ephemeral UI state (auction bid input)
        rules/RulesPage.tsx       static rules booklet
+       styleguide/               #/style: the design system, rendered
        persistence/              localStorage + zod validation
   └─ components/layout/          the app header and its settings menu
   └─ components/game/            presentational, no store access
@@ -229,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1466 unit tests, 186 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1469 unit tests, 189 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -441,6 +442,19 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   which on a stalling connection is thirty seconds. The e2e browser also resolves both font hosts to
   nothing (`--host-resolver-rules` in `playwright.config.ts`): a test should not be able to pass or
   fail on somebody else's CDN.
+- **Every measurement a partial writes comes from a scale, and a guard says so.**
+  [design-system.md](docs/design-system.md) is the reference and `#/style` renders it.
+  Space is a 4px grid (`$space-N`, the number IS the multiple); type is a **role**
+  reached through `t.text(role)` that carries size, leading, weight, tracking, family
+  and case together; elevation is `$elevation-N var(--shadow-ink)`, geometry fixed and
+  ink themed; motion lives inside `m.motion { }` so the still state is the default.
+  Three traps worth knowing before touching any of it:
+  **`text()` emits the `font` shorthand**, so anything set _before_ the include -
+  a weight, a family - is discarded silently; put the role first. **A Sass `@error`
+  in a partial nothing `@use`s is dead code**, which is why `_tokens.scss` forwards
+  `_scale.scss` rather than leaving it unreferenced. And **a custom property's value
+  and an at-rule's condition are not Sass expressions**, so a variable in either must
+  be interpolated - `--token-size: t.$x` emits literal text and breaks silently.
 - **Player-facing copy has a shape, and it is written down.** [conventions.md](docs/conventions.md)
   section 3d: a `*BlockedReason` is a **fragment** with no terminal full stop, anything else the
   player is told is a **sentence**, a button is verb plus object, second person for the player and a
@@ -618,22 +632,23 @@ for/ })` and every screen reader are untouched. Never move that name into the vi
 
 Docs here are load-bearing: `CLAUDE.md` is read into context every session, so a stale line actively misleads. **Update docs in the same change as the code**, not afterwards.
 
-| If you change…                                  | Update                                                                                                     |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Engine commands, phases, or constants           | §4 above                                                                                                   |
-| `GameState` shape or storage keys               | §5 + bump `GAME_STATE_VERSION` + zod schema                                                                |
-| Layer boundaries, new directory                 | §3 + `docs/architecture.md`                                                                                |
-| Ruleset behaviour or values                     | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below               |
-| **Adding or changing a rule**                   | give the row an id, and name a test for it in `RULE_COVERAGE` — `rulesCoverage.test.ts` fails until you do |
-| Scripts in `package.json`                       | §6                                                                                                         |
-| Fixing/adding duplication or a known bug        | the §7 DRY table / §8 list — remove rows you resolve                                                       |
-| Adding tests, or fixing a harness blocker       | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5             |
-| Conventions, testing policy, definition of done | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                                     |
-| An ESLint rule                                  | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                                 |
-| **Adding or removing any file**                 | [docs/file-index.md](docs/file-index.md) — one line saying what it does                                    |
-| **Adding a feature**                            | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index         |
-| Changing a feature's behaviour or decisions     | that feature's doc in `docs/features/`                                                                     |
-| Adding a theme, or changing theme tokens        | [docs/theming.md](docs/theming.md)                                                                         |
+| If you change…                                      | Update                                                                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Engine commands, phases, or constants               | §4 above                                                                                                   |
+| `GameState` shape or storage keys                   | §5 + bump `GAME_STATE_VERSION` + zod schema                                                                |
+| Layer boundaries, new directory                     | §3 + `docs/architecture.md`                                                                                |
+| Ruleset behaviour or values                         | `docs/india-edition-rules.md` **and** the in-app booklet — they must stay in sync; see below               |
+| **Adding or changing a rule**                       | give the row an id, and name a test for it in `RULE_COVERAGE` — `rulesCoverage.test.ts` fails until you do |
+| Scripts in `package.json`                           | §6                                                                                                         |
+| Fixing/adding duplication or a known bug            | the §7 DRY table / §8 list — remove rows you resolve                                                       |
+| Adding tests, or fixing a harness blocker           | the coverage table / blocker list in [docs/coding-guidelines.md](docs/coding-guidelines.md) §5             |
+| Conventions, testing policy, definition of done     | [docs/coding-guidelines.md](docs/coding-guidelines.md)                                                     |
+| An ESLint rule                                      | [docs/conventions.md](docs/conventions.md) §1 and the §8 enforcement table                                 |
+| **Adding or removing any file**                     | [docs/file-index.md](docs/file-index.md) — one line saying what it does                                    |
+| **Adding a feature**                                | a new [docs/features/](docs/features/) doc from `_template.md`, plus its row in the features index         |
+| Changing a feature's behaviour or decisions         | that feature's doc in `docs/features/`                                                                     |
+| Adding a theme, or changing theme tokens            | [docs/theming.md](docs/theming.md)                                                                         |
+| A scale, a token, or anything a partial reaches for | [docs/design-system.md](docs/design-system.md) — and the `#/style` page renders it                         |
 
 ### Every documented rule has a test
 

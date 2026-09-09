@@ -8,6 +8,7 @@ import { HostPage } from './features/multiplayer/HostPage';
 import { JoinPage } from './features/multiplayer/JoinPage';
 import { LobbyPage } from './features/lobby/LobbyPage';
 import { NotFoundPage } from './features/shell/NotFoundPage';
+import { StyleGuidePage } from './features/styleguide/StyleGuidePage';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 function App() {
@@ -35,6 +36,11 @@ function App() {
           <Route path="/host" element={<HostPage />} />
           <Route path="/join" element={<JoinPage />} />
           <Route path="/rules" element={<RulesPage />} />
+          {/* The design system, rendered. A maintainer's page, deliberately
+              absent from NAV_ITEMS - that list is the app's top-level places
+              for somebody playing, and the header already wrapped to a second
+              line once when a control gained a text label. */}
+          <Route path="/style" element={<StyleGuidePage />} />
           <Route path="/game/:gameId" element={<GamePage />} />
           {/* The invite link. The same URL after the game starts sends the
               follower into the game rather than a lobby that is gone. */}

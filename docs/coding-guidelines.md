@@ -257,6 +257,7 @@ The mandate above is the standard going forward. The repository does **not** mee
 | Edition-correct setup tokens                   | 6 tests         | —           | —            |
 | The suite's offline guarantee                  | —               | —           | 2 tests      |
 | Edition-aware rules booklet                    | 18 tests        | —           | 2 tests      |
+| The design system's scales and its guard       | 18 tests        | —           | 3 tests      |
 
 **The harness blockers are cleared, and so is the coverage gap they existed to unblock.** The
 thunks — the layer this section calls the highest-value one to test — now have 24 integration tests

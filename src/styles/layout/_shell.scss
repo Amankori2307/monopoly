@@ -43,8 +43,7 @@
 // one column is right for a form field and wrong for a pair of labelled
 // figures, which is what turned the player card into four stacked rows and
 // about 300px of height on a phone. It owns its layout in components/_player.scss.
-.field-grid.two,
-.two-column {
+.field-grid.two {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: t.$space-3;
@@ -55,9 +54,7 @@
 }
 
 .button-row,
-.recent-game-meta,
-.status-row,
-.space-players {
+.recent-game-meta {
   display: flex;
   flex-wrap: wrap;
   gap: t.$space-2;

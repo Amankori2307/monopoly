@@ -107,22 +107,26 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Domain tests
 
-| File                                                                                 | Covers                                                                                       |
-| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| [rules/gameEngine.test.ts](../src/domain/rules/gameEngine.test.ts)                   | Engine defaults, buy decision, auction on decline (seeded dice).                             |
-| [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.                                         |
-| [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.                                           |
-| [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.                                          |
-| [board/boardTracks.guard.test.ts](../src/domain/board/boardTracks.guard.test.ts)     | `$board-corner-track` in the SCSS and `CORNER_TRACK` in the TS still agree.                  |
-| [styles/themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)      | Every token in `$theme-contract` is actually read by something.                              |
-| [styles/designSystem.guard.test.ts](../src/styles/designSystem.guard.test.ts)        | Nobody steps off the scales: clean rules per migrated axis, a per-file ratchet for the rest. |
-| [shared/hooks/useOutsideClick.ts](../src/shared/hooks/useOutsideClick.ts)            | Click-away dismissal on `pointerdown`. Paired with `useEscapeKey`.                           |
-| [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Steps and paths both ways, wrapping past GO either way, and a full round.                    |
-| [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping.                             |
-| [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)           | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard.     |
-| [rules/buildings.utils.test.ts](../src/domain/rules/buildings.utils.test.ts)         | Both even rules as a table of levels, bank shortages, and what buildings could raise.        |
-| [rules/trade.utils.test.ts](../src/domain/rules/trade.utils.test.ts)                 | Every proposal guard, mortgage transfer fees, and what is tradable.                          |
-| [rules/speedDie.utils.test.ts](../src/domain/rules/speedDie.utils.test.ts)           | When the die activates, its six faces, and what counts as a triple.                          |
+| File                                                                                                | Covers                                                                                         |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [rules/gameEngine.test.ts](../src/domain/rules/gameEngine.test.ts)                                  | Engine defaults, buy decision, auction on decline (seeded dice).                               |
+| [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                                | Type guards, including board-wide title-deed counts.                                           |
+| [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts)                | Property-action availability and disabled reasons.                                             |
+| [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)                    | Grid mapping: corners, uniqueness, edges, wrapping.                                            |
+| [board/boardTracks.guard.test.ts](../src/domain/board/boardTracks.guard.test.ts)                    | `$board-corner-track` in the SCSS and `CORNER_TRACK` in the TS still agree.                    |
+| [styles/themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)                     | Every token in `$theme-contract` is actually read by something.                                |
+| [styles/designSystem.guard.test.ts](../src/styles/designSystem.guard.test.ts)                       | Nobody steps off the scales: clean rules per migrated axis, a per-file ratchet for the rest.   |
+| [features/styleguide/StyleGuidePage.tsx](../src/features/styleguide/StyleGuidePage.tsx)             | `#/style`: every rung of the system on one screen. Unlisted in the header nav.                 |
+| [features/styleguide/styleGuide.constants.ts](../src/features/styleguide/styleGuide.constants.ts)   | What the style guide renders, mirrored from the Sass scales.                                   |
+| [features/styleguide/styleGuide.guard.test.ts](../src/features/styleguide/styleGuide.guard.test.ts) | Reads `_scale.scss` and fails when the page stops showing a rung.                              |
+| [features/styleguide/useThemeTokens.ts](../src/features/styleguide/useThemeTokens.ts)               | Reads the palette off the DOM, so the page names no token and the contract guard stays honest. |
+| [shared/hooks/useOutsideClick.ts](../src/shared/hooks/useOutsideClick.ts)                           | Click-away dismissal on `pointerdown`. Paired with `useEscapeKey`.                             |
+| [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts)                | Steps and paths both ways, wrapping past GO either way, and a full round.                      |
+| [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)                        | Corners, per-side membership, ten spaces a side, index wrapping.                               |
+| [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)                          | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard.       |
+| [rules/buildings.utils.test.ts](../src/domain/rules/buildings.utils.test.ts)                        | Both even rules as a table of levels, bank shortages, and what buildings could raise.          |
+| [rules/trade.utils.test.ts](../src/domain/rules/trade.utils.test.ts)                                | Every proposal guard, mortgage transfer fees, and what is tradable.                            |
+| [rules/speedDie.utils.test.ts](../src/domain/rules/speedDie.utils.test.ts)                          | When the die activates, its six faces, and what counts as a triple.                            |
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
@@ -396,6 +400,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [themes/\_themes.scss](../src/styles/themes/_themes.scss)                         | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                                          |
 | [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)       | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.                         |
 | [abstracts/\_scale.scss](../src/styles/abstracts/_scale.scss)                     | The design system's ladders: space, type, weight, tracking, elevation, layers, motion, borders.                     |
+| [pages/\_styleguide.scss](../src/styles/pages/_styleguide.scss)                   | The style guide's own layout, written entirely from the scales it displays.                                         |
 | [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)                   | This app's own metrics: fonts, radii, breakpoints, board and deed geometry, header heights. Forwards `_scale.scss`. |
 | [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)                   | Shared mixins: `below()`, `landscape-compact()`, `mono-label()`, `card-surface()`.                                  |
 | [base/\_reset.scss](../src/styles/base/_reset.scss)                               | Box-sizing, body, default control resets.                                                                           |

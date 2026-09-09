@@ -8,6 +8,10 @@
  * single compiler-checked edit.
  */
 export const TEST_IDS = {
+  // The design system's own page
+  stylePage: 'style-page',
+  styleSwatches: 'style-swatches',
+
   // Layout
   gameLayout: 'game-layout',
   boardGrid: 'board-grid',

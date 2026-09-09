@@ -1,0 +1,189 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+// ---------------------------------------------------------------------------
+// The design system, rendered.
+//
+// Written entirely from the scales it displays, which is the point: if this
+// page needed a literal to look right, the ladder would be missing a rung.
+// ---------------------------------------------------------------------------
+
+.style-page {
+  display: grid;
+  gap: t.$space-5;
+  width: min(100%, 960px);
+  padding-block: t.$space-8;
+}
+
+.style-masthead h1 {
+  margin-bottom: t.$space-2;
+}
+
+.style-section {
+  display: grid;
+  gap: t.$space-4;
+
+  h2 {
+    margin-bottom: 0;
+  }
+
+  > .helper-text {
+    margin: 0;
+    color: var(--text-muted);
+  }
+}
+
+.style-type,
+.style-space,
+.style-swatches,
+.style-elevations,
+.style-layers,
+.style-motion {
+  display: grid;
+  gap: t.$space-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.style-key {
+  @include t.text(label);
+  color: var(--text-eyebrow);
+}
+
+.style-value {
+  @include t.text(small);
+  color: var(--text-muted);
+}
+
+.style-type li,
+.style-space li,
+.style-layers li,
+.style-motion li {
+  display: grid;
+  grid-template-columns: 9ch 1fr auto;
+  align-items: center;
+  gap: t.$space-4;
+}
+
+// One line of specimen text per role, set in that role.
+@each $role
+  in (
+    hero,
+    display,
+    title,
+    heading,
+    prose,
+    body,
+    body-sm,
+    small,
+    numeric,
+    mono-sm,
+    brand,
+    eyebrow,
+    label,
+    micro,
+    code
+  )
+{
+  .style-specimen.is-#{$role} {
+    @include t.text($role);
+  }
+}
+
+.style-bar {
+  height: t.$space-3;
+  background: var(--accent-soft);
+}
+
+@each $step in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18) {
+  .style-bar.is-space-#{$step} {
+    width: t.space($step);
+  }
+}
+
+.style-swatches {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.style-swatches li {
+  display: grid;
+  gap: t.$space-1;
+}
+
+.style-swatch {
+  height: t.$space-10;
+  border: t.$border-hairline solid var(--border-subtle);
+}
+
+.style-elevations {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: t.$space-6;
+}
+
+.style-elevations li {
+  display: grid;
+  gap: t.$space-2;
+}
+
+.style-tile {
+  height: t.$space-14;
+  background: var(--surface-panel);
+}
+
+.style-tile.is-elevation-1 {
+  box-shadow: t.$elevation-1 var(--shadow-ink);
+}
+.style-tile.is-elevation-2 {
+  box-shadow: t.$elevation-2 var(--shadow-ink);
+}
+.style-tile.is-elevation-3 {
+  box-shadow: t.$elevation-3 var(--shadow-ink);
+}
+.style-tile.is-elevation-4 {
+  box-shadow: t.$elevation-4 var(--shadow-ink-strong);
+}
+.style-tile.is-elevation-tuck {
+  box-shadow: t.$elevation-tuck var(--shadow-ink);
+}
+.style-tile.is-emboss-press {
+  box-shadow: t.$emboss-press var(--shadow-ink);
+}
+
+.style-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-3;
+}
+
+// A dot that travels, so a duration is something you can watch rather than
+// read. Inside motion(), like everything else.
+.style-dot {
+  width: t.$space-4;
+  height: t.$space-4;
+  background: var(--accent);
+
+  @include m.motion {
+    // No duration here: each modifier below supplies its own, which is the
+    // whole point of the row. The guard caught the placeholder 2s that was
+    // here first - on the page that demonstrates the system, which is exactly
+    // where a literal is least excusable.
+    animation: style-travel t.$duration-base t.$ease-plain infinite alternate;
+  }
+}
+
+.style-dot.is-duration-fast {
+  animation-duration: t.$duration-fast;
+}
+.style-dot.is-duration-base {
+  animation-duration: t.$duration-base;
+}
+.style-dot.is-duration-slow {
+  animation-duration: t.$duration-slow;
+}
+
+@keyframes style-travel {
+  to {
+    transform: translateX(t.$space-12);
+  }
+}

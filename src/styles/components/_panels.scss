@@ -23,28 +23,6 @@
   }
 }
 
-.panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: t.$space-4;
-  margin-bottom: t.$space-4;
-
-  .eyebrow {
-    margin-bottom: t.$space-1;
-  }
-}
-
-.counter-badge {
-  display: grid;
-  place-items: center;
-  min-width: 30px;
-  height: 30px;
-  border-radius: t.$radius-sharp;
-  background: var(--badge-bg);
-  @include t.text(label);
-}
-
 // Plain white, like every other card. It used to be tinted and ringed in red,
 // which made the same deed look different depending on where it was shown.
 .decision-card {

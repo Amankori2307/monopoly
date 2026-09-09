@@ -162,10 +162,6 @@
   @include m.focus-ring;
 }
 
-.player-list {
-  gap: t.$space-2;
-}
-
 .player-card {
   position: relative;
   overflow: hidden;

@@ -9,21 +9,22 @@ which the code itself cannot tell them.
 
 ## Index
 
-| Feature                    | Doc                                      | Status                             |
-| -------------------------- | ---------------------------------------- | ---------------------------------- |
-| Game setup and saved games | [setup.md](setup.md)                     | Shipped                            |
-| Playing a turn             | [game-turn.md](game-turn.md)             | Shipped (building/trading pending) |
-| Action feedback            | [action-feedback.md](action-feedback.md) | Shipped                            |
-| Sound                      | [sound.md](sound.md)                     | Shipped (4 placeholder clips)      |
-| Site ownership             | [site-ownership.md](site-ownership.md)   | Shipped (owner actions pending)    |
-| Auctions                   | [auctions.md](auctions.md)               | Shipped                            |
-| Trading                    | [trading.md](trading.md)                 | Shipped                            |
-| Persistence and resume     | [persistence.md](persistence.md)         | Shipped                            |
-| Game screen layout         | [game-layout.md](game-layout.md)         | Shipped (responsive)               |
-| Play from your own devices | [multiplayer.md](multiplayer.md)         | 🚧 In progress                     |
-| Theming and appearances    | [../theming.md](../theming.md)           | Shipped                            |
-| Rules booklet              | [rules-page.md](rules-page.md)           | Shipped                            |
-| Navigation and the header  | [navigation.md](navigation.md)           | Shipped                            |
+| Feature                    | Doc                                        | Status                             |
+| -------------------------- | ------------------------------------------ | ---------------------------------- |
+| Game setup and saved games | [setup.md](setup.md)                       | Shipped                            |
+| Playing a turn             | [game-turn.md](game-turn.md)               | Shipped (building/trading pending) |
+| Action feedback            | [action-feedback.md](action-feedback.md)   | Shipped                            |
+| Sound                      | [sound.md](sound.md)                       | Shipped (4 placeholder clips)      |
+| Site ownership             | [site-ownership.md](site-ownership.md)     | Shipped (owner actions pending)    |
+| Auctions                   | [auctions.md](auctions.md)                 | Shipped                            |
+| Trading                    | [trading.md](trading.md)                   | Shipped                            |
+| Persistence and resume     | [persistence.md](persistence.md)           | Shipped                            |
+| Game screen layout         | [game-layout.md](game-layout.md)           | Shipped (responsive)               |
+| Play from your own devices | [multiplayer.md](multiplayer.md)           | 🚧 In progress                     |
+| Theming and appearances    | [../theming.md](../theming.md)             | Shipped                            |
+| Rules booklet              | [rules-page.md](rules-page.md)             | Shipped                            |
+| Navigation and the header  | [navigation.md](navigation.md)             | Shipped                            |
+| The design system          | [../design-system.md](../design-system.md) | Shipped, rendered at `#/style`     |
 
 ## Template
 
