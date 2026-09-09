@@ -32,7 +32,22 @@ const paletteOf = (page: Page) =>
     };
   });
 
+/**
+ * Open the header's settings menu and pick an appearance.
+ *
+ * It used to be a `<select>` inside the new-game form - which implied it was
+ * saved with the game - and a second, cycling control in the game's sidebar.
+ * One control in the header now, reachable from every route, which is why this
+ * helper works in-game and on the booklet as well as on the front door.
+ */
 const chooseAppearance = async (page: Page, value: string) => {
+  // Open it only if it is not already open: the panel stays up after a
+  // selection, on purpose - two settings live in there - so clicking the
+  // trigger a second time would close it instead.
+  const panel = page.getByTestId(TEST_IDS.settingsPanel);
+  if ((await panel.count()) === 0) {
+    await page.getByTestId(TEST_IDS.settingsTrigger).click();
+  }
   await page.getByTestId(TEST_IDS.appearanceSelect).selectOption(value);
 };
 
@@ -43,7 +58,9 @@ test('leaves the board in its edition colours by default', async ({ page }) => {
 });
 
 test('repaints the whole board without changing the edition', async ({ page }) => {
-  await page.goto('/');
+  // The setup screen rather than the chooser: it has a primary button for the
+  // probe below to read, and the chooser is all links.
+  await page.goto('/#/new');
   const before = await paletteOf(page);
 
   await chooseAppearance(page, 'aesthetic');
@@ -62,7 +79,7 @@ test('recolours the board itself, not just the chrome', async ({ page }) => {
   await startGame(page);
   const before = await paletteOf(page);
 
-  await page.getByTestId(TEST_IDS.appearanceToggle).click();
+  await chooseAppearance(page, 'aesthetic');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'aesthetic');
 
   const after = await paletteOf(page);
@@ -74,7 +91,7 @@ test('keeps the edition it is playing while wearing another palette', async ({
   page,
 }) => {
   await startGame(page);
-  await page.getByTestId(TEST_IDS.appearanceToggle).click();
+  await chooseAppearance(page, 'aesthetic');
 
   // The squares still carry the names they were dealt: an appearance is not an
   // edition, and this is the whole distinction.
@@ -90,7 +107,7 @@ test('keeps the edition it is playing while wearing another palette', async ({
  */
 test('remembers the appearance across a reload and a new game', async ({ page }) => {
   await startGame(page);
-  await page.getByTestId(TEST_IDS.appearanceToggle).click();
+  await chooseAppearance(page, 'aesthetic');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'aesthetic');
 
   await page.reload();
@@ -98,6 +115,10 @@ test('remembers the appearance across a reload and a new game', async ({ page })
 
   await page.goto('/');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'aesthetic');
+
+  // And the control agrees with the board - the select is in the header's
+  // menu, so it has to be opened to be read.
+  await page.getByTestId(TEST_IDS.settingsTrigger).click();
   await expect(page.getByTestId(TEST_IDS.appearanceSelect)).toHaveValue('aesthetic');
 });
 
@@ -111,13 +132,13 @@ test('carries the appearance into the rules booklet', async ({ page }) => {
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'aesthetic');
 });
 
-test('cycles back to the edition colours', async ({ page }) => {
+test('goes back to the edition colours', async ({ page }) => {
   await startGame(page);
 
-  await page.getByTestId(TEST_IDS.appearanceToggle).click();
+  await chooseAppearance(page, 'aesthetic');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'aesthetic');
 
-  await page.getByTestId(TEST_IDS.appearanceToggle).click();
+  await chooseAppearance(page, 'edition');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'india-edition');
 });
 
@@ -125,39 +146,44 @@ test.describe('on a phone', () => {
   test.use({ viewport: VIEWPORTS.phone });
 
   /**
-   * The control drops its name below the phone breakpoint. That is not
-   * cosmetic: with the name, the sidebar's link row wrapped to a second line,
-   * and the second line of a scroll region whose last child is a sticky bar
-   * sits exactly behind that bar - so the control was invisible until you
-   * scrolled, which is how it was found.
+   * The settings live in the header on a phone too. They used to be a control
+   * in the game's sidebar, which is a scroll region whose last child is a
+   * sticky bar - so the control sat behind that bar until you scrolled.
    */
-  test('keeps the appearance control clear of the action bar', async ({ page }) => {
+  test('opens the settings from the header without leaving the viewport', async ({
+    page,
+  }) => {
     await startGame(page);
 
-    const toggle = page.getByTestId(TEST_IDS.appearanceToggle);
-    await expect(toggle).toBeVisible();
+    const trigger = page.getByTestId(TEST_IDS.settingsTrigger);
+    await expect(trigger).toBeVisible();
 
-    const [control, footer] = await Promise.all([
-      toggle.boundingBox(),
-      page.locator('.game-side-footer').boundingBox(),
-    ]);
-    if (!control || !footer) {
-      throw new Error('The appearance control or the action bar has no layout box');
-    }
+    const box = await trigger.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
 
-    expect(control.y + control.height).toBeLessThanOrEqual(footer.y + 1);
-    // Icon-only, so it has to earn its touch target rather than inherit it.
-    expect(control.width).toBeGreaterThanOrEqual(44);
-    expect(control.height).toBeGreaterThanOrEqual(44);
+    await trigger.click();
+    await expect(page.getByTestId(TEST_IDS.settingsPanel)).toBeVisible();
+
+    // A 260px panel anchored to the right edge of a 375px screen is the
+    // overflow risk, so this is the assertion that matters.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+
+    const panel = await page.getByTestId(TEST_IDS.settingsPanel).boundingBox();
+    expect(panel?.x ?? -1).toBeGreaterThanOrEqual(0);
+    expect((panel?.x ?? 0) + (panel?.width ?? 0)).toBeLessThanOrEqual(375);
   });
 
-  test('still names the appearance for a screen reader', async ({ page }) => {
+  test('closes the settings on Escape', async ({ page }) => {
     await startGame(page);
 
-    await expect(
-      page.getByRole('button', {
-        name: /^Appearance: .+\. Change how the board looks\.$/,
-      })
-    ).toBeVisible();
+    await page.getByTestId(TEST_IDS.settingsTrigger).click();
+    await expect(page.getByTestId(TEST_IDS.settingsPanel)).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId(TEST_IDS.settingsPanel)).toHaveCount(0);
   });
 });

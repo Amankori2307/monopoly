@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { defaultTheme } from '../../domain/themes/themes.registry';
+import { AppShell } from '../shell/AppShell';
 
 interface GameUnavailableProps {
   loadError: string | null;
@@ -7,7 +9,7 @@ interface GameUnavailableProps {
 /** Shown when the route names a game that is missing or fails schema validation. */
 export function GameUnavailable({ loadError }: GameUnavailableProps) {
   return (
-    <div className="app-shell">
+    <AppShell editionId={defaultTheme.id}>
       <div className="page panel">
         <h1>Saved game unavailable</h1>
         <p>{loadError ?? 'This game could not be loaded.'}</p>
@@ -15,6 +17,6 @@ export function GameUnavailable({ loadError }: GameUnavailableProps) {
           Back to home
         </Link>
       </div>
-    </div>
+    </AppShell>
   );
 }

@@ -235,7 +235,7 @@ The mandate above is the standard going forward. The repository does **not** mee
 | Speed Die (activation, faces, triples)         | 10 tests        | —           | yes          |
 | `gameSlice` thunks                             | —               | 24 tests    | yes          |
 | `uiSlice`                                      | 13 tests        | —           | —            |
-| `HomePage`                                     | —               | 2 tests     | partial      |
+| `ChooserPage`, `NewGamePage`                   | —               | 13 tests    | yes          |
 | `GamePage` (board, decision panels)            | —               | 8 tests     | 1 smoke spec |
 | `DiceDock`                                     | 10 tests (hook) | —           | partial      |
 | `SpaceCard`, `SpaceDetailCard`                 | 2 files         | —           | yes          |
@@ -250,6 +250,10 @@ The mandate above is the standard going forward. The repository does **not** mee
 | Responsive layout (phone frame, landscape)     | 9 tests         | 1 test      | 18 tests     |
 | Appearances (the Aesthetic palette)            | 18 tests        | 2 tests     | 9 tests      |
 | The theme contract (every token is read)       | 64 cases        | —           | —            |
+| Navigation, header, settings menu              | 13 tests        | 1 test      | 10 tests     |
+| Joining by code (the pure rules)               | 16 tests        | —           | 7 tests      |
+| Online rejoin, per-device join code            | 9 tests         | 3 tests     | —            |
+| The saved-game index's table mode              | 6 tests         | 3 tests     | 1 test       |
 
 **The harness blockers are cleared, and so is the coverage gap they existed to unblock.** The
 thunks — the layer this section calls the highest-value one to test — now have 24 integration tests

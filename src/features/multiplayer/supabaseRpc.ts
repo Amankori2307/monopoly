@@ -94,6 +94,25 @@ export const rpc = {
       signal
     ),
 
+  /**
+   * Resolves a typed join code to the table it belongs to, or null.
+   *
+   * Deliberately returns the id and the phase and nothing else: the caller
+   * still has to `fetchGame` with the pair, so this is a resolver rather than
+   * a second way to read a game. See migration 0004 for what it costs.
+   */
+  findGameByCode: (
+    config: OnlineConfig,
+    input: { joinCode: string },
+    signal?: AbortSignal
+  ) =>
+    callRpc<{ id: string; phase: string } | null>(
+      config,
+      'find_game_by_code',
+      { p_join_code: input.joinCode },
+      signal
+    ),
+
   publishGameState: (
     config: OnlineConfig,
     input: {

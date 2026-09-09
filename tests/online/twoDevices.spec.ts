@@ -11,8 +11,12 @@ import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 
 /** Opens a table and returns the invite link the host would send. */
 const hostATable = async (page: Page): Promise<string> => {
-  await page.goto('./');
-  await page.getByTestId(TEST_IDS.playOnlineButton).click();
+  // Hosting is its own screen now, and its form is valid on first render -
+  // name, token, edition and Speed Die are all prefilled - so this is still
+  // one click. That is deliberate: a required empty field here would turn this
+  // into a fill step in the one suite that cannot be run locally.
+  await page.goto('./#/host');
+  await page.getByTestId(TEST_IDS.openTableButton).click();
   await expect(page.getByTestId(TEST_IDS.lobbyPanel)).toBeVisible({ timeout: 20000 });
   return (await page.getByTestId(TEST_IDS.lobbyInviteLink).inputValue()).replace(
     /^https?:\/\/[^/]+/,

@@ -44,6 +44,23 @@ export const storedGameIndexEntrySchema = z.object({
   turnNumber: z.number(),
   activePlayerId: z.string(),
   winnerPlayerId: z.string().nullable(),
+  /**
+   * Defaulted, NOT required - and that word is the difference between a
+   * harmless field and losing every save on the home screen.
+   *
+   * This schema `.parse()`s and throws, and `bootstrapRecentGames` turns a
+   * throw into `setRecentGames([])` plus a load error. So a required key here
+   * would make every index written by an older build fail validation, and every
+   * saved game would disappear from the front door while its per-game save sat
+   * intact on disk beside it.
+   *
+   * An old entry reads hot-seat, which is true of every game written before
+   * online play and harmless for the ones it is not: those were unresumable
+   * anyway, because no build before this one persisted a join code. The index
+   * then self-heals - `saveGame` rewrites it from these parsed values, so the
+   * first command in any game puts the field on every entry.
+   */
+  tableMode: z.nativeEnum(TableMode).default(TableMode.HotSeat),
 });
 
 export const storedGameIndexSchema = z.array(storedGameIndexEntrySchema);

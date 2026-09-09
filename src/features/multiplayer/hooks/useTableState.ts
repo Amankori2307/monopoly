@@ -1,7 +1,9 @@
+import { TableMode } from '../../../domain/types/game.enums';
 import type { GameState } from '../../../domain/types/game.interfaces';
 import type { Viewer } from '../viewer.interfaces';
 import { useConnectionMessage } from './useConnectionMessage';
 import { usePresence } from './usePresence';
+import { useTableRejoin } from './useTableRejoin';
 import { useTableSync } from './useTableSync';
 import { useViewer } from './useViewer';
 
@@ -27,6 +29,11 @@ export const useTableState = (
   game: GameState | null,
   revision: number
 ): UseTableStateResult => {
+  // Before the subscription, and that order matters: this is what attaches the
+  // session on a cold load, and useTableSync keys its subscription on the
+  // session it finds. Primitives rather than the game object - see the hook.
+  useTableRejoin(game?.id ?? null, game?.tableMode === TableMode.Online);
+
   // Somebody else's move arrives here: the bell carries a revision, this
   // fetches and adopts. A local game's session never rings.
   useTableSync(revision);

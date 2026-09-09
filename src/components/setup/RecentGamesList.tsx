@@ -4,6 +4,10 @@ import { scopedTestId, TEST_IDS } from '../../shared/constants/testIds.constants
 
 interface RecentGamesListProps {
   games: StoredGameIndexEntry[];
+  /** Per game, why it cannot be reopened - or absent when it can. */
+  blockedReasons?: Record<string, string | null>;
+  /** A word for each game's table mode, so a save says which kind it is. */
+  modeLabels: Record<string, string>;
   onContinue: (gameId: string) => void;
   onDelete: (gameId: string) => void;
 }
@@ -15,7 +19,13 @@ interface RecentGamesListProps {
  * button sat one click away from Continue - so it asks first, in place, rather
  * than through a dialog that would need dismissing.
  */
-export function RecentGamesList({ games, onContinue, onDelete }: RecentGamesListProps) {
+export function RecentGamesList({
+  blockedReasons = {},
+  games,
+  modeLabels,
+  onContinue,
+  onDelete,
+}: RecentGamesListProps) {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   if (games.length === 0) {
@@ -32,7 +42,12 @@ export function RecentGamesList({ games, onContinue, onDelete }: RecentGamesList
           data-testid={scopedTestId(TEST_IDS.recentGameItem, game.id)}
           key={game.id}
         >
-          <strong>{game.name}</strong>
+          <div className="recent-game-head">
+            <strong>{game.name}</strong>
+            {/* Which kind of game this is, in words rather than by colour
+                alone - an online save behaves differently from a local one. */}
+            <span className="recent-game-mode">{modeLabels[game.id]}</span>
+          </div>
           <div className="recent-game-meta">
             <span>{game.playerCount} players</span>
             <span>Turn {game.turnNumber}</span>
@@ -41,10 +56,13 @@ export function RecentGamesList({ games, onContinue, onDelete }: RecentGamesList
           <div className="button-row">
             <button
               className="primary-button"
+              disabled={Boolean(blockedReasons[game.id])}
               onClick={() => onContinue(game.id)}
               type="button"
             >
-              Continue
+              {/* An online table is rejoined, not continued: the game is
+                  somebody else's too, and it has moved on without you. */}
+              {modeLabels[game.id] === 'Online' ? 'Rejoin' : 'Continue'}
             </button>
             {confirmingId === game.id ? (
               <>
@@ -78,6 +96,12 @@ export function RecentGamesList({ games, onContinue, onDelete }: RecentGamesList
               </button>
             )}
           </div>
+
+          {/* Shown, not just disabled: a dead button with no reason reads as a
+              bug rather than as a table this device cannot reach. */}
+          {blockedReasons[game.id] ? (
+            <p className="helper-text">{blockedReasons[game.id]}</p>
+          ) : null}
         </article>
       ))}
     </div>

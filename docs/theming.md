@@ -52,7 +52,7 @@ may have run an older build, and an unknown id would reach `data-theme` and matc
 ## How it works
 
 ```
-HomePage / GamePage
+AppShell (every page)
   └─ <div className="app-shell" data-theme={themeId}>
                                    │
         src/styles/themes/_themes.scss emits:
@@ -187,7 +187,7 @@ all the UI needs.
 **3. Test it**, per [coding-guidelines.md](coding-guidelines.md):
 
 - unit — the `ThemeConfig` is well-formed (id matches, ≥8 tokens, unique token ids)
-- integration — selecting it on `HomePage` creates a game whose `themeId` persists
+- integration — selecting it on `NewGamePage` creates a game whose `themeId` persists
 - e2e — the board renders with `data-theme="monsoon"` applied
 
 **4. Update docs** — add the theme to this file and note it in the file index if you added a file.

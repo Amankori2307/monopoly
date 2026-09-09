@@ -23,6 +23,7 @@ which the code itself cannot tell them.
 | Play from your own devices | [multiplayer.md](multiplayer.md)         | 🚧 In progress                     |
 | Theming and appearances    | [../theming.md](../theming.md)           | Shipped                            |
 | Rules booklet              | [rules-page.md](rules-page.md)           | Shipped                            |
+| Navigation and the header  | [navigation.md](navigation.md)           | Shipped                            |
 
 ## Template
 

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import type { GameState } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { ActivityButton } from '../overlays/ActivityButton';
@@ -15,17 +14,13 @@ interface GameSidebarProps {
   canRoll: boolean;
   connectedSeatIds: ReadonlySet<string>;
   currencySymbol: string;
-  /** Which palette the board is drawn in, named on its own control. */
-  appearanceLabel: string;
   /** Size of the game history, shown on the activity button. */
   eventCount: number;
   onDismissToast: (id: string) => void;
   onEndTurn: () => void;
-  onCycleAppearance: () => void;
   onOpenActivity: () => void;
   onRoll: () => void;
   onSelectPlayer: (playerId: string) => void;
-  onToggleSound: () => void;
   soundEnabled: boolean;
   summaries: PlayerSummary[];
   toastDismissAfterMs: number;
@@ -43,20 +38,17 @@ interface GameSidebarProps {
  * is now the board, this, and the overlays.
  */
 export function GameSidebar({
-  appearanceLabel,
   bannerProps,
   canEndTurn,
   canRoll,
   connectedSeatIds,
   currencySymbol,
   eventCount,
-  onCycleAppearance,
   onDismissToast,
   onEndTurn,
   onOpenActivity,
   onRoll,
   onSelectPlayer,
-  onToggleSound,
   soundEnabled,
   summaries,
   toastDismissAfterMs,
@@ -79,47 +71,6 @@ export function GameSidebar({
               slot - it explains why nothing works at all - and it clears
               itself, so there is nothing to dismiss. */}
         <CommandErrorBanner {...bannerProps} />
-
-        <div className="button-row">
-          <Link className="secondary-button" to="/">
-            Home
-          </Link>
-          <Link className="secondary-button" to="/rules">
-            Rules
-          </Link>
-          {/* Beside the other two rather than tucked away: nine sounds
-                need an off switch a player can find. */}
-          <button
-            aria-pressed={!soundEnabled}
-            className="secondary-button"
-            data-testid={TEST_IDS.soundToggle}
-            onClick={onToggleSound}
-            title={soundEnabled ? 'Turn sound off' : 'Turn sound on'}
-            type="button"
-          >
-            {soundEnabled ? '🔊 Sound' : '🔇 Muted'}
-          </button>
-
-          {/* Beside the sound switch, for the same reason: a look worth
-                choosing is worth changing without leaving the game.
-
-                The name is dropped on a phone, and that is not cosmetic. With
-                it, this row wrapped to a second line - and the second line of
-                a scroll region whose last child is a sticky bar sits exactly
-                behind that bar, so the control was invisible until you
-                scrolled. The full text stays in the accessible name. */}
-          <button
-            aria-label={`Appearance: ${appearanceLabel}. Change how the board looks.`}
-            className="secondary-button"
-            data-testid={TEST_IDS.appearanceToggle}
-            onClick={onCycleAppearance}
-            title={`Appearance: ${appearanceLabel}`}
-            type="button"
-          >
-            <span aria-hidden="true">◐</span>
-            <span className="appearance-toggle-label">{appearanceLabel}</span>
-          </button>
-        </div>
       </div>
 
       {/*

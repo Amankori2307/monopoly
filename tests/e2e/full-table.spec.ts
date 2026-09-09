@@ -94,14 +94,19 @@ test('scrolls a full stack inside its own box rather than over the column', asyn
         const scroll = document.querySelector('.player-stack-scroll') as HTMLElement;
         return scroll.scrollHeight > scroll.clientHeight;
       })(),
-      linksClipped: links.scrollHeight > links.clientHeight + 1,
+      bannerSlotClipped: links.scrollHeight > links.clientHeight + 1,
     };
   });
 
   expect(layout.stackOverflows).toBe(true);
   expect(layout.regionHeight).toBeLessThan(layout.sideHeight);
-  // The Home / Rules row below the stack stays readable.
-  expect(layout.linksClipped).toBe(false);
+  // Retargeted, not deleted. This used to say "the Home / Rules row below the
+  // stack stays readable" - that row is in the header now, and with the slot
+  // empty the assertion would have gone green while proving nothing
+  // (`0 > 1` is false). What is left in there is the rejected-command banner,
+  // which must never be the thing a full table squeezes out: it is the only
+  // place a refusal is visible while a decision modal is up.
+  expect(layout.bannerSlotClipped).toBe(false);
 });
 
 test('plays a turn with a full table', async ({ page }) => {

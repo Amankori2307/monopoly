@@ -12,17 +12,13 @@ import { RulesSpeedDie } from '../../components/rules/RulesSpeedDie';
 import { RulesStart } from '../../components/rules/RulesStart';
 import { RulesTurn } from '../../components/rules/RulesTurn';
 import { defaultTheme } from '../../domain/themes/themes.registry';
-import { useAppearance } from '../appearance/useAppearance';
+import { AppShell } from '../shell/AppShell';
 import { useHashScroll } from './hooks/useHashScroll';
 
 export function RulesPage() {
   useHashScroll();
-  // The booklet had no data-theme at all, so it always rendered in the default
-  // palette - an appearance the player had chosen stopped at the door.
-  const look = useAppearance(defaultTheme.id);
-
   return (
-    <div className="app-shell rules-shell" data-theme={look.dataTheme}>
+    <AppShell className="rules-shell" editionId={defaultTheme.id}>
       <main className="rules-page">
         <header className="rules-header">
           <div>
@@ -32,9 +28,6 @@ export function RulesPage() {
               A digital reading guide based on the India Edition booklet and board.
             </p>
           </div>
-          <Link className="secondary-button" to="/">
-            Back to games
-          </Link>
         </header>
 
         {/* Nav, sections, and the matching headings in
@@ -69,6 +62,6 @@ export function RulesPage() {
           <RulesClosing />
         </article>
       </main>
-    </div>
+    </AppShell>
   );
 }

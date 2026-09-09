@@ -2,8 +2,12 @@ import './styles/main.scss';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { GamePage } from './features/game/GamePage';
 import { RulesPage } from './features/rules/RulesPage';
-import { HomePage } from './features/setup/HomePage';
+import { ChooserPage } from './features/setup/ChooserPage';
+import { NewGamePage } from './features/setup/NewGamePage';
+import { HostPage } from './features/multiplayer/HostPage';
+import { JoinPage } from './features/multiplayer/JoinPage';
 import { LobbyPage } from './features/lobby/LobbyPage';
+import { NotFoundPage } from './features/shell/NotFoundPage';
 import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 function App() {
@@ -24,12 +28,19 @@ function App() {
           resolves to index.html by construction. */}
       <HashRouter>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          {/* The front door asks how you want to play; each answer gets a
+              screen carrying only what belongs to it. */}
+          <Route path="/" element={<ChooserPage />} />
+          <Route path="/new" element={<NewGamePage />} />
+          <Route path="/host" element={<HostPage />} />
+          <Route path="/join" element={<JoinPage />} />
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/game/:gameId" element={<GamePage />} />
           {/* The invite link. The same URL after the game starts sends the
               follower into the game rather than a lobby that is gone. */}
           <Route path="/lobby/:gameId" element={<LobbyPage />} />
+          {/* Without this an unmatched hash renders nothing at all. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

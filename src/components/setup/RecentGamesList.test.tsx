@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { TableMode } from '../../domain/types/game.enums';
 import { describe, expect, it, vi } from 'vitest';
 import { GameStatus } from '../../domain/types/game.enums';
 import type { StoredGameIndexEntry } from '../../domain/types/game.interfaces';
@@ -17,10 +18,18 @@ const game: StoredGameIndexEntry = {
   turnNumber: 4,
   activePlayerId: 'player-1',
   winnerPlayerId: null,
+  tableMode: TableMode.HotSeat,
 };
 
 const renderList = (onDelete = vi.fn()) => {
-  render(<RecentGamesList games={[game]} onContinue={vi.fn()} onDelete={onDelete} />);
+  render(
+    <RecentGamesList
+      modeLabels={{ 'game-1': 'Local' }}
+      games={[game]}
+      onContinue={vi.fn()}
+      onDelete={onDelete}
+    />
+  );
   return onDelete;
 };
 
@@ -61,7 +70,14 @@ describe('deleting a saved game', () => {
   });
 
   it('says nothing about deleting when there is nothing saved', () => {
-    render(<RecentGamesList games={[]} onContinue={vi.fn()} onDelete={vi.fn()} />);
+    render(
+      <RecentGamesList
+        modeLabels={{ 'game-1': 'Local' }}
+        games={[]}
+        onContinue={vi.fn()}
+        onDelete={vi.fn()}
+      />
+    );
 
     expect(screen.getByText(/no saved games yet/i)).toBeInTheDocument();
   });

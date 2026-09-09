@@ -1,6 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
-const PORT = 3200;
+// Its own port, not 3200. `pnpm dev:online` and `pnpm tunnel` both use 3200,
+// and `reuseExistingServer` below is on locally - so a dev server left running
+// got ADOPTED by this suite, substituting a host WITH history fallback for the
+// static host whose lack of one is the entire point here. The first test caught
+// it (it asserts the host really 404s), but it failed pointing at nothing.
+const PORT = 3300;
 
 /**
  * Routing tests against the real production build on a real static host.

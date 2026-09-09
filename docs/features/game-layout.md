@@ -78,6 +78,46 @@ Two traps, both found by measuring rather than by reading:
 The phone block must stay **before** the landscape block in `_game.scss`: a small phone held
 sideways (667×375) matches both, and the landscape grid has to win.
 
+### The sidebar carries no navigation
+
+Home, Rules, the sound switch and the appearance cycler used to sit in a `.button-row` inside
+`.game-side-scroll` — four controls that are not about the game, taking room from the game on the
+smallest screens. They are the header's job now ([navigation.md](navigation.md)), which frees a
+44px row plus its gap inside the one scroll region a phone has.
+
+- **The frame is measured from what the header leaves.** `.app-shell` publishes
+  `--app-header-height` and `--app-frame-height` (`100dvh` minus it), and `.game-side`'s height and
+  the board's square cap both read from that instead of the bare `100dvh - 72px` — which is now
+  `$shell-frame-reserve`. The board's phone cap became
+  `calc(var(--app-frame-height) * 0.54)`: as `54dvh` it was 54% of the _window_, so with a header
+  the board kept its old share, squeezed the sidebar and spilled its cards under the sticky bar.
+- **`.app-shell.is-game > .app-header { flex: 0 0 auto }`.** The frame is a flex column, so without
+  it the header shrinks before the board does — backwards, since the board can lose pixels and a
+  48px bar cannot.
+- **Landscape overrides the header's margin rather than negating the frame's padding**, and takes
+  the shortest of the three heights: 40px out of a 390px window is already a tenth of it, and the
+  wordmark is hidden there.
+
+### The sidebar carries no navigation
+
+Home, Rules, the sound switch and the appearance cycler used to sit in a `.button-row` inside
+`.game-side-scroll` - four controls that are not about the game, taking room from the game on the
+smallest screens. They are the header's job now ([navigation.md](navigation.md)), which frees a 44px
+row plus its gap inside the one scroll region a phone has.
+
+- **The frame is measured from what the header leaves.** `.app-shell` publishes
+  `--app-header-height` and `--app-frame-height` (`100dvh` minus it), and `.game-side`'s height and
+  the board's square cap both read from that instead of the bare `100dvh - 72px` - which is now
+  `$shell-frame-reserve`. The board's phone cap became
+  `calc(var(--app-frame-height) * 0.54)`: as `54dvh` it was 54% of the _window_, so with a header
+  the board kept its old share, squeezed the sidebar and spilled its cards under the sticky bar.
+- **`.app-shell.is-game > .app-header { flex: 0 0 auto }`.** The frame is a flex column, so without
+  it the header shrinks before the board does - backwards, since the board can lose pixels and a
+  48px bar cannot.
+- **Landscape overrides the header's margin rather than negating the frame's padding**, and takes
+  the shortest of the three heights: 40px out of a 390px window is already a tenth of it, and the
+  wordmark is hidden there.
+
 ### The player card is four figures, not four rows
 
 The card pairs the name with the headline figure on one line, runs cash and sites inline beneath

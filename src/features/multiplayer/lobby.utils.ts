@@ -1,5 +1,5 @@
 import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
-import type { LobbySeat } from './lobby.interfaces';
+import type { LobbySeat, TableOptions } from './lobby.interfaces';
 
 /**
  * The rules of a table that has not started yet.
@@ -66,7 +66,22 @@ export const startBlockedReason = (seats: LobbySeat[]): string | null => {
  * served from more than one origin over its life and a hardcoded one is a link
  * that quietly stops working. The hash is load-bearing - see CLAUDE.md section 8.
  */
-export const inviteLinkFor = (gameId: string, joinCode: string): string => {
+
+/** The in-app path for a lobby, options included. */
+export const lobbyPathFor = (
+  gameId: string,
+  joinCode: string,
+  options: TableOptions
+): string =>
+  `/lobby/${gameId}?code=${encodeURIComponent(joinCode)}` +
+  `&theme=${encodeURIComponent(options.themeId)}` +
+  `&speed=${options.useSpeedDie ? 'on' : 'off'}`;
+
+export const inviteLinkFor = (
+  gameId: string,
+  joinCode: string,
+  options: TableOptions
+): string => {
   const { origin, pathname } = window.location;
-  return `${origin}${pathname}#/lobby/${gameId}?code=${encodeURIComponent(joinCode)}`;
+  return `${origin}${pathname}#${lobbyPathFor(gameId, joinCode, options)}`;
 };

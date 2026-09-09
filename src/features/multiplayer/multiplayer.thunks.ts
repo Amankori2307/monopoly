@@ -12,7 +12,7 @@ import { MAX_PLAYERS } from '../../domain/constants/game.constants';
 import { nextFreeSeatId } from './lobby.utils';
 import { onlineConfig } from './onlineConfig.utils';
 import { createJoinCode, createOnlineSession } from './onlineSession';
-import { readDeviceId, writeSeatClaim } from './seatClaim.utils';
+import { readDeviceId, writeJoinCode, writeSeatClaim } from './seatClaim.utils';
 import {
   claimSeat,
   setConnection,
@@ -46,6 +46,29 @@ const requireConfig = () => {
   return onlineConfig;
 };
 
+/**
+ * Turns a typed join code into the table it names.
+ *
+ * `'missing'` covers a wrong code, a deleted game and a build with no server -
+ * the same answer for all three, which is the rule the RPCs establish so game
+ * ids stay unenumerable. The phase comes back too, so a latecomer whose table
+ * has already started is sent into the game rather than to a lobby that is
+ * gone.
+ */
+export const resolveJoinCode =
+  (joinCode: string) =>
+  async (): Promise<{ gameId: string; phase: string } | 'missing'> => {
+    if (!onlineConfig) {
+      return 'missing';
+    }
+
+    const found = await rpc.findGameByCode(onlineConfig, { joinCode });
+    if (!found) {
+      return 'missing';
+    }
+    return { gameId: found.id, phase: found.phase };
+  };
+
 /** Opens a table and takes the first seat. */
 export const createOnlineLobby =
   (host: { name: string; tokenId: string }) =>
@@ -75,6 +98,9 @@ export const createOnlineLobby =
     dispatch(setJoinCode(joinCode));
     dispatch(setLobby({ seats: [seat], phase: 'lobby' }));
     dispatch(claimSeat({ gameId, seatId: seat.seatId }));
+    // The host invents the code and is never sent it, so without this the host
+    // is the one device that cannot rejoin its own table after a reload.
+    writeJoinCode(gameId, joinCode);
     return { gameId, joinCode };
   };
 
@@ -122,6 +148,8 @@ export const openOnlineTable =
     }
 
     dispatch(setJoinCode(joinCode));
+    // Only now: the code has just been proven to open a real table.
+    writeJoinCode(gameId, joinCode);
     dispatch(setLobby({ seats: row.seats ?? [], phase: row.phase }));
     dispatch(setConnection(ConnectionState.Live));
 

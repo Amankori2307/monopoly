@@ -49,6 +49,7 @@ describe('createLocalSession', () => {
 describe('createSessionRegistry', () => {
   const fakeSession = (): GameSession => ({
     isOnline: true,
+    gameId: 'game-1',
     publish: vi.fn().mockResolvedValue({ status: 'accepted', revision: 1 }),
     fetch: vi.fn().mockResolvedValue(null),
     announce: vi.fn().mockResolvedValue(undefined),

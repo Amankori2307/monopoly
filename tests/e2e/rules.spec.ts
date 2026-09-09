@@ -5,6 +5,7 @@ import {
   PASS_GO_AMOUNT,
   STARTING_CASH,
 } from '../../src/domain/constants/game.constants';
+import { startGame } from './helpers';
 
 /**
  * The booklet is the player-facing half of the ruleset; the other half is
@@ -76,10 +77,27 @@ test('quotes ruleset amounts in rupees, from the constants', async ({ page }) =>
   await expect(booklet).not.toContainText(/\bM\d/);
 });
 
-test('is reachable from the home page', async ({ page }) => {
-  await page.goto('/');
+test('is reachable from the setup screen', async ({ page }) => {
+  await page.goto('/#/new');
   await page.getByRole('link', { name: /Read the rules/i }).click();
 
   await expect(page).toHaveURL(/\/rules/);
   await expect(page.locator('#faq')).toBeVisible();
+});
+
+/**
+ * The booklet used to be reachable from one link on one screen. The header
+ * carries it on every route, including mid-game - where getting to the rules
+ * previously meant a link buried in the game's own sidebar.
+ */
+test('is reachable from the header on any screen', async ({ page }) => {
+  await startGame(page);
+
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Rules' })
+    .click();
+
+  await expect(page).toHaveURL(/\/rules/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Rules of play/);
 });

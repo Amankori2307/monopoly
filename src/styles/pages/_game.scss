@@ -27,7 +27,7 @@
   min-width: 0;
   // A definite height is what lets the turn controls sit at the bottom via
   // margin-top:auto, however little the column holds.
-  height: calc(100dvh - 72px);
+  height: calc(var(--app-frame-height) - #{t.$shell-frame-reserve});
 
   @include m.below(t.$breakpoint-board) {
     height: auto;
@@ -85,7 +85,7 @@
 
 // The board is square, so cap it by viewport height and centre it in its column.
 .board-card {
-  max-width: min(100%, calc(100dvh - 72px));
+  max-width: min(100%, calc(var(--app-frame-height) - #{t.$shell-frame-reserve}));
   margin-inline: auto;
 }
 
@@ -118,8 +118,17 @@
     height: 100dvh;
     min-height: 0;
     padding: 0;
+    // Nothing to break out of, so the header must not pull itself off-screen.
+    --shell-pad: 0px;
     // The frame itself never scrolls; .game-side does.
     overflow: hidden;
+  }
+
+  // The header takes its height and no more. Without this it is a flex item
+  // like any other and shrinks before the board does, which is backwards:
+  // the board can lose a few pixels, a 48px bar cannot.
+  .app-shell.is-game > .app-header {
+    flex: 0 0 auto;
   }
 
   // `margin: 0 auto` on a flex item beats align-self:stretch and shrink-wraps
@@ -153,7 +162,7 @@
   .app-shell.is-game .board-card {
     flex: 0 0 auto;
     width: 100%;
-    max-width: min(100%, 54dvh);
+    max-width: min(100%, calc(var(--app-frame-height) * 0.54));
     margin-inline: auto;
     // A fraction of the board, not of the viewport. The default is a vw clamp,
     // and once the board is capped by dvh the two stop agreeing - the piece
@@ -243,6 +252,15 @@
     min-height: 0;
     padding: t.$gap-xs;
     overflow: hidden;
+  }
+
+  // The header spans the frame rather than breaking out of it: this block keeps
+  // a small padding, and negating it made the header 27px wider than the window
+  // and pushed it off both edges. It also takes the shortest of the three
+  // heights - 40px out of a 390px window is already a tenth of it.
+  .app-shell.is-game > .app-header {
+    margin: 0 0 t.$gap-xs;
+    height: t.$header-height-landscape;
   }
 
   .app-shell.is-game > .page {

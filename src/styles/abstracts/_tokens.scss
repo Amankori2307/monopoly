@@ -102,6 +102,18 @@ $token-move-duration: 170ms;
 // Fast out of a space, slow across the gap, fast into the next one.
 $token-move-easing: cubic-bezier(0.45, 1, 0.55, 0);
 
+// ---------------------------------------------------------------------------
+// The header, and what it leaves for the page.
+//
+// Published as a custom property by layout/_header.scss so every calc() reads
+// one source. $shell-frame-reserve names the bare 72 that _game.scss carried:
+// twice the shell's largest padding.
+// ---------------------------------------------------------------------------
+$header-height: 56px;
+$header-height-compact: 48px;
+$header-height-landscape: 40px;
+$shell-frame-reserve: 72px;
+
 $breakpoint-board: 1250px;
 $breakpoint-tablet: 720px;
 $breakpoint-mobile: 620px;

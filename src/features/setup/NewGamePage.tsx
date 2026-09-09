@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isOnlineEnabled } from '../multiplayer/onlineConfig.utils';
-import { createOnlineLobby } from '../multiplayer/multiplayer.thunks';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { PlayerConfigRow } from '../../components/setup/PlayerConfigRow';
 import { RecentGamesList } from '../../components/setup/RecentGamesList';
@@ -10,39 +8,26 @@ import { SetupHero } from '../../components/setup/SetupHero';
 import { SpeedDieToggle } from '../../components/setup/SpeedDieToggle';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
-import { AppearanceField } from '../../components/setup/AppearanceField';
-import { useAppearance } from '../appearance/useAppearance';
+import { AppShell } from '../shell/AppShell';
+import { savedGameBlockedReasons, savedGameModeLabels } from './savedGames.utils';
 import { useGameSetupForm } from './hooks/useGameSetupForm';
 
-/** Wiring only: form state lives in useGameSetupForm, rendering in components/setup. */
-export function HomePage() {
+/**
+ * Setting up a game played on one device.
+ *
+ * This was the whole home page: it also hosted online tables, picked the
+ * appearance and carried the front door's masthead. Now it carries exactly what
+ * a hot-seat game needs - who is playing, on which board, with which optional
+ * rule - beside the saves you might resume instead.
+ *
+ * Wiring only: form state lives in useGameSetupForm, rendering in components/setup.
+ */
+export function NewGamePage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const recentGames = useAppSelector((state) => state.game.recentGames);
   const loadError = useAppSelector((state) => state.game.loadError);
   const form = useGameSetupForm();
-  // The picked edition, unless an appearance overrides its colours - so the
-  // setup screen previews exactly what the game will look like.
-  const look = useAppearance(form.themeId);
-  // Opening a table is a network round trip, so the button has to be able to
-  // say it is busy - a second click would open a second table.
-  const [isOpeningTable, setIsOpeningTable] = useState(false);
-
-  /** Opens an online table with this device as its first seat. */
-  const openTable = async () => {
-    setIsOpeningTable(true);
-    try {
-      const host = form.firstPlayer();
-      const { gameId, joinCode } = await dispatch(createOnlineLobby(host));
-      navigate(`/lobby/${gameId}?code=${encodeURIComponent(joinCode)}`);
-    } catch (error) {
-      form.setFormError(
-        error instanceof Error ? error.message : 'Could not open an online table.'
-      );
-    } finally {
-      setIsOpeningTable(false);
-    }
-  };
 
   useEffect(() => {
     dispatch(bootstrapRecentGames());
@@ -72,7 +57,7 @@ export function HomePage() {
   const currencySymbol = form.selectedTheme.currencySymbol;
 
   return (
-    <div className="app-shell" data-theme={look.dataTheme}>
+    <AppShell editionId={form.themeId}>
       <div className="page">
         <SetupHero currencySymbol={currencySymbol} themeName={form.selectedTheme.name} />
 
@@ -93,8 +78,6 @@ export function HomePage() {
                 playerCountNotice={form.playerCountNotice}
                 themeId={form.themeId}
               />
-
-              <AppearanceField appearance={look.appearance} onChange={look.select} />
 
               <SpeedDieToggle
                 currencySymbol={currencySymbol}
@@ -123,20 +106,6 @@ export function HomePage() {
                 <button className="primary-button" type="submit">
                   Create game
                 </button>
-                {/* Only offered when this build has a server to reach. An
-                    offline build must not render a control that cannot work -
-                    see onlineConfig. */}
-                {isOnlineEnabled() ? (
-                  <button
-                    className="secondary-button"
-                    data-testid={TEST_IDS.playOnlineButton}
-                    disabled={isOpeningTable}
-                    onClick={() => void openTable()}
-                    type="button"
-                  >
-                    Play online
-                  </button>
-                ) : null}
               </div>
             </form>
           </section>
@@ -144,13 +113,15 @@ export function HomePage() {
           <section className="panel recent-panel">
             <h2>Recent games</h2>
             <RecentGamesList
+              blockedReasons={savedGameBlockedReasons(recentGames)}
               games={recentGames}
+              modeLabels={savedGameModeLabels(recentGames)}
               onContinue={(id) => navigate(`/game/${id}`)}
               onDelete={(id) => dispatch(removeSavedGame(id))}
             />
           </section>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

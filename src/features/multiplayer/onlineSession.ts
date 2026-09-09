@@ -1,3 +1,4 @@
+import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH } from './joinCode.constants';
 import type { GameState, RuntimeGameCommand } from '../../domain/types/game.interfaces';
 import { logger } from '../../shared/utils/logger.utils';
 import { decodeGameState } from '../persistence/decodeGameState';
@@ -31,10 +32,7 @@ const POLL_INTERVAL_MS = 30_000;
 /** A game row that has seats but is not a game yet. */
 const LOBBY_PHASE = 'lobby';
 
-/** Small enough to type over the phone, and no ambiguous characters. */
-const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-export const createJoinCode = (length = 6): string =>
+export const createJoinCode = (length = JOIN_CODE_LENGTH): string =>
   Array.from(
     crypto.getRandomValues(new Uint8Array(length)),
     (byte) => JOIN_CODE_ALPHABET[byte % JOIN_CODE_ALPHABET.length]
@@ -90,6 +88,7 @@ export const createOnlineSession = (options: OnlineSessionOptions): GameSession 
 
   return {
     isOnline: true,
+    gameId: options.gameId,
 
     async publish({
       game,

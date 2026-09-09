@@ -4,6 +4,7 @@ import type { LobbySeat } from './lobby.interfaces';
 import {
   claimBlockedReason,
   inviteLinkFor,
+  lobbyPathFor,
   nextFreeSeatId,
   seatIdForIndex,
   startBlockedReason,
@@ -94,10 +95,12 @@ describe('startBlockedReason', () => {
 });
 
 describe('inviteLinkFor', () => {
+  const options = { themeId: 'us-edition', useSpeedDie: false };
+
   it('carries the game and the code, from the origin actually being served', () => {
     // Never from a constant: this app has been served from more than one origin,
     // and a hardcoded one is a link that quietly stops working.
-    const link = inviteLinkFor('game-1', 'ABC123');
+    const link = inviteLinkFor('game-1', 'ABC123', options);
 
     expect(link.startsWith(window.location.origin)).toBe(true);
     expect(link).toContain('#/lobby/game-1');
@@ -105,6 +108,36 @@ describe('inviteLinkFor', () => {
   });
 
   it('escapes a code that would need it', () => {
-    expect(inviteLinkFor('game-1', 'A B&C')).toContain('code=A%20B%26C');
+    expect(inviteLinkFor('game-1', 'A B&C', options)).toContain('code=A%20B%26C');
+  });
+
+  /**
+   * The edition matters to a guest, not only to the host: seat tokens come from
+   * `theme.tokenCatalog`, so a guest whose lobby defaulted to another edition
+   * picks a token id the host's board has no piece for. The lobby used to
+   * hardcode `availableThemes[0]`, so every non-India table was exactly that.
+   */
+  it('carries the table options so every device agrees on the edition', () => {
+    const link = inviteLinkFor('game-1', 'ABC123', options);
+
+    expect(link).toContain('theme=us-edition');
+    expect(link).toContain('speed=off');
+  });
+
+  it('says when the Speed Die is on', () => {
+    const link = inviteLinkFor('game-1', 'ABC123', { ...options, useSpeedDie: true });
+
+    expect(link).toContain('speed=on');
+  });
+});
+
+describe('lobbyPathFor', () => {
+  it('is the in-app path, with no origin on it', () => {
+    const path = lobbyPathFor('game-1', 'ABC123', {
+      themeId: 'india-edition',
+      useSpeedDie: true,
+    });
+
+    expect(path).toBe('/lobby/game-1?code=ABC123&theme=india-edition&speed=on');
   });
 });

@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { APPEARANCES, EDITION_APPEARANCE } from '../constants/appearance.constants';
-import {
-  appearanceLabel,
-  nextAppearance,
-  resolveAppearanceTheme,
-} from './appearance.utils';
+import { appearanceLabel, resolveAppearanceTheme } from './appearance.utils';
 
 describe('resolveAppearanceTheme', () => {
   /**
@@ -29,27 +25,6 @@ describe('resolveAppearanceTheme', () => {
       expect(resolveAppearanceTheme('aesthetic', editionId)).toBe('aesthetic');
     }
   );
-});
-
-describe('nextAppearance', () => {
-  it('wraps round the list', () => {
-    const ids = APPEARANCES.map((appearance) => appearance.id);
-    const walked = ids.map((_, index) =>
-      ids.slice(0, index + 1).reduce((current) => nextAppearance(current), ids[0])
-    );
-
-    // Walking the list once from the first entry returns to the first entry.
-    expect(walked[walked.length - 1]).toBe(ids[0]);
-  });
-
-  it('never returns the appearance it was given', () => {
-    // True only while there is more than one, which is the case worth guarding:
-    // a cycle that returns its input is a control that does nothing.
-    expect(APPEARANCES.length).toBeGreaterThan(1);
-    for (const appearance of APPEARANCES) {
-      expect(nextAppearance(appearance.id)).not.toBe(appearance.id);
-    }
-  });
 });
 
 describe('appearanceLabel', () => {

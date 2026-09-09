@@ -57,7 +57,7 @@ type AppStore = ReturnType<typeof makeStore>;
 /**
  * Derived from the factory, not hand-written. AppDispatch has to carry the thunk
  * middleware's overloads or code that reads a thunk's return value stops
- * typechecking - see createNewGame's use in HomePage.
+ * typechecking - see createNewGame's use in NewGamePage.
  */
 export type RootState = ReturnType<AppStore['getState']>;
 export type AppDispatch = AppStore['dispatch'];

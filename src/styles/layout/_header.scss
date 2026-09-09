@@ -1,0 +1,205 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+// ---------------------------------------------------------------------------
+// The app header
+//
+// It lives INSIDE `.app-shell`, not above it, and that is load-bearing rather
+// than tidy: the theme engine emits its tokens on `:root` and on
+// `[data-theme="<id>"]`, so a header outside the themed element would resolve
+// against `:root` for ever - permanently the default palette, visibly out of
+// step with the board the moment a player picks another appearance.
+//
+// The height is published as a custom property because three things need it:
+// the game screen's desktop column height, the board's cap, and nothing else
+// should ever hardcode it again.
+// ---------------------------------------------------------------------------
+.app-shell {
+  --app-header-height: #{t.$header-height};
+  // What is left for the page once the header has taken its share.
+  --app-frame-height: calc(100dvh - var(--app-header-height));
+
+  @include m.below(t.$breakpoint-tablet) {
+    --app-header-height: #{t.$header-height-compact};
+  }
+}
+
+// The game screen is the one place every pixel is board.
+.app-shell.is-game {
+  --app-header-height: #{t.$header-height-compact};
+}
+
+@include m.landscape-compact {
+  .app-shell {
+    --app-header-height: #{t.$header-height-landscape};
+  }
+
+  // A wordmark is the first thing to go when the window is 390px tall.
+  .app-brand {
+    display: none;
+  }
+}
+
+.app-header {
+  // Above the decision backdrop (z-index 40), and it has to be.
+  //
+  // That backdrop is a fixed sheet over the whole viewport, so with the header
+  // unpositioned the app's ONLY navigation went dead the moment a card or a
+  // buy decision came up - no rules, no mute, no way out until the decision was
+  // answered. The controls used to be in the game sidebar, which was under the
+  // backdrop too, so this is a pre-existing dead zone that moving them merely
+  // made obvious. A decision modal is deliberately not dismissible; that is
+  // about the decision, not about the app's chrome.
+  //
+  // Sticky rather than fixed: on the game route the shell does not scroll, so
+  // it costs nothing there, and everywhere else it keeps the header in view
+  // without taking the page out of flow.
+  position: sticky;
+  // Flush with the window, not floating inside the shell's padding. The shell
+  // publishes that padding as --shell-pad precisely so this can negate it from
+  // one source rather than repeating the clamp.
+  top: 0;
+  z-index: 50;
+  margin: calc(-1 * var(--shell-pad)) calc(-1 * var(--shell-pad)) var(--shell-pad);
+  display: flex;
+  align-items: center;
+  gap: t.$gap-md;
+  height: var(--app-header-height);
+  padding-inline: clamp(10px, 2vw, 22px);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-panel);
+}
+
+.app-brand {
+  @include m.mono-label(0.78rem, 0.16em);
+
+  color: var(--text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: t.$gap-xs;
+  // Pushes the settings trigger to the far end without a spacer element.
+  margin-right: auto;
+}
+
+.app-nav-link {
+  display: grid;
+  place-items: center;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: t.$radius-sharp;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  // Where you are, marked in more than colour: NavLink also sets
+  // aria-current, so this is the visible half of the same fact.
+  &.is-current {
+    border-color: var(--border-input);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Settings: sound and appearance
+//
+// Both were on pages before - the appearance inside the new-game form, which
+// implied it was saved with the game, and the sound switch in the game's own
+// sidebar taking room from the game.
+// ---------------------------------------------------------------------------
+.settings-menu {
+  position: relative;
+}
+
+.settings-trigger {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border-input);
+  border-radius: t.$radius-sharp;
+  background: var(--button-secondary);
+  color: var(--button-secondary-text);
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: var(--button-secondary-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.settings-panel {
+  @include m.card-surface;
+
+  position: absolute;
+  // Below the trigger, hard against the shell's right edge. Anchored right
+  // rather than left, or a 260px panel hangs off a 375px screen.
+  top: calc(100% + 6px);
+  right: 0;
+  // Above its own header, which is already above the decision backdrop.
+  z-index: 1;
+  display: grid;
+  gap: t.$gap-sm;
+  width: 260px;
+  padding: t.$gap-md;
+
+  // On a phone the panel is as wide as the window allows, minus the header's
+  // own inset either side.
+  @include m.below(t.$breakpoint-mobile) {
+    width: min(260px, calc(100vw - 24px));
+  }
+}
+
+.settings-heading {
+  @include m.mono-label(0.62rem, 0.12em);
+
+  margin: 0;
+  color: var(--text-eyebrow);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$gap-sm;
+  font-size: 0.86rem;
+
+  .select-input {
+    max-width: 140px;
+  }
+}
+
+.settings-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}

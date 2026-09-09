@@ -10,8 +10,12 @@ import { startGame } from './helpers';
  * Persistence: LocalStorage - whose Speed Die row said "planned later" while the
  * Speed Die's own toggle sat a few centimetres below it.
  */
-test('opens on a masthead a player can read, not a spec sheet', async ({ page }) => {
-  await page.goto('/');
+test('sets up a game behind a masthead a player can read, not a spec sheet', async ({
+  page,
+}) => {
+  // The masthead follows the ruleset picked in the form below it, so it lives
+  // with the form rather than on the front door.
+  await page.goto('/#/new');
 
   // Titled with the ruleset it is about to start, in the board's display serif.
   const title = page.getByRole('heading', { level: 1 });
@@ -57,7 +61,7 @@ test('creates a game and navigates to a resumable route', async ({ page }) => {
 test('starts a Speed Die game with the bonus, and an ordinary one without', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/new');
   await page.getByTestId(TEST_IDS.speedDieToggle).check();
   await page.getByRole('button', { name: 'Create game' }).click();
   await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();

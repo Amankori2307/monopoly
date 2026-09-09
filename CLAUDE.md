@@ -38,12 +38,17 @@ disk.
 ```
 src/App.tsx                      routes only
   └─ features/                   pages + redux slices (React-aware)
-       setup/HomePage.tsx        create game, list/resume/delete saves
+       setup/ChooserPage.tsx     the front door: how are you playing
+       setup/NewGamePage.tsx     create game, list/resume/delete saves
+       shell/AppShell.tsx        the themed shell + the header, for every page
+       multiplayer/HostPage.tsx  open an online table
+       multiplayer/JoinPage.tsx  join one with a six-character code
        game/GamePage.tsx         board render + decision panels
        game/gameSlice.ts         thunks: bridge UI ⇄ engine ⇄ storage
        game/uiSlice.ts           ephemeral UI state (auction bid input)
        rules/RulesPage.tsx       static rules booklet
        persistence/              localStorage + zod validation
+  └─ components/layout/          the app header and its settings menu
   └─ components/game/            presentational, no store access
        DiceDock.tsx              dice animation + roll sound
        SpaceDetailCard.tsx       title-deed modal
@@ -188,7 +193,10 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
 
 ## 5. Persistence
 
-- Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`.
+- Keys: index `monopoly.games.index.v1`, per game `monopoly.game.<id>.v1`, this device's seat
+  `monopoly.seat.<id>.v1` and its join code `monopoly.code.<id>.v1`, plus the preferences
+  `monopoly.sound.v1` and `monopoly.appearance.v1`. **The index is its own shape with its own
+  schema and no version**, so adding a field to it is not a `GAME_STATE_VERSION` change - see §8.
 - `GAME_STATE_VERSION = 9`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
 - **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
@@ -213,7 +221,7 @@ pnpm build        # production build → build/
 pnpm typecheck    # tsc --noEmit
 pnpm test         # vitest (src/**/*.test.{ts,tsx})
 pnpm test:e2e     # playwright (tests/e2e), auto-starts dev server
-pnpm test:routing # builds, then playwright (tests/routing) against a static host
+pnpm test:routing # builds, then playwright (tests/routing) against a static host on :3300
 pnpm test:online  # builds, then playwright (tests/online) against the REAL project
 pnpm lint         # eslint (config: .eslintrc.json)
 pnpm check-all    # typecheck + lint + prettier, in one
@@ -221,7 +229,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1347 unit tests, 154 e2e and 4 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1402 unit tests, 174 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -360,6 +368,14 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   first fetch came back sent an array containing only itself and **deleted the host**. Found with two
   real browsers. The merge is done in SQL under the row lock now (migration 0003), and the lobby also
   refuses to offer any control until `phase !== null`, because "not read yet" is not "empty".
+- **There is no `start`, and `dev`/`dev:online` are not a duplicate pair.** `start` was
+  byte-identical to `dev` (`nx serve`) and referenced by nothing - it is gone. The two dev servers
+  stay, because online-vs-offline is a _runtime_ choice (`LocalSession` vs `OnlineSession`) but the
+  _config_ is resolved once at module load from `import.meta.env` and is therefore fixed by Vite's
+  mode. `test:routing` has its own port (3300) rather than sharing 3200 with `dev:online` and
+  `tunnel`: `reuseExistingServer` is on locally, so a dev server left running got adopted by that
+  suite - a host WITH history fallback standing in for the static host whose lack of one is the
+  whole point. Its first test catches it, but it failed pointing at nothing.
 - **`pnpm dev` cannot play online, and that is deliberate.** It runs in `development` mode, which
   resolves no Supabase config, because the e2e suite starts that same server and must never reach the
   network. So there is no "Play online" button on :3000 - which reads as a missing feature rather
@@ -460,6 +476,51 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   pips, the modal scrims are dark translucent, and the drop shadows are ink-tinted - all correct
   under a light palette and wrong under a dark one. That, not the engine, is what keeps `midnight`
   out of `APPEARANCES`; it is fully defined and one row away.
+- **The header paints above the decision backdrop, and the side drawer starts below the header.**
+  The backdrop is a fixed sheet over the whole viewport at `z-index: 40`, so an unpositioned header
+  meant the app's only navigation went dead the moment a card or a buy decision came up - no rules,
+  no mute, no way out. The controls used to sit in the game sidebar, which is under the backdrop
+  too, so moving them into the header only made a pre-existing dead zone obvious. Raising it then
+  covered the side drawer's own close button, because that drawer is top-anchored - hence
+  `.drawer-backdrop { inset: var(--app-header-height) 0 0 }`. Found by a sound test failing after a
+  reload, not by looking.
+- **The board's phone cap is a fraction of the FRAME, not the viewport.** `min(100%, 54dvh)` was
+  54% of the window; with a header the frame is shorter than the window, so the board kept its old
+  share, squeezed `.game-side` and spilled its cards under the sticky bar. It is
+  `calc(var(--app-frame-height) * 0.54)`, and `--app-frame-height` is `100dvh` minus
+  `--app-header-height` - published on `.app-shell` so every `calc()` reads one source. The same
+  property replaced the bare `72` in `.game-side`, which is now `$shell-frame-reserve`.
+- **`--shell-pad` exists so the header can negate it.** `.app-shell`'s padding is a `clamp()`, and
+  the header has to break out of it to sit flush with the window; two copies of that clamp would
+  drift. The phone game frame sets `--shell-pad: 0px` because it has no padding to escape, and the
+  landscape block overrides the header's margin outright rather than negating its 5px - negating it
+  made the header 27px wider than the window and pushed it off both edges.
+- **An index entry is not `GameState`, and `tableMode` on it is `.default()`ed for a reason.**
+  `storedGameIndexEntrySchema` parses and **throws**, and `bootstrapRecentGames` turns a throw into
+  `setRecentGames([])` plus a load error - so a _required_ new key there would make every index
+  written by an older build fail validation and **every saved game vanish from the front door**,
+  with its per-game save sitting intact on disk beside it. The index has no version of its own, so
+  this needs no `GAME_STATE_VERSION` bump; `.default(TableMode.HotSeat)` is what makes an old entry
+  readable, and the index self-heals on the next save. The test for it builds the old index **by
+  hand** - projecting a state through the current `toStoredGameIndexEntry` would always include the
+  field and pass vacuously.
+- **An online game is saved locally like any other, and rejoining it needs the code.** The join code
+  lived only in `seat.joinCode` and the lobby URL's `?code=`, which the game URL does not carry, and
+  `restoreSeat` was dispatched nowhere - so a refresh mid-game loaded the state, attached no session,
+  and `resolveViewer` failed closed to Spectator: a frozen game on your own save.
+  `monopoly.code.<gameId>.v1` holds it per device, written on create, on join and on attach;
+  [useTableRejoin](src/features/multiplayer/hooks/useTableRejoin.ts) puts the device back on the
+  table on a cold load. Its guard is `session.gameId` read through a **ref** - the one fact that
+  answers "already attached" without reading `sessionEpoch`, `connection` or `seat.joinCode`, all of
+  which the attach itself writes. And it checks `isOnlineEnabled()` first, because
+  `attachOnlineSession` goes through `requireConfig()`, which **throws** - and a throw inside an
+  effect reaches nothing but `ErrorBoundary`, so an online save on a server-less build would render
+  as a crash.
+- **A code-only lookup is a real if modest weakening, and it is written down.** `find_game_by_code`
+  (migration 0004) means a blind attacker needs 30 bits rather than a uuid _and_ a code. It returns
+  the id and the phase and nothing else, and reading the table still takes the code, so a correct
+  guess buys exactly what the code alone buys. There is no rate limiting available inside a
+  `security definer` function. See [docs/features/multiplayer.md](docs/features/multiplayer.md).
 - **A shared grid utility is not a layout.** `.player-metrics` sat in the
   `.field-grid.two, .two-column, .player-metrics` list in `layout/_shell.scss`, which collapses to
   one column below `$breakpoint-tablet`. Right for a form field, wrong for a pair of labelled

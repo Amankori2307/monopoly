@@ -111,6 +111,7 @@ File-naming rules are in [conventions.md](conventions.md).
 | [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.                                      |
 | [board/boardTracks.guard.test.ts](../src/domain/board/boardTracks.guard.test.ts)     | `$board-corner-track` in the SCSS and `CORNER_TRACK` in the TS still agree.              |
 | [styles/themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)      | Every token in `$theme-contract` is actually read by something.                          |
+| [shared/hooks/useOutsideClick.ts](../src/shared/hooks/useOutsideClick.ts)            | Click-away dismissal on `pointerdown`. Paired with `useEscapeKey`.                       |
 | [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Steps and paths both ways, wrapping past GO either way, and a full round.                |
 | [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping.                         |
 | [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)           | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard. |
@@ -122,8 +123,6 @@ File-naming rules are in [conventions.md](conventions.md).
 
 | File                                                                                                              | What it does                                                                                                  |
 | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| [setup/HomePage.tsx](../src/features/setup/HomePage.tsx)                                                          | New-game setup form plus the saved-game list with resume/delete.                                              |
-| [setup/HomePage.test.tsx](../src/features/setup/HomePage.test.tsx)                                                | Integration tests for setup rendering and name validation.                                                    |
 | [game/GamePage.tsx](../src/features/game/GamePage.tsx)                                                            | Game screen **wiring only**: selects state, derives view models, dispatches commands.                         |
 | [game/GamePage.integration.test.tsx](../src/features/game/GamePage.integration.test.tsx)                          | Route to load to render to command, and the decision modal.                                                   |
 | [game/GameOverlayLayer.tsx](../src/features/game/GameOverlayLayer.tsx)                                            | Everything that floats over the board: drawers, deed panel, toasts, decision modal.                           |
@@ -162,6 +161,21 @@ File-naming rules are in [conventions.md](conventions.md).
 | [persistence/decodeGameState.interfaces.ts](../src/features/persistence/decodeGameState.interfaces.ts)            | `DecodedGameState`: the game, and whether migrations ran.                                                     |
 | [multiplayer/onlineConfig.utils.ts](../src/features/multiplayer/onlineConfig.utils.ts)                            | Resolves the realtime backend config once, or `null`. Absent config means offline, never an error.            |
 | [appearance/useAppearance.ts](../src/features/appearance/useAppearance.ts)                                        | The appearance preference and everything a page does with it: `data-theme`, label, select, cycle.             |
+| [shell/AppShell.tsx](../src/features/shell/AppShell.tsx)                                                          | The themed shell and the header, for every page. One owner of `.app-shell`, `data-theme` and the nav.         |
+| [shell/NotFoundPage.tsx](../src/features/shell/NotFoundPage.tsx)                                                  | A hash that matches no route. Without it an unmatched path rendered a blank page.                             |
+| [multiplayer/HostPage.tsx](../src/features/multiplayer/HostPage.tsx)                                              | Opening an online table: host name/token, ruleset and Speed Die. Valid on first render.                       |
+| [multiplayer/JoinPage.tsx](../src/features/multiplayer/JoinPage.tsx)                                              | Joining by a typed six-character code.                                                                        |
+| [multiplayer/NoServerPanel.tsx](../src/features/multiplayer/NoServerPanel.tsx)                                    | What an offline build says when somebody types an online route.                                               |
+| [multiplayer/joinCode.constants.ts](../src/features/multiplayer/joinCode.constants.ts)                            | The code's alphabet and length, shared by the generator and the parser.                                       |
+| [multiplayer/joinCode.utils.ts](../src/features/multiplayer/joinCode.utils.ts)                                    | Normalising a typed code, and `joinBlockedReason`.                                                            |
+| [multiplayer/multiplayer.constants.ts](../src/features/multiplayer/multiplayer.constants.ts)                      | `TABLE_MESSAGES`: what the table says when something is wrong, in one place.                                  |
+| [multiplayer/hooks/useTableRejoin.ts](../src/features/multiplayer/hooks/useTableRejoin.ts)                        | Puts this device back on an online table on a cold load. Fixes the frozen-game bug.                           |
+| [multiplayer/hooks/useHostTableForm.ts](../src/features/multiplayer/hooks/useHostTableForm.ts)                    | What the host settles before the table exists. Prefilled, so opening one is a single click.                   |
+| [setup/ChooserPage.tsx](../src/features/setup/ChooserPage.tsx)                                                    | The front door: how are you playing, plus a way back into the last game.                                      |
+| [setup/NewGamePage.tsx](../src/features/setup/NewGamePage.tsx)                                                    | Setting up a game played on one device. Was `HomePage`.                                                       |
+| [setup/savedGames.utils.ts](../src/features/setup/savedGames.utils.ts)                                            | The mode label and the rejoin blocked reason for each save.                                                   |
+| [setup/resume.utils.ts](../src/features/setup/resume.utils.ts)                                                    | `resumeBlockedReason`: an online save with no code on this device cannot be reopened.                         |
+| [setup/tableMode.constants.ts](../src/features/setup/tableMode.constants.ts)                                      | `TABLE_MODE_LABEL`: a word for every table mode, exhaustively.                                                |
 | [appearance/appearancePreference.utils.ts](../src/features/appearance/appearancePreference.utils.ts)              | Reads and writes `monopoly.appearance.v1`, validating the stored id. Guarded like every other storage call.   |
 | [appearance/appearancePreference.utils.test.ts](../src/features/appearance/appearancePreference.utils.test.ts)    | The default, the round trip, an unrecognised id, and storage that throws.                                     |
 | [multiplayer/onlineConfig.interfaces.ts](../src/features/multiplayer/onlineConfig.interfaces.ts)                  | `OnlineConfig`: the validated project url and anon key.                                                       |
@@ -189,7 +203,9 @@ File-naming rules are in [conventions.md](conventions.md).
 | [multiplayer/hooks/usePresence.ts](../src/features/multiplayer/hooks/usePresence.ts)                              | Which seats have a device connected. Empty means no information.                                              |
 | [multiplayer/hooks/useConnectionMessage.ts](../src/features/multiplayer/hooks/useConnectionMessage.ts)            | The same sentence the command path refuses with.                                                              |
 | [components/game/layout/GameSidebar.tsx](../src/components/game/layout/GameSidebar.tsx)                           | The column beside the board: players, banner, then the sticky footer of toasts and dice.                      |
-| [components/setup/AppearanceField.tsx](../src/components/setup/AppearanceField.tsx)                               | The appearance select on the home page. A display preference, deliberately outside the game form.             |
+| [components/layout/AppHeader.tsx](../src/components/layout/AppHeader.tsx)                                         | The one place the app is navigated from: brand, nav, settings trigger.                                        |
+| [components/layout/SettingsMenu.tsx](../src/components/layout/SettingsMenu.tsx)                                   | Sound and appearance, in a dismissible menu rather than on a page.                                            |
+| [components/setup/PlayChoices.tsx](../src/components/setup/PlayChoices.tsx)                                       | The three ways in. The online two are absent without a server.                                                |
 | [components/game/layout/GameSidebar.test.tsx](../src/components/game/layout/GameSidebar.test.tsx)                 | The footer groups toasts above the dice, and the activity button sits in the control row.                     |
 | [lobby/LobbyPage.tsx](../src/features/lobby/LobbyPage.tsx)                                                        | The table before the game starts; the invite link's destination.                                              |
 | [lobby/useLobby.ts](../src/features/lobby/useLobby.ts)                                                            | Reading the table, taking a seat, starting the game.                                                          |
@@ -352,6 +368,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | [constants/testIds.constants.ts](../src/shared/constants/testIds.constants.ts)              | Every `data-testid`, plus `scopedTestId` for repeated elements. Tests import from here. |
 | [constants/appearance.constants.ts](../src/shared/constants/appearance.constants.ts)        | The selectable appearances, and `AppearanceId` derived from that list.                  |
+| [constants/nav.constants.ts](../src/shared/constants/nav.constants.ts)                      | `NAV_ITEMS`: the header's places, in order. Router paths, never bare fragments.         |
 | [utils/logger.enums.ts](../src/shared/utils/logger.enums.ts)                                | Log severity levels.                                                                    |
 | [utils/logger.interfaces.ts](../src/shared/utils/logger.interfaces.ts)                      | One captured log entry.                                                                 |
 | [utils/logger.utils.ts](../src/shared/utils/logger.utils.ts)                                | App log: console + capped ring + localStorage, exposed as `window.monopolyLog`.         |
@@ -359,7 +376,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [shared/components/ErrorBoundary.test.tsx](../src/shared/components/ErrorBoundary.test.tsx) | The fallback, the log entry, and the full-reload way out.                               |
 | [utils/logger.utils.test.ts](../src/shared/utils/logger.utils.test.ts)                      | Ring cap, persistence, error filtering, storage-failure safety.                         |
 | [utils/money.utils.ts](../src/shared/utils/money.utils.ts)                                  | `formatMoney` and currency-symbol fallback. The one place money is rendered.            |
-| [utils/appearance.utils.ts](../src/shared/utils/appearance.utils.ts)                        | Resolves an appearance to a `data-theme`, cycles it, and names it.                      |
+| [utils/appearance.utils.ts](../src/shared/utils/appearance.utils.ts)                        | Resolves an appearance to a `data-theme`, and names it.                                 |
 | [utils/audio.utils.ts](../src/shared/utils/audio.utils.ts)                                  | `playSound` (a `play()` returning nothing must not throw) and a round-robin clip pool.  |
 | [utils/audio.utils.test.ts](../src/shared/utils/audio.utils.test.ts)                        | Every way play() can fail, and the pool round-robin.                                    |
 | [utils/money.utils.test.ts](../src/shared/utils/money.utils.test.ts)                        | Unit tests for money formatting.                                                        |
@@ -409,6 +426,8 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [tests/e2e/layout.spec.ts](../tests/e2e/layout.spec.ts)                                   | Two-column layout, site-panel actions, dice placement, player stack. Pins the desktop viewport.                   |
 | [tests/e2e/mobile.spec.ts](../tests/e2e/mobile.spec.ts)                                   | The phone frame and landscape: no page scroll, board and Roll together, hidden names, touch targets.              |
 | [tests/e2e/appearance.spec.ts](../tests/e2e/appearance.spec.ts)                           | Choosing an appearance repaints the board, keeps the edition, and survives a reload.                              |
+| [tests/e2e/navigation.spec.ts](../tests/e2e/navigation.spec.ts)                           | The chooser, the header on every screen, the catch-all, and the header over a decision modal.                     |
+| [tests/e2e/join.spec.ts](../tests/e2e/join.spec.ts)                                       | The join code field: uppercasing, dropped characters, the length cap, the blocked reasons.                        |
 | [tests/e2e/overlays.spec.ts](../tests/e2e/overlays.spec.ts)                               | Decision modal, activity drawer, player detail drawer, dice roll.                                                 |
 | [tests/e2e/full-table.spec.ts](../tests/e2e/full-table.spec.ts)                           | Eight-player layout: token cluster stays on the board, dice stay reachable.                                       |
 | [tests/e2e/mortgage.spec.ts](../tests/e2e/mortgage.spec.ts)                               | Mortgaging out of a debt, the dead end without assets, and the site panel.                                        |

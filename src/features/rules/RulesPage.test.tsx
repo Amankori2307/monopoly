@@ -9,11 +9,17 @@ import { RulesPage } from './RulesPage';
 const NAV_TARGETS = RULES_SECTIONS.map((section) => section.id);
 
 describe('RulesPage', () => {
-  it('renders the booklet heading and back link', () => {
+  it('renders the booklet heading, and the header carries the way back', () => {
     renderWithProviders(<RulesPage />);
 
     expect(screen.getByRole('heading', { name: /Rules of play/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Back to games/i })).toBeInTheDocument();
+    // The booklet's own "Back to games" button is gone: the header is on every
+    // screen now and carries the nav, so a second way home beside it was
+    // duplication rather than convenience.
+    expect(
+      screen.getByRole('navigation', { name: 'Main' }).querySelector('a')
+    ).not.toBeNull();
+    expect(screen.getByRole('link', { name: 'Play' })).toBeInTheDocument();
   });
 
   // The sections were extracted into separate components; every nav link must

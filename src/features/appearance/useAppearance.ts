@@ -2,7 +2,6 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import type { AppearanceId } from '../../shared/constants/appearance.constants';
 import {
   appearanceLabel,
-  nextAppearance,
   resolveAppearanceTheme,
 } from '../../shared/utils/appearance.utils';
 import { setAppearance } from '../game/uiSlice';
@@ -15,8 +14,6 @@ interface UseAppearanceResult {
   /** The current appearance's name, for a control that has to say it. */
   label: string;
   select: (appearance: AppearanceId) => void;
-  /** Moves to the next appearance, wrapping. */
-  cycle: () => void;
 }
 
 /**
@@ -36,6 +33,5 @@ export const useAppearance = (editionId: string): UseAppearanceResult => {
     dataTheme: resolveAppearanceTheme(appearance, editionId),
     label: appearanceLabel(appearance),
     select: (next) => dispatch(setAppearance(next)),
-    cycle: () => dispatch(setAppearance(nextAppearance(appearance))),
   };
 };

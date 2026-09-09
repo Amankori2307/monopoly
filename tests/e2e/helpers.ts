@@ -38,7 +38,12 @@ export const CORNERS = [
  * cluster are under the most pressure.
  */
 export const startGame = async (page: Page, options: { players?: number } = {}) => {
-  await page.goto('/');
+  // Straight to the setup screen, not through the chooser. `/` is a chooser
+  // now, and going via a click would make ~150 tests depend on the front
+  // door's copy for no gain - the tests that are ABOUT the front door use
+  // openChooser instead. Safe as the first navigation in a test, which is a
+  // real document load rather than a hash-only change.
+  await page.goto('/#/new');
 
   if (options.players !== undefined) {
     await page.getByTestId(TEST_IDS.playerCountInput).fill(String(options.players));
@@ -48,6 +53,9 @@ export const startGame = async (page: Page, options: { players?: number } = {}) 
   await expect(page).toHaveURL(/\/game\//);
   await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
 };
+
+/** The front door itself, for the tests that are about it. */
+export const openChooser = (page: Page) => page.goto('/');
 
 /** What `advanceGame` did, so a caller can decide whether to keep going. */
 export type GameAction =

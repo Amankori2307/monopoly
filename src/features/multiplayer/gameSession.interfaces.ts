@@ -29,6 +29,15 @@ export interface RemoteGameUpdate {
  * in the command path awaits one.
  */
 export interface GameSession {
+  /**
+   * Which game this session is attached to; null for the local session.
+   *
+   * It exists so a caller can ask "am I already on this table" WITHOUT reading
+   * state that attaching itself changes - `sessionEpoch`, `connection` and
+   * `seat.joinCode` are all written by the attach, so an effect keyed on any
+   * of them would cancel its own handler. See CLAUDE.md section 8.
+   */
+  readonly gameId: string | null;
   /** False for the local session, so no online UI is offered for a local game. */
   readonly isOnline: boolean;
 

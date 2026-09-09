@@ -2,15 +2,20 @@
 @use '../abstracts/mixins' as m;
 
 .app-shell {
+  // Published as a property because the header has to negate it to sit flush
+  // against the top of the window - see layout/_header.scss. Two literals
+  // would drift the first time this padding changed.
+  --shell-pad: clamp(14px, 2.2vw, 36px);
+
   // dvh, not vh: on a mobile browser vh includes the address bar that is not
   // actually there, so a 100vh shell is always taller than the window.
   min-height: 100dvh;
-  padding: clamp(14px, 2.2vw, 36px);
+  padding: var(--shell-pad);
   background: var(--surface-app);
   color: var(--text-primary);
 
   @include m.below(t.$breakpoint-tablet) {
-    padding: t.$shell-pad-phone;
+    --shell-pad: #{t.$shell-pad-phone};
   }
 }
 

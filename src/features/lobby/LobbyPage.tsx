@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { InviteLink } from '../../components/lobby/InviteLink';
 import { LobbySeats } from '../../components/lobby/LobbySeats';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
+import { AppShell } from '../shell/AppShell';
 import { useLobby } from './useLobby';
 
 /**
@@ -16,7 +17,7 @@ export function LobbyPage() {
 
   if (lobby.lobbyError) {
     return (
-      <div className="app-shell">
+      <AppShell editionId={lobby.theme.id}>
         <main className="page lobby-page">
           <section className="panel lobby-panel" data-testid={TEST_IDS.lobbyPanel}>
             <h1>That table is not there</h1>
@@ -26,12 +27,12 @@ export function LobbyPage() {
             </Link>
           </section>
         </main>
-      </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="app-shell" data-theme={lobby.theme.id}>
+    <AppShell editionId={lobby.theme.id}>
       <main className="page lobby-page">
         <section className="panel lobby-panel" data-testid={TEST_IDS.lobbyPanel}>
           <p className="eyebrow">Online game</p>
@@ -112,6 +113,6 @@ export function LobbyPage() {
           <InviteLink joinCode={lobby.joinCode} link={lobby.inviteLink} />
         </section>
       </main>
-    </div>
+    </AppShell>
   );
 }

@@ -226,3 +226,129 @@
     margin: 0;
   }
 }
+
+// ---------------------------------------------------------------------------
+// The chooser: the front door
+//
+// It replaced a screen that carried the masthead, a ruleset table, the whole
+// 2-to-8-player form, an appearance picker, a saved-games list AND the online
+// button. One question, three answers.
+// ---------------------------------------------------------------------------
+.chooser-page {
+  display: grid;
+  gap: t.$gap-lg;
+  max-width: 780px;
+  padding-block: clamp(20px, 5vw, 56px);
+}
+
+.chooser-masthead {
+  display: grid;
+  gap: t.$gap-sm;
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 5vw, 2.9rem);
+    letter-spacing: -0.03em;
+  }
+
+  .masthead-lede {
+    margin: 0;
+    max-width: 46ch;
+  }
+}
+
+// Resuming is the commonest repeat visit, so it is a row of its own above the
+// choices rather than a screen deeper in.
+.chooser-continue {
+  @include m.card-surface;
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: t.$gap-sm t.$gap-md;
+  padding: t.$gap-md;
+  border-left: 4px solid var(--accent);
+  color: var(--text-primary);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--surface-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  @include m.below(t.$breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chooser-continue-label {
+  @include m.mono-label(0.62rem, 0.12em);
+
+  color: var(--text-eyebrow);
+}
+
+.chooser-continue-name {
+  font-family: t.$font-serif;
+  font-size: 1.1rem;
+}
+
+.chooser-continue-meta {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.play-choices {
+  display: grid;
+  gap: t.$gap-md;
+}
+
+.play-choice {
+  @include m.card-surface;
+
+  display: grid;
+  gap: 4px;
+  padding: t.$gap-lg t.$gap-md;
+  color: var(--text-primary);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--surface-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+.play-choice-title {
+  font-family: t.$font-serif;
+  font-size: 1.15rem;
+}
+
+.play-choice-copy {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  max-width: 52ch;
+}
+
+// A saved game says which kind it is, beside its name.
+.recent-game-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$gap-sm;
+}
+
+.recent-game-mode {
+  @include m.mono-label(0.58rem, 0.1em);
+
+  padding: 2px 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}

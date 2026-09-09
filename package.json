@@ -18,7 +18,6 @@
   },
   "scripts": {
     "preinstall": "node -e \"if (!/pnpm/.test(process.env.npm_config_user_agent || '')) { console.error('\\\\nThis project is pnpm-only. Run: pnpm install\\\\n'); process.exit(1); }\"",
-    "start": "nx serve",
     "dev": "nx serve",
     "dev:online": "vite --mode online --port 3200 --host 0.0.0.0",
     "tunnel": "ngrok http 3200",

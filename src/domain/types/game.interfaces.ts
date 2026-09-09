@@ -352,6 +352,8 @@ export interface StoredGameIndexEntry {
   turnNumber: number;
   activePlayerId: PlayerId;
   winnerPlayerId: PlayerId | null;
+  /** Whether this save is a hot-seat game or an online table. */
+  tableMode: TableMode;
 }
 
 // -- Commands ----------------------------------------------------------------

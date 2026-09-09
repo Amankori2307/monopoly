@@ -47,6 +47,9 @@ export const toStoredGameIndexEntry = (gameState: GameState): StoredGameIndexEnt
   turnNumber: gameState.turnNumber,
   activePlayerId: gameState.playerOrder[gameState.activePlayerIndex],
   winnerPlayerId: gameState.winnerPlayerId,
+  // Projected onto the index so the home screen can tell a local save from an
+  // online one without parsing a full state - which is the index's whole job.
+  tableMode: gameState.tableMode,
 });
 
 export const loadGameIndex = (): StoredGameIndexEntry[] => {

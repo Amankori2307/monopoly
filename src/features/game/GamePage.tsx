@@ -11,10 +11,8 @@ import { selectBoardViewModels } from './boardViewModels.selectors';
 import { TOAST_DISMISS_MS } from './game.constants';
 import { GameUnavailable } from './GameUnavailable';
 import { selectCanEndTurn, selectCanRollDice } from './gameView.selectors';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { setSoundEnabled } from './uiSlice';
-import { defaultTheme } from '../../domain/themes/themes.registry';
-import { useAppearance } from '../appearance/useAppearance';
+import { useAppSelector } from '../../app/hooks';
+import { AppShell } from '../shell/AppShell';
 import { useActiveGame } from './hooks/useActiveGame';
 import { useFeedbackGate } from './hooks/useFeedbackGate';
 import { useGameSounds } from './hooks/useGameSounds';
@@ -40,12 +38,10 @@ export function GamePage() {
     [activeGame]
   );
   // Display positions lag the engine while a token walks to its new space.
-  const dispatch = useAppDispatch();
   const soundEnabled = useAppSelector((state) => state.ui.soundEnabled);
   // Before the early return, like every other hook here. Falls back to the
   // default edition's id purely so the call is unconditional - nothing renders
   // when there is no game to render.
-  const look = useAppearance(activeGame?.themeId ?? defaultTheme.id);
   // Sounds whatever the last command did. Mounted here because the page is
   // where the game is being played.
   useGameSounds();
@@ -83,7 +79,7 @@ export function GamePage() {
     // pinned at the top, one scrolling region, dice in a bar at the bottom. A
     // modifier class rather than a :has() selector, because only this page wants
     // it and an explicit class is cheaper to read and to assert on.
-    <div className="app-shell is-game" data-theme={look.dataTheme}>
+    <AppShell className="is-game" editionId={activeGame.themeId}>
       <div className="page">
         {/* data-moving publishes the walk, so a test can assert nothing slipped out mid-way. */}
         <div
@@ -103,7 +99,6 @@ export function GamePage() {
           />
 
           <GameSidebar
-            appearanceLabel={look.label}
             bannerProps={bannerProps}
             canEndTurn={selectCanEndTurn(activeGame, viewer)}
             // Not while a token is walking. A double puts the turn straight
@@ -114,13 +109,11 @@ export function GamePage() {
             connectedSeatIds={connectedSeatIds}
             currencySymbol={currencySymbol}
             eventCount={activeGame.history.length}
-            onCycleAppearance={look.cycle}
             onDismissToast={commands.dismissToast}
             onEndTurn={commands.endTurn}
             onOpenActivity={overlays.openActivity}
             onRoll={commands.rollDice}
             onSelectPlayer={overlays.openPlayer}
-            onToggleSound={() => dispatch(setSoundEnabled(!soundEnabled))}
             soundEnabled={soundEnabled}
             summaries={summaries}
             toastDismissAfterMs={TOAST_DISMISS_MS}
@@ -145,6 +138,6 @@ export function GamePage() {
           viewer={viewer}
         />
       </div>
-    </div>
+    </AppShell>
   );
 }

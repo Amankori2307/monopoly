@@ -97,7 +97,11 @@
 // ---------------------------------------------------------------------------
 .drawer-backdrop {
   position: fixed;
-  inset: 0;
+  // Starts below the header, not at the top of the viewport. The header sits
+  // above every overlay so the app's only navigation is never dead (see
+  // layout/_header.scss), and this drawer is top-anchored - so without the
+  // inset the header covered the drawer's own close button.
+  inset: var(--app-header-height) 0 0;
   z-index: 35;
   display: flex;
   justify-content: flex-end;

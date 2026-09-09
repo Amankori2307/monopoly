@@ -11,7 +11,7 @@ Keep this file in step with the code — see the Documentation contract in CLAUD
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ features/  pages, slices, thunks, persistence               │  React + Redux aware
-│   HomePage · GamePage · RulesPage · gameSlice · uiSlice      │
+│   ChooserPage · NewGamePage · GamePage · RulesPage · slices  │
 └───────────────┬──────────────────────────┬──────────────────┘
                 │                          │
     ┌───────────▼──────────┐   ┌───────────▼───────────────────┐
@@ -178,7 +178,7 @@ The schema currently uses `z.any()` for `players`, `board`, and `ownership` — 
 
 Clicking any space opens `SpaceDetailCard` (title-deed modal, `role="dialog"`). `DiceDock` is a fixed-position roller that animates for ~520 ms, plays a sound, then fires `onRoll` — so the visible dice are decorative and the authoritative values come back from the engine in `turn.lastRoll`.
 
-**`HomePage`** owns setup form state locally (name, count 2-8, per-player names and tokens), validates non-empty + unique names + unique tokens, then dispatches `createNewGame` and navigates to `/game/:id`.
+**`NewGamePage`** (`#/new`; the front door is `ChooserPage`) owns setup form state locally (name, count 2-8, per-player names and tokens), validates non-empty + unique names + unique tokens, then dispatches `createNewGame` and navigates to `/game/:id`.
 
 ---
 

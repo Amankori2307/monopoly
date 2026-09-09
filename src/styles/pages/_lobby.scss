@@ -108,3 +108,59 @@
     font-size: 0.78rem;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Hosting a table, and joining one by code
+//
+// Both are single-column: they carry a handful of fields each, and the lobby's
+// two-column grid exists for its invite panel, which neither of these has.
+// ---------------------------------------------------------------------------
+.host-page,
+.join-page {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: t.$gap-xl t.$gap-lg;
+}
+
+.host-panel,
+.join-panel {
+  display: grid;
+  gap: t.$gap-md;
+
+  h1 {
+    margin: 0;
+    font-family: t.$font-serif;
+    font-size: 1.6rem;
+  }
+
+  .masthead-lede {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+}
+
+.host-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: t.$gap-md;
+
+  @include m.below(t.$breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.join-field {
+  display: grid;
+  gap: 5px;
+}
+
+// A code is read aloud, so it needs the room between characters that
+// .invite-code already gives the one being read out.
+.join-code-input {
+  max-width: 260px;
+  font-family: t.$font-mono;
+  font-size: 1.5rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}

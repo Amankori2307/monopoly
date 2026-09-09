@@ -1,9 +1,11 @@
 import type { GameId, PlayerId } from '../../domain/types/game.interfaces';
 import { logger } from '../../shared/utils/logger.utils';
 import { randomUUID } from '../../domain/rules/id.utils';
+import { normaliseJoinCode } from './joinCode.utils';
 
 /**
- * Which seat this device holds, per game.
+ * What this device knows about a table: which seat it holds, and the code that
+ * lets it read the table at all.
  *
  * Per-device rather than in the game state, and that split is deliberate:
  * `tableMode` must be agreed by everyone, but "which of you am I" is the one
@@ -63,5 +65,58 @@ export const clearSeatClaim = (gameId: GameId): void => {
     window.localStorage.removeItem(getSeatClaimKey(gameId));
   } catch (error) {
     logger.debug('multiplayer', 'could not clear the seat claim', { error });
+  }
+};
+
+// ---------------------------------------------------------------------------
+// The join code, per game.
+//
+// It IS the capability, and until now it lived in exactly two places a reload
+// destroys: `seat.joinCode` in Redux, and the lobby URL's `?code=` - which the
+// game URL does not carry. So an online game sat in the recent-games index
+// (`startOnlineGame` calls `saveGame`) and could be opened and then not played:
+// nothing could re-attach a session without a code, so `resolveViewer` failed
+// closed to Spectator and every control was dead. A frozen game on your own
+// save.
+//
+// Per-device for the same reason the seat claim is - a device that was never
+// given the code must not be able to read it back out of somebody's save.
+// ---------------------------------------------------------------------------
+
+export const JOIN_CODE_KEY_PREFIX = 'monopoly.code';
+
+export const getJoinCodeKey = (gameId: GameId): string =>
+  `${JOIN_CODE_KEY_PREFIX}.${gameId}.v1`;
+
+export const readJoinCode = (gameId: GameId): string | null => {
+  try {
+    const stored = window.localStorage.getItem(getJoinCodeKey(gameId));
+    // Validated rather than trusted: this is whatever is on the disk of a
+    // browser that may have run an older build or been hand-edited, and an
+    // invalid code would be sent to the network. Compared against its own
+    // normalisation rather than a length, so a future longer code still reads.
+    if (!stored || normaliseJoinCode(stored) !== stored) {
+      return null;
+    }
+    return stored;
+  } catch (error) {
+    logger.debug('seat', 'could not read the join code', { error });
+    return null;
+  }
+};
+
+export const writeJoinCode = (gameId: GameId, joinCode: string): void => {
+  try {
+    window.localStorage.setItem(getJoinCodeKey(gameId), joinCode);
+  } catch (error) {
+    logger.debug('seat', 'could not save the join code', { error });
+  }
+};
+
+export const clearJoinCode = (gameId: GameId): void => {
+  try {
+    window.localStorage.removeItem(getJoinCodeKey(gameId));
+  } catch (error) {
+    logger.debug('seat', 'could not clear the join code', { error });
   }
 };

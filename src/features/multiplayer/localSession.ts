@@ -14,6 +14,8 @@ import type { GameSession, PublishOutcome } from './gameSession.interfaces';
  */
 export const createLocalSession = (): GameSession => ({
   isOnline: false,
+  // A hot-seat game is not a table anybody attaches to.
+  gameId: null,
 
   publish: (): Promise<PublishOutcome> =>
     // Revision 0 forever: nothing reads it for a local game, and inventing a

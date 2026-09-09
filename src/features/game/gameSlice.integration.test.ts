@@ -740,6 +740,7 @@ describe('a non-active debtor raising cash', () => {
 describe('publishing a move', () => {
   const onlineSession = (publish: GameSession['publish']): GameSession => ({
     isOnline: true,
+    gameId: 'game-1',
     publish,
     fetch: vi.fn().mockResolvedValue(null),
     announce: vi.fn().mockResolvedValue(undefined),
@@ -919,6 +920,7 @@ describe('adopting a state from another device', () => {
 describe('a table this device cannot reach', () => {
   const unreachable = (): GameSession => ({
     isOnline: true,
+    gameId: 'game-1',
     publish: vi.fn().mockResolvedValue({ status: 'failed', message: 'offline' }),
     fetch: vi.fn().mockResolvedValue(null),
     announce: vi.fn().mockResolvedValue(undefined),

@@ -1,4 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { clearJoinCode, clearSeatClaim } from '../multiplayer/seatClaim.utils';
 import type { AppDispatch } from '../../app/appStore';
 import { createGameState, executeGameCommand } from '../../domain/rules/gameEngine';
 import { DefaultRandomSource } from '../../domain/rules/rng';
@@ -351,6 +352,11 @@ export const removeSavedGame =
   (gameId: string) =>
   (dispatch: AppDispatch, getState: () => { game: GameSliceState }) => {
     deleteSavedGame(gameId);
+    // What this device knew about the table goes with it. `clearSeatClaim` was
+    // exported and called nowhere, so deleting an online game left its seat
+    // claim behind for ever.
+    clearSeatClaim(gameId);
+    clearJoinCode(gameId);
     if (getState().game.activeGame?.id === gameId) {
       dispatch(setActiveGame(null));
     }

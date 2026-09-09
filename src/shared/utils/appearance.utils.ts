@@ -22,18 +22,6 @@ export const resolveAppearanceTheme = (
   editionId: string
 ): string => (appearance === EDITION_APPEARANCE ? editionId : appearance);
 
-/**
- * The appearance after this one, wrapping round.
- *
- * Cycling rather than a boolean toggle: there are two appearances today and a
- * toggle would quietly become wrong on the day there is a third, which is
- * exactly the sort of thing that ships.
- */
-export const nextAppearance = (appearance: AppearanceId): AppearanceId => {
-  const index = APPEARANCES.findIndex((option) => option.id === appearance);
-  return APPEARANCES[(index + 1) % APPEARANCES.length].id;
-};
-
 /** The label for an appearance, for a control that has to name it. */
 export const appearanceLabel = (appearance: AppearanceId): string =>
   APPEARANCES.find((option) => option.id === appearance)?.label ?? appearance;

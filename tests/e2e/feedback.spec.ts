@@ -55,7 +55,7 @@ const seedOwnership = async (page: Page, seeds: OwnershipSeed[]) => {
 };
 
 test('reads every amount in rupees', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/new');
 
   // The setup screen quotes the ruleset, so it is the earliest place to check.
   // Scoped to the card and asserted as a row: the label and the amount are two
@@ -542,10 +542,15 @@ test.describe('sound', () => {
     await watchSounds(page);
     await startGame(page);
 
+    // The switch is in the header's settings menu now, not the game sidebar.
+    await page.getByTestId(TEST_IDS.settingsTrigger).click();
     const toggle = page.getByTestId(TEST_IDS.soundToggle);
-    await expect(toggle).toContainText(/sound/i);
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
     await toggle.click();
-    await expect(toggle).toContainText(/muted/i);
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    // Out of the way, so it cannot intercept the roll below.
+    await page.keyboard.press('Escape');
 
     await clearSounds(page);
     await page.getByTestId(TEST_IDS.rollButton).click();
@@ -555,17 +560,24 @@ test.describe('sound', () => {
 
     // And the choice is a preference, so it outlives the page.
     await page.reload();
-    await expect(page.getByTestId(TEST_IDS.soundToggle)).toContainText(/muted/i);
+    await page.getByTestId(TEST_IDS.settingsTrigger).click();
+    await expect(page.getByTestId(TEST_IDS.soundToggle)).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
   });
 
   test('plays the dice again once sound is switched back on', async ({ page }) => {
     await watchSounds(page);
     await startGame(page);
+
+    await page.getByTestId(TEST_IDS.settingsTrigger).click();
     const toggle = page.getByTestId(TEST_IDS.soundToggle);
 
     await toggle.click();
     await toggle.click();
-    await expect(toggle).toContainText(/sound/i);
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('Escape');
 
     await clearSounds(page);
     await page.getByTestId(TEST_IDS.rollButton).click();

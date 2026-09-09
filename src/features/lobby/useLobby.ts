@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { availableThemes } from '../../domain/themes/indiaEditionTheme';
 import { getThemeOrDefault } from '../../domain/rules/engine/state.utils';
 import { readDeviceId } from '../multiplayer/seatClaim.utils';
 import {
@@ -41,7 +40,14 @@ export const useLobby = () => {
   const [tokenId, setTokenId] = useState('');
   const [isBusy, setIsBusy] = useState(false);
 
-  const theme = getThemeOrDefault(availableThemes[0]?.id ?? '');
+  // The table's options travel in the URL beside the code, because this is
+  // where the game is STARTED and the host chose them a screen ago. They used
+  // to be hardcoded here - `availableThemes[0]` and `useSpeedDie: false` - so
+  // every online table was the first edition and no online game could ever use
+  // the Speed Die. getThemeOrDefault falls back, so an absent or tampered
+  // param degrades to the default rather than throwing.
+  const theme = getThemeOrDefault(searchParams.get('theme') ?? '');
+  const useSpeedDie = searchParams.get('speed') === 'on';
   const mySeat = seats.find((seat) => seat.deviceId === readDeviceId());
 
   useEffect(() => {
@@ -127,19 +133,22 @@ export const useLobby = () => {
     setIsBusy(true);
     try {
       await dispatch(
-        startOnlineGame({ gameId, joinCode, themeId: theme.id, useSpeedDie: false })
+        startOnlineGame({ gameId, joinCode, themeId: theme.id, useSpeedDie })
       );
       navigate(`/game/${gameId}`);
     } finally {
       setIsBusy(false);
     }
-  }, [dispatch, gameId, joinCode, navigate, theme.id]);
+  }, [dispatch, gameId, joinCode, navigate, theme.id, useSpeedDie]);
 
   return {
     claim,
     claimReason,
     gameId,
-    inviteLink: gameId && joinCode ? inviteLinkFor(gameId, joinCode) : '',
+    inviteLink:
+      gameId && joinCode
+        ? inviteLinkFor(gameId, joinCode, { themeId: theme.id, useSpeedDie })
+        : '',
     isBusy,
     isLoaded,
     joinCode,
