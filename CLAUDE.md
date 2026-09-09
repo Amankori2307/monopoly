@@ -229,7 +229,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1402 unit tests, 174 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1405 unit tests, 181 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -549,10 +549,22 @@ for/ })` and every screen reader are untouched. Never move that name into the vi
 - **`.rules-booklet` negates the shell's phone padding to bleed full width.** Both sides now come
   from `$shell-pad-phone`; they were two independent `10px` literals that cancelled by coincidence,
   so changing the shell's padding left the booklet inset or overhanging.
-- **The activity button lives in `.turn-controls`, not with the overlays.** It is `position: fixed`
-  on desktop, so its DOM position is invisible there — which is what lets it sit in the bar and go
-  `position: static` on a phone, where floating bottom-left put it exactly on top of the dice. A
-  `transform` or `filter` on `.turn-controls` would trap it; don't add one.
+- **Page spacing belongs to the page, never to the shell.** The header negates `.app-shell`'s
+  padding (via `--shell-pad`) to sit flush with the window, so any padding a page adds to the
+  _shell_ lands **above** the header instead of below it. `.rules-shell` did exactly that with
+  `padding-block: clamp(28px, 5vw, 72px)`, which is why the booklet's h1 sat against the header's
+  border with only 10px on a phone. It is `padding-block` on `.rules-page` now, and
+  `navigation.spec.ts` asserts a non-zero gap on every route.
+- **`env()` needs a fallback or it is zero.** The sticky dice bar's only bottom spacing was
+  `padding-bottom: env(safe-area-inset-bottom)`, which resolves to **0** in Playwright, in DevTools
+  emulation and on any device without `viewport-fit=cover` - so a 58px button row sat flush against
+  the screen edge. It is `calc($gap-sm + env(safe-area-inset-bottom, 0px))`, and `index.html` now
+  asks for `viewport-fit=cover` so the inset is real where it exists.
+- **The activity log is a header control, and the tokens are the header's own.** It used to be
+  `position: fixed` bottom-left over the board and then `position: static` on a phone - two
+  treatments for one button, the second because the first landed exactly on the dice. It is passed
+  to `AppShell` as an `activity` slot by `GamePage` alone, so it appears on the game route and
+  nowhere else. `$floating-inset` went with it: nothing floats over the board any more.
 - **`tsconfig.json` is `strict: true`, target `es2020`**, and typechecks every file under `src/` — there is no `exclude`.
 
 ---

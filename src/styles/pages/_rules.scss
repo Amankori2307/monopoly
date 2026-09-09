@@ -1,17 +1,21 @@
 @use '../abstracts/tokens' as t;
 @use '../abstracts/mixins' as m;
 
-.rules-shell {
+// The booklet's breathing room belongs to the PAGE, not the shell.
+//
+// It was `padding-block` on `.app-shell` via a `rules-shell` class, and the
+// header negates the shell's padding to sit flush with the window - so all
+// 28-72px of it landed ABOVE the header instead of below it, leaving the
+// booklet with only `--shell-pad` (10px on a phone) between the header's border
+// and the h1. That is the "no space between header and the rules" this fixes.
+.rules-page {
+  width: min(100%, 920px);
+  margin: 0 auto;
   padding-block: clamp(28px, 5vw, 72px);
 
   @include m.below(t.$breakpoint-mobile) {
     padding-block: 28px;
   }
-}
-
-.rules-page {
-  width: min(100%, 920px);
-  margin: 0 auto;
 }
 
 .rules-header {

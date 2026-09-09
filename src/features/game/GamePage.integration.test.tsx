@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createGameState } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
-import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import {
   GameCommandType,
   PendingDecisionType,

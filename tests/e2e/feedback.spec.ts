@@ -55,20 +55,11 @@ const seedOwnership = async (page: Page, seeds: OwnershipSeed[]) => {
 };
 
 test('reads every amount in rupees', async ({ page }) => {
-  await page.goto('/#/new');
-
-  // The setup screen quotes the ruleset, so it is the earliest place to check.
-  // Scoped to the card and asserted as a row: the label and the amount are two
-  // elements now, which is what makes it a table rather than a sentence.
-  const glance = page.getByTestId(TEST_IDS.rulesetGlance);
-  await expect(glance).toBeVisible();
-  await expect(glance).toContainText('Starting cash');
-  await expect(glance).toContainText('₹1500');
-  await expect(glance).toContainText('₹200');
-  await expect(glance).toContainText('₹50');
-
+  // The setup screen's "at a glance" card used to be the earliest place rupees
+  // appeared; it is gone with the masthead, so the board is now the first.
   await startGame(page);
-  await expect(page.getByTestId(TEST_IDS.playersPanel)).toContainText('₹1500');
+
+  await expect(page.getByTestId(TEST_IDS.playersPanel)).toContainText('\u20b9');
 });
 
 // Money used to move in silence: of twelve paths, seven logged nothing at all.

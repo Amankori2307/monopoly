@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HOTEL_BUILD_LEVEL, MAX_HOUSES_PER_SITE } from '../constants/game.constants';
-import { indiaEditionTheme } from '../themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import { ColorGroup } from '../types/game.enums';
 import type { GameState, StreetSpace } from '../types/game.interfaces';
 import {

@@ -8,7 +8,7 @@ import {
   GAME_STATE_VERSION,
   STARTING_CASH,
 } from '../../domain/constants/game.constants';
-import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import {
   GameCommandType,
   GameEventCue,

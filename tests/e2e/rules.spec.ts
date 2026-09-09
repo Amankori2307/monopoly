@@ -77,14 +77,6 @@ test('quotes ruleset amounts in rupees, from the constants', async ({ page }) =>
   await expect(booklet).not.toContainText(/\bM\d/);
 });
 
-test('is reachable from the setup screen', async ({ page }) => {
-  await page.goto('/#/new');
-  await page.getByRole('link', { name: /Read the rules/i }).click();
-
-  await expect(page).toHaveURL(/\/rules/);
-  await expect(page.locator('#faq')).toBeVisible();
-});
-
 /**
  * The booklet used to be reachable from one link on one screen. The header
  * carries it on every route, including mid-game - where getting to the rules

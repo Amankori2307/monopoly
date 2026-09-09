@@ -69,20 +69,44 @@ export function SettingsMenu({
         <div className="settings-panel" data-testid={TEST_IDS.settingsPanel}>
           <p className="settings-heading">Settings</p>
 
-          <label className="settings-row">
-            Sound
+          <div className="settings-row">
+            <span id="app-settings-sound">Sound</span>
+            {/* An icon, so the button needs its own accessible name: the label
+                beside it is not the control's name, and a name must never live
+                in visible text alone (CLAUDE.md section 8). */}
             <button
+              aria-label={
+                soundEnabled ? 'Sound is on. Mute it.' : 'Sound is muted. Turn it on.'
+              }
               aria-pressed={soundEnabled}
-              className="secondary-button"
+              className="secondary-button settings-icon-button"
               data-testid={TEST_IDS.soundToggle}
               onClick={() => onSoundChange(!soundEnabled)}
               type="button"
             >
-              {soundEnabled ? 'On' : 'Muted'}
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                {/* The speaker, drawn once. */}
+                <path d="M4 9h3.2L13 4.2v15.6L7.2 15H4z" fill="currentColor" />
+                {soundEnabled ? (
+                  // Two arcs, as bars rather than strokes: this wrapper fills
+                  // rather than strokes, like every other icon here.
+                  <path
+                    d="M15.6 7.7a1 1 0 0 1 1.4.2 6.5 6.5 0 0 1 0 8.2 1 1 0 0 1-1.6-1.2 4.5 4.5 0 0 0 0-5.8 1 1 0 0 1 .2-1.4zM18.4 4.9a1 1 0 0 1 1.4.1 10.4 10.4 0 0 1 0 14 1 1 0 0 1-1.5-1.4 8.4 8.4 0 0 0 0-11.3 1 1 0 0 1 .1-1.4z"
+                    fill="currentColor"
+                  />
+                ) : (
+                  // A cross, which reads as muted at 18px where a single
+                  // diagonal slash does not.
+                  <path
+                    d="M16.3 9.3 17.7 8l5 5-1.4 1.4zM21.3 8l1.4 1.3-5 5L16.3 13z"
+                    fill="currentColor"
+                  />
+                )}
+              </svg>
             </button>
-          </label>
+          </div>
 
-          <label className="settings-row">
+          <label className="settings-row is-stacked">
             Appearance
             <select
               className="select-input"

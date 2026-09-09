@@ -254,6 +254,60 @@ test.describe('a phone in portrait', () => {
     expect(columns.split(' ').length).toBe(2);
   });
 
+  /**
+   * The dice must not touch the bottom edge.
+   *
+   * The sticky bar's only bottom spacing was `env(safe-area-inset-bottom)` with
+   * no fallback, which resolves to 0 in Playwright, in DevTools emulation and on
+   * any device without `viewport-fit=cover` - so a 58px button row sat flush
+   * against the screen edge.
+   */
+  test('leaves a gap between the dice and the bottom of the screen', async ({ page }) => {
+    await startGame(page);
+
+    const gap = await page.evaluate(() => {
+      const footer = document.querySelector('.game-side-footer') as HTMLElement;
+      const controls = document.querySelector('.turn-controls') as HTMLElement;
+      return (
+        footer.getBoundingClientRect().bottom - controls.getBoundingClientRect().bottom
+      );
+    });
+
+    expect(gap).toBeGreaterThanOrEqual(8);
+  });
+
+  /**
+   * The log is chrome, so it is in the header - it used to share the bar with
+   * the dice, which is the tightest row on the screen and wrapped to two lines
+   * whenever End turn was showing.
+   */
+  test('keeps the activity log in the header, out of the dice bar', async ({ page }) => {
+    await startGame(page);
+
+    const button = page.getByTestId(TEST_IDS.activityButton);
+    await expect(button).toBeVisible();
+
+    const [activity, header, controls] = await Promise.all([
+      button.boundingBox(),
+      page.getByTestId(TEST_IDS.appHeader).boundingBox(),
+      page.locator('.turn-controls').boundingBox(),
+    ]);
+    if (!activity || !header || !controls) {
+      throw new Error('The activity button, the header or the bar has no layout box');
+    }
+
+    // Inside the header, and nowhere near the dice.
+    expect(activity.y).toBeGreaterThanOrEqual(header.y - 1);
+    expect(activity.y + activity.height).toBeLessThanOrEqual(
+      header.y + header.height + 1
+    );
+    expect(activity.y).toBeLessThan(controls.y);
+
+    // Still opens the drawer.
+    await button.click();
+    await expect(page.getByTestId(TEST_IDS.activityDrawer)).toBeVisible();
+  });
+
   test('gives every control in the bar a 44px touch target', async ({ page }) => {
     await startGame(page);
 

@@ -1,4 +1,4 @@
-import { availableThemes } from '../../domain/themes/indiaEditionTheme';
+import { availableThemes } from '../../domain/themes/themes.registry';
 import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 

@@ -1,19 +1,8 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import {
-  JAIL_FINE,
-  MAX_PLAYERS,
-  MIN_PLAYERS,
-  PASS_GO_AMOUNT,
-  STARTING_CASH,
-} from '../../domain/constants/game.constants';
-import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
-import { formatMoney } from '../../shared/utils/money.utils';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { NewGamePage } from './NewGamePage';
-
-const CURRENCY = indiaEditionTheme.currencySymbol;
 
 describe('NewGamePage', () => {
   it('renders setup and recent games areas', () => {
@@ -36,54 +25,36 @@ describe('NewGamePage', () => {
 });
 
 /**
- * The masthead lives with the form, not on the front door: it follows whichever
- * ruleset is selected below it, which is its whole purpose.
+ * The setup screen carries the form and the saves, and nothing else.
  *
- * It speaks to a player, not to whoever built the app.
- *
- * It carried a project description ("a typed, resumable rebuild ... with the
- * rules engine separated from the UI") and a "Locked v1 scope" table listing
- * Persistence: LocalStorage - which had also gone stale, still calling the Speed
- * Die "planned later" while its toggle sat on the same screen.
+ * It used to open with a masthead: the edition's name in the display serif, a
+ * lede, an "at a glance" ruleset card and a link to the booklet. That is all
+ * gone - the header carries the nav, and the front door carries the framing.
  */
-describe('the setup masthead', () => {
-  it('titles the screen with the ruleset that will be started', () => {
+describe('the setup screen', () => {
+  it('leads with the form rather than a banner', () => {
     renderWithProviders(<NewGamePage />);
 
+    expect(screen.getByText(/Start a new game/i)).toBeInTheDocument();
+    expect(screen.queryByTestId(TEST_IDS.rulesetGlance)).not.toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 1, name: indiaEditionTheme.name })
-    ).toBeInTheDocument();
+      screen.queryByRole('link', { name: /Read the rules/i })
+    ).not.toBeInTheDocument();
   });
 
-  it('quotes the ruleset from the constants rather than from copy', () => {
-    renderWithProviders(<NewGamePage />);
-
-    const glance = screen.getByTestId(TEST_IDS.rulesetGlance);
-    expect(glance).toHaveTextContent(`${MIN_PLAYERS} to ${MAX_PLAYERS}`);
-    expect(glance).toHaveTextContent(formatMoney(STARTING_CASH, CURRENCY));
-    expect(glance).toHaveTextContent(formatMoney(PASS_GO_AMOUNT, CURRENCY));
-    expect(glance).toHaveTextContent(formatMoney(JAIL_FINE, CURRENCY));
-  });
-
-  // The screen is for someone about to play, not for someone reading the repo.
   it('says nothing about how the app is built', () => {
     const { container } = renderWithProviders(<NewGamePage />);
 
-    expect(container.textContent).not.toMatch(/localstorage|rules engine|v1 scope/i);
+    const copy = (container.textContent ?? '').toLowerCase();
+    expect(copy).not.toContain('localstorage');
+    expect(copy).not.toContain('rules engine');
+    expect(copy).not.toContain('planned later');
   });
 
-  // It said "planned later" long after the Speed Die shipped, on the same screen
-  // as its own toggle. Nothing may claim a feature is unbuilt from here.
-  it('does not call a shipped feature unbuilt', () => {
-    const { container } = renderWithProviders(<NewGamePage />);
-
-    expect(screen.getByTestId(TEST_IDS.speedDieToggle)).toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/planned later/i);
-  });
-
-  it('still offers the way into the rules', () => {
+  // A shipped rule must not be described as unbuilt.
+  it('offers the Speed Die as a choice', () => {
     renderWithProviders(<NewGamePage />);
 
-    expect(screen.getByRole('link', { name: /Read the rules/i })).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.speedDieToggle)).toBeInTheDocument();
   });
 });

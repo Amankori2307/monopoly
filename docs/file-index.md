@@ -98,7 +98,6 @@ File-naming rules are in [conventions.md](conventions.md).
 | [board/boardLayout.utils.ts](../src/domain/board/boardLayout.utils.ts)     | Board index to grid cell, and where a token stands - including the Jail corner's two regions. |
 | [board/tokenMovement.utils.ts](../src/domain/board/tokenMovement.utils.ts) | Board geometry for the walk: steps and the path it passes through, either way round.          |
 | [cards/indiaEditionCards.ts](../src/domain/cards/indiaEditionCards.ts)     | Chance and Community Chest deck contents and effects.                                         |
-| [themes/indiaEditionTheme.ts](../src/domain/themes/indiaEditionTheme.ts)   | Game-facing theme data: name, currency symbol, token catalog. Colours live in SCSS.           |
 | [board/boardSide.utils.ts](../src/domain/board/boardSide.utils.ts)         | Which edge of the board a space sits on; drives which side its colour ribbon hugs.            |
 
 ### Domain tests
@@ -333,15 +332,13 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ## `src/components/setup/` — presentational setup components
 
-| File                                                                               | What it does                                                                                 |
-| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [SetupHero.tsx](../src/components/setup/SetupHero.tsx)                             | The masthead, built as a title deed: the ruleset's name, the lede, the rules link.           |
-| [setup/SpeedDieToggle.tsx](../src/components/setup/SpeedDieToggle.tsx)             | The one optional ruleset choice, agreed before the game starts.                              |
-| [setup/RulesetSummary.tsx](../src/components/setup/RulesetSummary.tsx)             | The ruleset at a glance - players and the three headline amounts, quoted from the constants. |
-| [setup/GameIdentityFields.tsx](../src/components/setup/GameIdentityFields.tsx)     | Game name, player count and ruleset, on one row.                                             |
-| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx)                 | One player's name and token inputs.                                                          |
-| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx)                 | Saved games with continue and delete, or the empty state.                                    |
-| [setup/RecentGamesList.test.tsx](../src/components/setup/RecentGamesList.test.tsx) | The two-step delete.                                                                         |
+| File                                                                               | What it does                                                    |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [setup/SpeedDieToggle.tsx](../src/components/setup/SpeedDieToggle.tsx)             | The one optional ruleset choice, agreed before the game starts. |
+| [setup/GameIdentityFields.tsx](../src/components/setup/GameIdentityFields.tsx)     | Game name, player count and ruleset, on one row.                |
+| [PlayerConfigRow.tsx](../src/components/setup/PlayerConfigRow.tsx)                 | One player's name and token inputs.                             |
+| [RecentGamesList.tsx](../src/components/setup/RecentGamesList.tsx)                 | Saved games with continue and delete, or the empty state.       |
+| [setup/RecentGamesList.test.tsx](../src/components/setup/RecentGamesList.test.tsx) | The two-step delete.                                            |
 
 ## `src/components/rules/` — rules booklet sections
 

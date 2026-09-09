@@ -221,7 +221,11 @@
     flex-direction: column;
     gap: t.$gap-sm;
     margin-top: auto;
-    padding-bottom: env(safe-area-inset-bottom);
+    // A real gap, plus the notch where there is one. `env()` with no fallback
+    // resolves to 0 in Playwright, in DevTools emulation and on every device
+    // without `viewport-fit=cover` - so the 58px button row sat flush against
+    // the bottom edge of the screen.
+    padding-bottom: calc(#{t.$gap-sm} + env(safe-area-inset-bottom, 0px));
     // Content scrolls behind the bar, so it cannot be transparent.
     background: var(--surface-app);
   }
@@ -229,12 +233,6 @@
   // The dock was pinned right by an auto margin, which fights a wrapping row.
   .app-shell.is-game .dice-dock {
     margin-left: 0;
-  }
-
-  // In the bar, where a phone game keeps its log. It floats over the board on
-  // desktop; here that put it exactly on top of the turn controls.
-  .app-shell.is-game .activity-button {
-    position: static;
   }
 }
 
@@ -330,11 +328,11 @@
     flex-direction: column;
     gap: t.$gap-sm;
     margin-top: auto;
-    padding-bottom: env(safe-area-inset-bottom);
+    // A real gap, plus the notch where there is one. `env()` with no fallback
+    // resolves to 0 in Playwright, in DevTools emulation and on every device
+    // without `viewport-fit=cover` - so the 58px button row sat flush against
+    // the bottom edge of the screen.
+    padding-bottom: calc(#{t.$gap-sm} + env(safe-area-inset-bottom, 0px));
     background: var(--surface-app);
-  }
-
-  .app-shell.is-game .activity-button {
-    position: static;
   }
 }

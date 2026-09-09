@@ -131,6 +131,44 @@ test('keeps the header usable while a decision modal is up', async ({ page }) =>
   await expect(page).toHaveURL(/\/rules/);
 });
 
+/**
+ * Every page needs air under the header.
+ *
+ * `.rules-shell` put its 28-72px of breathing room as `padding-block` on the
+ * SHELL, and the header negates the shell's padding to sit flush with the
+ * window - so all of it landed ABOVE the header and the booklet's h1 sat
+ * against the header's border. Per route, because that is how it was missed.
+ */
+for (const route of ['/', '/#/new', '/#/rules', '/#/host', '/#/join']) {
+  test(`leaves air between the header and the content of ${route}`, async ({ page }) => {
+    await page.goto(route);
+    await expect(page.getByTestId(TEST_IDS.appHeader)).toBeVisible();
+
+    const gap = await page.evaluate(() => {
+      const header = document.querySelector('.app-header') as HTMLElement;
+      // The first thing the page itself draws, whatever wrapper it uses.
+      const content = document.querySelector(
+        '.app-shell > :not(.app-header)'
+      ) as HTMLElement;
+      const first = (content.querySelector('h1, h2, section, .panel') ??
+        content) as HTMLElement;
+      return first.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
+    });
+
+    expect(gap).toBeGreaterThanOrEqual(12);
+  });
+}
+
+// The header must be flush with the window, not floating inside the shell's
+// padding - it was 28px down the page at 1280px.
+test('sits the header flush against the top of the window', async ({ page }) => {
+  await page.goto('/');
+
+  const box = await page.getByTestId(TEST_IDS.appHeader).boundingBox();
+  expect(box?.y ?? -1).toBe(0);
+  expect(box?.x ?? -1).toBe(0);
+});
+
 // An unmatched hash used to render a blank page.
 test('says so on a route that does not exist', async ({ page }) => {
   await page.goto('/#/no-such-screen');

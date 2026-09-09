@@ -190,36 +190,38 @@
 }
 
 // ---------------------------------------------------------------------------
-// Floating activity control
+// The activity control
+//
+// A header control now, not a floating pill. It was `position: fixed` bottom
+// left over the board, which on a phone landed exactly on the dice - so it was
+// un-fixed there and lived in the turn-control row instead, two treatments for
+// one button. In the header it is one thing everywhere, and it gives the bar
+// back the width it was taking from the tightest row on the screen.
 // ---------------------------------------------------------------------------
 .activity-button {
-  position: fixed;
-  bottom: t.$floating-inset;
-  left: t.$floating-inset;
-  z-index: 20;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: t.$activity-button-height;
-  padding: 0 16px;
-  border: 1px solid var(--border-subtle);
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--border-input);
   border-radius: t.$radius-sharp;
-  background: var(--surface-panel);
-  color: var(--text-primary);
+  background: var(--button-secondary);
+  color: var(--button-secondary-text);
   font-size: 0.9rem;
-  box-shadow: 0 10px 26px rgba(26, 32, 25, 0.18);
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease;
+  cursor: pointer;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 30px rgba(26, 32, 25, 0.24);
+    background: var(--button-secondary-hover);
   }
 
   &:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    min-height: t.$activity-button-height;
   }
 }
 

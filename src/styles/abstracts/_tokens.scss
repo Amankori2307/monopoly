@@ -82,11 +82,10 @@ $stack-expanded-max-height: 420px;
 // them - the links and the error banner - down to a clipped strip.
 $player-stack-max-share: 55%;
 
-// Floating controls over the board: the activity button and the toast stack.
-// Toasts sit above the button rather than opposite it, because the opposite
-// corner is where the dice and the end-turn button live - a toast there
-// intercepted the click that rolled.
-$floating-inset: clamp(16px, 2.2vw, 32px);
+// How tall the activity control is on a phone, where every tap target is 44px.
+// $floating-inset went with the floating pill: the activity button is a header
+// control now and the toast stack sits in the sidebar's own flow, so nothing
+// floats over the board any more.
 $activity-button-height: 44px;
 
 // Player token on the board. Big enough to follow while it moves.

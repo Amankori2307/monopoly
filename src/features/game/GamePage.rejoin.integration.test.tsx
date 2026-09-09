@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
-import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import { TableMode } from '../../domain/types/game.enums';
 import type { GameState } from '../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';

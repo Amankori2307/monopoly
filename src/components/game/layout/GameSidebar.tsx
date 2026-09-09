@@ -1,6 +1,5 @@
 import type { GameState } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
-import { ActivityButton } from '../overlays/ActivityButton';
 import { CommandErrorBanner } from '../panels/CommandErrorBanner';
 import { ToastStack } from '../overlays/ToastStack';
 import { PlayersPanel } from '../panels/PlayersPanel';
@@ -14,11 +13,8 @@ interface GameSidebarProps {
   canRoll: boolean;
   connectedSeatIds: ReadonlySet<string>;
   currencySymbol: string;
-  /** Size of the game history, shown on the activity button. */
-  eventCount: number;
   onDismissToast: (id: string) => void;
   onEndTurn: () => void;
-  onOpenActivity: () => void;
   onRoll: () => void;
   onSelectPlayer: (playerId: string) => void;
   soundEnabled: boolean;
@@ -43,10 +39,8 @@ export function GameSidebar({
   canRoll,
   connectedSeatIds,
   currencySymbol,
-  eventCount,
   onDismissToast,
   onEndTurn,
-  onOpenActivity,
   onRoll,
   onSelectPlayer,
   soundEnabled,
@@ -102,12 +96,6 @@ export function GameSidebar({
           // got to, cutting both legs short.
           canRoll={canRoll}
           canRollAgain={turn.canRollAgain}
-          // Floating over the board on desktop, in the bar on a phone. It is
-          // rendered here rather than with the other overlays because a
-          // `position: fixed` element ignores its DOM position, so this move
-          // changes nothing above the phone breakpoint - and below it the
-          // button simply becomes static and lands in the row.
-          leading={<ActivityButton eventCount={eventCount} onOpen={onOpenActivity} />}
           speedDieFace={turn.speedDieFace}
           lastRoll={turn.lastRoll}
           lastRollId={turn.lastRollId}

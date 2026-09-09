@@ -47,6 +47,15 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 - **The appearance picker left the form.** It was a `<select>` between the identity fields and the
   Speed Die toggle, which implied it was saved with the game — it is a per-device preference, and it
   lives in the header's settings menu.
+- **The masthead is gone entirely** — the edition name in the display serif, the lede, the "at a
+  glance" ruleset card and the link to the booklet. The header carries the nav and the chooser
+  carries the framing, so on this screen they were a banner between the player and the form.
+- **The tokens follow the edition.** `defaultTokens` read India's catalog whatever was selected and
+  its effect keyed on the player count alone, so picking another edition left ids like `elephant`
+  that exist in no other catalog — the token finder returned `undefined` and every player rendered
+  as a **colourless, emoji-less disc**, on a board where colour is the only thing telling them
+  apart. It takes the selected edition's catalog now, keeps a piece the player chose when that
+  edition has it, and the effect is keyed on the edition too.
 - **A saved game says whether it is Local or Online**, from `tableMode` on the index entry, and an
   online save is _Rejoined_ rather than continued. One whose join code this device never had is
   refused with the reason on screen rather than opened with every control dead — see

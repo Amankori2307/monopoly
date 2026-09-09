@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../../domain/board/indiaEditionBoard';
-import { indiaEditionTheme } from '../../../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../../../domain/themes/india.theme';
 import {
   AuctionLedgerKind,
   BuildingKind,

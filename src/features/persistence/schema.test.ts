@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGameState } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
-import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import type { GameState } from '../../domain/types/game.interfaces';
 import { gameStateSchema } from './schema';
 

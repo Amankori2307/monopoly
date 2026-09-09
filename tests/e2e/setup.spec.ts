@@ -10,20 +10,15 @@ import { startGame } from './helpers';
  * Persistence: LocalStorage - whose Speed Die row said "planned later" while the
  * Speed Die's own toggle sat a few centimetres below it.
  */
-test('sets up a game behind a masthead a player can read, not a spec sheet', async ({
-  page,
-}) => {
-  // The masthead follows the ruleset picked in the form below it, so it lives
-  // with the form rather than on the front door.
+test('leads with the form, not a banner or a spec sheet', async ({ page }) => {
   await page.goto('/#/new');
 
-  // Titled with the ruleset it is about to start, in the board's display serif.
-  const title = page.getByRole('heading', { level: 1 });
-  await expect(title).toHaveText(/India Edition/);
-  await expect(title).toHaveCSS('font-family', /Fraunces/);
-
-  await expect(page.getByTestId(TEST_IDS.rulesetGlance)).toBeVisible();
-  await expect(page.getByRole('link', { name: /Read the rules/i })).toBeVisible();
+  // The masthead is gone: the edition name in the display serif, the lede, the
+  // "at a glance" card and the link to the booklet. The header carries the nav
+  // and the front door carries the framing.
+  await expect(page.getByTestId(TEST_IDS.rulesetGlance)).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /Read the rules/i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Create game' })).toBeVisible();
 
   // Nothing about how it was built, and nothing calling a shipped rule unbuilt.
   const copy = (await page.locator('body').innerText()).toLowerCase();
@@ -33,8 +28,7 @@ test('sets up a game behind a masthead a player can read, not a spec sheet', asy
 
   // The form is the reason anyone is here, so it takes the wider column - it
   // used to take the narrower one, with the room given to a recent-games list
-  // that is empty on a first visit. By panel, not by the list inside it: there
-  // are no saved games yet, so the list itself is not on the page.
+  // that is empty on a first visit.
   const [form, recent] = await Promise.all([
     page.locator('.setup-panel').boundingBox(),
     page.locator('.recent-panel').boundingBox(),

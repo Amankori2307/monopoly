@@ -31,7 +31,7 @@ import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { RAILWAY_RENT_BY_COUNT } from '../constants/board.constants';
 import { chanceCards, communityChestCards } from '../cards/indiaEditionCards';
-import { indiaEditionTheme } from '../themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import { getPlacementSites } from './buildings.utils';
 import { startAuction } from './engine/auction.utils';
 import { drawCard } from './engine/cards.utils';

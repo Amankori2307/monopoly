@@ -4,7 +4,6 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { PlayerConfigRow } from '../../components/setup/PlayerConfigRow';
 import { RecentGamesList } from '../../components/setup/RecentGamesList';
 import { GameIdentityFields } from '../../components/setup/GameIdentityFields';
-import { SetupHero } from '../../components/setup/SetupHero';
 import { SpeedDieToggle } from '../../components/setup/SpeedDieToggle';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { bootstrapRecentGames, createNewGame, removeSavedGame } from '../game/gameSlice';
@@ -59,8 +58,6 @@ export function NewGamePage() {
   return (
     <AppShell editionId={form.themeId}>
       <div className="page">
-        <SetupHero currencySymbol={currencySymbol} themeName={form.selectedTheme.name} />
-
         <div className="layout-grid">
           <section className="panel setup-panel">
             <h2>Start a new game</h2>

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ColorGroupProgress } from '../../../domain/rules/holdings.utils';
-import { indiaEditionTheme } from '../../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
 import { ColorGroup } from '../../../domain/types/game.enums';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { PlayerSummary } from './panels.interfaces';

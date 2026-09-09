@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
 import type { HoldingsSection } from '../../../domain/rules/holdings.utils';
 import { isOwnableSpace, isStreetSpace } from '../../../domain/rules/space.utils';
-import { indiaEditionTheme } from '../../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
 import { ColorGroup, SpaceKind } from '../../../domain/types/game.enums';
 import type { OwnableSpace } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';

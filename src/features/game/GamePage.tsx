@@ -12,6 +12,7 @@ import { TOAST_DISMISS_MS } from './game.constants';
 import { GameUnavailable } from './GameUnavailable';
 import { selectCanEndTurn, selectCanRollDice } from './gameView.selectors';
 import { useAppSelector } from '../../app/hooks';
+import { ActivityButton } from '../../components/game/overlays/ActivityButton';
 import { AppShell } from '../shell/AppShell';
 import { useActiveGame } from './hooks/useActiveGame';
 import { useFeedbackGate } from './hooks/useFeedbackGate';
@@ -79,7 +80,16 @@ export function GamePage() {
     // pinned at the top, one scrolling region, dice in a bar at the bottom. A
     // modifier class rather than a :has() selector, because only this page wants
     // it and an explicit class is cheaper to read and to assert on.
-    <AppShell className="is-game" editionId={activeGame.themeId}>
+    <AppShell
+      activity={
+        <ActivityButton
+          eventCount={activeGame.history.length}
+          onOpen={overlays.openActivity}
+        />
+      }
+      className="is-game"
+      editionId={activeGame.themeId}
+    >
       <div className="page">
         {/* data-moving publishes the walk, so a test can assert nothing slipped out mid-way. */}
         <div
@@ -108,10 +118,8 @@ export function GamePage() {
             canRoll={selectCanRollDice(activeGame, viewer) && !isMoving}
             connectedSeatIds={connectedSeatIds}
             currencySymbol={currencySymbol}
-            eventCount={activeGame.history.length}
             onDismissToast={commands.dismissToast}
             onEndTurn={commands.endTurn}
-            onOpenActivity={overlays.openActivity}
             onRoll={commands.rollDice}
             onSelectPlayer={overlays.openPlayer}
             soundEnabled={soundEnabled}

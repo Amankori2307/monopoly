@@ -11,7 +11,7 @@ import {
   SpaceKind,
   TurnPhase,
 } from '../../domain/types/game.enums';
-import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import { isStreetSpace } from '../../domain/rules/space.utils';
 import type { GameState, OwnableSpace } from '../../domain/types/game.interfaces';
 import {

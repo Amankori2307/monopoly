@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import type { AppearanceId } from '../../shared/constants/appearance.constants';
 import { NAV_ITEMS } from '../../shared/constants/nav.constants';
@@ -5,6 +6,8 @@ import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { SettingsMenu } from './SettingsMenu';
 
 interface AppHeaderProps {
+  /** An extra control for screens that have one. Rendered before settings. */
+  activity?: ReactNode;
   appearance: AppearanceId;
   /** The current appearance's name, for the settings trigger's own label. */
   appearanceLabel: string;
@@ -26,6 +29,7 @@ interface AppHeaderProps {
  * `aria-current` rather than only a colour.
  */
 export function AppHeader({
+  activity,
   appearance,
   appearanceLabel,
   onAppearanceChange,
@@ -50,6 +54,11 @@ export function AppHeader({
           </NavLink>
         ))}
       </nav>
+
+      {/* The game's log lives here rather than in the bar beside the dice:
+          it is chrome, not a game control, and the bar is the tightest row on
+          a phone - it wrapped to two lines whenever End turn was showing. */}
+      {activity}
 
       <SettingsMenu
         appearance={appearance}

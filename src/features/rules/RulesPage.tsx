@@ -18,7 +18,7 @@ import { useHashScroll } from './hooks/useHashScroll';
 export function RulesPage() {
   useHashScroll();
   return (
-    <AppShell className="rules-shell" editionId={defaultTheme.id}>
+    <AppShell editionId={defaultTheme.id}>
       <main className="rules-page">
         <header className="rules-header">
           <div>

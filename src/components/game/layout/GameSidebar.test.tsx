@@ -1,6 +1,6 @@
-import { screen } from '@testing-library/react';
+import {} from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { indiaEditionTheme } from '../../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
 import { TurnPhase } from '../../../domain/types/game.enums';
 import type { GameState } from '../../../domain/types/game.interfaces';
 import { renderWithProviders } from '../../../test/renderWithProviders';
@@ -49,10 +49,8 @@ const renderSidebar = (overrides: Partial<Parameters<typeof GameSidebar>[0]> = {
       canRoll
       connectedSeatIds={new Set<string>()}
       currencySymbol="₹"
-      eventCount={7}
       onDismissToast={vi.fn()}
       onEndTurn={vi.fn()}
-      onOpenActivity={vi.fn()}
       onRoll={vi.fn()}
       onSelectPlayer={vi.fn()}
       soundEnabled
@@ -99,24 +97,15 @@ describe('GameSidebar', () => {
   });
 
   /**
-   * It is `position: fixed` on a desktop, so its DOM position is invisible
-   * there - which is exactly why it can live in the bar. On a phone it goes
-   * static and lands in the row instead of floating on top of it.
+   * The log is chrome, not a game control, so it is the header's now - and the
+   * bar it used to share with the dice is the tightest row on a phone. Its own
+   * coverage moved to AppHeader.test.tsx and navigation.spec.ts.
    */
-  it('renders the activity button inside the turn-control row', () => {
+  it('leaves the activity log to the header', () => {
     const { container } = renderSidebar();
 
-    const controls = container.querySelector(`[data-testid="${TEST_IDS.turnControls}"]`);
     expect(
-      controls?.querySelector(`[data-testid="${TEST_IDS.activityButton}"]`)
-    ).not.toBeNull();
-  });
-
-  it('reports the history size on the activity button', () => {
-    renderSidebar({ eventCount: 7 });
-
-    expect(
-      screen.getByRole('button', { name: 'Open activity log, 7 events' })
-    ).toBeInTheDocument();
+      container.querySelector(`[data-testid="${TEST_IDS.activityButton}"]`)
+    ).toBeNull();
   });
 });

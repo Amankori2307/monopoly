@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
-import { indiaEditionTheme } from '../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import { GAME_STATE_VERSION } from '../../domain/constants/game.constants';
 import { clearLog, getLogErrors } from '../../shared/utils/logger.utils';
 import { StorageWriteError } from './persistence.errors';

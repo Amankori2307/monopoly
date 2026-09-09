@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MORTGAGE_INTEREST_PERCENT } from '../constants/game.constants';
-import { indiaEditionTheme } from '../themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import type { GameState, StreetSpace, TradeState } from '../types/game.interfaces';
 import { createGameState } from './gameEngine';
 import { SeededRandomSource } from './rng';

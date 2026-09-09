@@ -28,94 +28,12 @@
   }
 }
 
-.setup-masthead {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.65fr);
-  align-items: start;
-  gap: t.$gap-xl;
-  padding: 40px 34px 34px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  border-radius: t.$radius-sharp;
-  background: var(--surface-panel);
-  box-shadow: var(--shadow-panel);
-
-  @include deed-band;
-
-  @include m.below(t.$breakpoint-tablet) {
-    grid-template-columns: 1fr;
-    padding: t.$gap-xl t.$gap-lg t.$gap-lg;
-  }
-}
-
-.masthead-brand h1 {
-  margin: 0 0 12px;
-  // The board's display serif. The title is the theme's own name, so it can run
-  // to three words - hence a clamp that leans smaller than a one-word title
-  // would need, and a line-height that lets it wrap without colliding.
-  font-family: t.$font-serif;
-  font-size: clamp(2rem, 3.6vw, 3.5rem);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-}
-
 .masthead-lede {
   max-width: 52ch;
   margin: 0 0 t.$gap-lg;
   color: var(--text-body);
   font-size: 0.95rem;
   line-height: 1.55;
-}
-
-// ---------------------------------------------------------------------------
-// The ruleset, at a glance
-// ---------------------------------------------------------------------------
-.ruleset-glance {
-  padding: 16px 18px 18px;
-  border: 1px solid var(--border-subtle);
-  border-radius: t.$radius-sharp;
-  background: var(--surface-muted);
-}
-
-.ruleset-glance-title {
-  @include m.mono-label;
-  margin: 0 0 12px;
-  color: var(--text-eyebrow);
-}
-
-.ruleset-glance-rows {
-  display: grid;
-  gap: 0;
-  margin: 0;
-}
-
-// A rule between rows rather than around each: this is a printed table, and it
-// reads as one object instead of four.
-.ruleset-glance-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: t.$gap-md;
-  padding: 9px 0;
-
-  + .ruleset-glance-row {
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  dt {
-    color: var(--text-muted);
-    font-size: 0.82rem;
-  }
-
-  dd {
-    margin: 0;
-    color: var(--text-primary);
-    font-family: t.$font-mono;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
 }
 
 // ---------------------------------------------------------------------------

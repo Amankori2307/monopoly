@@ -192,14 +192,38 @@
   justify-content: space-between;
   gap: t.$gap-sm;
   font-size: 0.86rem;
+}
 
-  .select-input {
-    max-width: 140px;
-  }
+// A select needs the width its longest option asks for. Beside its label in a
+// 260px panel it had 140px, which cut "Match the edition" to "Match the edit".
+.settings-row.is-stacked {
+  display: grid;
+  gap: 4px;
+  justify-items: stretch;
 }
 
 .settings-note {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.72rem;
+}
+
+// The sound control is an icon now, so it needs a square footprint rather than
+// the width a word gave it.
+.settings-icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  @include m.below(t.$breakpoint-tablet) {
+    width: 44px;
+    min-width: 44px;
+  }
 }

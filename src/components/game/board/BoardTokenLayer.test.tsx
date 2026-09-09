@@ -4,7 +4,7 @@ import { getTokenPosition } from '../../../domain/board/boardLayout.utils';
 import { JAIL_POSITION } from '../../../domain/constants/game.constants';
 import { MoveDirection } from '../../../domain/types/game.enums';
 import type { PlayerState, ThemeToken } from '../../../domain/types/game.interfaces';
-import { indiaEditionTheme } from '../../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { BoardTokenLayer } from './BoardTokenLayer';
 

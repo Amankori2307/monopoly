@@ -5,8 +5,20 @@ import { useAppearance } from '../appearance/useAppearance';
 import { setSoundEnabled } from '../game/uiSlice';
 
 interface AppShellProps {
+  /**
+   * A control for the header that only some screens have - today the game's
+   * activity log. Passed in rather than resolved here, because it belongs to
+   * one route and the shell is on all of them.
+   */
+  activity?: ReactNode;
   children: ReactNode;
-  /** Extra classes on the shell, e.g. `is-game`, `rules-shell`. */
+  /**
+   * Extra classes on the shell, e.g. `is-game`.
+   *
+   * Do NOT use this for a page's own spacing: the header negates the shell's
+   * padding to sit flush with the window, so padding added here lands above the
+   * header rather than below it. Page spacing belongs on the page's wrapper.
+   */
   className?: string;
   /**
    * Whose palette to use when no appearance overrides it. Every page has a
@@ -30,7 +42,12 @@ interface AppShellProps {
  * routes would mean pushing that value back down through context to get
  * exactly what a prop already gives.
  */
-export function AppShell({ children, className = '', editionId }: AppShellProps) {
+export function AppShell({
+  activity,
+  children,
+  className = '',
+  editionId,
+}: AppShellProps) {
   const dispatch = useAppDispatch();
   const look = useAppearance(editionId);
   const soundEnabled = useAppSelector((state) => state.ui.soundEnabled);
@@ -38,6 +55,7 @@ export function AppShell({ children, className = '', editionId }: AppShellProps)
   return (
     <div className={`app-shell ${className}`.trim()} data-theme={look.dataTheme}>
       <AppHeader
+        activity={activity}
         appearance={look.appearance}
         appearanceLabel={look.label}
         onAppearanceChange={look.select}

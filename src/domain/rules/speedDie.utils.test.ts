@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SPEED_DIE_FACES } from '../constants/game.constants';
-import { indiaEditionTheme } from '../themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import { SpeedDieFace } from '../types/game.enums';
 import type { GameState } from '../types/game.interfaces';
 import { createGameState } from './gameEngine';

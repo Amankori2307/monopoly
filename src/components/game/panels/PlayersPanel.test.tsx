@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { MAX_PLAYERS } from '../../../domain/constants/game.constants';
-import { indiaEditionTheme } from '../../../domain/themes/indiaEditionTheme';
+import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { PlayerSummary } from './panels.interfaces';
 import { PlayersPanel } from './PlayersPanel';

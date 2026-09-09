@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MAX_PLAYERS, MIN_PLAYERS } from '../../../domain/constants/game.constants';
-import {
-  availableThemes,
-  indiaEditionTheme,
-} from '../../../domain/themes/indiaEditionTheme';
+import { availableThemes, defaultTheme } from '../../../domain/themes/themes.registry';
 import type {
   CreatePlayerInput,
   ThemeConfig,
+  ThemeToken,
 } from '../../../domain/types/game.interfaces';
 import { DEFAULT_GAME_NAME } from '../setup.constants';
 import { trimPlayerNames, validateSetupDraft } from '../setupValidation.utils';
@@ -42,11 +40,24 @@ const clampPlayerCount = (value: number) =>
 const defaultNames = (count: number, current: string[] = []) =>
   Array.from({ length: count }, (_, index) => current[index] ?? `Player ${index + 1}`);
 
-const defaultTokens = (count: number, current: string[] = []) =>
-  Array.from(
-    { length: count },
-    (_, index) => current[index] ?? indiaEditionTheme.tokenCatalog[index].id
-  );
+/**
+ * Tokens for `count` players, from THIS edition's catalog.
+ *
+ * It read `indiaEditionTheme.tokenCatalog` regardless of the edition selected,
+ * and the effect below only re-ran on `playerCount` - so picking any other
+ * edition left ids like `elephant` that exist in no other catalog. The token
+ * finder then returned undefined and every player rendered as a colourless,
+ * emoji-less disc, on a board where colour is the only thing telling them
+ * apart. `useHostTableForm` already solved this; this is the same shape.
+ */
+const defaultTokens = (catalog: ThemeToken[], count: number, current: string[] = []) =>
+  Array.from({ length: count }, (_, index) => {
+    const held = current[index];
+    // Keep what the player chose, unless this edition has no such piece.
+    return held && catalog.some((token) => token.id === held)
+      ? held
+      : (catalog[index % catalog.length]?.id ?? catalog[0].id);
+  });
 
 /**
  * Owns the setup form's state and validation. The page renders it; the rules
@@ -55,22 +66,29 @@ const defaultTokens = (count: number, current: string[] = []) =>
 export const useGameSetupForm = (): UseGameSetupFormResult => {
   const [gameName, setGameName] = useState(DEFAULT_GAME_NAME);
   const [playerCount, setPlayerCountState] = useState(MIN_PLAYERS);
-  const [themeId, setThemeId] = useState(indiaEditionTheme.id);
+  const [themeId, setThemeId] = useState(defaultTheme.id);
   const [playerNames, setPlayerNames] = useState(() => defaultNames(MIN_PLAYERS));
-  const [playerTokens, setPlayerTokens] = useState(() => defaultTokens(MIN_PLAYERS));
+  const [playerTokens, setPlayerTokens] = useState(() =>
+    defaultTokens(defaultTheme.tokenCatalog, MIN_PLAYERS)
+  );
   const [formError, setFormError] = useState<string | null>(null);
   const [useSpeedDie, setUseSpeedDie] = useState(false);
   const [playerCountNotice, setPlayerCountNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    setPlayerNames((current) => defaultNames(playerCount, current));
-    setPlayerTokens((current) => defaultTokens(playerCount, current));
-  }, [playerCount]);
-
   const selectedTheme = useMemo(
-    () => availableThemes.find((theme) => theme.id === themeId) ?? indiaEditionTheme,
+    () => availableThemes.find((theme) => theme.id === themeId) ?? defaultTheme,
     [themeId]
   );
+
+  // Keyed on the EDITION as well as the count. It was `[playerCount]` only, so
+  // switching edition left every player holding a piece that edition does not
+  // have - see defaultTokens.
+  useEffect(() => {
+    setPlayerNames((current) => defaultNames(playerCount, current));
+    setPlayerTokens((current) =>
+      defaultTokens(selectedTheme.tokenCatalog, playerCount, current)
+    );
+  }, [playerCount, selectedTheme]);
 
   const setPlayerName = useCallback((index: number, value: string) => {
     setPlayerNames((current) => current.map((name, i) => (i === index ? value : name)));
