@@ -20,10 +20,30 @@ import { describe, expect, it } from 'vitest';
  * token the next person will assume something reads. So the rule is the one the
  * doc already states, and this is what makes it true: **add a contract token in
  * the same change as the rule that reads it, not before.**
+ *
+ * Two ways this used to pass while proving nothing, both fixed:
+ *
+ * - It matched `--token` as a plain substring, so `--accent` was "read" by any
+ *   mention of `--accent-hover`. Five of the contract's names are prefixes of
+ *   another, and every one of them was unfalsifiable. The match is now
+ *   boundary-anchored.
+ * - It scanned raw text, so a token named only in a COMMENT counted - including
+ *   in a comment explaining that the token had been removed. Comments are
+ *   stripped first.
  */
 
 const REPO_ROOT = join(__dirname, '../..');
 const THEMES_FILE = join(__dirname, 'themes/_themes.scss');
+
+/**
+ * Comments do not read a token, so they cannot vouch for one.
+ *
+ * Stripped before the scan, in both syntaxes: SCSS partials use `//` and the
+ * TSX uses both. A URL's `//` is not a concern here - no stylesheet in this
+ * tree carries one - but a `/* *\/` block is, so both are handled.
+ */
+const stripComments = (source: string): string =>
+  source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
 
 /** Everything that could legitimately read a custom property. */
 const collectSources = (dir: string, found: string[] = []): string[] => {
@@ -56,7 +76,7 @@ describe('the theme contract', () => {
     ...collectSources(join(REPO_ROOT, 'src')),
     ...collectSources(join(REPO_ROOT, 'tests')),
   ]
-    .map((path) => readFileSync(path, 'utf8'))
+    .map((path) => stripComments(readFileSync(path, 'utf8')))
     .join('\n');
 
   it('declares a reasonable number of tokens', () => {
@@ -65,7 +85,10 @@ describe('the theme contract', () => {
     expect(tokens.length).toBeGreaterThan(50);
   });
 
+  // Boundary-anchored: `--accent` must not be satisfied by `--accent-hover`.
+  // Anything that could continue the name - a letter, a digit, `-` or `_` -
+  // means this is a different token.
   it.each(tokens)('has something that reads --%s', (token) => {
-    expect(body).toContain(`--${token}`);
+    expect(body).toMatch(new RegExp(`--${token}(?![-\\w])`));
   });
 });

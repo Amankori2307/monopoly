@@ -12,7 +12,13 @@
   text-transform: uppercase;
 }
 
-@mixin card-surface($radius: t.$radius-xl) {
+/// A card's edge, ground and lift.
+///
+/// Took a `$radius` argument and then ignored it, hardcoding $radius-sharp in
+/// the body. Harmless while every radius is 0, and a trap the moment one is
+/// not - so the parameter is gone rather than honoured: the sharp system is a
+/// decision, not a default to override.
+@mixin card-surface {
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
   background: var(--surface-panel);

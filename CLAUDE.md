@@ -229,7 +229,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1440 unit tests, 184 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1450 unit tests, 184 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the

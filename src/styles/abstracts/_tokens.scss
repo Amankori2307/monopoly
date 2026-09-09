@@ -1,5 +1,17 @@
 // Non-themeable design tokens: geometry, type, motion.
 // Anything that changes between themes belongs in themes/_themes.scss instead.
+//
+// The design system's SCALES live next door in _scale.scss, and are forwarded
+// from here so `t.$space-3` and `t.text(body)` resolve in every partial that
+// already writes `@use '../abstracts/tokens' as t` - 24 files that would
+// otherwise each need a second @use line for nothing.
+//
+// The forward is load-bearing for a second reason that cost a measurement to
+// find: `abstracts/` is deliberately absent from main.scss because it emits no
+// CSS, so an @error in a partial nothing @uses is never evaluated. _scale.scss
+// guards its own grid and its own layer order at compile time, and both guards
+// were silently inert until this line put the file in everyone's graph.
+@forward 'scale';
 
 $font-sans: Manrope, 'Avenir Next', sans-serif;
 $font-serif: Fraunces, 'Iowan Old Style', Georgia, serif;

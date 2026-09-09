@@ -1,0 +1,319 @@
+@use 'sass:list';
+@use 'sass:map';
+@use 'sass:math';
+
+// ---------------------------------------------------------------------------
+// The design system's scales.
+//
+// This file is the SYSTEM; _tokens.scss beside it holds this app's bespoke
+// METRICS - the board's grid tracks, the deed card's fixed size, the player
+// stack's fan, the header's heights, the breakpoints. The distinction is
+// load-bearing: a scale is a ladder you pick a rung from, and a metric is one
+// measurement that happens to matter. Adding a rung here is a design decision;
+// adding a metric there is a layout fact.
+//
+// Every scale below replaces a measured mess. Before it:
+//
+//   type      118 declarations, 38 distinct rem values - twelve of them inside
+//             the 0.76-0.90rem band, differences of 0.16px that cannot be
+//             intent. h2 was the only heading with a size anywhere, and nine
+//             partials overrode it.
+//   spacing   201 literals against 91 token uses, running TWO incompatible
+//             ladders at once: the tokens were 5/9/14/22/28 while the three
+//             commonest literals - 12px, 10px, 6px, 72 uses between them - had
+//             no token at all.
+//   leading   14 values floating free of the sizes they belonged to.
+//   tracking  19 values across two mechanisms.
+//   motion    8 durations, and one repeated verbatim seven times with no name
+//             while the structurally identical piece easing had a token.
+//
+// Unlike $theme-contract, a rung may exist before anything reads it. A gappy
+// ladder is what invites a literal: somebody needing 32px with no $space-8 to
+// reach for writes 32px, and the drift starts again. The theme contract is the
+// opposite case - a colour nobody reads is a colour every palette must invent a
+// value for - which is why its guard forbids exactly what this file allows.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Spacing: a 4px grid.
+//
+// The number IS the multiple, so $space-3 is unambiguously 12px. This is the
+// one scale that is deliberately NOT role-named: the same 12px is a form's
+// field gap, a card's inner padding and a button's inline padding, so a role
+// name here would be a lie about what it is for.
+//
+// Snapping the old values to their nearest rung moves nothing by more than 2px,
+// and eleven of the twenty-three in use were already on the grid. The old gap
+// tokens land as 5->4, 9->8, 14->12, 22->20, 28->28.
+//
+// Anything above 48px is a layout fact rather than a rung - see _tokens.scss.
+// ---------------------------------------------------------------------------
+$space-unit: 4px;
+$space-scale: 4px 8px 12px 16px 20px 24px 28px 32px 36px 40px 44px 48px;
+
+/// One rung, by index. Bounds-checked, so space(99) names the mistake.
+@function space($step) {
+  @if $step < 1 or $step > list.length($space-scale) {
+    @error 'No space step #{$step}. The ladder has #{list.length($space-scale)} rungs.';
+  }
+  @return list.nth($space-scale, $step);
+}
+
+// Named aliases, derived rather than restated - the boardTracks lesson: two
+// places that must agree eventually do not.
+$space-1: space(1);
+$space-2: space(2);
+$space-3: space(3);
+$space-4: space(4);
+$space-5: space(5);
+$space-6: space(6);
+$space-7: space(7);
+$space-8: space(8);
+$space-9: space(9);
+$space-10: space(10);
+$space-11: space(11);
+$space-12: space(12);
+
+// ---------------------------------------------------------------------------
+// Type: role-named, and each size carries its own line height.
+//
+// Role-named because a token should express a decision - `body` says what the
+// text IS, where `sm` only says how big it is and gives the next person no
+// reason to pick it over `xs`. Spacing above is the deliberate exception.
+//
+// Size and leading travel together because they were the same decision all
+// along: fourteen line heights had drifted loose of the sizes they belong to,
+// including 1.04 and 1.05 in one partial. Reach for them through the text()
+// mixin, which sets both, rather than reading the map directly.
+// ---------------------------------------------------------------------------
+$type-scale: (
+  // Counters, badge digits, the smallest mono labels.
+  micro: (0.62rem, 1.1),
+  // An eyebrow, a definition term, any uppercase mono label.
+  label: (0.68rem, 1.1),
+  // Secondary and supporting text: meta rows, hints, table cells.
+  small: (0.76rem, 1.4),
+  // The default. Body copy, button labels, form fields.
+  body: (0.84rem, 1.5),
+  // A lede or an intro paragraph - body copy asked to carry a screen.
+  lead: (0.94rem, 1.55),
+  // h3, a panel's own heading, a deed's rent title.
+  heading: (1.1rem, 1.35),
+  // h2. Deliberately the value h2 already had, so the commonest heading in the
+  // app does not move at all.
+  title: (1.42rem, 1.15),
+  // h1 on an ordinary page.
+  display: (1.7rem, 1.1),
+  // A masthead. Usually the upper end of a clamp() rather than a flat size.
+  hero: (2rem, 1.05)
+);
+
+/// The size for one role, for a clamp() endpoint or a calc().
+///
+/// Prefer the text() mixin, which also sets the leading. This exists because a
+/// fluid heading needs the rung as a bound rather than as a declaration.
+@function text-size($role) {
+  $entry: map.get($type-scale, $role);
+  @if $entry == null {
+    @error 'Unknown type role "#{$role}". Roles: #{map.keys($type-scale)}.';
+  }
+  @return list.nth($entry, 1);
+}
+
+/// The line height for one role.
+@function text-leading($role) {
+  $entry: map.get($type-scale, $role);
+  @if $entry == null {
+    @error 'Unknown type role "#{$role}". Roles: #{map.keys($type-scale)}.';
+  }
+  @return list.nth($entry, 2);
+}
+
+/// One rung of the type scale, size and leading together.
+///
+/// @example scss
+///   .helper-text { @include text(small); }
+@mixin text($role) {
+  font-size: text-size($role);
+  line-height: text-leading($role);
+}
+
+// ---------------------------------------------------------------------------
+// Weight.
+//
+// Three, which is what was actually in use: 500, 700 and 800, plus a single
+// stray 600 in the lobby that had no reason to be different from its siblings.
+// ---------------------------------------------------------------------------
+$weight-regular: 500;
+$weight-bold: 700;
+$weight-heavy: 800;
+
+// ---------------------------------------------------------------------------
+// Tracking.
+//
+// Nineteen values collapse to six. Two mechanisms fed them - a literal
+// letter-spacing and the $tracking argument of mono-label() - and they never
+// agreed, so an eyebrow set through the mixin and one hand-written beside it
+// tracked differently.
+//
+// Negative tracking is for large type only: it tightens a heading that would
+// otherwise look loose, and applied to body copy it just hurts to read.
+// ---------------------------------------------------------------------------
+$track-snug: -0.065em; // A masthead, hero size only
+$track-tight: -0.03em; // Headings from `title` up
+$track-normal: 0;
+$track-wide: 0.02em; // Mono figures, where digits need air
+$track-label: 0.08em; // A short uppercase label in the body face
+$track-caps: 0.14em; // An eyebrow: uppercase mono, needs the most
+$track-caps-loose: 0.2em; // A join code, read aloud one character at a time
+
+// ---------------------------------------------------------------------------
+// Elevation: geometry only, until the ink exists.
+//
+// Thirteen shadow declarations carried eleven near-identical dark-green tints -
+// rgba(22,27,22,.55), rgba(24,30,23,.24), rgba(23,29,20,.18) - for what is one
+// colour, plus thirteen offset/blur signatures with no two alike.
+//
+// The fix separates the two halves: the GEOMETRY is a fact about how far a
+// surface floats and does not change between palettes, while the INK does. So
+// the ink becomes a theme token and lands with the rules that read it, and
+// these are composed at the point of use:
+//
+//   box-shadow: $elevation-2 var(--shadow-ink);
+//
+// which is legal CSS - box-shadow takes its colour last. Written the other way
+// round, as a complete themed value per level, a dark palette would have to
+// restate the geometry it does not care about.
+// ---------------------------------------------------------------------------
+$elevation-1: 0 1px 3px; // Resting: a card at rest, a sticky strip
+$elevation-2: 0 8px 22px; // Raised: the card on top of a stack, a menu
+$elevation-3: 0 12px 28px; // Floating: a drawer, a toast
+$elevation-4: 0 25px 70px; // Modal: the only thing on screen
+
+// ---------------------------------------------------------------------------
+// Layers.
+//
+// Only APP layers are named here. Below $z-layer-floor a z-index is local to
+// one component's own stacking context - the board's own 1-7 for ribbons,
+// tokens and stamps, the player stack's fan derived from $max-players - and
+// naming those globally would suggest they compete with the header, which they
+// cannot: they sit inside a positioned ancestor.
+//
+// The header sits above every scrim on purpose: a card or a buy decision must
+// never take the app's only navigation hostage, which is the bug CLAUDE.md
+// section 8 records at length.
+//
+// ONE OPEN QUESTION, deliberately left open until the layers are actually
+// migrated. `.trade-backdrop` is a full-viewport sheet at 60, i.e. ABOVE the
+// header, and nothing in _trade.scss explains it - its comment is about
+// two-column layout. Two readings, and they are both defensible:
+//
+//   Keep it.  A trade closes on a click outside (GameOverlayLayer: "an offer
+//             nobody has sent yet is not a decision anyone is waiting on"), so
+//             there is always a way out. Covering the nav is only a trap when
+//             there is not.
+//   Lower it. Being able to LEAVE a trade is not the same as being able to
+//             mute the game while in one, and a trade is the longest-lived
+//             overlay in the app - you assemble an offer and wait for someone
+//             to read it. Every other backdrop here is 30-40.
+//
+// $z-modal-dismissible exists so the first reading has a name if it wins. It
+// is referenced by nothing yet.
+//
+// Two apparent collisions, and they are not the same:
+//
+//   45  toasts and the command-error banner. One layer, two tenants: both are
+//       "a notice that must stay above a scrim", and they never overlap each
+//       other. Equal is correct; naming it says so.
+//   35  the spectator veil and the drawer scrim. A REAL collision - somebody
+//       else's decision can arrive while your own holdings drawer is open, and
+//       the drawer wins today only because _overlays.scss:105 comes after :51.
+//       Split, so the outcome stops depending on file order.
+// ---------------------------------------------------------------------------
+$z-layer-floor: 10; // Below this, a z-index is a component's own business
+$z-space-detail: 30; // The title-deed sheet
+$z-spectator: 35; // Somebody else's decision, veiled
+$z-drawer: 38; // A drawer's scrim, above the veil by decision not by order
+$z-modal: 40; // A decision's scrim: no way out but answering it
+$z-notice: 45; // Toasts and the command-error banner, above any scrim
+$z-header: 50; // Above anything you cannot dismiss
+$z-modal-dismissible: 60; // A trade: closes on a click outside, so it may cover
+
+// ---------------------------------------------------------------------------
+// Motion.
+//
+// Eight durations become three, and the unit split goes with them: everything
+// was `s`-decimal except one lone 120ms.
+//
+// $ease-standard is the curve that was already repeated verbatim seven times
+// across two partials with no name, while the structurally identical piece
+// easing in _tokens.scss had one.
+// ---------------------------------------------------------------------------
+$duration-fast: 160ms; // A hover, a colour change - felt, not watched
+$duration-base: 200ms; // A scrim fading, a panel rising
+$duration-slow: 300ms; // A card sliding out of a stack
+$ease-standard: cubic-bezier(0.22, 0.7, 0.3, 1);
+$ease-plain: ease;
+
+// ---------------------------------------------------------------------------
+// Borders and the focus ring.
+//
+// Six widths become three, and that is a decision rather than a transcription:
+// 1px is every surface's edge (49 of the 64 declarations), and the rest were
+// decorative accents at 2, 3, 4, 5 and 6px with nothing distinguishing them.
+//
+// The focus ring is one width and one offset because it was previously three
+// and four - and absent altogether from the three main button variants, which
+// fell back to whatever the browser drew.
+// ---------------------------------------------------------------------------
+$border-hairline: 1px; // Every surface edge
+$border-marker: 2px; // An emphasised edge
+$border-accent: 4px; // A card's coloured left-edge bar
+$focus-ring-width: 2px;
+$focus-ring-offset: 2px;
+
+// ---------------------------------------------------------------------------
+// The scale guards its own shape, at compile time.
+//
+// These belong here rather than in the vitest guard beside them because they
+// are about this file alone, and Sass can check them exactly: a broken ladder
+// should fail `pnpm build` and `pnpm dev`, not wait for a test run. The vitest
+// guard's job is the opposite - scanning the OTHER stylesheets, which Sass
+// cannot do. Same division as themes/_themes.scss and themeContract.guard.test.ts.
+// ---------------------------------------------------------------------------
+
+// The grid's promise is that $space-3 is three steps from zero. A rung off the
+// unit, or out of order, makes the index meaningless - and the index is the
+// only reason these are numbered rather than named.
+@each $step in $space-scale {
+  $index: list.index($space-scale, $step);
+  @if math.div($step, $space-unit) != $index {
+    @error 'Space rung #{$index} is #{$step}, which is not #{$index} x #{$space-unit}. ' +
+      'The ladder is a grid: $space-#{$index} must be #{$index * $space-unit}.';
+  }
+}
+
+// Navigation must stay reachable while a modal is up - see layout/_header.scss
+// and CLAUDE.md section 8. This is the check that would have caught a
+// full-viewport sheet being given a number above the header the day it was
+// written, rather than during an inventory two features later.
+@if $z-header <= $z-modal {
+  @error 'The header (#{$z-header}) must outrank a decision scrim (#{$z-modal}), ' +
+    'or a card decision takes the app\'s only navigation hostage.';
+}
+@if $z-notice <= $z-modal {
+  @error 'A notice (#{$z-notice}) must outrank a scrim (#{$z-modal}), or a rejected ' +
+    'command is invisible during the modal that provoked it.';
+}
+@if $z-drawer <= $z-spectator {
+  @error 'The drawer (#{$z-drawer}) must outrank the spectator veil (#{$z-spectator}); ' +
+    'the two co-occur and the order must not depend on main.scss import order.';
+}
+
+// A role with no leading is how fourteen line heights drifted loose of the
+// sizes they belong to.
+@each $role, $entry in $type-scale {
+  @if list.length($entry) != 2 {
+    @error 'Type role "#{$role}" must be (size, line-height); got #{$entry}.';
+  }
+}

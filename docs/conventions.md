@@ -312,21 +312,22 @@ split the file rather than raising the limit.
 
 ## 8. Enforcement
 
-| Convention                                 | Enforced by                                                       |
-| ------------------------------------------ | ----------------------------------------------------------------- |
-| Layer boundaries                           | `no-restricted-imports` overrides in `.eslintrc.json`             |
-| File naming                                | `check-file/filename-naming-convention`                           |
-| Enums / exported types in their typed file | `no-restricted-syntax` in `.eslintrc.json` (section 1)            |
-| Dice rolls going through `useDiceRoller`   | `no-restricted-syntax` (section 4c) + `diceRolling.guard.test.ts` |
-| Folder naming                              | `check-file/folder-naming-convention`                             |
-| Identifier naming                          | `@typescript-eslint/naming-convention`                            |
-| No `any`                                   | `@typescript-eslint/no-explicit-any`                              |
-| No nested ternaries                        | `no-nested-ternary`                                               |
-| File/function size                         | `max-lines`, `max-lines-per-function`, `complexity` (warnings)    |
-| Formatting                                 | Prettier (`pnpm format`)                                          |
-| Theme token discipline                     | `@error` guard in `themes/_themes.scss` at compile time           |
-| Blocked-reason copy shape                  | `blockedReasons.guard.test.ts`                                    |
-| Every edition supplying its own nouns      | `themeNouns.guard.test.ts`                                        |
+| Convention                                 | Enforced by                                                               |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| Layer boundaries                           | `no-restricted-imports` overrides in `.eslintrc.json`                     |
+| File naming                                | `check-file/filename-naming-convention`                                   |
+| Enums / exported types in their typed file | `no-restricted-syntax` in `.eslintrc.json` (section 1)                    |
+| Dice rolls going through `useDiceRoller`   | `no-restricted-syntax` (section 4c) + `diceRolling.guard.test.ts`         |
+| Folder naming                              | `check-file/folder-naming-convention`                                     |
+| Identifier naming                          | `@typescript-eslint/naming-convention`                                    |
+| No `any`                                   | `@typescript-eslint/no-explicit-any`                                      |
+| No nested ternaries                        | `no-nested-ternary`                                                       |
+| File/function size                         | `max-lines`, `max-lines-per-function`, `complexity` (warnings)            |
+| Formatting                                 | Prettier (`pnpm format`)                                                  |
+| Theme token discipline                     | `@error` guard in `themes/_themes.scss` at compile time                   |
+| Blocked-reason copy shape                  | `blockedReasons.guard.test.ts`                                            |
+| The design system's scales                 | `designSystem.guard.test.ts` + `@error` guards in `abstracts/_scale.scss` |
+| Every edition supplying its own nouns      | `themeNouns.guard.test.ts`                                                |
 
 Run everything before reporting work done:
 

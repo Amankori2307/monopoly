@@ -107,21 +107,22 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Domain tests
 
-| File                                                                                 | Covers                                                                                   |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| [rules/gameEngine.test.ts](../src/domain/rules/gameEngine.test.ts)                   | Engine defaults, buy decision, auction on decline (seeded dice).                         |
-| [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.                                     |
-| [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.                                       |
-| [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.                                      |
-| [board/boardTracks.guard.test.ts](../src/domain/board/boardTracks.guard.test.ts)     | `$board-corner-track` in the SCSS and `CORNER_TRACK` in the TS still agree.              |
-| [styles/themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)      | Every token in `$theme-contract` is actually read by something.                          |
-| [shared/hooks/useOutsideClick.ts](../src/shared/hooks/useOutsideClick.ts)            | Click-away dismissal on `pointerdown`. Paired with `useEscapeKey`.                       |
-| [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Steps and paths both ways, wrapping past GO either way, and a full round.                |
-| [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping.                         |
-| [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)           | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard. |
-| [rules/buildings.utils.test.ts](../src/domain/rules/buildings.utils.test.ts)         | Both even rules as a table of levels, bank shortages, and what buildings could raise.    |
-| [rules/trade.utils.test.ts](../src/domain/rules/trade.utils.test.ts)                 | Every proposal guard, mortgage transfer fees, and what is tradable.                      |
-| [rules/speedDie.utils.test.ts](../src/domain/rules/speedDie.utils.test.ts)           | When the die activates, its six faces, and what counts as a triple.                      |
+| File                                                                                 | Covers                                                                                       |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| [rules/gameEngine.test.ts](../src/domain/rules/gameEngine.test.ts)                   | Engine defaults, buy decision, auction on decline (seeded dice).                             |
+| [rules/space.utils.test.ts](../src/domain/rules/space.utils.test.ts)                 | Type guards, including board-wide title-deed counts.                                         |
+| [rules/playerActions.utils.test.ts](../src/domain/rules/playerActions.utils.test.ts) | Property-action availability and disabled reasons.                                           |
+| [board/boardLayout.utils.test.ts](../src/domain/board/boardLayout.utils.test.ts)     | Grid mapping: corners, uniqueness, edges, wrapping.                                          |
+| [board/boardTracks.guard.test.ts](../src/domain/board/boardTracks.guard.test.ts)     | `$board-corner-track` in the SCSS and `CORNER_TRACK` in the TS still agree.                  |
+| [styles/themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)      | Every token in `$theme-contract` is actually read by something.                              |
+| [styles/designSystem.guard.test.ts](../src/styles/designSystem.guard.test.ts)        | Nobody steps off the scales: clean rules per migrated axis, a per-file ratchet for the rest. |
+| [shared/hooks/useOutsideClick.ts](../src/shared/hooks/useOutsideClick.ts)            | Click-away dismissal on `pointerdown`. Paired with `useEscapeKey`.                           |
+| [board/tokenMovement.utils.test.ts](../src/domain/board/tokenMovement.utils.test.ts) | Steps and paths both ways, wrapping past GO either way, and a full round.                    |
+| [board/boardSide.utils.test.ts](../src/domain/board/boardSide.utils.test.ts)         | Corners, per-side membership, ten spaces a side, index wrapping.                             |
+| [rules/holdings.utils.test.ts](../src/domain/rules/holdings.utils.test.ts)           | Net worth with mortgages and buildings, set progress, group ordering, empty-group guard.     |
+| [rules/buildings.utils.test.ts](../src/domain/rules/buildings.utils.test.ts)         | Both even rules as a table of levels, bank shortages, and what buildings could raise.        |
+| [rules/trade.utils.test.ts](../src/domain/rules/trade.utils.test.ts)                 | Every proposal guard, mortgage transfer fees, and what is tradable.                          |
+| [rules/speedDie.utils.test.ts](../src/domain/rules/speedDie.utils.test.ts)           | When the die activates, its six faces, and what counts as a triple.                          |
 
 ## `src/features/` — pages, state, persistence (React + Redux aware)
 
@@ -389,28 +390,29 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## `src/styles/` — SCSS
 
-| File                                                                              | What it does                                                                                 |
-| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [main.scss](../src/styles/main.scss)                                              | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.              |
-| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                         | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                   |
-| [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)       | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.  |
-| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)                   | Non-themeable tokens: fonts, radii, spacing, breakpoints, board geometry, colour-group list. |
-| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)                   | Shared mixins: `below()`, `mono-label()`, `card-surface()`.                                  |
-| [base/\_reset.scss](../src/styles/base/_reset.scss)                               | Box-sizing, body, default control resets.                                                    |
-| [base/\_typography.scss](../src/styles/base/_typography.scss)                     | Headings, `.eyebrow`, helper and error text.                                                 |
-| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                           | `.app-shell`, `.page`, shared grid/flex helpers.                                             |
-| [components/\_board.scss](../src/styles/components/_board.scss)                   | Board grid, centre ribbon, deck markers, and **space row templates**.                        |
-| [components/\_buttons.scss](../src/styles/components/_buttons.scss)               | Primary / secondary / danger buttons.                                                        |
-| [components/\_forms.scss](../src/styles/components/_forms.scss)                   | Inputs, selects, labels, setup form grids.                                                   |
-| [components/\_panels.scss](../src/styles/components/_panels.scss)                 | Panel/hero/summary/decision surfaces, headings, badges, empty states.                        |
-| [components/\_dice.scss](../src/styles/components/_dice.scss)                     | Dice dock, die faces, pip grid positions, tumble keyframes.                                  |
-| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss)     | Title-deed modal: backdrop, card, colour band, rent table.                                   |
-| [components/\_mortgage-stamp.scss](../src/styles/components/_mortgage-stamp.scss) | The mortgage watermark's placement and opacity, on a deed and on a board square.             |
-| [components/\_auction.scss](../src/styles/components/_auction.scss)               | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                   |
-| [components/\_player.scss](../src/styles/components/_player.scss)                 | Player cards, metrics, owned-property cards.                                                 |
-| [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Two-column game layout, the phone app frame, and the landscape arrangement.                  |
-| [pages/\_home.scss](../src/styles/pages/_home.scss)                               | The setup screen: the deed-band masthead, the ruleset glance, the form and the saved games.  |
-| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                             | Rules booklet typography and tables.                                                         |
+| File                                                                              | What it does                                                                                                        |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [main.scss](../src/styles/main.scss)                                              | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.                                     |
+| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                         | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                                          |
+| [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)       | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.                         |
+| [abstracts/\_scale.scss](../src/styles/abstracts/_scale.scss)                     | The design system's ladders: space, type, weight, tracking, elevation, layers, motion, borders.                     |
+| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)                   | This app's own metrics: fonts, radii, breakpoints, board and deed geometry, header heights. Forwards `_scale.scss`. |
+| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)                   | Shared mixins: `below()`, `landscape-compact()`, `mono-label()`, `card-surface()`.                                  |
+| [base/\_reset.scss](../src/styles/base/_reset.scss)                               | Box-sizing, body, default control resets.                                                                           |
+| [base/\_typography.scss](../src/styles/base/_typography.scss)                     | Headings, `.eyebrow`, helper and error text.                                                                        |
+| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                           | `.app-shell`, `.page`, shared grid/flex helpers.                                                                    |
+| [components/\_board.scss](../src/styles/components/_board.scss)                   | Board grid, centre ribbon, deck markers, and **space row templates**.                                               |
+| [components/\_buttons.scss](../src/styles/components/_buttons.scss)               | Primary / secondary / danger buttons.                                                                               |
+| [components/\_forms.scss](../src/styles/components/_forms.scss)                   | Inputs, selects, labels, setup form grids.                                                                          |
+| [components/\_panels.scss](../src/styles/components/_panels.scss)                 | Panel/hero/summary/decision surfaces, headings, badges, empty states.                                               |
+| [components/\_dice.scss](../src/styles/components/_dice.scss)                     | Dice dock, die faces, pip grid positions, tumble keyframes.                                                         |
+| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss)     | Title-deed modal: backdrop, card, colour band, rent table.                                                          |
+| [components/\_mortgage-stamp.scss](../src/styles/components/_mortgage-stamp.scss) | The mortgage watermark's placement and opacity, on a deed and on a board square.                                    |
+| [components/\_auction.scss](../src/styles/components/_auction.scss)               | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                                          |
+| [components/\_player.scss](../src/styles/components/_player.scss)                 | Player cards, metrics, owned-property cards.                                                                        |
+| [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Two-column game layout, the phone app frame, and the landscape arrangement.                                         |
+| [pages/\_home.scss](../src/styles/pages/_home.scss)                               | The setup screen: the deed-band masthead, the ruleset glance, the form and the saved games.                         |
+| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                             | Rules booklet typography and tables.                                                                                |
 
 ## Test infrastructure
 

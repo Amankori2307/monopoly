@@ -231,7 +231,16 @@ export const tokenColor = async (page: Page, token: string): Promise<string> => 
  */
 export const findRoundedElements = (page: Page): Promise<string[]> =>
   page.evaluate(() => {
-    const physicalPieces = ['token-chip', 'die-face', 'pip', 'space-owner-dot'];
+    const physicalPieces = [
+      'token-chip',
+      'die-face',
+      'pip',
+      'space-owner-dot',
+      // A trade column's owner dot: the same piece as the board's, so the same
+      // exception. It escaped notice because no trade modal is open when this
+      // sweep runs - the identical vacuity buildings.spec.ts was written for.
+      'trade-column-dot',
+    ];
     return Array.from(document.querySelectorAll('body *'))
       .filter(
         (element) => !physicalPieces.some((name) => element.classList.contains(name))
