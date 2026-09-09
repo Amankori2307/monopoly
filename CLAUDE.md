@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1481 unit tests, 199 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1481 unit tests, 210 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -467,6 +467,40 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   floor rather than set to 40, because a bar cannot be shorter than the tallest
   thing standing in it. The board's forty cells are the one exemption: 27px on a
   336px board, and a 44px square is not a board.
+- **A button casts no shadow, and it must not fade its colour either.** The
+  hover used to lift 1px over `$emboss-press`, a hard 5px blurless offset. That
+  treatment is right on the board's ribbon and on the die because those are
+  OBJECTS; on chrome it read as a toy, and on touch it LATCHED - Android holds
+  `:hover` after a tap, so a button you had just pressed stayed raised over a
+  slab of ink until you pressed something else. Press feedback is `:active`
+  now, which cannot latch. The obvious replacement, fading the background
+  instead, is a second trap and `appearance.spec.ts` caught it within one run:
+  an appearance is a `data-theme` swap, so a colour transition makes every
+  button fade into the new palette while the whole page around it flips at
+  once. Buttons transition nothing, which is also what `.app-nav-link` and
+  `.board-space` already did.
+- **Every control in the app is `$control-tap` tall - fields included.** A text
+  field was 48px because that is what `body` leading plus 12px of padding came
+  to, and a button beside it was 44, so every form row was four pixels out of
+  line. A field also inherited the label's bold weight through the reset's
+  `font: inherit`, so what the player typed came out bold; it is deliberately
+  NOT given a smaller role with the fix, because a field under 16px makes iOS
+  zoom the page on focus.
+- **The deed card clipped on three of the four editions, and the cause was the
+  TITLE, not the card.** `.deed-card` is a fixed height with `overflow: hidden`
+  - deliberately, so it does not resize as you move around the board - so
+    anything too tall is cut off silently rather than scrolled to. At `display`
+    (1.7rem) the longest street name on the US and London boards wrapped to two
+    lines, which is 408px of content in a 380px card, and the building-cost
+    footer went off the bottom: nobody could see what a house costs. At `title`
+    (1.42rem) every street name in every edition sets on one line. Growing the
+    card instead would have moved the auction and trade panels, which measure
+    themselves from the same token, to fix a name that was simply too big for its
+    own card. The card did grow, but only from 380 to 392, because the tallest
+    deed then measured exactly 380 and zero slack is how this comes back.
+    `overlays.spec.ts` plays the **Atlantic City** board for this: India's
+    longest street is "Bhubaneshwar", which has always fitted, so the test would
+    pass on the default edition while proving nothing.
 - **A phone override of a type role must come LAST in its file.** The rule it
   overrides is the same specificity and a media query adds none, so source
   order is the whole of what decides it - written beside the rule it modifies,

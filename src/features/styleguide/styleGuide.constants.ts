@@ -39,7 +39,6 @@ export const ELEVATIONS = [
   { name: 'elevation-3', note: 'Floating: a toast' },
   { name: 'elevation-4', note: 'Modal: the only thing on screen' },
   { name: 'elevation-tuck', note: 'Cast upward, onto the card in front' },
-  { name: 'emboss-press', note: 'A hard offset: the printed-card look' },
 ] as const;
 
 /** The app's stacking order, lowest first. Mirrors the $z-* tokens. */

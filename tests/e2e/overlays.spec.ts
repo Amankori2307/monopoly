@@ -453,7 +453,7 @@ test("opens any player's holdings from any player card", async ({ page }) => {
 // Mirrors $deed-card-width / $deed-card-height / $holdings-peek / $drawer-pad
 // in src/styles/abstracts/_tokens.scss.
 const DEED_CARD_WIDTH = 340;
-const DEED_CARD_HEIGHT = 380;
+const DEED_CARD_HEIGHT = 392;
 const HOLDINGS_PEEK = 78;
 /** The card's own 1px border, inside its width and height box. */
 const CARD_BORDER = 1;
@@ -733,4 +733,68 @@ test('paints a rejected-command banner above the decision backdrop', async ({ pa
   expect(header).toBeGreaterThan(backdrop);
   expect(header).toBeGreaterThan(trade);
   expect(trade).toBe(backdrop);
+});
+
+/**
+ * The deed card must contain its own deed, on every board.
+ *
+ * `.deed-card` is a FIXED height with `overflow: hidden` - deliberately, so the
+ * card does not resize as you move around the board - which means anything too
+ * tall is silently cut off rather than scrolled to. It was: at 1.7rem the
+ * longest street name on three of the four editions wrapped to two lines, and
+ * the building-cost footer under the rent schedule went off the bottom. Nobody
+ * could see what a house costs on the US or London boards.
+ *
+ * Played on the Atlantic City board on purpose. India's longest street is
+ * "Bhubaneshwar", which has always fitted on one line, so this test run against
+ * the default edition would pass while proving nothing.
+ */
+test.describe('the deed card', () => {
+  test('fits the longest street name on the board', async ({ page }) => {
+    await startGame(page, { edition: 'Monopoly Classic (Atlantic City)' });
+
+    // The longest street names on this board, all 20-21 characters.
+    for (const name of [
+      'Mediterranean Avenue',
+      'North Carolina Avenue',
+      'Pennsylvania Avenue',
+    ]) {
+      await page.getByRole('button', { name: `View details for ${name}` }).click();
+
+      const deed = page.locator('.deed-card').first();
+      await expect(deed).toBeVisible();
+
+      const fit = await deed.evaluate((el) => {
+        const card = el as HTMLElement;
+        // `overflow: hidden` caps scrollHeight, so it cannot report the
+        // overflow - and `.deed-footer` has `margin-top: auto`, which
+        // collapses when the content is too tall, so the footer's own box
+        // stays inside the card while the schedule above it is cut. The only
+        // honest measure is what the content WANTS: release the height, read
+        // it, put it back.
+        const height = card.style.height;
+        const overflow = card.style.overflow;
+        card.style.height = 'auto';
+        card.style.overflow = 'visible';
+        const natural = card.offsetHeight;
+        card.style.height = height;
+        card.style.overflow = overflow;
+
+        return {
+          natural,
+          available: card.clientHeight,
+          hasFooter: card.querySelector('.deed-footer') !== null,
+        };
+      });
+
+      // Vacuity guard: a street always carries the building-cost footer, and
+      // that footer is what the overflow used to cut off.
+      expect(fit.hasFooter, `${name} should show its building costs`).toBe(true);
+      expect(fit.natural, `${name} content fits its card`).toBeLessThanOrEqual(
+        fit.available
+      );
+
+      await page.getByRole('button', { name: 'Close space details' }).click();
+    }
+  });
 });

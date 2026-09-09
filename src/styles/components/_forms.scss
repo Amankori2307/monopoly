@@ -37,13 +37,24 @@ label {
   }
 }
 
+// One control height across the app. A field was 48px and a button beside it
+// 44, so a form row was 4px out of line for no reason anybody had chosen -
+// the field's height was whatever `body` leading plus 12px of padding came to.
+// Both read $control-tap now, and the padding steps down so the floor is what
+// sets the height rather than fighting it.
 .text-input,
 .select-input {
   width: 100%;
-  padding: t.$space-3 t.$space-3;
-  border: 1px solid var(--border-input);
+  min-height: t.$control-tap;
+  padding: t.$space-2 t.$space-3;
+  border: t.$border-hairline solid var(--border-input);
   border-radius: t.$radius-sharp;
   background: var(--surface-input);
   color: var(--text-primary);
+  // The label above is bold and the reset gives a control `font: inherit`, so
+  // every value the player typed came out bold too. A label is emphasis; what
+  // you type is not. Deliberately NOT given a smaller role with it: a field
+  // under 16px makes iOS zoom the page on focus.
+  font-weight: t.$weight-normal;
   outline-color: var(--accent-strong);
 }

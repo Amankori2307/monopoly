@@ -45,7 +45,10 @@ export const CORNERS = [
  * exercise the crowded cases - a full table is where the sidebar and the token
  * cluster are under the most pressure.
  */
-export const startGame = async (page: Page, options: { players?: number } = {}) => {
+export const startGame = async (
+  page: Page,
+  options: { players?: number; edition?: string } = {}
+) => {
   // Straight to the setup screen, not through the chooser. `/` is a chooser
   // now, and going via a click would make ~150 tests depend on the front
   // door's copy for no gain - the tests that are ABOUT the front door use
@@ -55,6 +58,15 @@ export const startGame = async (page: Page, options: { players?: number } = {}) 
 
   if (options.players !== undefined) {
     await page.getByTestId(TEST_IDS.playerCountInput).fill(String(options.players));
+  }
+
+  // The edition decides the forty names, and a name's LENGTH is a layout fact:
+  // India's longest street is "Bhubaneshwar" and the US board's is
+  // "North Carolina Avenue", which is what makes the deed card's tallest case
+  // reachable at all. A spec that only ever plays the default board cannot see
+  // it.
+  if (options.edition !== undefined) {
+    await page.getByLabel('Ruleset').selectOption({ label: options.edition });
   }
 
   await page.getByRole('button', { name: 'Create game' }).click();

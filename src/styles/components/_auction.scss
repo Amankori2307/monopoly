@@ -113,21 +113,10 @@
   @include t.text(small);
 }
 
+// The surface, the edge and the hover all come from the button base now; this
+// is only how a bid shortcut sits in its row.
 .chip-button {
   flex: 0 0 auto;
-  padding: t.$space-1 t.$space-2;
-  border: 1px solid var(--border-input);
-  border-radius: t.$radius-sharp;
-  background: var(--surface-panel);
-  color: var(--text-body);
-  @include t.text(label);
-  font-weight: t.$weight-bold;
-  cursor: pointer;
-
-  &:not(:disabled):hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-  }
 }
 
 @include m.below(t.$breakpoint-tablet) {

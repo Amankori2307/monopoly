@@ -52,7 +52,12 @@ $board-color-bar-compact: 7px;
 // as you move around the board. Shrinking this clips the tallest deed rather
 // than growing the card, so re-measure before you change either dimension.
 $deed-card-width: 340px;
-$deed-card-height: 380px;
+// 392, not 380. With the title on one line the tallest deed - a street's
+// seven-row rent schedule - measures 380px of content, which in a 380px card
+// with `overflow: hidden` is exactly zero slack: any future row, or a wider
+// currency symbol, clips the footer again with nothing to say so. Three grid
+// steps of room, and deedFits in space-detail.spec.ts is what keeps it honest.
+$deed-card-height: 392px;
 // The colour strip bleeds to the card's top and side edges by negating this
 // padding, so the two must stay derived from one value - which is why the card
 // publishes it as --deed-pad rather than either site reading the variable.

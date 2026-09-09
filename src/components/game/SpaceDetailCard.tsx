@@ -127,7 +127,7 @@ function SiteActions({
       <div className="site-action-buttons">
         {siteActions.map((action) => (
           <button
-            className="secondary-button"
+            className="secondary-button is-compact"
             data-testid={`${TEST_IDS.siteAction}-${action.action}`}
             disabled={!action.isEnabled}
             key={action.action}
@@ -141,7 +141,7 @@ function SiteActions({
 
         {isOwnedByOpponent ? (
           <button
-            className="secondary-button"
+            className="secondary-button is-compact"
             data-testid={TEST_IDS.proposeTradeButton}
             onClick={onProposeTrade}
             type="button"

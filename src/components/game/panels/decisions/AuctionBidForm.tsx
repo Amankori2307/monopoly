@@ -59,7 +59,7 @@ export function AuctionBidForm({
         />
         {RAISE_STEPS.map((step) => (
           <button
-            className="chip-button"
+            className="chip-button is-compact"
             data-testid={TEST_IDS.auctionRaise}
             // A raise past the bidder's cash is not a bid they could make.
             disabled={field.amount + step > field.maximumBid}
@@ -74,7 +74,7 @@ export function AuctionBidForm({
           </button>
         ))}
         <button
-          className="chip-button"
+          className="chip-button is-compact"
           data-testid={TEST_IDS.auctionAllIn}
           disabled={field.maximumBid < field.minimumBid}
           onClick={() => onBidAmountChange(field.maximumBid)}

@@ -633,3 +633,63 @@ test.describe('an Android phone', () => {
     expect(height).toBe(44);
   });
 });
+
+// ---------------------------------------------------------------------------
+// What to do with the room a square board leaves on a tall screen
+// ---------------------------------------------------------------------------
+//
+// The board is square and a phone is not, so on a tall screen the board is
+// limited by WIDTH and the column under it has height to spare - 145px of it
+// at 360x740 with two players. All of it used to fall between the last player
+// card and the bottom bar, because the bar's `margin-top: auto` took the lot:
+// one hole, at the bottom, which reads as something missing rather than as
+// space.
+test.describe('a tall phone', () => {
+  test.use({ viewport: { width: 360, height: 740 } });
+
+  test('shares the spare height above and below the player cards', async ({ page }) => {
+    await startGame(page);
+
+    const board = await boxOf(page, '.board-card');
+    const stack = await boxOf(page, '.player-stack-region');
+    const footer = await boxOf(page, '.game-side-footer');
+
+    const above = stack.top - board.bottom;
+    const below = footer.top - stack.bottom;
+
+    // Vacuity guard: with two players there IS spare height here. If the board
+    // ever grew to fill the column this test would be asserting nothing.
+    expect(above + below).toBeGreaterThan(80);
+
+    // Shared, not piled at one end. The two are not exactly equal because the
+    // layout's own 12px gap sits above the sidebar, so allow for it.
+    expect(Math.abs(above - below)).toBeLessThanOrEqual(16);
+  });
+
+  /**
+   * The auto margin has to disappear when there is nothing left to share, or
+   * it would push a full column down and clip the top of it.
+   * `justify-content: center` does exactly that, which is why this is margins.
+   */
+  test('gives the space back when the column is full', async ({ page }) => {
+    await startGame(page, { players: MAX_PLAYERS });
+    await page.locator('.player-stack-expand').click();
+
+    const state = await page.evaluate(() => {
+      const side = document.querySelector('.game-side') as HTMLElement;
+      const region = document.querySelector('.player-stack-region') as HTMLElement;
+      const first = document.querySelector('.player-card') as HTMLElement;
+      return {
+        margin: getComputedStyle(region).marginTop,
+        scrolls: side.scrollHeight > side.clientHeight,
+        firstCardTop: first.getBoundingClientRect().top,
+        columnTop: side.getBoundingClientRect().top,
+      };
+    });
+
+    expect(state.scrolls).toBe(true);
+    expect(state.margin).toBe('0px');
+    // Nothing pushed off the top of the scroll container.
+    expect(state.firstCardTop).toBeGreaterThanOrEqual(state.columnTop - 1);
+  });
+});

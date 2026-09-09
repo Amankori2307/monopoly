@@ -1,48 +1,85 @@
 @use '../abstracts/tokens' as t;
 @use '../abstracts/mixins' as m;
 
-// Every control that looks like a button derives from here. Three of them
-// used to restate the whole surface instead - .dice-roll-button re-declared
-// the primary colour pair, and .settings-trigger and .activity-button the
-// secondary pair, so the pairs were written twice and three times over.
+// ---------------------------------------------------------------------------
+// One control surface, in the app's own language.
+//
+// Three of these used to restate the whole surface instead - .dice-roll-button
+// re-declared the primary colour pair, and .settings-trigger and
+// .activity-button the secondary pair - so the pairs were written twice and
+// three times over. .chip-button was a fourth, hand-rolled in _auction.scss.
+//
+// What the surface IS, and why it changed:
+//
+// A HAIRLINE EDGE, like every other surface here. Panels, inputs, the deed
+// card, the header, the settings panel and the site panel all carry
+// `1px solid var(--border-...)`; the button was the only thing in the app with
+// `border: 0`. That mattered most for .secondary-button, which is a near-white
+// ground on a near-white page: with no edge and no shadow it dissolves into
+// the page, and the shadow was the only thing holding it together.
+//
+// NO DROP SHADOW, in any state. The hover used to lift the button 1px and cast
+// `$emboss-press` - a hard 5px offset with no blur - beneath it. That treatment
+// is real elsewhere and deliberately so: the board's colour ribbon and the die
+// both use a blurless offset because they are OBJECTS, ink and plastic drawn as
+// ink and plastic. A button is chrome, and borrowing an object's treatment for
+// chrome is what made it read as a toy rather than as part of the page.
+//
+// It was also a mobile bug. `:hover` LATCHES on touch: Android holds the state
+// after a tap until you tap something else, so a button you had just pressed
+// sat raised with a slab of ink under it for as long as you looked at the
+// screen. `:active` cannot latch, which is where the press feedback lives now.
+//
+// A filled variant's edge is a darker shade of its own fill rather than a ring
+// around it, which is why primary borrows `--button-primary-hover` instead of
+// asking for a token of its own. In `midnight` that shade is LIGHTER, and that
+// is correct rather than a bug: on a dark ground an edge lifts by lightening.
+// ---------------------------------------------------------------------------
 .primary-button,
 .secondary-button,
 .danger-button,
 .dice-roll-button,
 .settings-trigger,
 .activity-button,
-.settings-icon-button {
+.settings-icon-button,
+.chip-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: t.$space-2;
-  // 44px is the touch-target minimum; .activity-button and .dice-roll-button
-  // were already there and these two were the odd ones out.
-  min-height: 44px;
-  padding: t.$space-2 t.$space-4;
-  border: 0;
+  // The floor a finger needs, from the scale rather than as the literal 44px
+  // this carried while every other control read the token.
+  min-height: t.$control-tap;
+  // $space-5 rather than $space-4. At 16px against a 44px height a two-word
+  // label came out nearly square - "Back" was 64x44 - which is what read as
+  // chunky. The height is a requirement; the width was just unconsidered.
+  padding: t.$space-2 t.$space-5;
+  // Transparent on the variants that want no edge, so every button has the
+  // same box whatever it is: a bordered secondary beside an unbordered primary
+  // would stand 2px taller than it.
+  border: t.$border-hairline solid transparent;
   border-radius: t.$radius-sharp;
   @include t.text(body-sm);
-  // Heavier than the role's default: a button's label is the action, and the
-  // weight is what makes it read as pressable rather than as prose.
-  font-weight: t.$weight-heavy;
+  // 700, not 800. Every other emphasised label in the app is bold, and the
+  // extra weight only made a 13.76px label shout.
+  font-weight: t.$weight-bold;
   text-decoration: none;
-  @include m.motion {
-    transition:
-      transform t.$duration-fast t.$ease-plain,
-      box-shadow t.$duration-fast t.$ease-plain;
-  }
-
-  // :not(:disabled) - the unqualified hover lifted a disabled button too, and
-  // the auction panel carried a rule undoing exactly that.
-  &:not(:disabled):hover {
-    transform: translateY(-1px);
-    box-shadow: t.$emboss-press var(--shadow-ink);
-  }
+  // NO transition, and that is a decision rather than an omission.
+  //
+  // The obvious replacement for the old transform/shadow transition was to
+  // fade the colour instead. It looks fine on a hover and is wrong everywhere
+  // else: an appearance is a `data-theme` swap on .app-shell, so a colour
+  // transition makes every button FADE into the new palette while the rest of
+  // the app flips instantly - the buttons visibly lag the page they are on.
+  // appearance.spec.ts caught it by reading a button's colour straight after
+  // the switch and still finding the old one.
+  //
+  // Instant is also the house style: .app-nav-link, .board-space and the chip
+  // this base absorbed never transitioned their hover either.
 
   // These three had no :focus-visible at all, so the app's most-used controls
   // fell back to the browser's own outline - which, over a saturated
-  // background with `border: 0`, is close to invisible.
+  // background, is close to invisible.
   @include m.focus-ring;
 
   &:disabled {
@@ -52,24 +89,54 @@
 
 .primary-button,
 .dice-roll-button {
+  border-color: var(--button-primary-hover);
   background: var(--button-primary);
   color: var(--button-primary-text);
 
-  &:not(:disabled):hover {
+  // :not(:disabled) - the unqualified hover used to reach a disabled button
+  // too, and the auction panel carried a rule undoing exactly that.
+  &:not(:disabled):hover,
+  &:not(:disabled):active {
     background: var(--button-primary-hover);
   }
+}
+
+.secondary-button,
+.chip-button {
+  border-color: var(--border-input);
+  background: var(--button-secondary);
+  color: var(--button-secondary-text);
+
+  &:not(:disabled):hover,
+  &:not(:disabled):active {
+    background: var(--button-secondary-hover);
+  }
+}
+
+// Its own text token, like every other variant. It borrowed --text-inverse,
+// which is a fine pairing in a light palette and black-on-black in a dark one:
+// midnight rendered this at 1.03:1, and nothing said so until the appearance
+// became selectable and a contrast sweep was pointed at it.
+//
+// Its edge is its own fill: danger has no darker shade in the contract, and
+// inventing one for a variant used three times is not worth a row in every
+// palette. The border is here for the box model, not to be seen.
+.danger-button {
+  border-color: var(--danger-bg);
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 // An icon on its own, with no chrome until you reach for it.
 //
 // These carried a border and a filled ground, which made a small glyph sit
-// inside a box that read as the control - and at 18px the icon read as
-// decoration next to it. The tap target is unchanged at 44px; only the paint
-// is gone, and it comes back on hover so the control still answers the pointer.
+// inside a box that read as the control. The tap target is unchanged; only the
+// paint is gone, and it comes back on hover so the control still answers the
+// pointer.
 .settings-trigger,
 .activity-button,
 .settings-icon-button {
-  border: 0;
+  border-color: transparent;
   background: none;
   color: var(--text-primary);
 
@@ -82,27 +149,29 @@
     height: t.$glyph-icon;
   }
 
-  &:not(:disabled):hover {
+  &:not(:disabled):hover,
+  &:not(:disabled):active {
     background: var(--button-secondary);
   }
 }
 
-.secondary-button {
-  background: var(--button-secondary);
-  color: var(--button-secondary-text);
-
-  &:not(:disabled):hover {
-    background: var(--button-secondary-hover);
-  }
-}
-
-// Its own text token, like every other variant. It borrowed --text-inverse,
-// which is a fine pairing in a light palette and black-on-black in a dark one:
-// midnight rendered this at 1.03:1, and nothing said so until the appearance
-// became selectable and a contrast sweep was pointed at it.
-.danger-button {
-  background: var(--danger-bg);
-  color: var(--danger-text);
+// ---------------------------------------------------------------------------
+// Compact: a dense action, at full tap height.
+//
+// The size that changes is the WIDTH and the label, never the height - a
+// finger needs 44px whatever the button is for. `.chip-button` was 23px tall
+// before this, which is how the auction's four bid shortcuts came to be the
+// smallest targets in the app, and they were invisible to the tap sweep
+// because reaching them takes a live auction.
+//
+// This also retires the anonymous `.site-action-buttons button` override, one
+// of the five descendant rules that silently resized whichever variant landed
+// inside them.
+// ---------------------------------------------------------------------------
+.is-compact {
+  padding-inline: t.$space-3;
+  @include t.text(small);
+  font-weight: t.$weight-bold;
 }
 
 // The appearance control names itself, until there is no room to.
@@ -117,10 +186,10 @@
   }
 }
 
-// Icon-only, the button shrinks to its glyph - 42px, just under the touch
-// minimum its own min-height already respects.
+// Icon-only, the button shrinks to its glyph, so it needs the floor on the
+// other axis too.
 @include m.below(t.$breakpoint-phone) {
   .secondary-button:has(.appearance-toggle-label) {
-    min-width: 44px;
+    min-width: t.$control-tap;
   }
 }

@@ -84,6 +84,9 @@ different jobs; that is not drift.
 change between palettes; what colour its shadow is does. Splitting them is what
 made a dark appearance possible without a second shadow ladder per theme.
 
+There is deliberately **no button-lift rung**. `$emboss-press` was one, and the
+button's hover was its only reader — see the control surface above.
+
 ### Layers
 
 `$z-space-detail` 30 · `$z-spectator` 35 · `$z-drawer` 38 · `$z-modal` 40 ·
@@ -102,7 +105,43 @@ respectful without anyone remembering. Six partials used to undo their motion
 in a separate `reduce` block, and the dice proved why that fails: an infinite
 tumble with no block anywhere.
 
-### Controls — how big a thing you press has to be
+### Controls — one surface, one height
+
+**Every control in the app is `$control-tap` tall** — buttons, text fields and
+selects alike. A field used to be 48px and a button beside it 44, so a form row
+was four pixels out of line for no reason anybody had chosen; the field's height
+was simply whatever `body` leading plus its padding came to.
+
+**A button is a hairline edge on a flat ground, and it casts no shadow in any
+state.** Panels, inputs, the deed card, the header and the site panel all carry
+`1px solid var(--border-...)`; the button was the only surface in the app with
+`border: 0`, which mattered most for `.secondary-button` — a near-white ground
+on a near-white page, held together by nothing but its shadow.
+
+That shadow was `$emboss-press`, a hard 5px blurless offset, cast on hover under
+a 1px lift. The same treatment is still right on the board's colour ribbon and
+on the die, because **those are objects** — ink and plastic, drawn as ink and
+plastic. On chrome it read as a toy. Three things follow:
+
+- **No `box-shadow` on a button, ever.** `controls.spec.ts` checks each variant
+  at rest and under the pointer.
+- **Press feedback is `:active`, never `:hover`.** `:hover` _latches_ on touch —
+  Android holds it after a tap until you press something else — so the old lift
+  left a button you had just tapped raised over a slab of ink.
+- **No colour transition either.** An appearance is a `data-theme` swap, so a
+  transition on `background-color` makes every button fade into the new palette
+  while the rest of the page flips at once. `appearance.spec.ts` reads a
+  button's colour immediately after the switch, and that is what catches it.
+
+A filled variant's edge is a darker shade of its own fill rather than a ring, so
+`.primary-button` borrows `--button-primary-hover` instead of asking for a token
+of its own. In `midnight` that shade is _lighter_, which is correct: on a dark
+ground an edge lifts by lightening.
+
+`.is-compact` is the one size modifier. It changes the **width and the label,
+never the height** — a finger needs 44px whatever the button is for.
+
+### The tap floor
 
 `$control-tap: 44px` is the floor for anything a thumb has to hit, and
 `$control-checkbox: 20px` is the one deliberate exception.
@@ -114,6 +153,11 @@ them something other than a button**: the header's nav links at 30px, the
 wordmark at 12, the booklet's ten section chips at 21, the deed sheet's close
 cross at 30×30 and a native checkbox at 13×13. What the misses have in common
 is that nothing stated the floor for them.
+
+A sixth turned up later and is the one worth remembering: `.chip-button`, the
+auction's bid shortcuts, at **23px**. No route sweep could see it, because
+reaching it takes a live auction — so the tap-floor test now plays on until one
+opens rather than only walking the pages.
 
 A checkbox stays 20px because a native control drawn at 44 looks broken. The
 **`<label>` around it carries the tap area instead**, which only works while
@@ -162,6 +206,8 @@ in one block at the end of the file for exactly this reason.
    not buttons.
 8. **A phone override goes last in its file**, or specificity ties are settled
    by accident.
+9. **A button casts no shadow and fades no colour.** Hover and `:active` change
+   the paint; nothing moves, and nothing animates.
 
 ## The exceptions
 

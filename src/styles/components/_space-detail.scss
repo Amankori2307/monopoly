@@ -174,8 +174,18 @@
 
   // Fixed, not viewport-relative: the card is a fixed width, so the name must
   // size to the card rather than to the window it happens to be shown in.
+  //
+  // `title`, not `display`, and that is what stops the card CLIPPING. At
+  // 1.7rem the longest street name on three of the four boards wrapped to two
+  // lines - Mediterranean Avenue, North Carolina Avenue, Northumberland
+  // Avenue, Pennsylvania Avenue - which is 408px of content inside a card with
+  // `overflow: hidden`, so the building-cost footer was cut off and nobody
+  // could see what a house costs. At 1.42rem every street name in every
+  // edition sets on one line. Growing the card instead would have moved the
+  // auction and trade panels, which measure themselves from the same token,
+  // to fix a name that was simply too big for its own card.
   h2 {
-    @include t.text(display);
+    @include t.text(title);
   }
 }
 
@@ -213,6 +223,11 @@
   border-top: 1px solid var(--border-input);
   border-left: 1px solid var(--border-input);
 
+  // `label`, not `micro`. These say what the numbers mean - PRICE, MORTGAGE
+  // VALUE - and micro is the badge-DIGIT rung; at 9.92px they read as
+  // decoration around the figures rather than as the key to them. Measured to
+  // cost the card nothing: the row's height comes from the value beside the
+  // label, not from the label.
   span {
     display: grid;
     gap: t.$space-1;
@@ -220,8 +235,7 @@
     border-right: 1px solid var(--border-input);
     border-bottom: 1px solid var(--border-input);
     color: var(--text-muted);
-    @include t.text(micro);
-    text-transform: uppercase;
+    @include t.text(label);
   }
 
   strong {
@@ -235,9 +249,8 @@
 .deed-rent-title {
   margin: t.$space-2 0 t.$space-1;
   color: var(--text-muted);
-  @include t.text(micro);
-  letter-spacing: t.$track-caps;
-  text-transform: uppercase;
+  // The role carries the caps and the tracking, so both were restated here.
+  @include t.text(label);
 }
 
 .rent-schedule {
@@ -335,11 +348,12 @@
   flex-wrap: wrap;
   gap: t.$space-2;
 
-  button {
+  // No anonymous `button {}` here any more - it silently resized whichever
+  // variant landed inside it. The buttons carry `is-compact` themselves, and
+  // this only says how they share the row.
+  > * {
     flex: 1 1 auto;
-    min-width: 72px;
-    padding: t.$space-2 t.$space-2;
-    @include t.text(small);
+    min-width: t.$control-site-action;
   }
 
   // Kept visible rather than hidden: the panel should say what will be possible
@@ -350,38 +364,11 @@
   }
 }
 
-// ---------------------------------------------------------------------------
-// The phone tier, and it has to be last in the file.
+// There is deliberately no phone tier left in this file.
 //
-// Every selector here is (0,1,1) and so is the rule it overrides; a media
-// query adds no specificity at all, so source order is the whole of what
-// decides these. Written beside the rules they modify - up beside .deed-card,
-// where the other phone rules live - they lose silently, which is exactly what
-// happened to the title on the first attempt.
-//
-// What they have in common is that the deed stops being a fixed 340x380 object
-// below this breakpoint and becomes the width of the screen with a height of
-// its own. Both of the desktop comments say the size is chosen for the CARD -
-// so when the card changes, so do they. Desktop is untouched, and deliberately:
-// that 380px is calibrated against the tallest deed on the board.
-// ---------------------------------------------------------------------------
-@include m.below(t.$breakpoint-mobile) {
-  // 1.7rem put "Chennai Central Railway Station" on three lines and 117px of a
-  // modal that already did not fit its window.
-  .space-detail-title-row h2 {
-    @include t.text(display, t.text-size(title));
-  }
-
-  // `label`, not `micro`. These are the words that say what the numbers mean -
-  // PRICE, MORTGAGE VALUE, RENT BY STATIONS OWNED - and micro is the rung for a
-  // badge digit. At 9.92px on a phone they are decoration around the figures
-  // rather than the key to them.
-  //
-  // Phone-only because the desktop card is a fixed 380px with 14px of slack
-  // against its tallest deed, and this costs 4 of them. That budget is not
-  // mine to spend during a mobile pass.
-  .deed-primary-stats span,
-  .deed-rent-title {
-    @include t.text(label);
-  }
-}
+// Both rules that lived here - the title a rung down, and the deed's labels
+// promoted off `micro` - turned out to be right on every screen rather than
+// only on a small one, so they are the plain rules above now. The phone-only
+// versions existed because the desktop card was believed to have 14px of slack
+// to protect; measuring it properly showed it had none at all and was already
+// clipping, which is a different bug with the same fix.

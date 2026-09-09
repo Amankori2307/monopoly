@@ -417,11 +417,15 @@ $elevation-tuck: 0 -6px 14px; // A card under the one in front of it
 $elevation-tuck-hair: 0 -1px 4px; // The same, on a collapsed sliver
 $elevation-drawer: -18px 0 44px; // Sideways, onto the page it covers
 
-// A hard offset with no blur is not elevation at all - it is the printed-card
-// look, ink offset from its own outline. On a dark palette a hard dark offset
-// reads as a hole rather than a lift, which is exactly why its ink is a theme
-// decision and not a fixed tint.
-$emboss-press: 0 5px 0; // A button's hover lift
+// There is deliberately no button-lift rung here any more.
+//
+// $emboss-press was `0 5px 0` - the printed-card look, ink offset from its own
+// outline - and the button's hover was its only reader. A blurless offset is
+// right for an OBJECT and the board's ribbon and the die still use one; it was
+// wrong for chrome, and on touch, where :hover latches after a tap, it left a
+// pressed button raised until you tapped somewhere else. Deleted rather than
+// left as an unread rung, because the one thing that read it is the one thing
+// that should not have.
 
 // ---------------------------------------------------------------------------
 // Layers.
@@ -528,6 +532,10 @@ $border-accent: 4px; // A card's coloured left-edge bar
 // ---------------------------------------------------------------------------
 $control-tap: 44px;
 $control-checkbox: 20px;
+// The width a site action needs before its label wraps: Mortgage, Redeem,
+// Build house, Sell hotel. A metric rather than a rung - it is the measure of
+// the longest of four labels, not a step on any ladder.
+$control-site-action: 72px;
 
 $focus-ring-width: 3px;
 $focus-ring-offset: 2px;
