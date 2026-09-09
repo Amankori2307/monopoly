@@ -15,6 +15,7 @@ import {
   streetsInGroup,
 } from './holdings.utils';
 import { isStreetSpace } from './space.utils';
+import { nounsFor } from '../themes/nouns.utils';
 
 /**
  * Building rules, kept pure and out of the engine.
@@ -32,7 +33,7 @@ export const getBuildingRefund = (cost: number): number =>
   Math.floor((cost * BUILDING_SELL_PERCENT) / 100);
 
 /**
- * The even rule, in one place: no two sites in a colour group may differ by
+ * The even rule, in one place: no two sites in a color group may differ by
  * more than one level. Building and selling are the same rule read in opposite
  * directions, so both ask this about the level they are about to write.
  *
@@ -57,19 +58,20 @@ const wouldStayEven = (
  * A reason string rather than a boolean: every caller - the engine's throw, the
  * site panel's disabled button - needs to say why.
  */
-/** What the colour set as a whole says about building on it. */
-const colourSetBlockedReason = (
+/** What the color set as a whole says about building on it. */
+const colorSetBlockedReason = (
   state: GameState,
   space: StreetSpace,
   playerId: PlayerId
 ): string => {
+  const nouns = nounsFor(state.themeId);
   if (!ownsEntireColorSet(state, playerId, space.colorGroup)) {
-    return 'You need every site in this colour set';
+    return `You need every ${nouns.site} in this color set`;
   }
   return streetsInGroup(state, space.colorGroup).some(
     (site) => state.ownership[site.id].mortgaged
   )
-    ? 'Redeem the mortgaged sites in this colour set first'
+    ? `Redeem the mortgaged ${nouns.sites} in this color set first`
     : '';
 };
 
@@ -93,16 +95,19 @@ export const buildBlockedReason = (
   playerId: PlayerId
 ): string => {
   const space = state.board.find((candidate) => candidate.id === spaceId);
-  if (!space || !isStreetSpace(space)) return 'Only streets can be built on';
-  if (state.ownership[spaceId]?.ownerPlayerId !== playerId) return 'You do not own it';
+  const nouns = nounsFor(state.themeId);
+  if (!space || !isStreetSpace(space)) return `Only ${nouns.sites} carry buildings`;
+  if (state.ownership[spaceId]?.ownerPlayerId !== playerId) {
+    return `You do not own this ${nouns.site}`;
+  }
 
-  const setReason = colourSetBlockedReason(state, space, playerId);
+  const setReason = colorSetBlockedReason(state, space, playerId);
   if (setReason) return setReason;
 
   const level = getBuildLevel(state, spaceId);
-  if (level >= HOTEL_BUILD_LEVEL) return 'A hotel is the most this site can hold';
+  if (level >= HOTEL_BUILD_LEVEL) return `This ${nouns.site} already has a hotel`;
   if (!wouldStayEven(state, space, level + 1)) {
-    return 'Build the rest of the colour set up first';
+    return 'Build up the rest of the color set first';
   }
 
   return affordabilityBlockedReason(
@@ -125,16 +130,19 @@ export const sellBlockedReason = (
   playerId: PlayerId
 ): string => {
   const space = state.board.find((candidate) => candidate.id === spaceId);
-  if (!space || !isStreetSpace(space)) return 'Only streets carry buildings';
-  if (state.ownership[spaceId]?.ownerPlayerId !== playerId) return 'You do not own it';
+  const nouns = nounsFor(state.themeId);
+  if (!space || !isStreetSpace(space)) return `Only ${nouns.sites} carry buildings`;
+  if (state.ownership[spaceId]?.ownerPlayerId !== playerId) {
+    return `You do not own this ${nouns.site}`;
+  }
 
   const level = getBuildLevel(state, spaceId);
-  if (level === 0) return 'Nothing built here';
+  if (level === 0) return 'Nothing is built here';
   if (level === HOTEL_BUILD_LEVEL && state.bank.housesAvailable < MAX_HOUSES_PER_SITE) {
-    return 'The bank has too few houses to break this hotel';
+    return 'A hotel sells back as four houses, and the bank has too few';
   }
   if (!wouldStayEven(state, space, level - 1)) {
-    return 'Sell the rest of the colour set down first';
+    return 'Sell down the rest of the color set first';
   }
 
   return '';
@@ -150,7 +158,7 @@ export const getSaleRefund = (state: GameState, space: StreetSpace): number =>
  * Every building this player could sell right now, and what each pays.
  *
  * Drives the liquidation panel. A player with buildings cannot mortgage that
- * colour set at all, so without this list they would be offered bankruptcy
+ * color set at all, so without this list they would be offered bankruptcy
  * while still holding hotels.
  */
 export const getSellableBuildings = (
@@ -192,7 +200,7 @@ export const getBuildingSaleValue = (state: GameState, playerId: PlayerId): numb
  * every unmortgaged site mortgaged after that.
  *
  * Not getRaisableCash: that one answers "what can be mortgaged right now", and
- * a site whose colour set holds buildings cannot be. Judging bankruptcy on it
+ * a site whose color set holds buildings cannot be. Judging bankruptcy on it
  * would declare a player with hotels bankrupt while they still held them.
  *
  * It lives here rather than in holdings.utils because it needs the building
@@ -228,7 +236,7 @@ export const playersWhoCouldBuild = (state: GameState, kind: BuildingKind): Play
 
         // Every rule except the two this auction exists to settle.
         return (
-          colourSetBlockedReason(state, space, playerId) === '' &&
+          colorSetBlockedReason(state, space, playerId) === '' &&
           level < HOTEL_BUILD_LEVEL &&
           wouldStayEven(state, space, level + 1)
         );
@@ -266,7 +274,7 @@ export const getPlacementSites = (
       const wantsHotel = level === MAX_HOUSES_PER_SITE;
       return (
         wantsHotel === (kind === BuildingKind.Hotel) &&
-        colourSetBlockedReason(state, space, playerId) === '' &&
+        colorSetBlockedReason(state, space, playerId) === '' &&
         level < HOTEL_BUILD_LEVEL &&
         wouldStayEven(state, space, level + 1)
       );

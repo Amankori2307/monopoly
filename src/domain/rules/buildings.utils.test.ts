@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { HOTEL_BUILD_LEVEL, MAX_HOUSES_PER_SITE } from '../constants/game.constants';
 import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
+import { usTheme } from '../../domain/themes/us.theme';
+import { availableThemes } from '../../domain/themes/themes.registry';
 import { ColorGroup } from '../types/game.enums';
 import type { GameState, StreetSpace } from '../types/game.interfaces';
 import {
@@ -19,7 +21,7 @@ import { isStreetSpace } from './space.utils';
  * tested as a table of levels rather than through the engine.
  */
 
-const createGame = (): GameState =>
+const createGame = (themeId: string = indiaEditionTheme.id): GameState =>
   createGameState(
     {
       name: 'Buildings',
@@ -27,7 +29,7 @@ const createGame = (): GameState =>
         { name: 'Asha', tokenId: 'elephant' },
         { name: 'Vikram', tokenId: 'train' },
       ],
-      themeId: indiaEditionTheme.id,
+      themeId,
       createdAt: '2026-08-29T00:00:00.000Z',
     },
     new SeededRandomSource(11)
@@ -87,7 +89,7 @@ describe('buildBlockedReason', () => {
     };
 
     expect(buildBlockedReason(state, first.id, state.playerOrder[0])).toMatch(
-      /every site in this colour set/i
+      /every city in this color set/i
     );
   });
 
@@ -114,7 +116,7 @@ describe('buildBlockedReason', () => {
     const [first] = groupOf(state, ColorGroup.Brown);
 
     expect(buildBlockedReason(state, first.id, state.playerOrder[0])).toMatch(
-      /rest of the colour set up first/i
+      /build up the rest of the color set/i
     );
   });
 
@@ -132,7 +134,7 @@ describe('buildBlockedReason', () => {
     const [first] = groupOf(state, ColorGroup.Brown);
 
     expect(buildBlockedReason(state, first.id, state.playerOrder[0])).toMatch(
-      /rest of the colour set up first/i
+      /build up the rest of the color set/i
     );
   });
 
@@ -154,7 +156,7 @@ describe('buildBlockedReason', () => {
     const [first] = groupOf(state, ColorGroup.Brown);
 
     expect(buildBlockedReason(state, first.id, state.playerOrder[0])).toMatch(
-      /most this site can hold/i
+      /already has a hotel/i
     );
   });
 
@@ -203,7 +205,7 @@ describe('buildBlockedReason', () => {
     const state = createGame();
 
     expect(buildBlockedReason(state, state.board[0].id, state.playerOrder[0])).toMatch(
-      /only streets/i
+      /only cities carry buildings/i
     );
   });
 });
@@ -222,7 +224,7 @@ describe('sellBlockedReason', () => {
     const [first] = groupOf(state, ColorGroup.Brown);
 
     expect(sellBlockedReason(state, first.id, state.playerOrder[0])).toMatch(
-      /down first/i
+      /sell down the rest of the color set/i
     );
   });
 
@@ -231,7 +233,7 @@ describe('sellBlockedReason', () => {
     const [first] = groupOf(state, ColorGroup.Brown);
 
     expect(sellBlockedReason(state, first.id, state.playerOrder[0])).toMatch(
-      /nothing built/i
+      /nothing is built/i
     );
   });
 
@@ -245,8 +247,57 @@ describe('sellBlockedReason', () => {
     const short: GameState = { ...state, bank: { ...state.bank, housesAvailable: 3 } };
 
     expect(sellBlockedReason(short, first.id, state.playerOrder[0])).toMatch(
-      /too few houses/i
+      /the bank has too few/i
     );
+  });
+});
+
+/**
+ * The refusals name a kind of square, and every edition has its own word for
+ * one. They used to say "Only streets can be built on" everywhere, which is
+ * wrong on the two boards of cities - and India, whose word is "city", is the
+ * default edition, so the most-seen refusal in the app was the wrong one.
+ */
+describe('the refusals speak the edition being played', () => {
+  it('names cities on the India board and streets on the US one', () => {
+    const india = createGame(indiaEditionTheme.id);
+    const us = createGame(usTheme.id);
+
+    // index 0 is GO on every board: not a street anywhere, so the refusal is
+    // the one that has to name the kind of square it wanted.
+    expect(buildBlockedReason(india, india.board[0].id, india.playerOrder[0])).toBe(
+      'Only cities carry buildings'
+    );
+    expect(buildBlockedReason(us, us.board[0].id, us.playerOrder[0])).toBe(
+      'Only streets carry buildings'
+    );
+  });
+
+  it("uses no other edition's noun, on any edition", () => {
+    // A guard rather than four assertions: a fifth refusal written with a
+    // hardcoded word, or a new edition, fails here rather than shipping wrong.
+    availableThemes.forEach((theme) => {
+      const own = [theme.nouns.site, theme.nouns.sites];
+      const foreign = availableThemes
+        .flatMap((other) => [other.nouns.site, other.nouns.sites])
+        .filter((noun) => !own.includes(noun));
+
+      const game = createGame(theme.id);
+      const bare = withGroup(game, ColorGroup.Brown, [0, 0]);
+      const site = groupOf(game, ColorGroup.Brown)[0].id;
+      const reasons = [
+        buildBlockedReason(game, game.board[0].id, game.playerOrder[0]),
+        buildBlockedReason(bare, site, game.playerOrder[1]),
+        sellBlockedReason(game, game.board[0].id, game.playerOrder[0]),
+        sellBlockedReason(bare, site, game.playerOrder[0]),
+      ];
+
+      reasons.forEach((reason) =>
+        foreign.forEach((noun) =>
+          expect(reason.toLowerCase()).not.toContain(noun.toLowerCase())
+        )
+      );
+    });
   });
 });
 

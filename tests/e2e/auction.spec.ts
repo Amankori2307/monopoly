@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { AUCTION_START_PRICE } from '../../src/domain/constants/game.constants';
+import { defaultTheme } from '../../src/domain/themes/themes.registry';
 import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { startGame } from './helpers';
 
@@ -187,7 +188,7 @@ test.describe('the auction panel', () => {
 
     await expect(submit).toBeDisabled();
     await expect(page.getByTestId(TEST_IDS.auctionBidBlocked)).toContainText(
-      `at least ${AUCTION_START_PRICE}`
+      `at least ${defaultTheme.currencySymbol}${AUCTION_START_PRICE}`
     );
     // Passing is still open to them, so the auction cannot stall.
     await expect(page.getByTestId(TEST_IDS.passAuctionButton)).toBeEnabled();
@@ -201,7 +202,7 @@ test.describe('the auction panel', () => {
 
     await expect(page.getByTestId(TEST_IDS.submitBidButton)).toBeDisabled();
     await expect(page.getByTestId(TEST_IDS.auctionBidBlocked)).toContainText(
-      /available cash/i
+      /do not have that much cash/i
     );
   });
 

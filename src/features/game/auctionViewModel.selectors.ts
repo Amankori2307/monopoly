@@ -107,7 +107,8 @@ export const auctionBidKey = (auction: AuctionState): string =>
 export const selectBidField = (
   auction: AuctionState,
   bidderCash: number,
-  typed: KeyedBidInput | null
+  typed: KeyedBidInput | null,
+  currencySymbol: string
 ): BidFieldState => {
   const minimumBid = minimumBidFor(auction);
   const amount =
@@ -117,6 +118,6 @@ export const selectBidField = (
     amount,
     minimumBid,
     maximumBid: bidderCash,
-    blockedReason: bidBlockedReason(auction, bidderCash, amount),
+    blockedReason: bidBlockedReason(auction, bidderCash, amount, currencySymbol),
   };
 };

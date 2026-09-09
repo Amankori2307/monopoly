@@ -34,7 +34,7 @@ export const tradeBlockedReason = (
     return 'Not owned by that player';
   }
   if (isStreetSpace(space) && groupHasBuildings(state, space.colorGroup)) {
-    return 'Sell the buildings in this colour set first';
+    return 'Sell the buildings in this color set first';
   }
   return '';
 };
@@ -75,21 +75,48 @@ export const getTransferFees = (
     );
   }, 0);
 
+/**
+ * How one side of a trade is named in a refusal, and which verb follows it.
+ *
+ * One `who: string` used to serve both sides, so the proposer's own side read
+ * "You does not have that much cash" and "You has left the game" - the trick of
+ * substituting either "You" or a name into one sentence cannot survive a single
+ * verb form. The two shapes are carried together so a reason cannot pick the
+ * name from one and the inflection from the other.
+ */
+interface TradeSide {
+  /** 'You' for the proposer's own side, the other player's name otherwise. */
+  name: string;
+  /** Second person takes do/are/have; a name takes does/is/has. */
+  isSecondPerson: boolean;
+}
+
+const SELF: TradeSide = { name: 'You', isSecondPerson: true };
+
+const other = (state: GameState, playerId: PlayerId): TradeSide => ({
+  name: state.players[playerId]?.name ?? 'They',
+  isSecondPerson: false,
+});
+
 const sideBlockedReason = (
   state: GameState,
   playerId: PlayerId,
   cash: number,
   spaceIds: SpaceId[],
   jailCards: number,
-  who: string
+  who: TradeSide
 ): string => {
+  const verb = (second: string, third: string): string =>
+    who.isSecondPerson ? second : third;
   const player = state.players[playerId];
-  if (!player) return `${who} is not in this game`;
-  if (player.isBankrupt) return `${who} has left the game`;
+  if (!player) return `${who.name} ${verb('are', 'is')} not in this game`;
+  if (player.isBankrupt) return `${who.name} ${verb('have', 'has')} left the game`;
   if (cash < 0 || jailCards < 0) return 'A trade cannot ask for a negative amount';
-  if (player.cash < cash) return `${who} does not have that much cash`;
+  if (player.cash < cash) {
+    return `${who.name} ${verb('do not', 'does not')} have that much cash`;
+  }
   if (player.jailFreeCards.length < jailCards) {
-    return `${who} does not have that many Get Out of Jail Free cards`;
+    return `${who.name} ${verb('do not', 'does not')} have that many Get Out of Jail Free cards`;
   }
 
   const blocked = spaceIds
@@ -130,7 +157,7 @@ export const proposalBlockedReason = (state: GameState, trade: TradeState): stri
       trade.offeredCash,
       trade.offeredSpaceIds,
       trade.offeredJailCards,
-      'You'
+      SELF
     ) ||
     sideBlockedReason(
       state,
@@ -138,7 +165,7 @@ export const proposalBlockedReason = (state: GameState, trade: TradeState): stri
       trade.requestedCash,
       trade.requestedSpaceIds,
       trade.requestedJailCards,
-      state.players[trade.recipientPlayerId]?.name ?? 'They'
+      other(state, trade.recipientPlayerId)
     )
   );
 };
@@ -167,7 +194,10 @@ export const acceptanceBlockedReason = (
     trade.requestedCash + getTransferFees(state, trade.offeredSpaceIds, choices);
 
   if (state.players[trade.proposerPlayerId].cash < proposerOwes) {
-    return 'The proposer cannot cover the mortgage interest on this trade';
+    // Named rather than "the proposer": this is read by the recipient, on the
+    // Accept button, and they know the other player by name and not by role.
+    const proposer = state.players[trade.proposerPlayerId].name;
+    return `${proposer} cannot cover the mortgage interest on this trade`;
   }
   if (state.players[trade.recipientPlayerId].cash < recipientOwes) {
     return 'You cannot cover the mortgage interest on this trade';

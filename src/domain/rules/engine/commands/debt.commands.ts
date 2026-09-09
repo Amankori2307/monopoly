@@ -19,6 +19,7 @@ import {
   updateSpaceOwnership,
 } from '../state.utils';
 import { concludeIfWon } from '../turn.utils';
+import { countSites } from '../../../themes/nouns.utils';
 import type { CommandHandlers } from './command.interfaces';
 
 /**
@@ -28,6 +29,18 @@ import type { CommandHandlers } from './command.interfaces';
  * the same card, then any queued auction, then the turn. That order lives in
  * one place so settling and going bankrupt cannot disagree about it.
  */
+
+/**
+ * What the creditor takes, or the bank sends to auction, said in the edition's
+ * own words - and only when there is anything to say.
+ *
+ * These two sentences used to read "3 site(s)", the lazy plural landing at the
+ * most dramatic moment in a game, and "0 site(s)" when the debtor held nothing
+ * at all. A player who owns no squares is common enough: rent on somebody
+ * else's board is how most people go out.
+ */
+const andTheirSites = (themeId: string, count: number): string =>
+  count === 0 ? '' : ` and ${countSites(themeId, count)}`;
 
 export const debtCommands: CommandHandlers = {
   [GameCommandType.SettleDebt]: (state, _command, randomSource) => {
@@ -103,7 +116,7 @@ export const debtCommands: CommandHandlers = {
       nextState = appendEvents(nextState, [
         createEvent(
           nextState.turnNumber,
-          `${debtor.name} went bankrupt. ${creditor.name} took ${money(nextState, debtor.cash)} and ${owned.length} site(s).`,
+          `${debtor.name} went bankrupt. ${creditor.name} took ${money(nextState, debtor.cash)}${andTheirSites(nextState.themeId, owned.length)}.`,
           GameEventCue.Bankrupt
         ),
       ]);
@@ -145,7 +158,9 @@ export const debtCommands: CommandHandlers = {
       nextState = appendEvents(nextState, [
         createEvent(
           nextState.turnNumber,
-          `${debtor.name} went bankrupt. ${owned.length} site(s) go to auction.`,
+          owned.length === 0
+            ? `${debtor.name} went bankrupt.`
+            : `${debtor.name} went bankrupt. The bank takes ${countSites(nextState.themeId, owned.length)} to auction.`,
           GameEventCue.Bankrupt
         ),
       ]);

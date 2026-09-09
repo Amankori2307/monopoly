@@ -612,7 +612,7 @@ describe('auction bidder rotation', () => {
         },
         new SeededRandomSource(3)
       )
-    ).toThrow(/exceeds available cash/i);
+    ).toThrow(/do not have that much cash/i);
   });
 
   it('rejects a bid below the minimum', () => {
@@ -1510,6 +1510,36 @@ describe('bankruptcy', () => {
     expect(next.pendingDecision.type).toBe(PendingDecisionType.GameOver);
   });
 
+  // These two sentences said "3 site(s)", and "0 site(s)" for a debtor who
+  // held nothing - the lazy plural, at the most dramatic moment in a game.
+  it("counts what changes hands in the edition's own words", () => {
+    const { state } = hopelesslyInDebt();
+
+    const next = executeGameCommand(
+      state,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    const line = next.history.find((event) => event.message.includes('went bankrupt'));
+    expect(line?.message).toContain('and 1 city.');
+    expect(line?.message).not.toContain('site(s)');
+  });
+
+  it('says nothing about sites when the debtor held none', () => {
+    const { state } = hopelesslyInDebt({ toBank: true });
+    const nothingOwned: GameState = { ...state, ownership: {} };
+
+    const next = executeGameCommand(
+      nothingOwned,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    const line = next.history.find((event) => event.message.includes('went bankrupt'));
+    expect(line?.message).toMatch(/went bankrupt\.$/);
+  });
+
   it('keeps a mortgaged site mortgaged when it changes hands', () => {
     const { state, creditorId, street, debtorId } = hopelesslyInDebt();
     const mortgaged: GameState = {
@@ -1867,7 +1897,7 @@ describe('building', () => {
         { type: GameCommandType.BuildHouse, spaceId: sites[0].id },
         new SeededRandomSource(3)
       )
-    ).toThrow(/colour set up first/i);
+    ).toThrow(/rest of the color set/i);
   });
 
   it('refuses to build on a set the player does not fully own', () => {
@@ -1893,7 +1923,7 @@ describe('building', () => {
         { type: GameCommandType.BuildHouse, spaceId: street.id },
         new SeededRandomSource(3)
       )
-    ).toThrow(/colour set/i);
+    ).toThrow(/color set/i);
   });
 
   it('pays back half and returns the house to the bank on a sale', () => {
@@ -1938,7 +1968,7 @@ describe('building', () => {
         { type: GameCommandType.SellHouse, spaceId: sites[0].id },
         new SeededRandomSource(3)
       )
-    ).toThrow(/down first/i);
+    ).toThrow(/sell down the rest of the color set/i);
   });
 
   // Selling buildings is how a player with a built colour set raises cash, so

@@ -17,6 +17,7 @@ import type {
 import { buildBlockedReason, getBuildLevel, sellBlockedReason } from './buildings.utils';
 import { groupHasBuildings, isOwnedBy } from './holdings.utils';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
+import { nounsFor } from '../themes/nouns.utils';
 
 /**
  * What a player may do with one specific site.
@@ -83,34 +84,33 @@ const siteActionBlockedReason = (
   action: PropertyAction
 ): string => {
   const isMortgaged = state.ownership[space.id].mortgaged;
+  const nouns = nounsFor(state.themeId);
 
-  if (action === PropertyAction.Build) {
-    // Only streets carry buildings, and saying so beats a generic refusal on a
-    // railway's panel.
-    return isStreetSpace(space)
+  if (action === PropertyAction.Build || action === PropertyAction.Sell) {
+    // Naming the kind of square beats a generic refusal on a railway's panel -
+    // and it has to be the edition's own word for it, because this same
+    // sentence is read on a board of streets and on a board of cities.
+    if (!isStreetSpace(space)) {
+      return `Only ${nouns.sites} carry buildings`;
+    }
+    return action === PropertyAction.Build
       ? buildBlockedReason(state, space.id, playerId)
-      : 'Only streets can be built on';
-  }
-
-  if (action === PropertyAction.Sell) {
-    return isStreetSpace(space)
-      ? sellBlockedReason(state, space.id, playerId)
-      : 'Only streets carry buildings';
+      : sellBlockedReason(state, space.id, playerId);
   }
 
   if (action === PropertyAction.Mortgage) {
     if (isMortgaged) {
       return 'Already mortgaged';
     }
-    // The rule covers the whole colour set, not just this site.
+    // The rule covers the whole color set, not just this site.
     if (isStreetSpace(space) && groupHasBuildings(state, space.colorGroup)) {
-      return 'Sell the buildings in this colour set first';
+      return 'Sell the buildings in this color set first';
     }
     return '';
   }
 
   if (!isMortgaged) {
-    return 'Not mortgaged';
+    return `This ${nouns.site} is not mortgaged`;
   }
   const redemptionCost =
     space.mortgageValue +

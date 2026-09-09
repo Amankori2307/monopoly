@@ -116,7 +116,7 @@ test('refuses an uneven build, and says why', async ({ page }) => {
 
   const build = siteAction(page, PropertyAction.Build);
   await expect(build).toBeDisabled();
-  await expect(build).toHaveAttribute('title', /colour set up first/i);
+  await expect(build).toHaveAttribute('title', /build up the rest of the color set/i);
 });
 
 test('upgrades four houses into a hotel and returns the houses', async ({ page }) => {

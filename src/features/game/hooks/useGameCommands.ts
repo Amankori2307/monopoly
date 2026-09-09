@@ -11,6 +11,7 @@ import { GameCommandType } from '../../../domain/types/game.enums';
 import { runGameCommand, setCommandError } from '../gameSlice';
 import { dismissToast, setAuctionBidInput } from '../uiSlice';
 import { auctionBidKey, selectBidField } from '../auctionViewModel.selectors';
+import { getThemeOrDefault } from '../../../domain/themes/themes.registry';
 
 export interface UseGameCommandsResult {
   /** The auction bid field, prefilled and guarded. Null with no auction open. */
@@ -43,7 +44,12 @@ export const useGameCommands = (): UseGameCommandsResult => {
   const toasts = useAppSelector((state) => state.ui.toasts);
   // The field is derived, not stored: an untouched field holds the minimum legal
   // bid, so this is also the amount Submit sends.
-  const bidField = auction ? selectBidField(auction, bidderCash, typedBid) : null;
+  const currencySymbol = useAppSelector(
+    (state) => getThemeOrDefault(state.game.activeGame?.themeId ?? '').currencySymbol
+  );
+  const bidField = auction
+    ? selectBidField(auction, bidderCash, typedBid, currencySymbol)
+    : null;
 
   return useMemo(
     () => ({

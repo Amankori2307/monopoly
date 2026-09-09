@@ -40,32 +40,34 @@ describe('minimumBidFor', () => {
 
 describe('bidBlockedReason', () => {
   it('allows a bid at exactly the minimum', () => {
-    expect(bidBlockedReason(auction({ highestBid: 100 }), 500, 101)).toBeNull();
+    expect(bidBlockedReason(auction({ highestBid: 100 }), 500, 101, '₹')).toBeNull();
   });
 
   it('allows a bid of everything the player holds', () => {
-    expect(bidBlockedReason(auction(), 300, 300)).toBeNull();
+    expect(bidBlockedReason(auction(), 300, 300, '₹')).toBeNull();
   });
 
   it('blocks a bid below the minimum, and says what the minimum is', () => {
-    expect(bidBlockedReason(auction({ highestBid: 100 }), 500, 100)).toBe(
-      'Bid must be at least 101.'
+    expect(bidBlockedReason(auction({ highestBid: 100 }), 500, 100, '₹')).toBe(
+      'Bid at least ₹101'
     );
   });
 
   it('blocks a bid the player cannot afford', () => {
-    expect(bidBlockedReason(auction(), 90, 100)).toBe('Bid exceeds available cash.');
+    expect(bidBlockedReason(auction(), 90, 100, '₹')).toBe(
+      'You do not have that much cash'
+    );
   });
 
   // An emptied number input reads as NaN, which would otherwise slip past both
   // comparisons - NaN is neither less than the minimum nor more than the cash.
   it('blocks an empty field rather than letting NaN through', () => {
-    expect(bidBlockedReason(auction(), 500, Number.NaN)).toBe('Enter a bid.');
+    expect(bidBlockedReason(auction(), 500, Number.NaN, '₹')).toBe('Enter a bid');
   });
 
   it('reports the shortfall before the cash, so the player raises once', () => {
-    expect(bidBlockedReason(auction({ highestBid: 100 }), 5, 10)).toBe(
-      'Bid must be at least 101.'
+    expect(bidBlockedReason(auction({ highestBid: 100 }), 5, 10, '₹')).toBe(
+      'Bid at least ₹101'
     );
   });
 });

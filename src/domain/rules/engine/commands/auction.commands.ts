@@ -33,7 +33,12 @@ export const auctionCommands: CommandHandlers = {
     const activeBidder = getPlayerById(nextState, activeBidderId);
     // Stated once, in auctionBids.utils - the panel disables its button from
     // the same function, so the two cannot disagree about what is legal.
-    const blockedReason = bidBlockedReason(auction, activeBidder.cash, command.amount);
+    const blockedReason = bidBlockedReason(
+      auction,
+      activeBidder.cash,
+      command.amount,
+      getThemeOrDefault(nextState.themeId).currencySymbol
+    );
     if (blockedReason) {
       throw new Error(blockedReason);
     }

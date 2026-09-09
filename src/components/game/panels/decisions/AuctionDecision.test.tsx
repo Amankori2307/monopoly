@@ -196,18 +196,18 @@ describe('AuctionDecision', () => {
    */
   it('disables Submit with the reason stated', () => {
     renderPanel({
-      bidField: field({ amount: 50, blockedReason: 'Bid must be at least 121.' }),
+      bidField: field({ amount: 50, blockedReason: 'Bid at least ₹121' }),
     });
 
     expect(screen.getByTestId(TEST_IDS.submitBidButton)).toBeDisabled();
     expect(screen.getByTestId(TEST_IDS.auctionBidBlocked)).toHaveTextContent(
-      'Bid must be at least 121.'
+      'Bid at least ₹121'
     );
   });
 
   it('leaves Pass available to a bidder who cannot afford to bid', () => {
     renderPanel({
-      bidField: field({ maximumBid: 5, blockedReason: 'Bid exceeds available cash.' }),
+      bidField: field({ maximumBid: 5, blockedReason: 'You do not have that much cash' }),
     });
 
     expect(screen.getByTestId(TEST_IDS.passAuctionButton)).toBeEnabled();

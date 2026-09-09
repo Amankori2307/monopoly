@@ -166,6 +166,56 @@ describe('proposalBlockedReason', () => {
   });
 });
 
+/**
+ * One `who: string` used to be substituted into one sentence for both sides,
+ * so the proposer's own side read "You does not have that much cash", "You is
+ * not in this game" and "You has left the game". A single verb form cannot
+ * serve both a name and the second person, which is why the side now carries
+ * its person alongside its name.
+ */
+describe('each side of a trade is refused in its own grammar', () => {
+  it('addresses the proposer as you, with second-person verbs', () => {
+    const state = createGame();
+
+    expect(proposalBlockedReason(state, makeTrade(state, { offeredCash: 999999 }))).toBe(
+      'You do not have that much cash'
+    );
+    expect(proposalBlockedReason(state, makeTrade(state, { offeredJailCards: 2 }))).toBe(
+      'You do not have that many Get Out of Jail Free cards'
+    );
+  });
+
+  it('names the other side, with third-person verbs', () => {
+    const state = createGame();
+    // The opening roll decides the order, so the recipient is read off the
+    // state rather than assumed.
+    const them = state.players[state.playerOrder[1]].name;
+
+    expect(
+      proposalBlockedReason(state, makeTrade(state, { requestedCash: 999999 }))
+    ).toBe(`${them} does not have that much cash`);
+  });
+
+  it('never leaves a subject disagreeing with its verb', () => {
+    const game = createGame();
+    const bankrupt = (playerId: string): GameState => ({
+      ...game,
+      players: {
+        ...game.players,
+        [playerId]: { ...game.players[playerId], isBankrupt: true },
+      },
+    });
+    const [proposer, recipient] = game.playerOrder;
+
+    expect(
+      proposalBlockedReason(bankrupt(proposer), makeTrade(game, { offeredCash: 10 }))
+    ).toBe('You have left the game');
+    expect(
+      proposalBlockedReason(bankrupt(recipient), makeTrade(game, { offeredCash: 10 }))
+    ).toBe(`${game.players[recipient].name} has left the game`);
+  });
+});
+
 describe('mortgaged sites in a trade', () => {
   it('charges the receiver 10%, rounded up', () => {
     expect(getMortgageTransferFee(100)).toBe(10);

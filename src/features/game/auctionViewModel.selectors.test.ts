@@ -157,7 +157,7 @@ describe('selectBidField', () => {
   it('prefills the minimum legal bid when nothing has been typed', () => {
     const auction = auctionOf(bid(openAuction(), 100));
 
-    expect(selectBidField(auction, 1500, null)).toMatchObject({
+    expect(selectBidField(auction, 1500, null, '₹')).toMatchObject({
       amount: 101,
       minimumBid: 101,
       blockedReason: null,
@@ -168,7 +168,8 @@ describe('selectBidField', () => {
     const auction = auctionOf(openAuction());
 
     expect(
-      selectBidField(auction, 1500, { key: auctionBidKey(auction), amount: 250 }).amount
+      selectBidField(auction, 1500, { key: auctionBidKey(auction), amount: 250 }, '₹')
+        .amount
     ).toBe(250);
   });
 
@@ -179,7 +180,7 @@ describe('selectBidField', () => {
     const typed = { key: auctionBidKey(auctionOf(opened)), amount: 250 };
     const after = auctionOf(bid(opened, 300));
 
-    expect(selectBidField(after, 1500, typed).amount).toBe(301);
+    expect(selectBidField(after, 1500, typed, '₹').amount).toBe(301);
   });
 
   it('discards what was typed once the turn passes to the next bidder', () => {
@@ -188,24 +189,24 @@ describe('selectBidField', () => {
     const after = auctionOf(pass(opened));
 
     expect(auctionBidKey(after)).not.toBe(typed.key);
-    expect(selectBidField(after, 1500, typed).amount).toBe(10);
+    expect(selectBidField(after, 1500, typed, '₹').amount).toBe(10);
   });
 
   it('reports the bidder’s cash as the ceiling', () => {
     const auction = auctionOf(openAuction());
 
-    expect(selectBidField(auction, 640, null).maximumBid).toBe(640);
+    expect(selectBidField(auction, 640, null, '₹').maximumBid).toBe(640);
   });
 
   it('states why a typed bid cannot be submitted', () => {
     const auction = auctionOf(bid(openAuction(), 100));
     const key = auctionBidKey(auction);
 
-    expect(selectBidField(auction, 1500, { key, amount: 50 }).blockedReason).toBe(
-      'Bid must be at least 101.'
+    expect(selectBidField(auction, 1500, { key, amount: 50 }, '₹').blockedReason).toBe(
+      'Bid at least ₹101'
     );
-    expect(selectBidField(auction, 120, { key, amount: 200 }).blockedReason).toBe(
-      'Bid exceeds available cash.'
+    expect(selectBidField(auction, 120, { key, amount: 200 }, '₹').blockedReason).toBe(
+      'You do not have that much cash'
     );
   });
 
@@ -214,9 +215,9 @@ describe('selectBidField', () => {
   it('blocks the prefilled amount when the bidder cannot afford the minimum', () => {
     const auction = auctionOf(bid(openAuction(), 100));
 
-    expect(selectBidField(auction, 40, null)).toMatchObject({
+    expect(selectBidField(auction, 40, null, '₹')).toMatchObject({
       amount: 101,
-      blockedReason: 'Bid exceeds available cash.',
+      blockedReason: 'You do not have that much cash',
     });
   });
 });

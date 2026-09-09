@@ -23,18 +23,26 @@ export const minimumBidFor = (auction: AuctionState): number =>
 export const bidBlockedReason = (
   auction: AuctionState,
   bidderCash: number,
-  amount: number
+  amount: number,
+  /**
+   * The edition's symbol, because a minimum is an amount of money.
+   *
+   * This was the one figure in the app printed bare - "Bid must be at least
+   * 121" beside a panel where every other number carries the symbol - and it
+   * has to come from the caller, since a pure rule has no theme of its own.
+   */
+  currencySymbol: string
 ): string | null => {
   const minimum = minimumBidFor(auction);
 
   if (!Number.isFinite(amount)) {
-    return 'Enter a bid.';
+    return 'Enter a bid';
   }
   if (amount < minimum) {
-    return `Bid must be at least ${minimum}.`;
+    return `Bid at least ${currencySymbol}${minimum}`;
   }
   if (amount > bidderCash) {
-    return 'Bid exceeds available cash.';
+    return 'You do not have that much cash';
   }
 
   return null;

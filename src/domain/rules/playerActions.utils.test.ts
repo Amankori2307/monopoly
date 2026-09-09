@@ -81,12 +81,14 @@ describe('getSiteActions', () => {
       actions.find((candidate) => candidate.action === action);
 
     // One site out of its colour set: nothing to build on, nothing built.
-    expect(byAction(PropertyAction.Build)?.disabledReason).toMatch(/colour set/i);
-    expect(byAction(PropertyAction.Sell)?.disabledReason).toMatch(/nothing built/i);
+    expect(byAction(PropertyAction.Build)?.disabledReason).toMatch(/color set/i);
+    expect(byAction(PropertyAction.Sell)?.disabledReason).toMatch(/nothing is built/i);
     // Mortgage is available on an unmortgaged site the player owns.
     expect(byAction(PropertyAction.Mortgage)?.isEnabled).toBe(true);
     // Redeem is not, because there is nothing to redeem.
-    expect(byAction(PropertyAction.Redeem)?.disabledReason).toBe('Not mortgaged');
+    expect(byAction(PropertyAction.Redeem)?.disabledReason).toBe(
+      'This city is not mortgaged'
+    );
   });
 
   // The label and the command both follow the build level, so one button can
@@ -126,8 +128,12 @@ describe('getSiteActions', () => {
     const byAction = (action: PropertyAction) =>
       actions.find((candidate) => candidate.action === action);
 
-    expect(byAction(PropertyAction.Build)?.disabledReason).toMatch(/only streets/i);
-    expect(byAction(PropertyAction.Sell)?.disabledReason).toMatch(/only streets/i);
+    expect(byAction(PropertyAction.Build)?.disabledReason).toMatch(
+      /only cities carry buildings/i
+    );
+    expect(byAction(PropertyAction.Sell)?.disabledReason).toMatch(
+      /only cities carry buildings/i
+    );
     expect(byAction(PropertyAction.Mortgage)?.isEnabled).toBe(true);
   });
 

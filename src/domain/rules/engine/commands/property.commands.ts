@@ -30,13 +30,13 @@ export const propertyCommands: CommandHandlers = {
   [GameCommandType.BuyLandedAsset]: (state, _command, randomSource) => {
     let nextState = state;
     if (nextState.pendingDecision.type !== PendingDecisionType.LandedUnownedProperty) {
-      throw new Error('There is no property awaiting purchase.');
+      throw new Error('There is nothing to buy here.');
     }
     const decision = nextState.pendingDecision;
     const buyer = getPlayerById(nextState, decision.playerId);
     const space = getSpaceById(nextState, decision.spaceId);
     if (!isOwnableSpace(space)) {
-      throw new Error('Current space is not buyable.');
+      throw new Error(`${space.name} is not for sale.`);
     }
     // From the shared rule, so the disabled Buy button and this throw always
     // give the same answer - the auction's bid guard works the same way.
@@ -71,7 +71,7 @@ export const propertyCommands: CommandHandlers = {
   [GameCommandType.DeclineLandedAsset]: (state, _command, _randomSource) => {
     let nextState = state;
     if (nextState.pendingDecision.type !== PendingDecisionType.LandedUnownedProperty) {
-      throw new Error('There is no property awaiting decline.');
+      throw new Error('There is nothing to decline here.');
     }
     nextState = startAuction(nextState, nextState.pendingDecision.spaceId);
     return nextState;
@@ -97,7 +97,7 @@ export const propertyCommands: CommandHandlers = {
     // covers the whole colour group, not just this site.
     if (isStreetSpace(space) && groupHasBuildings(nextState, space.colorGroup)) {
       throw new Error(
-        `Sell the buildings in ${space.name}'s colour set before mortgaging it.`
+        `Sell the buildings in ${space.name}'s color set before mortgaging it.`
       );
     }
 
