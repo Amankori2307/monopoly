@@ -13,10 +13,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
   align-items: start;
-  gap: t.$gap-xl;
+  gap: t.$space-7;
   max-width: 1000px;
   margin: 0 auto;
-  padding: t.$gap-xl t.$gap-lg;
+  padding: t.$space-7 t.$space-5;
 
   @include m.below(t.$breakpoint-tablet) {
     grid-template-columns: 1fr;
@@ -24,7 +24,7 @@
 }
 
 .lobby-panel h1 {
-  margin: 0 0 t.$gap-lg;
+  margin: 0 0 t.$space-5;
   @include t.text(display);
 }
 
@@ -32,8 +32,8 @@
 // to see there is room.
 .lobby-seats {
   display: grid;
-  gap: 8px;
-  margin: 0 0 t.$gap-lg;
+  gap: #{t.$space-2};
+  margin: 0 0 t.$space-5;
   padding: 0;
   list-style: none;
 }
@@ -41,8 +41,8 @@
 .lobby-seat {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: #{t.$space-3};
+  padding: #{t.$space-2} #{t.$space-3};
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
   background: var(--surface-muted);
@@ -75,8 +75,8 @@
 .lobby-claim {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
-  margin-bottom: t.$gap-lg;
+  gap: #{t.$space-3};
+  margin-bottom: t.$space-5;
 
   @include m.below(t.$breakpoint-tablet) {
     grid-template-columns: 1fr;
@@ -87,7 +87,7 @@
 // The invite
 // ---------------------------------------------------------------------------
 .invite-code {
-  margin: 6px 0 t.$gap-md;
+  margin: #{t.$space-1} 0 t.$space-3;
   // Bigger than the code you type, from the same role - see text()'s $size.
   @include t.text(code, t.text-size(hero));
   color: var(--text-primary);
@@ -95,7 +95,7 @@
 
 .invite-link-row {
   display: flex;
-  gap: 8px;
+  gap: #{t.$space-2};
 
   .text-input {
     flex: 1 1 auto;
@@ -114,13 +114,13 @@
 .join-page {
   max-width: 620px;
   margin: 0 auto;
-  padding: t.$gap-xl t.$gap-lg;
+  padding: t.$space-7 t.$space-5;
 }
 
 .host-panel,
 .join-panel {
   display: grid;
-  gap: t.$gap-md;
+  gap: t.$space-3;
 
   h1 {
     margin: 0;
@@ -137,7 +137,7 @@
 .host-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: t.$gap-md;
+  gap: t.$space-3;
 
   @include m.below(t.$breakpoint-mobile) {
     grid-template-columns: 1fr;
@@ -146,7 +146,7 @@
 
 .join-field {
   display: grid;
-  gap: 5px;
+  gap: #{t.$space-1};
 }
 
 // A code is read aloud, so it needs the room between characters that

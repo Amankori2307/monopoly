@@ -5,7 +5,7 @@
 .dice-dock {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: #{t.$space-3};
   margin-left: auto;
   padding: 0;
   border: 0;
@@ -15,7 +15,7 @@
 
 .dice-pair {
   display: flex;
-  gap: 10px;
+  gap: #{t.$space-2};
 }
 
 .die-face {
@@ -25,7 +25,7 @@
   grid-template-rows: repeat(3, 1fr);
   width: 58px;
   aspect-ratio: 1;
-  padding: 9px;
+  padding: #{t.$space-2};
   border: 1px solid #aeb3ad;
   border-radius: t.$die-radius;
   background: linear-gradient(145deg, #ffffff 0%, #f4f5f1 62%, #dfe2dc 100%);
@@ -35,7 +35,7 @@
 
   &::after {
     position: absolute;
-    inset: 4px;
+    inset: #{t.$space-1};
     content: '';
     border: 1px solid rgba(255, 255, 255, 0.9);
     border-radius: t.$die-inner-radius;

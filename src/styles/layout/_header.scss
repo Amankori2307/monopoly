@@ -63,9 +63,9 @@
   margin: calc(-1 * var(--shell-pad)) calc(-1 * var(--shell-pad)) var(--shell-pad);
   display: flex;
   align-items: center;
-  gap: t.$gap-md;
+  gap: t.$space-3;
   height: var(--app-header-height);
-  padding-inline: clamp(10px, 2vw, 22px);
+  padding-inline: clamp(#{t.$space-2}, 2vw, #{t.$space-5});
   border-bottom: 1px solid var(--border-subtle);
   background: var(--surface-panel);
 }
@@ -81,7 +81,7 @@
 .app-nav {
   display: flex;
   align-items: center;
-  gap: t.$gap-xs;
+  gap: t.$space-1;
   // Pushes the settings trigger to the far end without a spacer element.
   margin-right: auto;
 }
@@ -89,7 +89,7 @@
 .app-nav-link {
   display: grid;
   place-items: center;
-  padding: 6px 10px;
+  padding: #{t.$space-1} #{t.$space-2};
   border: 1px solid transparent;
   border-radius: t.$radius-sharp;
   color: var(--text-muted);
@@ -147,9 +147,9 @@
   // Above its own header, which is already above the decision backdrop.
   z-index: 1;
   display: grid;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
   width: 260px;
-  padding: t.$gap-md;
+  padding: t.$space-3;
 
   // On a phone the panel is as wide as the window allows, minus the header's
   // own inset either side.
@@ -169,7 +169,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
   @include t.text(body-sm);
 }
 
@@ -177,7 +177,7 @@
 // 260px panel it had 140px, which cut "Match the edition" to "Match the edit".
 .settings-row.is-stacked {
   display: grid;
-  gap: 4px;
+  gap: #{t.$space-1};
   justify-items: stretch;
 }
 

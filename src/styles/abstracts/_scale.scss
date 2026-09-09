@@ -58,10 +58,19 @@ $font-mono: 'DM Mono', monospace;
 // and eleven of the twenty-three in use were already on the grid. The old gap
 // tokens land as 5->4, 9->8, 14->12, 22->20, 28->28.
 //
-// Anything above 48px is a layout fact rather than a rung - see _tokens.scss.
+// Ties round DOWN, consistently: 6 to 4, 10 to 8, 14 to 12, 22 to 20. The
+// direction matters less than picking one, and this matches the five gap
+// tokens, which moved the same way.
 // ---------------------------------------------------------------------------
 $space-unit: 4px;
-$space-scale: 4px 8px 12px 16px 20px 24px 28px 32px 36px 40px 44px 48px;
+$space-scale: 4px 8px 12px 16px 20px 24px 28px 32px 36px 40px 44px 48px 52px 56px 60px
+  64px 68px 72px;
+
+// Below the grid, and deliberately named rather than snapped: a 1px gap
+// between two stacked figures is the thinnest visible separation, not a
+// quarter of a rhythm unit. If the grid ever re-bases, this must stay 1px -
+// which is exactly why conflating the two would be wrong.
+$space-hair: 1px;
 
 /// One rung, by index. Bounds-checked, so space(99) names the mistake.
 @function space($step) {
@@ -85,6 +94,9 @@ $space-9: space(9);
 $space-10: space(10);
 $space-11: space(11);
 $space-12: space(12);
+$space-14: space(14);
+$space-16: space(16);
+$space-18: space(18);
 
 // ---------------------------------------------------------------------------
 // Weight.

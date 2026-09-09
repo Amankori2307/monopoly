@@ -31,8 +31,8 @@
   display: grid;
   grid-template-columns: minmax(360px, 1.15fr) minmax(0, 0.85fr);
   align-items: start;
-  gap: t.$gap-lg;
-  margin-top: t.$gap-lg;
+  gap: t.$space-5;
+  margin-top: t.$space-5;
 
   @include m.below(t.$breakpoint-tablet) {
     grid-template-columns: 1fr;
@@ -47,7 +47,7 @@
 .two-column {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: #{t.$space-3};
 
   @include m.below(t.$breakpoint-tablet) {
     grid-template-columns: 1fr;
@@ -60,5 +60,5 @@
 .space-players {
   display: flex;
   flex-wrap: wrap;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 }

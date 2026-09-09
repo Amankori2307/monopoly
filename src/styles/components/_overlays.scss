@@ -13,7 +13,7 @@
   z-index: 40;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: #{t.$space-5};
   background: rgba(22, 27, 22, 0.55);
   backdrop-filter: blur(3px);
   animation: overlay-fade 0.18s ease;
@@ -34,7 +34,7 @@
 // one fixed card, the gap, and a choice column of about the same width.
 .decision-modal:has(.buy-decision),
 .decision-modal:has(.auction-decision) {
-  width: min(100%, calc(2 * #{t.$deed-card-width} + #{t.$gap-xl}));
+  width: min(100%, calc(2 * #{t.$deed-card-width} + #{t.$space-7}));
 }
 
 // ---------------------------------------------------------------------------
@@ -75,8 +75,8 @@
 
 .decision-spectator-waiting {
   @include t.text(eyebrow);
-  margin: 0 0 8px;
-  padding: 6px 10px;
+  margin: 0 0 #{t.$space-2};
+  padding: #{t.$space-1} #{t.$space-2};
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
   background: var(--surface-muted);
@@ -131,8 +131,8 @@
   display: flex;
   align-items: start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 22px t.$drawer-pad 14px;
+  gap: #{t.$space-4};
+  padding: #{t.$space-5} t.$drawer-pad #{t.$space-3};
   border-bottom: 1px solid var(--border-subtle);
 
   .space-detail-close {
@@ -145,14 +145,14 @@
   min-height: 0;
   overflow-y: auto;
   // Horizontal padding is the same value .is-wide derives its width from.
-  padding: 18px t.$drawer-pad 24px;
+  padding: #{t.$space-4} t.$drawer-pad #{t.$space-6};
 }
 
 .drawer-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  margin-bottom: 20px;
+  gap: #{t.$space-hair};
+  margin-bottom: #{t.$space-5};
   background: var(--border-subtle);
 
   // Two columns, not one. Collapsing these to a single column turned four
@@ -160,10 +160,10 @@
   // in a drawer whose whole job is showing the deeds. A cell is ~155px wide at
   // 360px, which a mono label and a figure fit; the padding tightens instead.
   @include m.below(t.$breakpoint-phone) {
-    margin-bottom: 14px;
+    margin-bottom: #{t.$space-3};
 
     span {
-      padding: 8px 10px;
+      padding: #{t.$space-2} #{t.$space-2};
       // Sans, and not a label - a count is not uppercase.
       @include t.text(small);
     }
@@ -175,8 +175,8 @@
 
   span {
     display: grid;
-    gap: 4px;
-    padding: 12px;
+    gap: #{t.$space-1};
+    padding: #{t.$space-3};
     background: var(--surface-panel);
     color: var(--text-muted);
     @include t.text(micro);
@@ -210,7 +210,7 @@
   place-items: center;
   min-width: 22px;
   height: 22px;
-  padding: 0 6px;
+  padding: 0 #{t.$space-1};
   border-radius: t.$radius-sharp;
   background: var(--badge-bg);
   // A count, not a label: digits, and nothing to uppercase.
@@ -279,7 +279,7 @@
   display: flex;
   // Oldest first from toToasts, so the newest ends up nearest the dice.
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
   // Pushes itself and the turn controls below it to the bottom of the column.
   // Deliberately not display:none when empty - that would drop the auto margin
   // and unpin the dice, which is the common case.
@@ -315,7 +315,7 @@
 
 .toast {
   pointer-events: auto;
-  padding: 11px 13px;
+  padding: #{t.$space-3} #{t.$space-3};
   border: 1px solid var(--border-input);
   border-left-width: 4px;
   border-radius: t.$radius-sharp;
@@ -366,7 +366,7 @@
 .card-draw {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: #{t.$space-2};
   text-align: center;
 
   h2 {
@@ -395,7 +395,7 @@
 }
 
 .card-draw .primary-button {
-  margin-top: t.$gap-sm;
+  margin-top: t.$space-2;
   min-height: 48px;
 }
 
@@ -414,7 +414,7 @@
 .liquidation {
   display: flex;
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 
   h2 {
     margin: 0;
@@ -428,7 +428,7 @@
   }
 
   .primary-button {
-    margin-top: t.$gap-sm;
+    margin-top: t.$space-2;
     min-height: 48px;
   }
 }
@@ -442,7 +442,7 @@
 .liquidation-sites {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: #{t.$space-1};
   margin: 0;
   // Long portfolios must not push the Pay button off the modal.
   max-height: 260px;
@@ -454,14 +454,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: t.$gap-md;
-    padding: 6px 0;
+    gap: t.$space-3;
+    padding: #{t.$space-1} 0;
     border-bottom: 1px solid var(--border-input);
   }
 
   button {
     flex: none;
-    padding: 5px 9px;
+    padding: #{t.$space-1} #{t.$space-2};
     @include t.text(small);
     white-space: nowrap;
   }
@@ -470,7 +470,7 @@
 // The honest dead end until bankruptcy lands.
 .liquidation-dead-end {
   margin: 0;
-  padding: 10px 12px;
+  padding: #{t.$space-2} #{t.$space-3};
   border: 1px dashed var(--border-dashed);
   color: var(--error-text);
   @include t.text(body-sm);
@@ -492,7 +492,7 @@
 .game-over {
   display: flex;
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
   text-align: center;
 
   h2 {
@@ -507,9 +507,9 @@
 
   .primary-button {
     align-self: center;
-    margin-top: t.$gap-sm;
+    margin-top: t.$space-2;
     min-height: 48px;
-    padding-inline: t.$gap-xl;
+    padding-inline: t.$space-7;
     text-decoration: none;
   }
 }
@@ -526,7 +526,7 @@
 .speed-die-decision {
   display: flex;
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 
   h2 {
     margin: 0;
@@ -549,7 +549,7 @@
 .destination-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
+  gap: #{t.$space-1};
   margin: 0;
   padding: 0;
   max-height: 48dvh;
@@ -581,7 +581,7 @@
 .building-placement {
   display: flex;
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 
   h2 {
     margin: 0;
@@ -604,13 +604,9 @@
 .error-panel {
   display: flex;
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
   max-width: 560px;
-  margin: t.$gap-xl auto;
-  padding: t.$gap-xl;
-  border: 1px solid var(--border-subtle);
-  border-radius: t.$radius-md;
-  background: var(--surface-panel);
+  margin: t.$space-7 auto;
 
   h1 {
     margin: 0;
@@ -630,7 +626,7 @@
 
 .error-panel-message {
   margin: 0;
-  padding: t.$gap-sm;
+  padding: t.$space-2;
   border-radius: t.$radius-md;
   background: var(--surface-muted);
   color: var(--error-text);
@@ -648,7 +644,7 @@
 .jail-decision {
   display: flex;
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 
   h2 {
     margin: 0;
@@ -679,6 +675,6 @@
  */
 .jail-dice {
   display: flex;
-  gap: 10px;
-  margin: 4px 0 2px;
+  gap: #{t.$space-2};
+  margin: #{t.$space-1} 0 #{t.$space-1};
 }

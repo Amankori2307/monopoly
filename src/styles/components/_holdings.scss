@@ -10,8 +10,8 @@
 .group-pips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 10px;
+  gap: #{t.$space-1};
+  margin-top: #{t.$space-2};
 }
 
 .group-pip {
@@ -46,12 +46,12 @@
 }
 
 .holdings-featured {
-  margin-top: t.$gap-lg;
+  margin-top: t.$space-5;
 }
 
 .holdings-stack {
-  margin-top: t.$gap-xl;
-  padding-bottom: t.$gap-lg;
+  margin-top: t.$space-7;
+  padding-bottom: t.$space-5;
 }
 
 // A positioning wrapper, not a surface: the `.deed-card` inside paints the

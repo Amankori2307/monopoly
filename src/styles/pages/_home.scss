@@ -30,7 +30,7 @@
 
 .masthead-lede {
   max-width: 52ch;
-  margin: 0 0 t.$gap-lg;
+  margin: 0 0 t.$space-5;
   color: var(--text-body);
   @include t.text(body);
 }
@@ -53,7 +53,7 @@
 .field-grid.setup-identity {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) 84px minmax(0, 1.2fr);
-  gap: 12px;
+  gap: #{t.$space-3};
 
   @include m.below(t.$breakpoint-tablet) {
     grid-template-columns: 1fr;
@@ -69,8 +69,8 @@
 .checkbox-field {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: #{t.$space-2};
+  padding: #{t.$space-3} #{t.$space-4};
   border: 1px solid var(--border-subtle);
   border-left: 4px solid var(--accent-soft);
   border-radius: t.$radius-sharp;
@@ -81,13 +81,13 @@
   font-weight: t.$weight-bold;
 
   input {
-    margin-top: 2px;
+    margin-top: #{t.$space-1};
     flex: 0 0 auto;
   }
 
   .helper-text {
     display: block;
-    margin-top: 3px;
+    margin-top: #{t.$space-1};
     font-weight: t.$weight-medium;
   }
 }
@@ -97,12 +97,12 @@
 // ---------------------------------------------------------------------------
 .recent-games {
   display: grid;
-  gap: 12px;
+  gap: #{t.$space-3};
 }
 
 .recent-game-item {
   position: relative;
-  padding: 16px 18px;
+  padding: #{t.$space-4} #{t.$space-4};
   border-radius: t.$radius-sharp;
   overflow: hidden;
 
@@ -111,7 +111,7 @@
 
   > strong {
     display: block;
-    padding-top: 4px;
+    padding-top: #{t.$space-1};
     @include t.text(body);
     font-family: t.$font-serif;
   }
@@ -120,8 +120,8 @@
 .recent-game-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 14px;
-  margin: 6px 0 14px;
+  gap: #{t.$space-1} #{t.$space-3};
+  margin: #{t.$space-1} 0 #{t.$space-3};
   color: var(--text-muted);
   @include t.text(small);
 }
@@ -131,7 +131,7 @@
 // what it actually affects.
 .appearance-field {
   display: grid;
-  gap: 5px;
+  gap: #{t.$space-1};
 
   .select-input {
     max-width: 260px;
@@ -151,14 +151,14 @@
 // ---------------------------------------------------------------------------
 .chooser-page {
   display: grid;
-  gap: t.$gap-lg;
+  gap: t.$space-5;
   max-width: 780px;
-  padding-block: clamp(20px, 5vw, 56px);
+  padding-block: clamp(#{t.$space-5}, 5vw, #{t.$space-14});
 }
 
 .chooser-masthead {
   display: grid;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 
   h1 {
     margin: 0;
@@ -180,8 +180,8 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: t.$gap-sm t.$gap-md;
-  padding: t.$gap-md;
+  gap: t.$space-2 t.$space-3;
+  padding: t.$space-3;
   border-left: 4px solid var(--accent);
   color: var(--text-primary);
   text-decoration: none;
@@ -214,15 +214,15 @@
 
 .play-choices {
   display: grid;
-  gap: t.$gap-md;
+  gap: t.$space-3;
 }
 
 .play-choice {
   @include m.card-surface;
 
   display: grid;
-  gap: 4px;
-  padding: t.$gap-lg t.$gap-md;
+  gap: #{t.$space-1};
+  padding: t.$space-5 t.$space-3;
   color: var(--text-primary);
   text-decoration: none;
 
@@ -248,13 +248,13 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 }
 
 .recent-game-mode {
   @include t.text(micro);
 
-  padding: 2px 6px;
+  padding: #{t.$space-1} #{t.$space-1};
   border: 1px solid var(--border-subtle);
   background: var(--surface-muted);
   color: var(--text-muted);

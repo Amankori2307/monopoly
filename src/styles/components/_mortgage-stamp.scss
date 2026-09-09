@@ -30,7 +30,7 @@
 .mortgage-stamp.is-deed {
   // Over the card's content, which is all in normal flow beneath it.
   z-index: 1;
-  padding: 0 t.$gap-lg;
+  padding: 0 t.$space-5;
   opacity: 0.16;
 }
 

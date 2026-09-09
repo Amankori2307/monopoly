@@ -1,20 +1,25 @@
 @use '../abstracts/tokens' as t;
 @use '../abstracts/mixins' as m;
 
+// One card surface, reached one way. There used to be three: this class, the
+// card-surface() mixin, and hand-written border+background+box-shadow in two
+// more partials - so a "card" could be any of three slightly different things
+// depending on which a component happened to reach for.
 .panel,
 .decision-card,
 .recent-game-item {
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-panel);
-  box-shadow: var(--shadow-panel);
+  @include m.card-surface;
 }
 
-.panel {
-  padding: t.$gap-lg;
-  border-radius: t.$radius-sharp;
+// And one padding. .decision-card restated this identically, and .error-panel
+// overrode it to 28px while dropping the responsive step - so a panel's inner
+// spacing depended on which panel it was.
+.panel,
+.decision-card {
+  padding: t.$space-5;
 
   @include m.below(t.$breakpoint-tablet) {
-    padding: 16px;
+    padding: #{t.$space-4};
   }
 }
 
@@ -22,11 +27,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 15px;
+  gap: #{t.$space-4};
+  margin-bottom: #{t.$space-4};
 
   .eyebrow {
-    margin-bottom: 4px;
+    margin-bottom: #{t.$space-1};
   }
 }
 
@@ -43,18 +48,8 @@
 // Plain white, like every other card. It used to be tinted and ringed in red,
 // which made the same deed look different depending on where it was shown.
 .decision-card {
-  padding: t.$gap-lg;
-  border: 1px solid var(--border-subtle);
-  border-radius: t.$radius-sharp;
-  background: var(--surface-panel);
-  box-shadow: var(--shadow-panel);
-
   h2 {
-    margin-bottom: 8px;
-  }
-
-  @include m.below(t.$breakpoint-tablet) {
-    padding: 16px;
+    margin-bottom: #{t.$space-2};
   }
 }
 
@@ -86,8 +81,8 @@
   display: flex;
   align-items: start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: #{t.$space-3};
+  padding: #{t.$space-3} #{t.$space-4};
   border-left: 5px solid var(--error-text);
   background: var(--surface-muted);
 }
@@ -104,7 +99,7 @@
 
 .command-error-dismiss {
   flex: 0 0 auto;
-  padding: 2px 8px;
+  padding: #{t.$space-1} #{t.$space-2};
   border: 1px solid var(--border-subtle);
   background: transparent;
   color: var(--text-muted);
@@ -114,7 +109,7 @@
 }
 
 .empty-state {
-  padding: t.$gap-lg;
+  padding: t.$space-5;
   border: 1px dashed var(--border-dashed);
   border-radius: t.$radius-sharp;
   color: var(--text-muted);
@@ -122,7 +117,7 @@
 }
 
 .event-item {
-  padding: 11px 0;
+  padding: #{t.$space-3} 0;
   border-bottom: 1px dashed var(--border-dashed);
   @include t.text(body-sm);
 

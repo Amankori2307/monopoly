@@ -14,11 +14,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: #{t.$space-2};
   // 44px is the touch-target minimum; .activity-button and .dice-roll-button
   // were already there and these two were the odd ones out.
   min-height: 44px;
-  padding: 10px 15px;
+  padding: #{t.$space-2} #{t.$space-4};
   border: 0;
   border-radius: t.$radius-sharp;
   @include t.text(body-sm);

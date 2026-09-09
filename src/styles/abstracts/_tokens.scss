@@ -12,6 +12,9 @@
 // guards its own grid and its own layer order at compile time, and both guards
 // were silently inert until this line put the file in everyone's graph.
 @forward 'scale';
+// @use as well as @forward: a forward exposes the scale to this file's
+// importers, not to this file, and the gap tokens below are defined from it.
+@use 'scale' as *;
 
 // ---------------------------------------------------------------------------
 // Corner radius.
@@ -29,12 +32,6 @@ $radius-xl: $radius-sharp;
 $radius-pill: $radius-sharp;
 /** Was 50% - circular elements are squared off under the sharp system. */
 $radius-round: $radius-sharp;
-
-$gap-xs: 5px;
-$gap-sm: 9px;
-$gap-md: 14px;
-$gap-lg: 22px;
-$gap-xl: 28px;
 
 // Board geometry. The colour bar only exists on street spaces - see components/_board.scss.
 $board-corner-track: 1.7fr;
@@ -62,7 +59,7 @@ $deed-card-pad: 18px;
 
 // The holdings drawer is sized by its card, not the other way round: the panel
 // is exactly one card plus this padding either side.
-$drawer-pad: $gap-xl;
+$drawer-pad: $space-7;
 
 // Collapsed holding in the stack: tall enough to clear the colour strip, the
 // eyebrow, and the full-size deed heading - nothing more - plus how far each

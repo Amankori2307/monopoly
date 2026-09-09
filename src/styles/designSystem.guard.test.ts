@@ -88,7 +88,7 @@ const TYPE_PROPS = /^(font|font-size|font-weight|line-height|letter-spacing)$/;
  *
  * A value referencing a scale variable or a custom property is compliant even
  * when it also does arithmetic - `calc(var(--frame) * 0.54)` is a ratio, not a
- * magic number. A bare literal beside a token (`padding: 10px t.$gap-md`) is
+ * magic number. A bare literal beside a token (`padding: 10px t.$space-3`) is
  * still counted, which is deliberate: half-migrated is not migrated.
  */
 const offLadder = (property: string, value: string): boolean => {
@@ -145,10 +145,10 @@ const MIGRATING =
   'Not yet migrated. The count is exact as of the day the scales landed, and ' +
   'the phase that migrates this axis drives it to zero. See docs/design-system.md.';
 
-// Type is DONE: 174 deviations across 14 partials are now zero, so its rows
-// are gone rather than sitting at 0 - the default budget already says 0, and a
-// zero row would only be a place for a future one to hide. What remains below
-// is spacing and colour, plus the two regions the system does not govern.
+// Type and spacing are DONE: 174 and 171 deviations respectively, both now
+// zero, so their rows are gone rather than sitting at 0 - the default budget
+// already says 0, and a zero row would only be a place for a future one to
+// hide. What remains is COLOUR, plus the regions the system does not govern.
 
 const BUDGETS: Record<string, Budget> = {
   'abstracts/_scale.scss': {
@@ -183,98 +183,50 @@ const BUDGETS: Record<string, Budget> = {
       'sub-grid values inside a fluid cell where a 4px grid means nothing. Its nine ' +
       'colour literals shade an inline player colour - docs/theming.md.',
   },
-  'components/_auction.scss': {
-    spacing: 9,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
   'components/_buttons.scss': {
-    spacing: 2,
+    spacing: 0,
     type: 0,
     colour: 1,
     reason: MIGRATING,
   },
   'components/_dice.scss': {
-    spacing: 4,
+    spacing: 0,
     type: 0,
     colour: 11,
     reason: MIGRATING,
   },
-  'components/_forms.scss': {
-    spacing: 3,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
   'components/_holdings.scss': {
-    spacing: 2,
+    spacing: 0,
     type: 0,
     colour: 1,
     reason: MIGRATING,
   },
   'components/_overlays.scss': {
-    spacing: 22,
+    spacing: 0,
     type: 0,
     colour: 4,
     reason: MIGRATING,
   },
-  'components/_panels.scss': {
-    spacing: 10,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
   'components/_player.scss': {
-    spacing: 15,
+    spacing: 0,
     type: 0,
     colour: 2,
     reason: MIGRATING,
   },
   'components/_space-detail.scss': {
-    spacing: 24,
+    spacing: 0,
     type: 0,
     colour: 2,
     reason: MIGRATING,
   },
   'components/_trade.scss': {
-    spacing: 17,
+    spacing: 0,
     type: 0,
     colour: 3,
     reason: MIGRATING,
   },
-  'layout/_header.scss': {
-    spacing: 3,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
-  'layout/_shell.scss': {
-    spacing: 1,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
-  'pages/_game.scss': {
-    spacing: 4,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
-  'pages/_home.scss': {
-    spacing: 14,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
-  'pages/_lobby.scss': {
-    spacing: 7,
-    type: 0,
-    colour: 0,
-    reason: MIGRATING,
-  },
   'pages/_rules.scss': {
-    spacing: 29,
+    spacing: 0,
     type: 0,
     colour: 1,
     reason: MIGRATING,
@@ -370,6 +322,18 @@ describe('the design system', () => {
       });
     });
     expect(offenders).toEqual([]);
+  });
+
+  it('has no trace of the old gap tokens', () => {
+    // $gap-xs..xl were 5/9/14/22/28 - a ladder with no relationship between
+    // its rungs, and one that the three commonest literals in the app (12px,
+    // 10px, 6px) did not even appear on. They are $space-N now, and leaving
+    // both spellings alive would recreate exactly the disease: two names for
+    // one value. Deleted last, after the rename, so nothing drifted in flight.
+    const survivors = files
+      .filter((file) => strip(file.scss).includes('$gap-'))
+      .map((file) => file.name);
+    expect(survivors).toEqual([]);
   });
 
   it('takes every radius from a token', () => {

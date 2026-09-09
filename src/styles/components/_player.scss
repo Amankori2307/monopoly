@@ -15,7 +15,7 @@
 .player-stack-region {
   display: flex;
   flex-direction: column;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
   min-width: 0;
   // Without min-height:0 a flex item refuses to shrink below its content, so at
   // eight players the stack pushed the turn controls out of the column.
@@ -31,13 +31,13 @@
   min-height: 0;
   overflow-y: auto;
   // Room for the collapsed stack's outermost card, which insets as it tapers.
-  padding-right: 2px;
+  padding-right: #{t.$space-1};
 }
 
 .player-stack {
   position: relative;
   display: grid;
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 }
 
 // Whoever is on top is the active player, so the top card carries the emphasis
@@ -143,7 +143,7 @@
 .player-stack-collapse {
   align-self: start;
   flex: none;
-  padding: 4px 10px;
+  padding: #{t.$space-1} #{t.$space-2};
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
   background: transparent;
@@ -165,14 +165,14 @@
 }
 
 .player-list {
-  gap: t.$gap-sm;
+  gap: t.$space-2;
 }
 
 .player-card {
   position: relative;
   overflow: hidden;
   // The right inset is where the chevron sits, so it never lands on a figure.
-  padding: 11px 40px 11px 14px;
+  padding: #{t.$space-3} #{t.$space-10} #{t.$space-3} #{t.$space-3};
   border: 1px solid var(--border-input);
   // Left edge is tinted with the player's token colour, set inline from
   // ThemeToken.color so each player is identifiable at a glance.
@@ -187,7 +187,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: #{t.$space-2};
 }
 
 .player-card-name {
@@ -200,7 +200,7 @@
 .player-card-worth {
   display: grid;
   justify-items: end;
-  gap: 1px;
+  gap: #{t.$space-hair};
   text-align: right;
   // The figure must not wrap under its own label.
   white-space: nowrap;
@@ -226,7 +226,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-inline-end: 9px;
+  padding-inline-end: #{t.$space-2};
   border: 0;
   background: none;
   cursor: pointer;
@@ -269,13 +269,13 @@
 .player-metrics {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 16px;
-  margin: 7px 0 0;
+  gap: #{t.$space-1} #{t.$space-4};
+  margin: #{t.$space-2} 0 0;
 
   > div {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: #{t.$space-1};
     min-width: 0;
   }
 
@@ -297,12 +297,12 @@
 .player-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
+  gap: #{t.$space-1};
+  margin-top: #{t.$space-2};
 }
 
 .player-badge {
-  padding: 3px 8px;
+  padding: #{t.$space-1} #{t.$space-2};
   border-radius: t.$radius-sharp;
   @include t.text(micro);
   text-transform: uppercase;
@@ -327,13 +327,13 @@
 // Outlined rather than filled: a mortgage is a state to notice, not an alarm.
 .badge-mortgaged {
   border: 1px dashed var(--border-dashed);
-  padding: 2px 7px;
+  padding: #{t.$space-1} #{t.$space-2};
   background: transparent;
   color: var(--text-muted);
 }
 
 .space-card {
-  padding: 12px;
+  padding: #{t.$space-3};
   border-left: 5px solid var(--text-eyebrow);
   border-radius: t.$radius-sharp;
   background: var(--surface-muted);
@@ -341,6 +341,6 @@
 
   strong {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: #{t.$space-1};
   }
 }
