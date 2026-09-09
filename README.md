@@ -1,4 +1,4 @@
-# Monopoly — India Edition
+# Monopoly
 
 A browser Monopoly with the full printed ruleset, built as a **pure rules engine with a React
 shell**. Games have stable ids, save to `localStorage`, and resume from `/game/:gameId`.

@@ -1,16 +1,20 @@
 import { SPEED_DIE_BONUS_CASH } from '../../domain/constants/game.constants';
 import { formatMoney } from '../../shared/utils/money.utils';
+import { useRulesEdition } from './RulesEditionContext';
 
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesSpeedDie() {
+  const { currencySymbol } = useRulesEdition();
+  const money = (amount: number) => formatMoney(amount, currencySymbol);
+
   return (
     <section id="speed-die">
       <p className="eyebrow">8. Speed Die</p>
       <h2>Optional faster-play rules</h2>
       <p>
-        The India Edition box includes a Speed Die. It is optional and is not used until
-        every player has passed GO for the first time. At the start of a Speed Die game,
-        each player receives an extra {formatMoney(SPEED_DIE_BONUS_CASH)}.
+        Some boxes include a Speed Die. It is optional and is not used until every player
+        has passed GO for the first time. At the start of a Speed Die game, each player
+        receives an extra {money(SPEED_DIE_BONUS_CASH)}.
       </p>
       <ul>
         <li>Roll the Speed Die with the two white dice on your turn.</li>

@@ -33,6 +33,14 @@ export const internationalTheme: GameTheme = {
 
   boardCenter: { title: 'Monopoly', subtitle: 'Classic Edition' },
 
+  // What this edition calls the things on its board, for the rules booklet.
+  nouns: {
+    site: 'street',
+    sites: 'streets',
+    railway: 'station',
+    railways: 'stations',
+  },
+
   spaceNames: [
     'GO', // 0
     'Old Kent Road', // 1  brown

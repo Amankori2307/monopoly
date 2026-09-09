@@ -33,6 +33,14 @@ export const worldTheme: GameTheme = {
 
   boardCenter: { title: 'Monopoly', subtitle: 'World Cities' },
 
+  // What this edition calls the things on its board, for the rules booklet.
+  nouns: {
+    site: 'city',
+    sites: 'cities',
+    railway: 'airport',
+    railways: 'airports',
+  },
+
   spaceNames: [
     'GO', // 0
     'Taipei', // 1  brown

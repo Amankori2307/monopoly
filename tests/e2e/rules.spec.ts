@@ -67,14 +67,46 @@ test('answers the questions that come up mid-game', async ({ page }) => {
   await expect(faq.locator('dd')).toHaveCount(questions);
 });
 
-test('quotes ruleset amounts in rupees, from the constants', async ({ page }) => {
+/**
+ * With no game open the booklet reads generically: the amounts are bare and
+ * the words are the ones true of every edition. It used to hardcode India's -
+ * cities, railway stations, rupees - which is wrong for three of the four
+ * boards and arbitrary for a reader who has not chosen one.
+ */
+test('quotes ruleset amounts from the constants, with no currency of its own', async ({
+  page,
+}) => {
   const booklet = page.locator('.rules-booklet');
 
   for (const amount of [STARTING_CASH, PASS_GO_AMOUNT, JAIL_FINE]) {
-    await expect(booklet).toContainText(`₹${amount}`);
+    await expect(booklet).toContainText(String(amount));
   }
-  // No leftovers from the old placeholder currency.
+
+  // No edition's symbol, and no leftovers from the old placeholder currency.
+  await expect(booklet).not.toContainText('₹');
   await expect(booklet).not.toContainText(/\bM\d/);
+  await expect(booklet).toContainText(/propert(y|ies)/i);
+});
+
+/**
+ * Mid-game it follows the board you are actually looking at - which is what
+ * the header's Rules link is mostly for.
+ */
+test('follows the edition being played', async ({ page }) => {
+  await startGame(page);
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Rules' })
+    .click();
+
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Rules of play/);
+  await expect(page.locator('.rules-header')).toContainText(/India Edition/);
+
+  const booklet = page.locator('.rules-booklet');
+  // India's money and India's words.
+  await expect(booklet).toContainText(`₹${STARTING_CASH}`);
+  await expect(booklet).toContainText(/cities/i);
+  await expect(booklet).toContainText(/railway station/i);
 });
 
 /**

@@ -2,9 +2,12 @@ import {
   HOTELS_AVAILABLE,
   HOUSES_AVAILABLE,
 } from '../../domain/constants/game.constants';
+import { useRulesEdition } from './RulesEditionContext';
 
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesBuildings() {
+  const { nouns } = useRulesEdition();
+
   return (
     <section id="buildings">
       <p className="eyebrow">6. Buildings</p>
@@ -17,12 +20,14 @@ export function RulesBuildings() {
         <li>
           Pay the listed house cost to the Bank and build evenly across the whole set.
         </li>
-        <li>You may build up to four houses on each city.</li>
+        <li>You may build up to four houses on each {nouns.site}.</li>
         <li>
-          When every city in a complete set has four houses, upgrade a city to one hotel
-          by paying its hotel cost and returning the four houses to the Bank.
+          When every {nouns.site} in a complete set has four houses, upgrade one to a
+          hotel by paying its hotel cost and returning the four houses to the Bank.
         </li>
-        <li>You cannot build in a color set while any city in that set is mortgaged.</li>
+        <li>
+          You cannot build in a color set while any {nouns.site} in that set is mortgaged.
+        </li>
         <li>
           Sell buildings back to the Bank for half what you paid, and sell evenly too -
           the same one-building rule in reverse. A hotel sells back into four houses.

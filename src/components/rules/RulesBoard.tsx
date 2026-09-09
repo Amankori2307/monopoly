@@ -1,9 +1,17 @@
-import { RAILWAY_RENT_BY_COUNT } from '../../domain/constants/board.constants';
+import {
+  INCOME_TAX_AMOUNT,
+  RAILWAY_RENT_BY_COUNT,
+  SUPER_TAX_AMOUNT,
+} from '../../domain/constants/board.constants';
 import { PASS_GO_AMOUNT } from '../../domain/constants/game.constants';
 import { formatMoney } from '../../shared/utils/money.utils';
+import { useRulesEdition } from './RulesEditionContext';
 
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesBoard() {
+  const { currencySymbol, nouns } = useRulesEdition();
+  const money = (amount: number) => formatMoney(amount, currencySymbol);
+
   return (
     <section id="board">
       <p className="eyebrow">3. Board spaces</p>
@@ -18,24 +26,26 @@ export function RulesBoard() {
           </thead>
           <tbody>
             <tr>
-              <td>Unowned city, railway, or utility</td>
+              <td>
+                Unowned {nouns.site}, {nouns.railway}, or utility
+              </td>
               <td>
                 Buy it for the price shown, or decline it. A declined asset must be
                 auctioned.
               </td>
             </tr>
             <tr>
-              <td>Owned city</td>
+              <td>Owned {nouns.site}</td>
               <td>
                 Pay the rent on its Title Deed card. A completed color set earns increased
                 rent, and buildings increase it further.
               </td>
             </tr>
             <tr>
-              <td>Railway</td>
+              <td className="rules-cell-capitalised">{nouns.railway}</td>
               <td>
-                Rent rises as its owner gains more railways:{' '}
-                {RAILWAY_RENT_BY_COUNT.map((rent) => formatMoney(rent)).join(', ')}.
+                Rent rises as its owner gains more {nouns.railways}:{' '}
+                {RAILWAY_RENT_BY_COUNT.map((rent) => money(rent)).join(', ')}.
               </td>
             </tr>
             <tr>
@@ -55,7 +65,8 @@ export function RulesBoard() {
             <tr>
               <td>Income Tax / Super Tax</td>
               <td>
-                Pay the Bank {formatMoney(200)} / {formatMoney(100)} respectively.
+                Pay the Bank {money(INCOME_TAX_AMOUNT)} / {money(SUPER_TAX_AMOUNT)}
+                respectively.
               </td>
             </tr>
             <tr>
@@ -68,9 +79,7 @@ export function RulesBoard() {
             </tr>
             <tr>
               <td>Go To Jail</td>
-              <td>
-                Move directly to Jail. Do not collect {formatMoney(PASS_GO_AMOUNT)}.
-              </td>
+              <td>Move directly to Jail. Do not collect {money(PASS_GO_AMOUNT)}.</td>
             </tr>
           </tbody>
         </table>

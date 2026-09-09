@@ -31,6 +31,14 @@ export const indiaTheme: GameTheme = {
 
   boardCenter: { title: 'Monopoly', subtitle: 'India Edition' },
 
+  // What this edition calls the things on its board, for the rules booklet.
+  nouns: {
+    site: 'city',
+    sites: 'cities',
+    railway: 'railway station',
+    railways: 'railway stations',
+  },
+
   spaceNames: [
     'GO', // 0
     'Guwahati', // 1  brown

@@ -21,6 +21,26 @@ import type { DeckCard, ThemeToken } from '../types/game.interfaces';
  * `styles/themes/_themes.scss`, keyed by this `id`, so a new theme is this file
  * plus one SCSS block. Moving them in here is the next phase.
  */
+/**
+ * What this edition calls the things on its board.
+ *
+ * The printed rules are identical in every edition - only the names, the money
+ * and the *words* differ. India has cities and railway stations, the US has
+ * streets and railroads, London has streets and stations, and the world board
+ * flies between airports. The booklet is one set of prose that reads these, so
+ * a rule can never be right in one edition and wrong in another.
+ *
+ * Lower case: the booklet interpolates them mid-sentence.
+ */
+export interface ThemeNouns {
+  /** A single ordinary property square. */
+  site: string;
+  sites: string;
+  /** One of the four squares in the railway slots. */
+  railway: string;
+  railways: string;
+}
+
 export interface GameTheme {
   /** Also the `data-theme` attribute, so the SCSS palette keys off it. */
   id: string;
@@ -35,6 +55,8 @@ export interface GameTheme {
    * coloured discs, so it is the only thing telling two players apart.
    */
   tokenCatalog: ThemeToken[];
+  /** What this edition calls a site and a railway. See ThemeNouns. */
+  nouns: ThemeNouns;
   /**
    * The forty squares, in board order.
    *

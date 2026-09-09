@@ -4,9 +4,13 @@ import {
   STARTING_CASH,
 } from '../../domain/constants/game.constants';
 import { formatMoney } from '../../shared/utils/money.utils';
+import { useRulesEdition } from './RulesEditionContext';
 
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesStart() {
+  const { currencySymbol } = useRulesEdition();
+  const money = (amount: number) => formatMoney(amount, currencySymbol);
+
   return (
     <section id="start">
       <p className="eyebrow">1. Set it up</p>
@@ -17,8 +21,7 @@ export function RulesStart() {
           hotels, and auctions.
         </li>
         <li>
-          Give each player {formatMoney(STARTING_CASH)}. Keep the remaining money in the
-          Bank.
+          Give each player {money(STARTING_CASH)}. Keep the remaining money in the Bank.
         </li>
         <li>
           Shuffle Chance and Community Chest separately and place both decks face down.
@@ -34,13 +37,13 @@ export function RulesStart() {
           Players<strong>2–8</strong>
         </span>
         <span>
-          Starting cash<strong>{formatMoney(STARTING_CASH)}</strong>
+          Starting cash<strong>{money(STARTING_CASH)}</strong>
         </span>
         <span>
-          GO salary<strong>{formatMoney(PASS_GO_AMOUNT)}</strong>
+          GO salary<strong>{money(PASS_GO_AMOUNT)}</strong>
         </span>
         <span>
-          Jail fine<strong>{formatMoney(JAIL_FINE)}</strong>
+          Jail fine<strong>{money(JAIL_FINE)}</strong>
         </span>
       </div>
     </section>

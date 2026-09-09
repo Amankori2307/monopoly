@@ -1,7 +1,10 @@
 import { MORTGAGE_INTEREST_PERCENT } from '../../domain/constants/game.constants';
+import { useRulesEdition } from './RulesEditionContext';
 
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesMoney() {
+  const { nouns } = useRulesEdition();
+
   return (
     <section id="money">
       <p className="eyebrow">7. Mortgages, trades, and bankruptcy</p>
@@ -12,7 +15,7 @@ export function RulesMoney() {
           Sell houses and hotels back to the Bank for half their cost. Houses must be sold
           evenly across a color set.
         </li>
-        <li>Before mortgaging a city, sell all buildings in its color set.</li>
+        <li>Before mortgaging a {nouns.site}, sell all buildings in its color set.</li>
         <li>
           To mortgage, turn the title deed face down and take its mortgage value from the
           Bank. Mortgaged assets collect no rent.

@@ -1,8 +1,12 @@
 import { PASS_GO_AMOUNT } from '../../domain/constants/game.constants';
 import { formatMoney } from '../../shared/utils/money.utils';
+import { useRulesEdition } from './RulesEditionContext';
 
 /** Rules booklet section. Static copy - see docs/features/rules-page.md. */
 export function RulesTurn() {
+  const { currencySymbol } = useRulesEdition();
+  const money = (amount: number) => formatMoney(amount, currencySymbol);
+
   return (
     <section id="turn">
       <p className="eyebrow">2. Take your turn</p>
@@ -17,8 +21,8 @@ export function RulesTurn() {
         <li>When your turn ends, the player on your left goes next.</li>
       </ol>
       <p className="callout">
-        Passing or landing on GO pays {formatMoney(PASS_GO_AMOUNT)}. Going directly to
-        Jail does not pay the GO salary.
+        Passing or landing on GO pays {money(PASS_GO_AMOUNT)}. Going directly to Jail does
+        not pay the GO salary.
       </p>
     </section>
   );

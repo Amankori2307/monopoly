@@ -31,6 +31,14 @@ export const usTheme: GameTheme = {
 
   boardCenter: { title: 'Monopoly', subtitle: 'Atlantic City' },
 
+  // What this edition calls the things on its board, for the rules booklet.
+  nouns: {
+    site: 'street',
+    sites: 'streets',
+    railway: 'railroad',
+    railways: 'railroads',
+  },
+
   spaceNames: [
     'GO', // 0
     'Mediterranean Avenue', // 1  brown

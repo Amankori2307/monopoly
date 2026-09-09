@@ -12,7 +12,7 @@ Guidance for Claude Code working in this repository.
 
 ## 1. What this project is
 
-A **Monopoly India Edition** board game in the browser: React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `#/game/:gameId`.
+A **Monopoly** board game in the browser, playable as any of four editions (India, London, US, World): React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `#/game/:gameId`.
 
 The defining architectural decision: **the rules engine is a pure module that knows nothing about React or Redux.** UI dispatches _commands_; the engine returns a _new game state_. Keep it that way.
 
@@ -229,7 +229,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1405 unit tests, 183 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1423 unit tests, 184 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -441,6 +441,26 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   which on a stalling connection is thirty seconds. The e2e browser also resolves both font hosts to
   nothing (`--host-resolver-rules` in `playwright.config.ts`): a test should not be able to pass or
   fail on somebody else's CDN.
+- **The rules booklet is edition-aware, and its vocabulary lives on the theme.** The printed rules
+  are identical in every edition - only the names, the money and the _words_ differ. So each theme
+  carries a `nouns` block (`site`/`sites`/`railway`/`railways`): India has cities and railway
+  stations, the US streets and railroads, London streets and stations, and the World board flies
+  between airports. One set of prose reads them, so a rule cannot be right in one edition and wrong
+  in another; `themeNouns.guard.test.ts` fails on a new edition that forgets one, on a capitalised
+  one (they are interpolated mid-sentence), and on a plural equal to its singular.
+  The booklet follows **the game you are in**, and with no game open reads
+  **generically** - `GENERIC_NOUNS` and no currency symbol at all, because
+  `formatMoney(1500, '')` is `1500` and a bare number is the honest way to state a rule that is the
+  same in every currency. It is deliberately not the default edition: India's words are wrong for
+  three of the four boards. Threaded by context rather than props, which is a considered exception -
+  eleven prose sections need the same three facts and take no other prop.
+- **`rulesSync.test.ts` pins India's currency symbol explicitly, and must.** It computed
+  `formatMoney(x)` with no symbol and leaned on `DEFAULT_CURRENCY_SYMBOL` being `₹`, which happened
+  to match `docs/india-edition-rules.md` - a transcription of the India booklet, which it will
+  always be. Now that the booklet renders whichever edition is in play, an implicit default would
+  make that guard compare the doc against a symbol nobody chose, and it would pass while proving
+  nothing. `board.rules.test.ts`, `ruleCoverage*` and the doc itself stay India-specific on purpose:
+  they are the transcription and its fixtures.
 - **A theme is one file, and the economics are not in it.** `src/domain/themes/<name>.theme.ts`
   carries what makes an edition _that_ edition - its name, currency, pieces, the forty square names
   and the board's centre - and `themes.registry.ts` lists it. Prices, rents and rules live once in

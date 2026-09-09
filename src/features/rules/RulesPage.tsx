@@ -13,19 +13,24 @@ import { RulesStart } from '../../components/rules/RulesStart';
 import { RulesTurn } from '../../components/rules/RulesTurn';
 import { defaultTheme } from '../../domain/themes/themes.registry';
 import { AppShell } from '../shell/AppShell';
+import { RulesEditionProvider } from '../../components/rules/RulesEditionContext';
 import { useHashScroll } from './hooks/useHashScroll';
+import { useRulesEdition } from './useRulesEdition';
 
 export function RulesPage() {
   useHashScroll();
+  // The edition you are playing, or the generic reading when you are not.
+  const edition = useRulesEdition();
+
   return (
     <AppShell editionId={defaultTheme.id}>
       <main className="rules-page">
         <header className="rules-header">
           <div>
-            <p className="eyebrow">Monopoly India Edition</p>
+            <p className="eyebrow">{edition.name}</p>
             <h1>Rules of play</h1>
             <p className="rules-lede">
-              A digital reading guide based on the India Edition booklet and board.
+              A digital reading guide to the board, the money and the turn.
             </p>
           </div>
         </header>
@@ -48,19 +53,21 @@ export function RulesPage() {
           ))}
         </nav>
 
-        <article className="rules-booklet">
-          <RulesIntro />
-          <RulesFaq />
-          <RulesStart />
-          <RulesTurn />
-          <RulesBoard />
-          <RulesBoardExtra />
-          <RulesJail />
-          <RulesBuildings />
-          <RulesMoney />
-          <RulesSpeedDie />
-          <RulesClosing />
-        </article>
+        <RulesEditionProvider edition={edition}>
+          <article className="rules-booklet">
+            <RulesIntro />
+            <RulesFaq />
+            <RulesStart />
+            <RulesTurn />
+            <RulesBoard />
+            <RulesBoardExtra />
+            <RulesJail />
+            <RulesBuildings />
+            <RulesMoney />
+            <RulesSpeedDie />
+            <RulesClosing />
+          </article>
+        </RulesEditionProvider>
       </main>
     </AppShell>
   );

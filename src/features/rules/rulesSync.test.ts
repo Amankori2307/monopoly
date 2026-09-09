@@ -23,6 +23,7 @@ import {
   STARTING_CASH,
 } from '../../domain/constants/game.constants';
 import { formatMoney } from '../../shared/utils/money.utils';
+import { indiaTheme } from '../../domain/themes/india.theme';
 
 /**
  * The in-app rules booklet and docs/india-edition-rules.md must stay in sync.
@@ -43,24 +44,52 @@ if (!existsSync(RULES_DOC_PATH)) {
 
 const RULES_DOC = readFileSync(RULES_DOC_PATH, 'utf8');
 
-/** Every ruleset value both documents quote, and where it comes from. */
+/**
+ * Every ruleset value both documents quote, and where it comes from.
+ *
+ * The symbol is pinned to India's **explicitly**, and that is load-bearing.
+ * These used to call `formatMoney(x)` with no symbol at all and lean on
+ * `DEFAULT_CURRENCY_SYMBOL` being `₹` - which happened to match the doc,
+ * because the doc is a transcription of the India booklet and always will be.
+ * Now that the booklet renders whichever edition you are playing, an implicit
+ * default would make this guard assert nothing the day that default changed:
+ * it would compare the doc against a symbol nobody had chosen.
+ */
 const QUOTED_VALUES: ReadonlyArray<{ name: string; text: string }> = [
-  { name: 'STARTING_CASH', text: formatMoney(STARTING_CASH) },
-  { name: 'PASS_GO_AMOUNT', text: formatMoney(PASS_GO_AMOUNT) },
-  { name: 'JAIL_FINE', text: formatMoney(JAIL_FINE) },
-  { name: 'AUCTION_START_PRICE', text: formatMoney(AUCTION_START_PRICE) },
-  { name: 'AUCTION_MIN_INCREMENT', text: formatMoney(AUCTION_MIN_INCREMENT) },
-  { name: 'SPEED_DIE_BONUS_CASH', text: formatMoney(SPEED_DIE_BONUS_CASH) },
+  { name: 'STARTING_CASH', text: formatMoney(STARTING_CASH, indiaTheme.currencySymbol) },
+  {
+    name: 'PASS_GO_AMOUNT',
+    text: formatMoney(PASS_GO_AMOUNT, indiaTheme.currencySymbol),
+  },
+  { name: 'JAIL_FINE', text: formatMoney(JAIL_FINE, indiaTheme.currencySymbol) },
+  {
+    name: 'AUCTION_START_PRICE',
+    text: formatMoney(AUCTION_START_PRICE, indiaTheme.currencySymbol),
+  },
+  {
+    name: 'AUCTION_MIN_INCREMENT',
+    text: formatMoney(AUCTION_MIN_INCREMENT, indiaTheme.currencySymbol),
+  },
+  {
+    name: 'SPEED_DIE_BONUS_CASH',
+    text: formatMoney(SPEED_DIE_BONUS_CASH, indiaTheme.currencySymbol),
+  },
   { name: 'HOUSES_AVAILABLE', text: String(HOUSES_AVAILABLE) },
   { name: 'HOTELS_AVAILABLE', text: String(HOTELS_AVAILABLE) },
   { name: 'MORTGAGE_INTEREST_PERCENT', text: `${MORTGAGE_INTEREST_PERCENT}%` },
   // Board data rather than a game constant, but the doc quotes both in its
   // section 13 "Values:" line and neither was checked.
-  { name: 'INCOME_TAX_AMOUNT', text: formatMoney(INCOME_TAX_AMOUNT) },
-  { name: 'SUPER_TAX_AMOUNT', text: formatMoney(SUPER_TAX_AMOUNT) },
+  {
+    name: 'INCOME_TAX_AMOUNT',
+    text: formatMoney(INCOME_TAX_AMOUNT, indiaTheme.currencySymbol),
+  },
+  {
+    name: 'SUPER_TAX_AMOUNT',
+    text: formatMoney(SUPER_TAX_AMOUNT, indiaTheme.currencySymbol),
+  },
   ...RAILWAY_RENT_BY_COUNT.map((rent, index) => ({
     name: `RAILWAY_RENT_BY_COUNT[${index}]`,
-    text: formatMoney(rent),
+    text: formatMoney(rent, indiaTheme.currencySymbol),
   })),
 ];
 

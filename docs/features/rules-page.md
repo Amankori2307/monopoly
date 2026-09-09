@@ -5,25 +5,41 @@
 
 ## What it does
 
-A static, readable rules reference at `/rules`, styled like the printed booklet, with anchor
-navigation between sections (start, turn, board, jail, buildings, money, speed die).
+A readable rules reference at `/rules`, styled like the printed booklet, with anchor navigation
+between sections (start, turn, board, jail, buildings, money, speed die). It reads as **the edition
+you are playing** — its name, its money, and its own words for the things on its board — and
+generically when no game is open.
 
 ## How it works
 
-A single presentational component — no store access, no props. Section links are a local array
-mapped to `<a href="#...">` anchors. Styling lives in
-[pages/\_rules.scss](../../src/styles/pages/_rules.scss).
+Presentational sections under `src/components/rules/`, wrapped by `RulesEditionProvider`. The page
+resolves the edition with [useRulesEdition](../../src/features/rules/useRulesEdition.ts) — the
+active game's theme, or `GENERIC_EDITION` — and each section reads `name`, `currencySymbol` and
+`nouns` from context. Section links are `<Link to="/rules#id">`, never bare anchors. Styling lives
+in [pages/\_rules.scss](../../src/styles/pages/_rules.scss).
 
 ## Key decisions
 
 - **Content is hardcoded JSX, not data.** It is prose, read by humans, changed rarely — a data
   model would add indirection with nothing in return.
+- **One set of prose, four vocabularies.** The printed rules are identical in every edition; only
+  the names, the money and the _words_ differ. So the words live on the theme as `nouns` and the
+  prose interpolates them, rather than there being four copies of the booklet — a rule fixed in one
+  copy would be silently stale in three.
+- **Context, not props, and that is the exception.** Eleven prose sections need the same three
+  facts and take no other prop; threading them through eleven signatures is eleven chances to
+  forget one. The provider is the page, so the sections stay presentational — they read a value
+  handed to them, not a store.
+- **No game means generic, not default.** With nothing open the booklet says "property" and
+  "station" and prints bare numbers. India's vocabulary is wrong for three of the four boards and
+  arbitrary for a reader who has not chosen one; `formatMoney(1500, '')` is `1500`, which is the
+  honest way to state a rule that is the same in every currency.
 - **Kept separate from `docs/india-edition-rules.md`**, which is the _implementation_ source of
   truth (values, mappings, what is built). This page is player-facing copy.
 
 ## State and data
 
-None.
+Reads `game.activeGame?.themeId` only, through `useRulesEdition`. Writes nothing, persists nothing.
 
 ## Tests
 

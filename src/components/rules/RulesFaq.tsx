@@ -5,6 +5,7 @@ import {
   MORTGAGE_INTEREST_PERCENT,
 } from '../../domain/constants/game.constants';
 import { formatMoney } from '../../shared/utils/money.utils';
+import { useRulesEdition } from './RulesEditionContext';
 
 /**
  * Rules booklet section. The questions that actually come up in play.
@@ -13,6 +14,9 @@ import { formatMoney } from '../../shared/utils/money.utils';
  * are kept in step by rulesSync.test.ts.
  */
 export function RulesFaq() {
+  const { currencySymbol, nouns } = useRulesEdition();
+  const money = (amount: number) => formatMoney(amount, currencySymbol);
+
   return (
     <section id="faq">
       <p className="eyebrow">Frequently asked</p>
@@ -47,8 +51,8 @@ export function RulesFaq() {
           One per turn, for up to {MAX_JAIL_TURNS} turns — the {MAX_JAIL_TURNS} is turns,
           not rolls in one turn. Roll a double and you leave, move by that roll, and your
           turn ends; there is no bonus roll. Fail {MAX_JAIL_TURNS} times and you must pay{' '}
-          {formatMoney(JAIL_FINE)} and move using that final roll. Doubles rolled in Jail
-          do not count towards the {DOUBLES_BEFORE_JAIL}-doubles rule.
+          {money(JAIL_FINE)} and move using that final roll. Doubles rolled in Jail do not
+          count towards the {DOUBLES_BEFORE_JAIL}-doubles rule.
         </dd>
 
         <dt>Can I sell a site I own?</dt>
@@ -78,7 +82,7 @@ export function RulesFaq() {
         <dd>
           Yes. Mortgaging is a loan, not a sale. Own all three of a colour set and
           mortgage one, and the other two still charge doubled rent. The same applies to
-          railway and utility counts.
+          {nouns.railway} and utility counts.
         </dd>
 
         <dt>Does the Speed Die count towards doubles?</dt>
