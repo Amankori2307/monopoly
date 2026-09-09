@@ -129,11 +129,6 @@
   width: t.$control-tap;
   height: t.$control-tap;
   padding: 0;
-
-  svg {
-    width: t.$glyph-icon;
-    height: t.$glyph-icon;
-  }
 }
 
 .settings-panel {
@@ -192,17 +187,7 @@
 .settings-icon-button {
   display: grid;
   place-items: center;
-  width: 40px;
-  min-width: 40px;
+  width: t.$control-tap;
+  min-width: t.$control-tap;
   padding: 0;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  @include m.below(t.$breakpoint-tablet) {
-    width: 44px;
-    min-width: 44px;
-  }
 }

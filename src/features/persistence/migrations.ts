@@ -213,6 +213,43 @@ const v7ToV8 = (raw: Record<string, unknown>): Record<string, unknown> => {
  * Writes v9's shape and no later one's, per the rule this file learned the hard
  * way at v4/v8.
  */
+/**
+ * Repairs a game deadlocked by a jail-choice decision nobody could answer.
+ *
+ * Two of the three exits from `attemptJailRoll` left `pendingDecision` at
+ * `jail-choice` after the player had already left Jail. `resolveCurrentSpace`
+ * reads `pendingDecision.type !== 'none'` to pick the phase, so the turn went
+ * to `await_decision` - while the Jail panel, which renders from
+ * `player.inJail`, had stopped rendering. No modal, no Roll, no End turn.
+ *
+ * The command is fixed, but a save already in that state stays dead, and the
+ * state is on disk rather than in memory. So this makes it legal again: the
+ * decision goes, and the turn becomes one the player can end - which is what
+ * the roll had already earned them.
+ *
+ * Deliberately narrow. It fires only on the exact contradiction - a jail-choice
+ * naming a player who is not in Jail - and leaves a legitimate jail-choice, the
+ * one a jailed player is answering right now, completely alone.
+ */
+const v9ToV10 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const decision = (raw.pendingDecision ?? {}) as Record<string, unknown>;
+  const players = (raw.players ?? {}) as Record<string, Record<string, unknown>>;
+  const owner = players[String(decision.playerId)];
+  const isStuck = decision.type === 'jail-choice' && owner != null && !owner.inJail;
+
+  if (!isStuck) {
+    return { ...raw, version: 10 };
+  }
+
+  const turn = (raw.turn ?? {}) as Record<string, unknown>;
+  return {
+    ...raw,
+    pendingDecision: { type: 'none' },
+    turn: { ...turn, phase: 'turn_complete', reason: null, canRollAgain: false },
+    version: 10,
+  };
+};
+
 const v8ToV9 = (raw: Record<string, unknown>): Record<string, unknown> => {
   const turn = (raw.turn ?? {}) as Record<string, unknown>;
 
@@ -233,6 +270,7 @@ const MIGRATIONS: Record<number, Migration> = {
   6: v6ToV7,
   7: v7ToV8,
   8: v8ToV9,
+  9: v9ToV10,
 };
 
 /**

@@ -221,8 +221,17 @@
 // back the width it was taking from the tightest row on the screen.
 // ---------------------------------------------------------------------------
 .activity-button {
-  gap: t.$space-2;
-  padding: 0 t.$space-3;
+  gap: t.$space-1;
+  // Room for the count beside the glyph, and no more.
+  padding: 0 t.$space-2;
+}
+
+// The glyph is a character rather than an SVG, so it takes its size from the
+// type scale - but it is an icon, and it has to read as one beside the two
+// 22px SVGs in the same header. line-height 1 because a glyph has no leading.
+.activity-button-glyph {
+  font-size: t.$glyph-icon;
+  line-height: 1;
 }
 
 .activity-button-count {

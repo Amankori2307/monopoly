@@ -198,7 +198,7 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
   `monopoly.seat.<id>.v1` and its join code `monopoly.code.<id>.v1`, plus the preferences
   `monopoly.sound.v1` and `monopoly.appearance.v1`. **The index is its own shape with its own
   schema and no version**, so adding a field to it is not a `GAME_STATE_VERSION` change - see §8.
-- `GAME_STATE_VERSION = 9`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
+- `GAME_STATE_VERSION = 10`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
 - **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. Add the field to the schema, or it will not survive a save.
@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1470 unit tests, 190 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1481 unit tests, 190 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -357,6 +357,19 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   active player. `tableMode` lives on `GameState` because every device has to agree: per-device, one
   client could declare itself hot-seat and take the whole table. The seat _claim_ is per-device in
   `localStorage`, because "which of you am I" is the one genuinely local fact.
+- **A command that ANSWERS a decision must clear it, on every exit.**
+  `resolveCurrentSpace` picks the turn's phase from
+  `pendingDecision.type !== None`, so a decision left standing after it has been
+  answered puts the turn into `AwaitDecision` - and if nothing can render that
+  decision any more, the game is dead with no modal, no Roll and no End turn.
+  `attemptJailRoll` did exactly this on two of its three exits: the player left
+  Jail, `jail-choice` stayed, and the Jail panel had already stopped rendering
+  because it keys off `player.inJail`. **The existing tests could not see it**,
+  because the square the player lands on usually raises a buy decision that
+  overwrites the stale one - it only deadlocks when the landing asks for
+  nothing, such as a station the player already owns. `selectHasAvailableAction`
+  is the oracle for this and already logs it loudly; point new decision paths at
+  it. `v9ToV10` repairs the saves that were caught.
 - **The decision on screen is not always `pendingDecision`.** The Jail panel is derived from
   `player.inJail`, so it appears while `pendingDecision` is `None`. That is why the overlay asks
   `decisionActorId` (which falls back to the active player) rather than `decisionOwnerOf` (which

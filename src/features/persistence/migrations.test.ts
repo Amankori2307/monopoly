@@ -352,3 +352,109 @@ describe('giving an older save a table mode', () => {
     expect(gameStateSchema.safeParse(migrateSavedGame(v8Save())).success).toBe(true);
   });
 });
+
+/**
+ * v9 -> v10: a game deadlocked by a jail-choice nobody could answer.
+ *
+ * Reported from a real save. Two of the three exits from `attemptJailRoll`
+ * left the decision standing after the player had left Jail, and because
+ * `resolveCurrentSpace` picks the phase from whether a decision exists, the
+ * turn sat in `await_decision` with no panel able to render it - the Jail panel
+ * keys off `player.inJail`, which was false. No modal, no Roll, no End turn.
+ *
+ * The command is fixed; this is for the saves already on disk.
+ */
+describe('v9 -> v10: unsticking a jail decision the player already left', () => {
+  const v9Save = (overrides: Record<string, unknown> = {}) => {
+    const game = JSON.parse(
+      JSON.stringify(
+        createGameState(
+          {
+            name: 'v9 Save',
+            playerConfigs: [
+              { name: 'Asha', tokenId: 'elephant' },
+              { name: 'Vikram', tokenId: 'train' },
+            ],
+            themeId: 'india-edition',
+            createdAt: '2026-09-01T00:00:00.000Z',
+          },
+          new SeededRandomSource(11)
+        )
+      )
+    );
+    return { ...game, version: 9, ...overrides };
+  };
+
+  /** The exact shape reported: out of Jail, decision still standing. */
+  const deadlocked = () => {
+    const game = v9Save();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    game.players[playerId] = {
+      ...game.players[playerId],
+      inJail: false,
+      jailTurnsServed: 0,
+      position: 15,
+    };
+    game.pendingDecision = { type: 'jail-choice', playerId };
+    game.turn = { ...game.turn, phase: 'await_decision' };
+    return { game, playerId };
+  };
+
+  it('clears the decision and hands the turn back', () => {
+    const { game } = deadlocked();
+
+    const migrated = migrateSavedGame(game) as {
+      pendingDecision: { type: string };
+      turn: { phase: string };
+    };
+
+    expect(migrated.pendingDecision.type).toBe('none');
+    // Turn complete rather than await_roll: the roll that freed them has
+    // already happened, so what they are owed is the end of their turn.
+    expect(migrated.turn.phase).toBe('turn_complete');
+  });
+
+  it('leaves a jail decision alone while the player is still in Jail', () => {
+    const game = v9Save();
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    game.players[playerId] = { ...game.players[playerId], inJail: true, position: 10 };
+    game.pendingDecision = { type: 'jail-choice', playerId };
+    game.turn = { ...game.turn, phase: 'await_decision' };
+
+    const migrated = migrateSavedGame(game) as {
+      pendingDecision: { type: string };
+      turn: { phase: string };
+    };
+
+    // The legitimate case, and by far the commoner one: this is a decision the
+    // player is answering right now.
+    expect(migrated.pendingDecision.type).toBe('jail-choice');
+    expect(migrated.turn.phase).toBe('await_decision');
+  });
+
+  it('leaves every other decision alone', () => {
+    const game = v9Save();
+    game.pendingDecision = {
+      type: 'landed-unowned-property',
+      playerId: game.playerOrder[0],
+      spaceId: game.board[1].id,
+    };
+    game.turn = { ...game.turn, phase: 'await_decision' };
+
+    const migrated = migrateSavedGame(game) as { pendingDecision: { type: string } };
+
+    expect(migrated.pendingDecision.type).toBe('landed-unowned-property');
+  });
+
+  it('produces something the schema accepts', () => {
+    const { game } = deadlocked();
+
+    expect(gameStateSchema.safeParse(migrateSavedGame(game)).success).toBe(true);
+  });
+
+  it('brings the save all the way to the current version', () => {
+    const migrated = migrateSavedGame(v9Save()) as { version: number };
+
+    expect(migrated.version).toBe(GAME_STATE_VERSION);
+  });
+});

@@ -3823,6 +3823,107 @@ describe('Jail', () => {
   });
 
   /**
+   * The jail-choice decision is answered by taking the roll, on every exit.
+   *
+   * This deadlocked a real game. Two of the three exits from AttemptJailRoll
+   * left `pendingDecision` at `jail-choice` after the player had left Jail, and
+   * `resolveCurrentSpace` decides the phase from
+   * `pendingDecision.type !== None` - so the turn went to AwaitDecision while
+   * the Jail panel, which is derived from `player.inJail`, had stopped
+   * rendering. No modal, no Roll, no End turn, and nothing on screen to say so.
+   *
+   * The tests above never caught it because the square the player lands on
+   * happens to raise a buy decision, which overwrote the stale one. Here the
+   * player owns the whole board, so nothing overwrites anything - which is
+   * exactly the situation the real game was in, landing on a station it owned.
+   */
+  describe('leaving Jail clears the decision that put them there', () => {
+    /** In Jail, and owning every square, so no landing raises a decision. */
+    const jailedOwningEverything = (
+      overrides: Partial<GameState['players'][string]> = {}
+    ) => {
+      const { state, playerId } = jailed(overrides);
+      const ownership = { ...state.ownership };
+      state.board.forEach((space) => {
+        if (ownership[space.id]) {
+          ownership[space.id] = {
+            ownerPlayerId: playerId,
+            mortgaged: false,
+            buildLevel: 0,
+          };
+        }
+      });
+      return { playerId, state: { ...state, ownership } };
+    };
+
+    it('clears it when a double frees them', () => {
+      const { state, playerId } = jailedOwningEverything();
+
+      const next = executeGameCommand(
+        state,
+        { type: GameCommandType.AttemptJailRoll },
+        DOUBLE()
+      ).nextState;
+
+      expect(next.players[playerId].inJail).toBe(false);
+      expect(next.pendingDecision.type).not.toBe(PendingDecisionType.JailChoice);
+      expect(next.turn.phase).not.toBe(TurnPhase.AwaitDecision);
+    });
+
+    // The exact shape of the game that deadlocked: the third failed attempt,
+    // the mandatory fine, and a landing square that asks for nothing.
+    it('clears it when the third failed attempt forces them out', () => {
+      const { state, playerId } = jailedOwningEverything({
+        jailTurnsServed: MAX_JAIL_TURNS - 1,
+      });
+
+      const next = executeGameCommand(
+        state,
+        { type: GameCommandType.AttemptJailRoll },
+        NOT_DOUBLE()
+      ).nextState;
+
+      expect(next.players[playerId].inJail).toBe(false);
+      expect(next.players[playerId].position).toBe(JAIL_POSITION + 5);
+      expect(next.pendingDecision.type).not.toBe(PendingDecisionType.JailChoice);
+      expect(next.turn.phase).not.toBe(TurnPhase.AwaitDecision);
+    });
+
+    // The third exit already cleared it, and must keep doing so.
+    it('clears it when the roll fails and they stay inside', () => {
+      const { state, playerId } = jailedOwningEverything();
+
+      const next = executeGameCommand(
+        state,
+        { type: GameCommandType.AttemptJailRoll },
+        NOT_DOUBLE()
+      ).nextState;
+
+      expect(next.players[playerId].inJail).toBe(true);
+      expect(next.pendingDecision.type).toBe(PendingDecisionType.None);
+      expect(next.turn.phase).toBe(TurnPhase.TurnComplete);
+    });
+
+    // A player who cannot cover the mandatory fine stays in Jail and owes it.
+    // Clearing the jail decision must not clear the liquidation that replaces it.
+    it('leaves a liquidation standing when the fine cannot be paid', () => {
+      const { state, playerId } = jailed({
+        jailTurnsServed: MAX_JAIL_TURNS - 1,
+        cash: 1,
+      });
+
+      const next = executeGameCommand(
+        state,
+        { type: GameCommandType.AttemptJailRoll },
+        NOT_DOUBLE()
+      ).nextState;
+
+      expect(next.pendingDecision.type).toBe(PendingDecisionType.AssetLiquidation);
+      expect(next.players[playerId].inJail).toBe(true);
+    });
+  });
+
+  /**
    * One roll per turn. The "three" in the three-turn limit is three of the
    * player's OWN turns, each separated by everybody else's - not three rolls
    * taken back to back.

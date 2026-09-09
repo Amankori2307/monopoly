@@ -10,7 +10,8 @@
 .danger-button,
 .dice-roll-button,
 .settings-trigger,
-.activity-button {
+.activity-button,
+.settings-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -59,17 +60,34 @@
   }
 }
 
-// The bordered secondaries: an icon button in the header, the activity
-// control. Their border is the only thing separating them from a plain
-// secondary, which is why they belong here rather than in their own partials.
+// An icon on its own, with no chrome until you reach for it.
+//
+// These carried a border and a filled ground, which made a small glyph sit
+// inside a box that read as the control - and at 18px the icon read as
+// decoration next to it. The tap target is unchanged at 44px; only the paint
+// is gone, and it comes back on hover so the control still answers the pointer.
 .settings-trigger,
-.activity-button {
-  border: t.$border-hairline solid var(--border-input);
+.activity-button,
+.settings-icon-button {
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+
+  svg {
+    // flex: 0 0 auto, because the control base is an inline-flex and an SVG is
+    // a shrinkable flex item: the settings glyph was rendering 12px wide
+    // against its own 22px height, squashed rather than small.
+    flex: 0 0 auto;
+    width: t.$glyph-icon;
+    height: t.$glyph-icon;
+  }
+
+  &:not(:disabled):hover {
+    background: var(--button-secondary);
+  }
 }
 
-.secondary-button,
-.settings-trigger,
-.activity-button {
+.secondary-button {
   background: var(--button-secondary);
   color: var(--button-secondary-text);
 

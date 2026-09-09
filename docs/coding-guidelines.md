@@ -229,7 +229,7 @@ The mandate above is the standard going forward. The repository does **not** mee
 | Action feedback (toasts)                       | 13 tests        | —           | yes          |
 | `rng` (`SeededRandomSource`, `shuffle`)        | 17 tests        | —           | —            |
 | `persistence` (save/load/index/delete/corrupt) | 5 tests         | 6 tests     | 1 spec       |
-| Saved-game migrations (v1 → v5)                | 18 tests        | —           | 1 spec       |
+| Saved-game migrations (v1 → v10)               | 23 tests        | —           | 1 spec       |
 | Buildings (both even rules, bank inventory)    | 21 tests        | —           | yes          |
 | Trading (proposal guards, transfer fees)       | 14 tests        | —           | yes          |
 | Speed Die (activation, faces, triples)         | 10 tests        | —           | yes          |

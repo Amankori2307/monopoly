@@ -514,3 +514,74 @@ describe('gating a turn on who is looking', () => {
     expect(selectHasAvailableAction(game)).toBe(true);
   });
 });
+
+/**
+ * The deadlock detector, pointed at the state that actually deadlocked.
+ *
+ * `selectHasAvailableAction` is the app's own oracle for "somebody can do
+ * something", and it already logs loudly when it goes false. It went false in a
+ * real game: two of the three exits from `attemptJailRoll` left
+ * `pendingDecision` at `jail-choice` after the player had left Jail, and
+ * because `resolveCurrentSpace` picks the phase from whether a decision exists,
+ * the turn sat in `await_decision` with nothing able to render it.
+ *
+ * The unit tests in gameEngine.test.ts assert the decision is cleared. This
+ * asserts the thing that actually matters to a player: the game is playable.
+ */
+describe('a jail roll never leaves the game with nothing to do', () => {
+  const jailedOwningEverything = (jailTurnsServed: number): GameState => {
+    const game = createGameState(
+      {
+        name: 'Jail deadlock',
+        playerConfigs: [
+          { name: 'Asha', tokenId: 'elephant' },
+          { name: 'Vikram', tokenId: 'train' },
+        ],
+        themeId: indiaEditionTheme.id,
+        createdAt: '2026-09-01T00:00:00.000Z',
+      },
+      new SeededRandomSource(11)
+    );
+    const playerId = game.playerOrder[game.activePlayerIndex];
+    // Owning the board is what exposes the bug: otherwise the square landed on
+    // raises a buy decision of its own, which overwrites the stale one.
+    const ownership = { ...game.ownership };
+    game.board.forEach((space) => {
+      if (ownership[space.id]) {
+        ownership[space.id] = {
+          ownerPlayerId: playerId,
+          mortgaged: false,
+          buildLevel: 0,
+        };
+      }
+    });
+    return {
+      ...game,
+      ownership,
+      players: {
+        ...game.players,
+        [playerId]: {
+          ...game.players[playerId],
+          inJail: true,
+          position: 10,
+          jailTurnsServed,
+        },
+      },
+      pendingDecision: { type: PendingDecisionType.JailChoice, playerId },
+      turn: { ...game.turn, phase: TurnPhase.AwaitRoll },
+    } as GameState;
+  };
+
+  it.each([
+    ['a double frees them', 0, 11],
+    ['the third failure forces them out', 2, 1],
+  ])('leaves an action available when %s', (_name, served, seed) => {
+    const next = executeGameCommand(
+      jailedOwningEverything(served),
+      { type: GameCommandType.AttemptJailRoll },
+      new SeededRandomSource(seed)
+    ).nextState;
+
+    expect(selectHasAvailableAction(next)).toBe(true);
+  });
+});

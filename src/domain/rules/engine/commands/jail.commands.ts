@@ -127,6 +127,19 @@ export const jailCommands: CommandHandlers = {
       ),
     ]);
 
+    // The jail-choice decision is ANSWERED the moment the roll is taken, so it
+    // is cleared here rather than in each branch below. Two of the three exits
+    // did not clear it, and the result was a deadlock nothing could answer:
+    // resolveCurrentSpace reads `pendingDecision.type !== None` to decide the
+    // phase, so a stale jail-choice put the turn into AwaitDecision - while the
+    // Jail panel, which is derived from `player.inJail`, had stopped rendering
+    // because the player had just left. No modal, no Roll, no End turn.
+    //
+    // Cleared BEFORE resolveBankPayment below, so a liquidation raised by the
+    // mandatory fine is still the decision that stands - which is the guard
+    // that keeps a player who cannot pay from walking out of Jail.
+    nextState = { ...nextState, pendingDecision: { type: PendingDecisionType.None } };
+
     if (dieOne === dieTwo) {
       nextState = updatePlayer(nextState, activePlayer.id, (player) => ({
         ...player,

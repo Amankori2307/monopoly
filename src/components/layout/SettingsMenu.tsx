@@ -80,7 +80,7 @@ export function SettingsMenu({
             <button
               aria-label="Sound"
               aria-pressed={soundEnabled}
-              className="secondary-button settings-icon-button"
+              className="settings-icon-button"
               data-testid={TEST_IDS.soundToggle}
               onClick={() => onSoundChange(!soundEnabled)}
               type="button"

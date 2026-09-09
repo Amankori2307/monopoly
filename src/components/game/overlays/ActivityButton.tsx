@@ -18,7 +18,9 @@ export function ActivityButton({ eventCount, onOpen }: ActivityButtonProps) {
       onClick={onOpen}
       type="button"
     >
-      <span aria-hidden="true">☰</span>
+      <span aria-hidden="true" className="activity-button-glyph">
+        ☰
+      </span>
       <span className="activity-button-count">{eventCount}</span>
     </button>
   );
