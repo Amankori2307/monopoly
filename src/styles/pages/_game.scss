@@ -132,8 +132,8 @@
   }
 
   // `margin: 0 auto` on a flex item beats align-self:stretch and shrink-wraps
-  // it to its content, so the whole frame collapsed - the board measured t.$space-66
-  // wide in a t.$space-94 viewport until this reset the margin and set a width.
+  // it to its content, so the whole frame collapsed - the board measured 263px
+  // wide in a 375px viewport until this reset the margin and set a width.
   .app-shell.is-game > .page {
     display: flex;
     flex-direction: column;
@@ -147,13 +147,19 @@
   // align-items:stretch is not redundant: the desktop rule sets `start`, which
   // shrink-wraps children on the CROSS axis once this is a column, and that
   // shrink-wrapped the board too.
+  // Air. The frame had none: the board ran edge to edge and sat directly
+  // against the header's bottom border, which is what made the screen read as
+  // cramped rather than dense. The padding lives here rather than on the shell
+  // because the header deliberately spans the full width on a phone - it is a
+  // bar, not a card - and shell padding is what the header negates.
   .app-shell.is-game .game-layout {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     flex: 1 1 auto;
     min-height: 0;
-    gap: 0;
+    gap: t.$space-3;
+    padding: t.$space-3 t.$space-3 0;
   }
 
   // Capped by height as well as width, so a short phone still leaves room for
@@ -177,7 +183,7 @@
     min-height: 0;
     height: auto;
     gap: t.$space-2;
-    padding: t.$space-2 t.$space-2 0;
+    padding: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
@@ -196,6 +202,11 @@
 
   .app-shell.is-game .player-stack-scroll {
     overflow: visible;
+    // And no right gutter. It exists on desktop for the fan's outermost card,
+    // but it is padding on ONE side, so inside the phone frame it made every
+    // player card 4px narrower than the board directly above it - a visible
+    // asymmetry on the one screen where both edges are in view at once.
+    padding-right: 0;
   }
 
   // Nothing in the column may shrink.
@@ -225,7 +236,9 @@
     // resolves to 0 in Playwright, in DevTools emulation and on every device
     // without `viewport-fit=cover` - so the 58px button row sat flush against
     // the bottom edge of the screen.
-    padding-bottom: calc(t.$space-2 + env(safe-area-inset-bottom, 0px));
+    // $space-3, matching the frame's side padding: the bar is the bottom edge
+    // of the layout, so its gap is the one the sides already set.
+    padding-bottom: calc(t.$space-3 + env(safe-area-inset-bottom, 0px));
     // Content scrolls behind the bar, so it cannot be transparent.
     background: var(--surface-app);
   }
@@ -313,6 +326,11 @@
 
   .app-shell.is-game .player-stack-scroll {
     overflow: visible;
+    // And no right gutter. It exists on desktop for the fan's outermost card,
+    // but it is padding on ONE side, so inside the phone frame it made every
+    // player card 4px narrower than the board directly above it - a visible
+    // asymmetry on the one screen where both edges are in view at once.
+    padding-right: 0;
   }
 
   // See the portrait block: a shrinking flex item spills its content over the

@@ -24,7 +24,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  width: 58px;
+  width: t.$die-size;
   aspect-ratio: 1;
   padding: t.$space-2;
   border: t.$border-hairline solid var(--die-edge);
@@ -50,6 +50,19 @@
     // animation in the app that never stops on its own.
     @include m.motion {
       animation: dice-tumble t.$duration-fast linear infinite;
+    }
+  }
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  .die-face {
+    width: t.$die-size-phone;
+    padding: t.$die-pad-phone;
+    border-radius: t.$die-radius-phone;
+
+    &::after {
+      inset: t.$space-1;
+      border-radius: t.$die-inner-radius-phone;
     }
   }
 }

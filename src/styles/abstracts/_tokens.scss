@@ -99,6 +99,15 @@ $token-size: clamp(11px, 1.4vw, 18px);
 // Physical game pieces are the one documented exception to the sharp-corner
 // system: a pawn, a die, and its pips are real objects, not UI surfaces.
 $token-radius: 50%;
+$die-size: 58px;
+// On a phone the die was the biggest object on screen - larger than the type,
+// the cards and the buttons around it. These keep its proportions: the radius
+// and the bevel are both fractions of the face, so they scale together or the
+// die stops looking like a die.
+$die-size-phone: 42px;
+$die-pad-phone: 6px;
+$die-radius-phone: 8px;
+$die-inner-radius-phone: 5px;
 $die-radius: 11px; // .die-face is a fixed 58px square, so px is exact
 // The die's own shadows: a hard offset plus a soft drop. Geometry lives with
 // the other die metrics rather than on the elevation ladder, because a die is

@@ -340,6 +340,39 @@ test.describe('a phone in portrait', () => {
     }
   });
 
+  /**
+   * The frame breathes, and it breathes evenly.
+   *
+   * It did not. The board ran edge to edge and sat directly against the
+   * header's bottom border, which is what made a dense screen read as a
+   * cramped one - and the player cards were 4px narrower than the board above
+   * them, because the stack reserves a gutter on ONE side for the fan's
+   * outermost card. On a phone both edges are in view at once, so that showed.
+   */
+  test('insets the board evenly and clears the header', async ({ page }) => {
+    await startGame(page);
+
+    const width = page.viewportSize()?.width ?? 0;
+    const header = await boxOf(page, '.app-header');
+    const board = await boxOf(page, '.board-card');
+
+    // Air under the header, not a board welded to its border.
+    expect(board.top - header.bottom).toBeGreaterThanOrEqual(8);
+
+    // And the same air either side.
+    expect(board.left).toBeGreaterThanOrEqual(8);
+    expect(board.left).toBe(width - board.right);
+
+    // Every stacked element shares those edges. The board is the widest thing
+    // on the screen, so anything narrower reads as misaligned rather than as
+    // inset - which is what the stack's one-sided gutter was doing.
+    for (const selector of ['.player-card', '.game-side-footer']) {
+      const box = await boxOf(page, selector);
+      expect(box.left, `${selector} left edge`).toBe(board.left);
+      expect(box.right, `${selector} right edge`).toBe(board.right);
+    }
+  });
+
   test('keeps a decision modal inside the window', async ({ page }) => {
     await startGame(page);
 
