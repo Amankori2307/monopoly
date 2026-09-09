@@ -75,8 +75,20 @@ const declarations = (scss: string): [string, string][] =>
     match[3].trim(),
   ]);
 
-/** A length nobody could call a token: `12px`, `0.86rem`, `-0.02em`. Zero is fine. */
-const LENGTH_LITERAL = /(?<![\w$.])-?(?:\d+\.?\d*|\.\d+)(px|rem|em)\b/;
+/** A length nobody could call a token: `12px`, `0.86rem`, `-0.02em`. */
+const LENGTH_LITERAL = /(?<![\w$.])-?(?:\d+\.?\d*|\.\d+)(px|rem|em)\b/g;
+
+/**
+ * Whether a value carries a length that is not zero.
+ *
+ * Zero is never a magic number, and it is not always the whole value: the
+ * sticky dice bar's `env(safe-area-inset-bottom, 0px)` needs that fallback or
+ * the inset resolves to nothing at all - CLAUDE.md section 8 records the bug -
+ * so a check on the whole value would have counted it forever.
+ */
+const hasNonZeroLength = (value: string): boolean =>
+  [...value.matchAll(LENGTH_LITERAL)].some((match) => parseFloat(match[0]) !== 0);
+
 const isZero = (value: string): boolean => /^0(px|rem|em)?$/.test(value.trim());
 
 const SPACING_PROPS =
@@ -93,7 +105,7 @@ const TYPE_PROPS = /^(font|font-size|font-weight|line-height|letter-spacing)$/;
  */
 const offLadder = (property: string, value: string): boolean => {
   if (isZero(value)) return false;
-  if (SPACING_PROPS.test(property)) return LENGTH_LITERAL.test(value);
+  if (SPACING_PROPS.test(property)) return hasNonZeroLength(value);
   if (TYPE_PROPS.test(property)) {
     // Weight and leading are bare numbers, so a literal is any digit that is
     // not part of a token name.
@@ -106,7 +118,7 @@ const offLadder = (property: string, value: string): boolean => {
     if (property === 'font-weight') {
       return /(?<![\w$.-])\d/.test(value);
     }
-    return LENGTH_LITERAL.test(value);
+    return hasNonZeroLength(value);
   }
   return false;
 };
@@ -134,21 +146,15 @@ interface Budget {
  * the sense of "we would rather not": both are regions the system does not
  * govern.
  */
-/**
- * The reason every not-yet-migrated file shares.
- *
- * These are a worklist, not an excuse: each number is the count on the day the
- * system landed, and the phase that migrates that axis drives it to zero. The
- * totals are 171 spacing, 174 type and 35 colour.
- */
-const MIGRATING =
-  'Not yet migrated. The count is exact as of the day the scales landed, and ' +
-  'the phase that migrates this axis drives it to zero. See docs/design-system.md.';
 
-// Type and spacing are DONE: 174 and 171 deviations respectively, both now
-// zero, so their rows are gone rather than sitting at 0 - the default budget
-// already says 0, and a zero row would only be a place for a future one to
-// hide. What remains is COLOUR, plus the regions the system does not govern.
+// All three axes are DONE - 174 type, 171 spacing and 35 colour deviations,
+// every one now zero - so the MIGRATING rows are gone rather than sitting at
+// 0: the default budget already says 0, and a zero row is only a place for a
+// future one to hide.
+//
+// What is left below is the two regions the system does not GOVERN, which is
+// a different thing from an exception. The nine genuine exceptions are marked
+// inline, at the site, and counted by the census above.
 
 const BUDGETS: Record<string, Budget> = {
   'abstracts/_scale.scss': {
@@ -175,7 +181,7 @@ const BUDGETS: Record<string, Budget> = {
     // The nine shading literals are the documented permanent exception: they
     // shade an arbitrary inline player colour, so there is no theme-dependent
     // decision for them to express. See docs/theming.md.
-    colour: 9,
+    colour: 0,
     reason:
       'Board geometry is frozen and calibrated by 21 e2e tests in board.spec.ts. ' +
       'Its type is a continuous function of board size - clamp(5px, 1.4cqw, 0.67rem), ' +
@@ -183,64 +189,62 @@ const BUDGETS: Record<string, Budget> = {
       'sub-grid values inside a fluid cell where a 4px grid means nothing. Its nine ' +
       'colour literals shade an inline player colour - docs/theming.md.',
   },
-  'components/_buttons.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 1,
-    reason: MIGRATING,
-  },
-  'components/_dice.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 11,
-    reason: MIGRATING,
-  },
-  'components/_holdings.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 1,
-    reason: MIGRATING,
-  },
-  'components/_overlays.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 4,
-    reason: MIGRATING,
-  },
-  'components/_player.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 2,
-    reason: MIGRATING,
-  },
-  'components/_space-detail.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 2,
-    reason: MIGRATING,
-  },
-  'components/_trade.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 3,
-    reason: MIGRATING,
-  },
-  'pages/_rules.scss': {
-    spacing: 0,
-    type: 0,
-    colour: 1,
-    reason: MIGRATING,
-  },
 };
 
 const budgetFor = (name: string): Budget =>
   BUDGETS[name] ?? { spacing: 0, type: 0, colour: 0, reason: 'Fully on the ladder.' };
 
+/**
+ * A sanctioned exception, marked at the site rather than in an allowlist.
+ *
+ * An allowlist is invisible from the code it excuses: nobody reading a partial
+ * learns the file is exempt, and the next literal gets in free. A marker sits
+ * on the line, in the diff, beside the thing it excuses - and it is greppable,
+ * so "what are we still not doing?" has a one-command answer.
+ *
+ * A marker covers from its own line to the next blank line or closing brace,
+ * which is what lets one comment cover a multi-line gradient rather than eight
+ * copies of itself.
+ */
+const EXEMPT_MARKER = 'design-system-exempt:';
+
+/**
+ * How many sanctioned exceptions the tree carries. Ratcheted, so one more can
+ * be added only by raising this number where a reviewer sees it.
+ */
+const EXEMPTION_CENSUS = 4;
+
+/** The lines a marker's reason covers, and the reasons themselves. */
+const exemptions = (scss: string): { lines: Set<number>; reasons: string[] } => {
+  const lines = scss.split('\n');
+  const covered = new Set<number>();
+  const reasons: string[] = [];
+  lines.forEach((line, index) => {
+    const at = line.indexOf(EXEMPT_MARKER);
+    if (at === -1) return;
+    reasons.push(line.slice(at + EXEMPT_MARKER.length).trim());
+    for (let ahead = index; ahead < lines.length; ahead += 1) {
+      const next = lines[ahead].trim();
+      if (ahead > index && (next === '' || next.startsWith('}'))) break;
+      covered.add(ahead + 1);
+    }
+  });
+  return { lines: covered, reasons };
+};
+
 /** Every raw colour in a partial, with its value, so a failure is a worklist. */
-const rawColours = (scss: string): string[] =>
-  [...strip(scss).matchAll(/#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\([^)]*\)/gi)].map(
-    (match) => match[0]
-  );
+const rawColours = (scss: string): string[] => {
+  const exempt = exemptions(scss).lines;
+  return strip(scss)
+    .split('\n')
+    .flatMap((line, index) =>
+      exempt.has(index + 1)
+        ? []
+        : [...line.matchAll(/#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\([^)]*\)/gi)].map(
+            (match) => `${index + 1}: ${match[0]}`
+          )
+    );
+};
 
 describe('the design system', () => {
   const files = partials().map((path) => ({
@@ -334,6 +338,47 @@ describe('the design system', () => {
       .filter((file) => strip(file.scss).includes('$gap-'))
       .map((file) => file.name);
     expect(survivors).toEqual([]);
+  });
+
+  it('gives every exemption a reason worth reading', () => {
+    // The mechanism guarding the mechanism. A marker with no reason, or one
+    // reading "by design", is the rubber stamp this was built to avoid.
+    const BOILERPLATE =
+      /^(needed|required|design|by design|ok|fine|todo|wip|see above)\.?$/i;
+    const offenders = files.flatMap((file) =>
+      exemptions(file.scss)
+        .reasons.filter((reason) => reason.length < 20 || BOILERPLATE.test(reason))
+        .map((reason) => `${file.name}: "${reason}" says nothing`)
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps the exemption census where it is', () => {
+    // Ratcheted like a budget: another shading comment can be added, but only
+    // by raising this number in a diff, which is where that conversation
+    // belongs. An allowlist grows silently; a census cannot.
+    const census = files.reduce(
+      (total, file) => total + exemptions(file.scss).reasons.length,
+      0
+    );
+    expect(census).toBe(EXEMPTION_CENSUS);
+  });
+
+  it('names every app-level layer', () => {
+    // Below $z-layer-floor a z-index is local to one component's own stacking
+    // context - the board's 1-7 for ribbons, tokens and stamps, the player
+    // stack's fan - and naming those globally would suggest they compete with
+    // the header, which they cannot. At or above it, a bare integer is how the
+    // trade scrim came to sit above the header with nothing to explain it.
+    const offenders = files.flatMap((file) =>
+      declarations(file.scss)
+        .filter(
+          ([property, value]) => property === 'z-index' && /^\d+$/.test(value.trim())
+        )
+        .filter(([, value]) => Number(value.trim()) >= 10)
+        .map(([, value]) => `${file.name}: z-index: ${value}`)
+    );
+    expect(offenders).toEqual([]);
   });
 
   it('takes every radius from a token', () => {

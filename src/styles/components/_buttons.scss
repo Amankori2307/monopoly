@@ -14,11 +14,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
   // 44px is the touch-target minimum; .activity-button and .dice-roll-button
   // were already there and these two were the odd ones out.
   min-height: 44px;
-  padding: #{t.$space-2} #{t.$space-4};
+  padding: t.$space-2 t.$space-4;
   border: 0;
   border-radius: t.$radius-sharp;
   @include t.text(body-sm);
@@ -34,7 +34,7 @@
   // the auction panel carried a rule undoing exactly that.
   &:not(:disabled):hover {
     transform: translateY(-1px);
-    box-shadow: 0 5px 0 rgba(23, 29, 20, 0.18);
+    box-shadow: t.$emboss-press var(--shadow-ink);
   }
 
   // These three had no :focus-visible at all, so the app's most-used controls

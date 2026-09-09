@@ -127,6 +127,39 @@ test('leaves everything alone when the offer is rejected', async ({ page }) => {
   await expect(page.getByTestId(TEST_IDS.endTurnButton)).toBeVisible();
 });
 
+/**
+ * The header stays reachable while a trade is open.
+ *
+ * `.trade-backdrop` was a full-viewport sheet at `z-index: 60` - above the
+ * header at 50 - so for as long as a trade was being assembled the app's only
+ * navigation was dead: no rules, no mute, no appearance. That is the exact
+ * failure CLAUDE.md section 8 records for decision modals, which is why the
+ * header was raised above them in the first place; the trade scrim was the one
+ * place it was still live.
+ *
+ * Being able to LEAVE a trade by clicking outside it is not the same as being
+ * able to mute the game while in one - and a trade is the longest-lived overlay
+ * in the app, since you assemble an offer and then wait for it to be read.
+ */
+test('leaves the header reachable while a trade is open', async ({ page }) => {
+  await startGame(page);
+  const seeded = await seedOneSiteEach(page);
+
+  await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, seeded.theirsIndex)).click();
+  await page.getByTestId(TEST_IDS.proposeTradeButton).click();
+  await expect(page.getByTestId(TEST_IDS.tradeBuilder)).toBeVisible();
+
+  // Not just painted above the scrim - actually clickable. A trial click is
+  // what distinguishes "on top" from "reachable"; the same distinction the
+  // overlays spec draws for the jail panel under a full-viewport backdrop.
+  const settings = page.getByTestId(TEST_IDS.settingsTrigger);
+  await settings.click();
+  await expect(page.getByTestId(TEST_IDS.settingsPanel)).toBeVisible();
+
+  // And the trade is still there behind it, not dismissed by the click.
+  await expect(page.getByTestId(TEST_IDS.tradeBuilder)).toBeVisible();
+});
+
 // A trade has to move something, and the builder says so on the button rather
 // than letting the engine throw.
 test('will not send an empty offer', async ({ page }) => {

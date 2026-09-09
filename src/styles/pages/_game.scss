@@ -27,7 +27,7 @@
   min-width: 0;
   // A definite height is what lets the turn controls sit at the bottom via
   // margin-top: auto, however little the column holds.
-  height: calc(var(--app-frame-height) - #{t.$shell-frame-reserve});
+  height: calc(var(--app-frame-height) - t.$shell-frame-reserve);
 
   @include m.below(t.$breakpoint-board) {
     height: auto;
@@ -51,8 +51,8 @@
 .turn-controls {
   display: flex;
   align-items: center;
-  gap: #{t.$space-3};
-  padding-top: #{t.$space-1};
+  gap: t.$space-3;
+  padding-top: t.$space-1;
   // Three dice with the speed die, plus a nowrap "Take extra roll", measures
   // more than a phone is wide and this row could not wrap. It never wraps on
   // desktop, where there is room.
@@ -61,7 +61,7 @@
 
 .turn-controls .end-turn-button {
   min-height: 58px;
-  padding-inline: #{t.$space-5};
+  padding-inline: t.$space-5;
   white-space: nowrap;
 }
 
@@ -70,7 +70,7 @@
   gap: t.$space-3;
   min-height: 0;
   overflow-y: auto;
-  padding-right: #{t.$space-1};
+  padding-right: t.$space-1;
 
   @include m.below(t.$breakpoint-board) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -85,7 +85,7 @@
 
 // The board is square, so cap it by viewport height and centre it in its column.
 .board-card {
-  max-width: min(100%, calc(var(--app-frame-height) - #{t.$shell-frame-reserve}));
+  max-width: min(100%, calc(var(--app-frame-height) - t.$shell-frame-reserve));
   margin-inline: auto;
 }
 
@@ -132,8 +132,8 @@
   }
 
   // `margin: 0 auto` on a flex item beats align-self:stretch and shrink-wraps
-  // it to its content, so the whole frame collapsed - the board measured #{t.$space-66}
-  // wide in a #{t.$space-94} viewport until this reset the margin and set a width.
+  // it to its content, so the whole frame collapsed - the board measured t.$space-66
+  // wide in a t.$space-94 viewport until this reset the margin and set a width.
   .app-shell.is-game > .page {
     display: flex;
     flex-direction: column;
@@ -225,7 +225,7 @@
     // resolves to 0 in Playwright, in DevTools emulation and on every device
     // without `viewport-fit=cover` - so the 58px button row sat flush against
     // the bottom edge of the screen.
-    padding-bottom: calc(#{t.$space-2} + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(t.$space-2 + env(safe-area-inset-bottom, 0px));
     // Content scrolls behind the bar, so it cannot be transparent.
     background: var(--surface-app);
   }
@@ -332,7 +332,7 @@
     // resolves to 0 in Playwright, in DevTools emulation and on every device
     // without `viewport-fit=cover` - so the 58px button row sat flush against
     // the bottom edge of the screen.
-    padding-bottom: calc(#{t.$space-2} + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(t.$space-2 + env(safe-area-inset-bottom, 0px));
     background: var(--surface-app);
   }
 }

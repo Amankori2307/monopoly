@@ -402,10 +402,23 @@ $measure-prose: 52ch;
 // round, as a complete themed value per level, a dark palette would have to
 // restate the geometry it does not care about.
 // ---------------------------------------------------------------------------
-$elevation-1: 0 1px 3px; // Resting: a card at rest, a sticky strip
+$elevation-1: 0 1px 3px; // Resting: a card at rest, a piece on the board
 $elevation-2: 0 8px 22px; // Raised: the card on top of a stack, a menu
-$elevation-3: 0 12px 28px; // Floating: a drawer, a toast
+$elevation-3: 0 12px 28px; // Floating: a toast
 $elevation-4: 0 25px 70px; // Modal: the only thing on screen
+
+// Directional, and the direction is the decision. A card TUCKED UNDER the one
+// in front of it is lit from above, so its shadow is cast upward onto it - no
+// downward elevation can express that, which is why these are not levels.
+$elevation-tuck: 0 -6px 14px; // A card under the one in front of it
+$elevation-tuck-hair: 0 -1px 4px; // The same, on a collapsed sliver
+$elevation-drawer: -18px 0 44px; // Sideways, onto the page it covers
+
+// A hard offset with no blur is not elevation at all - it is the printed-card
+// look, ink offset from its own outline. On a dark palette a hard dark offset
+// reads as a hole rather than a lift, which is exactly why its ink is a theme
+// decision and not a fixed tint.
+$emboss-press: 0 5px 0; // A button's hover lift
 
 // ---------------------------------------------------------------------------
 // Layers.

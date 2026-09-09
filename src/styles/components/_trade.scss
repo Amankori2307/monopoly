@@ -8,21 +8,10 @@
  * against what you get - so the two sides have to be readable at once. They
  * stack only when the screen cannot hold them side by side.
  */
-.trade-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: #{t.$space-5};
-  background: rgba(22, 27, 22, 0.55);
-  backdrop-filter: blur(3px);
-}
-
 .trade-modal {
   // Two full deed columns plus the gap and the modal's own padding: a trade is
   // picked from real title deeds now, and a deed is a fixed width.
-  width: min(calc(2 * #{t.$deed-card-width} + 3 * #{t.$space-5}), 100%);
+  width: min(calc(2 * t.$deed-card-width + 3 * t.$space-5), 100%);
   max-height: 90dvh;
   overflow-y: auto;
   padding: t.$space-5;
@@ -59,7 +48,7 @@
 .trade-column {
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
   padding: t.$space-2;
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-md;
@@ -69,7 +58,7 @@
 .trade-column-head {
   display: flex;
   align-items: center;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
   margin: 0;
   color: var(--text-primary);
   @include t.text(body-sm);
@@ -98,7 +87,7 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
   max-height: 210px;
   overflow-y: auto;
 
@@ -110,7 +99,7 @@
   label {
     display: flex;
     align-items: center;
-    gap: #{t.$space-1};
+    gap: t.$space-1;
     cursor: pointer;
 
     &.is-blocked {
@@ -129,13 +118,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
   color: var(--text-body);
   @include t.text(body-sm);
 
   input {
     width: 96px;
-    padding: #{t.$space-1} #{t.$space-2};
+    padding: t.$space-1 t.$space-2;
     border: 1px solid var(--border-input);
     border-radius: t.$radius-sharp;
     background: var(--surface-input);
@@ -154,7 +143,7 @@
 .trade-mortgages {
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
 
   ul {
     margin: 0;
@@ -162,13 +151,13 @@
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: #{t.$space-2};
+    gap: t.$space-2;
   }
 
   li {
     display: flex;
     flex-direction: column;
-    gap: #{t.$space-1};
+    gap: t.$space-1;
     padding: t.$space-2;
     border: 1px solid var(--border-subtle);
     border-radius: t.$radius-md;
@@ -187,7 +176,7 @@
   label {
     display: flex;
     align-items: center;
-    gap: #{t.$space-1};
+    gap: t.$space-1;
     color: var(--text-body);
     @include t.text(body-sm);
     font-weight: t.$weight-medium;
@@ -212,7 +201,7 @@
   flex-direction: column;
   align-items: center;
   max-height: 46dvh;
-  padding-right: #{t.$space-1};
+  padding-right: t.$space-1;
   overflow-y: auto;
 }
 
@@ -225,7 +214,7 @@
   width: t.$deed-card-width;
   max-height: t.$holdings-peek;
   overflow: hidden;
-  box-shadow: 0 -6px 14px rgba(24, 30, 23, 0.12);
+  box-shadow: t.$elevation-tuck var(--shadow-ink);
   transition:
     max-height 0.18s ease,
     box-shadow 0.18s ease;
@@ -241,7 +230,7 @@
     z-index: 2;
     box-shadow:
       0 0 0 3px var(--accent),
-      0 -6px 14px rgba(24, 30, 23, 0.18);
+      t.$elevation-tuck var(--shadow-ink);
   }
 
   &.is-blocked {
@@ -276,7 +265,7 @@
   left: 0;
   z-index: 4;
   margin: 0;
-  padding: #{t.$space-1} #{t.$space-2};
+  padding: t.$space-1 t.$space-2;
   @include t.text(label);
   font-weight: t.$weight-bold;
   text-transform: uppercase;
@@ -310,7 +299,7 @@
 .trade-jail-list {
   display: flex;
   flex-wrap: wrap;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -322,8 +311,8 @@
  */
 .trade-jail-card {
   display: grid;
-  gap: #{t.$space-hair};
-  padding: #{t.$space-2} #{t.$space-2};
+  gap: t.$space-hair;
+  padding: t.$space-2 t.$space-2;
   border: 2px solid var(--border-input);
   border-radius: t.$radius-sharp;
   text-align: left;
@@ -364,7 +353,7 @@
 .trade-summary-lines {
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
   margin: 0;
   padding: 0;
   list-style: none;

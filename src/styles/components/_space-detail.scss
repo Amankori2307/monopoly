@@ -4,11 +4,11 @@
 .space-detail-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: t.$z-space-detail;
   display: grid;
   place-items: center;
-  padding: #{t.$space-5};
-  background: rgba(26, 31, 28, 0.46);
+  padding: t.$space-5;
+  background: var(--scrim-soft);
   backdrop-filter: blur(3px);
 }
 
@@ -18,12 +18,12 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-3};
+  gap: t.$space-3;
   width: max-content;
   max-width: 100%;
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.34);
+  box-shadow: t.$elevation-4 var(--shadow-ink-strong);
 }
 
 .space-detail-close {
@@ -69,7 +69,7 @@
 
   // Scoped: .eyebrow is shared with the panels and the drawer header.
   .eyebrow {
-    margin-bottom: #{t.$space-1};
+    margin-bottom: t.$space-1;
   }
 }
 
@@ -90,9 +90,9 @@
 .space-card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: #{t.$space-2};
-  margin-top: #{t.$space-5};
-  padding-top: #{t.$space-4};
+  gap: t.$space-2;
+  margin-top: t.$space-5;
+  padding-top: t.$space-4;
   border-top: 1px solid var(--border-input);
 }
 
@@ -124,7 +124,7 @@
 // Side by side, not stacked.
 .buy-decision-buttons {
   display: flex;
-  gap: #{t.$space-3};
+  gap: t.$space-3;
 }
 
 .buy-decision-buttons > * {
@@ -144,15 +144,15 @@
 }
 
 .decision-lede {
-  margin: 0 0 #{t.$space-4};
+  margin: 0 0 t.$space-4;
   color: var(--text-body);
 }
 
 .space-detail-title-row {
   display: flex;
   align-items: center;
-  gap: #{t.$space-2};
-  padding-right: #{t.$space-7};
+  gap: t.$space-2;
+  padding-right: t.$space-7;
 
   // Fixed, not viewport-relative: the card is a fixed width, so the name must
   // size to the card rather than to the window it happens to be shown in.
@@ -179,7 +179,7 @@
   flex-shrink: 0;
   // Flush to the card's top and side edges by negating its padding - keep this
   // derived, or the strip stops lining up the moment that padding changes.
-  margin: (-1 * t.$deed-card-pad) (-1 * t.$deed-card-pad) #{t.$space-3};
+  margin: (-1 * t.$deed-card-pad) (-1 * t.$deed-card-pad) t.$space-3;
 }
 
 // Railways and utilities have no colour group, so they take ink: distinct from
@@ -197,8 +197,8 @@
 
   span {
     display: grid;
-    gap: #{t.$space-1};
-    padding: #{t.$space-2} #{t.$space-2};
+    gap: t.$space-1;
+    padding: t.$space-2 t.$space-2;
     border-right: 1px solid var(--border-input);
     border-bottom: 1px solid var(--border-input);
     color: var(--text-muted);
@@ -215,7 +215,7 @@
 }
 
 .deed-rent-title {
-  margin: #{t.$space-2} 0 #{t.$space-1};
+  margin: t.$space-2 0 t.$space-1;
   color: var(--text-muted);
   @include t.text(micro);
   letter-spacing: t.$track-caps;
@@ -230,8 +230,8 @@
   div {
     display: flex;
     justify-content: space-between;
-    gap: #{t.$space-3};
-    padding: #{t.$space-1} 0;
+    gap: t.$space-3;
+    padding: t.$space-1 0;
     border-bottom: 1px solid var(--border-input);
   }
 
@@ -262,14 +262,14 @@
 .deed-footer {
   display: flex;
   justify-content: space-between;
-  gap: #{t.$space-2};
-  margin-top: #{t.$space-2};
+  gap: t.$space-2;
+  margin-top: t.$space-2;
   color: var(--text-muted);
   @include t.text(mono-sm);
 }
 
 .detail-copy {
-  margin: #{t.$space-3} 0 0;
+  margin: t.$space-3 0 0;
   color: var(--text-body);
   @include t.text(body-sm);
 }
@@ -285,10 +285,10 @@
 .site-actions {
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
   width: t.$deed-card-width;
   max-width: 100%;
-  padding: #{t.$space-3};
+  padding: t.$space-3;
   border: 1px solid var(--border-space);
   background: var(--surface-panel);
 }
@@ -296,7 +296,7 @@
 .site-owner {
   display: flex;
   align-items: center;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
   margin: 0;
   color: var(--text-body);
   @include t.text(label);
@@ -315,12 +315,12 @@
 .site-action-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
 
   button {
     flex: 1 1 auto;
     min-width: 72px;
-    padding: #{t.$space-2} #{t.$space-2};
+    padding: t.$space-2 t.$space-2;
     @include t.text(small);
   }
 

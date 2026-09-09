@@ -5,7 +5,7 @@
 .dice-dock {
   display: flex;
   align-items: center;
-  gap: #{t.$space-3};
+  gap: t.$space-3;
   margin-left: auto;
   padding: 0;
   border: 0;
@@ -15,7 +15,7 @@
 
 .dice-pair {
   display: flex;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
 }
 
 .die-face {
@@ -25,19 +25,21 @@
   grid-template-rows: repeat(3, 1fr);
   width: 58px;
   aspect-ratio: 1;
-  padding: #{t.$space-2};
-  border: 1px solid #aeb3ad;
+  padding: t.$space-2;
+  border: t.$border-hairline solid var(--die-edge);
   border-radius: t.$die-radius;
-  background: linear-gradient(145deg, #ffffff 0%, #f4f5f1 62%, #dfe2dc 100%);
+  background: var(--die-face);
   box-shadow:
-    4px 5px 0 #babeb7,
-    8px 10px 14px rgba(34, 41, 34, 0.18);
+    t.$die-emboss var(--die-shade),
+    t.$die-drop var(--shadow-ink);
 
   &::after {
     position: absolute;
-    inset: #{t.$space-1};
+    inset: t.$space-1;
     content: '';
-    border: 1px solid rgba(255, 255, 255, 0.9);
+    // design-system-exempt: the die's inner bevel - a highlight on a physical
+    // object, not a themed surface colour.
+    border: t.$border-hairline solid rgba(255, 255, 255, 0.9);
     border-radius: t.$die-inner-radius;
     pointer-events: none;
   }
@@ -54,12 +56,10 @@
   width: 8px;
   aspect-ratio: 1;
   border-radius: t.$pip-radius;
-  background: radial-gradient(
-    circle at 34% 30%,
-    #5c655d 0 12%,
-    #202821 45%,
-    #111711 100%
-  );
+  background: var(--pip-ink);
+  // design-system-exempt: a specular highlight over the pip's own gradient,
+  // white because it is light rather than because it is a colour - the same
+  // reasoning docs/theming.md gives for the token chip's shading.
   box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.16);
 }
 

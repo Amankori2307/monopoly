@@ -100,6 +100,11 @@ $token-size: clamp(11px, 1.4vw, 18px);
 // system: a pawn, a die, and its pips are real objects, not UI surfaces.
 $token-radius: 50%;
 $die-radius: 11px; // .die-face is a fixed 58px square, so px is exact
+// The die's own shadows: a hard offset plus a soft drop. Geometry lives with
+// the other die metrics rather than on the elevation ladder, because a die is
+// a physical object and its shading is not a UI level.
+$die-emboss: 4px 5px 0;
+$die-drop: 8px 10px 14px;
 $die-inner-radius: 7px; // ::after is inset 4px, so 11 - 4
 $pip-radius: 50%;
 $token-move-duration: 170ms;

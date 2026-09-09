@@ -10,8 +10,8 @@
 .group-pips {
   display: flex;
   flex-wrap: wrap;
-  gap: #{t.$space-1};
-  margin-top: #{t.$space-2};
+  gap: t.$space-1;
+  margin-top: t.$space-2;
 }
 
 .group-pip {
@@ -61,7 +61,7 @@
   width: t.$deed-card-width;
   max-height: t.$holdings-peek;
   overflow: hidden;
-  box-shadow: 0 -6px 14px rgba(24, 30, 23, 0.12);
+  box-shadow: t.$elevation-tuck var(--shadow-ink);
   transition: transform 0.18s ease;
 
   & + & {

@@ -290,7 +290,7 @@
   background-image: linear-gradient(
     var(--ribbon-sheen),
     transparent 55%,
-    rgba(0, 0, 0, 0.08)
+    var(--ribbon-shade)
   );
 
   .side-bottom &,
@@ -687,6 +687,10 @@
   height: var(--token-size);
   border: 0;
   border-radius: t.$token-radius;
+  // design-system-exempt: black and white shading over an arbitrary inline
+  // player colour. There is no theme-dependent decision here to express - the
+  // piece's own colour is theme DATA, and this is only light and shade falling
+  // on it. docs/theming.md states the same for the pip.
   background-image:
     // Glossy highlight, upper left.
     radial-gradient(
@@ -699,12 +703,14 @@
     radial-gradient(circle at 68% 76%, rgba(0, 0, 0, 0.4) 0 12%, rgba(0, 0, 0, 0) 60%);
   // Shading is scaled to the piece: at this size larger offsets would swamp it.
   // No outer ring - the piece reads as a solid object against the board.
+  // design-system-exempt: the same shading, cast inward - light and shade on
+  // an arbitrary player colour rather than a surface a palette chooses.
   box-shadow:
     // Inner shading for volume.
     inset -1px -1px 2px rgba(0, 0, 0, 0.4),
     inset 1px 1px 1px rgba(255, 255, 255, 0.45),
     // Cast shadow, so the piece sits above the board.
-    0 1px 3px rgba(24, 30, 23, 0.5);
+    t.$elevation-1 var(--shadow-ink-strong);
   transform: translate(-50%, -50%);
   transition:
     left t.$token-move-duration t.$token-move-easing,

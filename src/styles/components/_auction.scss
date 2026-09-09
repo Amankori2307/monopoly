@@ -21,7 +21,7 @@
 .auction-bidding {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: #{t.$space-3};
+  gap: t.$space-3;
   min-width: 0;
   min-height: 0;
 }
@@ -39,9 +39,9 @@
 .auction-log {
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
   min-height: 0;
-  padding-right: #{t.$space-1};
+  padding-right: t.$space-1;
   overflow-y: auto;
 }
 
@@ -59,7 +59,7 @@
 
 // Whose turn it is, and the only place the panel says so.
 .auction-log-line.is-pending {
-  margin-top: #{t.$space-hair};
+  margin-top: t.$space-hair;
   color: var(--text-primary);
   font-weight: t.$weight-bold;
 }
@@ -73,7 +73,7 @@
 // ---------------------------------------------------------------------------
 .auction-bid-form {
   display: grid;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
 }
 
 // The field and its raises on one row: four more rows of chips and banners is
@@ -82,12 +82,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
 
   .text-input {
     flex: 1 1 76px;
     min-width: 0;
-    padding-inline: #{t.$space-2};
+    padding-inline: t.$space-2;
   }
 }
 
@@ -95,7 +95,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
 }
 
 // Why Submit is disabled, stated where the bidder is looking. The wording comes
@@ -115,7 +115,7 @@
 
 .chip-button {
   flex: 0 0 auto;
-  padding: #{t.$space-1} #{t.$space-2};
+  padding: t.$space-1 t.$space-2;
   border: 1px solid var(--border-input);
   border-radius: t.$radius-sharp;
   background: var(--surface-panel);

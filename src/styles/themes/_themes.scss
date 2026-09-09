@@ -28,15 +28,16 @@
 $theme-contract: surface-app surface-panel surface-board surface-input surface-muted
   surface-raised text-primary text-body text-muted text-inverse text-eyebrow accent
   accent-hover accent-strong accent-soft accent-contrast border-subtle border-input
-  border-space border-dashed focus-ring shadow-panel shadow-board board-space-bg
-  board-space-hover board-icon-ink board-field board-emboss board-shade board-paper-tooth
-  board-vignette jail-cell-bg jail-bars jail-visiting-bg ribbon-bg ribbon-border
-  ribbon-outline ribbon-text ribbon-drop ribbon-keyline ribbon-sheen deck-community-bg
-  deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text badge-bg danger-bg
-  error-text action-build action-mortgage building-house building-house-roof
-  building-hotel building-hotel-roof building-window piece-outline button-primary
-  button-primary-hover button-primary-text button-secondary button-secondary-hover
-  button-secondary-text;
+  border-space border-dashed focus-ring shadow-panel shadow-board shadow-ink
+  shadow-ink-strong scrim scrim-soft die-face die-edge die-shade pip-ink ribbon-shade
+  board-space-bg board-space-hover board-icon-ink board-field board-emboss board-shade
+  board-paper-tooth board-vignette jail-cell-bg jail-bars jail-visiting-bg ribbon-bg
+  ribbon-border ribbon-outline ribbon-text ribbon-drop ribbon-keyline ribbon-sheen
+  deck-community-bg deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text
+  badge-bg danger-bg error-text action-build action-mortgage building-house
+  building-house-roof building-hotel building-hotel-roof building-window piece-outline
+  button-primary button-primary-hover button-primary-text button-secondary
+  button-secondary-hover button-secondary-text;
 
 $india-palette: (
   surface-app: #f1f3f5,
@@ -64,6 +65,28 @@ $india-palette: (
   border-dashed: #d0c7a6,
 
   focus-ring: #3150b6,
+  // The ink every elevation is drawn in. Eleven declarations each invented a
+  // near-identical dark green for this - rgba(22,27,22,.55), rgba(24,30,23,.24),
+  // rgba(23,29,20,.18) - differing by at most six per channel. Alpha was the
+  // only difference that was ever a decision, hence two.
+  shadow-ink: rgba(24, 30, 23, 0.18),
+  shadow-ink-strong: rgba(24, 30, 23, 0.34),
+  // A scrim over the page. The soft one leaves what it covers readable, which
+  // is why the drawer and the deed sheet use it and a decision does not.
+  scrim: rgba(22, 27, 22, 0.55),
+  scrim-soft: rgba(22, 27, 22, 0.44),
+  // The die is a white object with near-black pips, and that is a palette
+  // decision rather than a fact - it is one of the three things docs/theming.md
+  // names as blocking a dark appearance. Whole gradients, because "what is a
+  // die made of" is one decision; three tokens would let a theme build a die
+  // out of two different materials.
+  die-face: linear-gradient(145deg, #ffffff 0%, #f4f5f1 62%, #dfe2dc 100%),
+  die-edge: #aeb3ad,
+  die-shade: #babeb7,
+  pip-ink: radial-gradient(circle at 34% 30%, #5c655d 0 12%, #202821 45%, #111711 100%),
+  // The ribbon's sheen was half themed and half a literal: the light stop came
+  // from --ribbon-sheen and the dark one from rgba(0,0,0,.08).
+  ribbon-shade: rgba(0, 0, 0, 0.08),
   shadow-panel: 0 14px 34px rgba(64, 47, 12, 0.12),
   shadow-board: (
     0 24px 52px rgba(25, 31, 24, 0.24),
@@ -173,6 +196,15 @@ $aesthetic-palette: (
   focus-ring: #2f6bff,
   // Tight and shallow. A 24px/52px drop is the printed-slab look; minimal wants
   // the surface to sit just off the page.
+  shadow-ink: rgba(13, 15, 20, 0.07),
+  shadow-ink-strong: rgba(13, 15, 20, 0.14),
+  scrim: rgba(13, 15, 20, 0.5),
+  scrim-soft: rgba(13, 15, 20, 0.38),
+  die-face: linear-gradient(145deg, #ffffff 0%, #fafafa 62%, #eeeeef 100%),
+  die-edge: #d5d6da,
+  die-shade: #e4e5e8,
+  pip-ink: radial-gradient(circle at 34% 30%, #4b4e57 0 12%, #23262d 45%, #14161b 100%),
+  ribbon-shade: rgba(13, 15, 20, 0.06),
   shadow-panel: 0 1px 2px rgba(13, 15, 20, 0.06),
   shadow-board: (
     0 1px 2px rgba(13, 15, 20, 0.05),
@@ -283,6 +315,20 @@ $themes: (
       border-dashed: #3b4552,
 
       focus-ring: #6f9dff,
+      shadow-ink: rgba(0, 0, 0, 0.55),
+      shadow-ink-strong: rgba(0, 0, 0, 0.72),
+      scrim: rgba(0, 0, 0, 0.66),
+      scrim-soft: rgba(0, 0, 0, 0.5),
+      die-face: linear-gradient(145deg, #2b323b 0%, #232a33 62%, #1a2029 100%),
+      die-edge: #3c4552,
+      die-shade: #151a21,
+      pip-ink: radial-gradient(
+          circle at 34% 30%,
+          #dfe5ee 0 12%,
+          #aab4c2 45%,
+          #8b97a6 100%
+        ),
+      ribbon-shade: rgba(0, 0, 0, 0.22),
       shadow-panel: 0 14px 34px rgba(0, 0, 0, 0.46),
       shadow-board: (
         0 24px 52px rgba(0, 0, 0, 0.55),

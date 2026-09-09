@@ -7,15 +7,25 @@
 // Takes over the screen when a decision is pending. Intentionally has no close
 // affordance: the turn cannot advance until it is answered.
 // ---------------------------------------------------------------------------
-.decision-backdrop {
+// One scrim, for every overlay that takes over the screen. The decision
+// backdrop and the trade backdrop were byte-identical - same position, inset,
+// padding, colour and blur - and maintained separately, which is how one of
+// them ended up at a z-index that killed the header and the other did not.
+.decision-backdrop,
+.trade-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  // The header outranks every scrim, so navigation is never dead while one is
+  // up. See CLAUDE.md section 8 and abstracts/_scale.scss.
+  z-index: t.$z-modal;
   display: grid;
   place-items: center;
-  padding: #{t.$space-5};
-  background: rgba(22, 27, 22, 0.55);
+  padding: t.$space-5;
+  background: var(--scrim);
   backdrop-filter: blur(3px);
+}
+
+.decision-backdrop {
   animation: overlay-fade 0.18s ease;
 }
 
@@ -34,7 +44,7 @@
 // one fixed card, the gap, and a choice column of about the same width.
 .decision-modal:has(.buy-decision),
 .decision-modal:has(.auction-decision) {
-  width: min(100%, calc(2 * #{t.$deed-card-width} + #{t.$space-7}));
+  width: min(100%, calc(2 * t.$deed-card-width + t.$space-7));
 }
 
 // ---------------------------------------------------------------------------
@@ -48,7 +58,7 @@
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 35;
+  z-index: t.$z-spectator;
   width: min(calc(100vw - 40px), 380px);
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
@@ -75,8 +85,8 @@
 
 .decision-spectator-waiting {
   @include t.text(eyebrow);
-  margin: 0 0 #{t.$space-2};
-  padding: #{t.$space-1} #{t.$space-2};
+  margin: 0 0 t.$space-2;
+  padding: t.$space-1 t.$space-2;
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
   background: var(--surface-muted);
@@ -102,10 +112,10 @@
   // layout/_header.scss), and this drawer is top-anchored - so without the
   // inset the header covered the drawer's own close button.
   inset: var(--app-header-height) 0 0;
-  z-index: 35;
+  z-index: t.$z-drawer;
   display: flex;
   justify-content: flex-end;
-  background: rgba(22, 27, 22, 0.42);
+  background: var(--scrim-soft);
   animation: overlay-fade 0.18s ease;
 }
 
@@ -118,12 +128,12 @@
   // drawer's padding either side. The card is the constraint, not the panel.
   // The border-left is in the box too, or the card sits a pixel off centre.
   &.is-wide {
-    width: min(100%, calc(#{t.$deed-card-width} + 2 * #{t.$drawer-pad} + 1px));
+    width: min(100%, calc(t.$deed-card-width + 2 * t.$drawer-pad + 1px));
   }
   height: 100%;
   border-left: 1px solid var(--border-subtle);
   background: var(--surface-panel);
-  box-shadow: -18px 0 44px rgba(24, 30, 23, 0.24);
+  box-shadow: t.$elevation-drawer var(--shadow-ink-strong);
   animation: drawer-slide 0.24s cubic-bezier(0.22, 0.7, 0.3, 1);
 }
 
@@ -131,8 +141,8 @@
   display: flex;
   align-items: start;
   justify-content: space-between;
-  gap: #{t.$space-4};
-  padding: #{t.$space-5} t.$drawer-pad #{t.$space-3};
+  gap: t.$space-4;
+  padding: t.$space-5 t.$drawer-pad t.$space-3;
   border-bottom: 1px solid var(--border-subtle);
 
   .space-detail-close {
@@ -145,14 +155,14 @@
   min-height: 0;
   overflow-y: auto;
   // Horizontal padding is the same value .is-wide derives its width from.
-  padding: #{t.$space-4} t.$drawer-pad #{t.$space-6};
+  padding: t.$space-4 t.$drawer-pad t.$space-6;
 }
 
 .drawer-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: #{t.$space-hair};
-  margin-bottom: #{t.$space-5};
+  gap: t.$space-hair;
+  margin-bottom: t.$space-5;
   background: var(--border-subtle);
 
   // Two columns, not one. Collapsing these to a single column turned four
@@ -160,10 +170,10 @@
   // in a drawer whose whole job is showing the deeds. A cell is ~155px wide at
   // 360px, which a mono label and a figure fit; the padding tightens instead.
   @include m.below(t.$breakpoint-phone) {
-    margin-bottom: #{t.$space-3};
+    margin-bottom: t.$space-3;
 
     span {
-      padding: #{t.$space-2} #{t.$space-2};
+      padding: t.$space-2 t.$space-2;
       // Sans, and not a label - a count is not uppercase.
       @include t.text(small);
     }
@@ -175,8 +185,8 @@
 
   span {
     display: grid;
-    gap: #{t.$space-1};
-    padding: #{t.$space-3};
+    gap: t.$space-1;
+    padding: t.$space-3;
     background: var(--surface-panel);
     color: var(--text-muted);
     @include t.text(micro);
@@ -210,7 +220,7 @@
   place-items: center;
   min-width: 22px;
   height: 22px;
-  padding: 0 #{t.$space-1};
+  padding: 0 t.$space-1;
   border-radius: t.$radius-sharp;
   background: var(--badge-bg);
   // A count, not a label: digits, and nothing to uppercase.
@@ -275,7 +285,7 @@
 // ---------------------------------------------------------------------------
 .toast-stack {
   position: relative;
-  z-index: 45;
+  z-index: t.$z-notice;
   display: flex;
   // Oldest first from toToasts, so the newest ends up nearest the dice.
   flex-direction: column;
@@ -315,12 +325,12 @@
 
 .toast {
   pointer-events: auto;
-  padding: #{t.$space-3} #{t.$space-3};
+  padding: t.$space-3 t.$space-3;
   border: 1px solid var(--border-input);
   border-left-width: 4px;
   border-radius: t.$radius-sharp;
   background: var(--surface-panel);
-  box-shadow: 0 12px 28px rgba(24, 30, 23, 0.22);
+  box-shadow: t.$elevation-3 var(--shadow-ink);
   color: var(--text-body);
   @include t.text(body-sm);
   text-align: left;
@@ -366,7 +376,7 @@
 .card-draw {
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
   text-align: center;
 
   h2 {
@@ -442,7 +452,7 @@
 .liquidation-sites {
   display: flex;
   flex-direction: column;
-  gap: #{t.$space-1};
+  gap: t.$space-1;
   margin: 0;
   // Long portfolios must not push the Pay button off the modal.
   max-height: 260px;
@@ -455,13 +465,13 @@
     align-items: center;
     justify-content: space-between;
     gap: t.$space-3;
-    padding: #{t.$space-1} 0;
+    padding: t.$space-1 0;
     border-bottom: 1px solid var(--border-input);
   }
 
   button {
     flex: none;
-    padding: #{t.$space-1} #{t.$space-2};
+    padding: t.$space-1 t.$space-2;
     @include t.text(small);
     white-space: nowrap;
   }
@@ -470,7 +480,7 @@
 // The honest dead end until bankruptcy lands.
 .liquidation-dead-end {
   margin: 0;
-  padding: #{t.$space-2} #{t.$space-3};
+  padding: t.$space-2 t.$space-3;
   border: 1px dashed var(--border-dashed);
   color: var(--error-text);
   @include t.text(body-sm);
@@ -549,7 +559,7 @@
 .destination-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: #{t.$space-1};
+  gap: t.$space-1;
   margin: 0;
   padding: 0;
   max-height: 48dvh;
@@ -675,6 +685,6 @@
  */
 .jail-dice {
   display: flex;
-  gap: #{t.$space-2};
-  margin: #{t.$space-1} 0 #{t.$space-1};
+  gap: t.$space-2;
+  margin: t.$space-1 0 t.$space-1;
 }

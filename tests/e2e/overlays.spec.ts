@@ -693,9 +693,13 @@ test('paints a rejected-command banner above the decision backdrop', async ({ pa
           continue; // cross-origin sheet, not ours
         }
         for (const rule of Array.from(rules)) {
+          // Split the selector list: the decision and trade scrims share one
+          // rule now, since they were byte-identical, so an exact match on
+          // selectorText finds nothing and the test reports a missing rule
+          // rather than the layering it is about.
           if (
             rule instanceof CSSStyleRule &&
-            rule.selectorText === selector &&
+            rule.selectorText.split(',').some((one) => one.trim() === selector) &&
             rule.style.zIndex
           ) {
             return Number(rule.style.zIndex);
@@ -708,11 +712,25 @@ test('paints a rejected-command banner above the decision backdrop', async ({ pa
     return {
       banner: zIndexOf('.command-error'),
       backdrop: zIndexOf('.decision-backdrop'),
+      trade: zIndexOf('.trade-backdrop'),
+      header: zIndexOf('.app-header'),
     };
   });
 
-  // Both must be found, or the comparison below proves nothing.
-  expect(layers.banner, '.command-error has no z-index rule').not.toBeNull();
-  expect(layers.backdrop, '.decision-backdrop has no z-index rule').not.toBeNull();
-  expect(layers.banner as number).toBeGreaterThan(layers.backdrop as number);
+  // All four must be found, or the comparisons below prove nothing.
+  for (const [name, value] of Object.entries(layers)) {
+    expect(value, `${name} has no z-index rule`).not.toBeNull();
+  }
+  const { banner, backdrop, trade, header } = layers as Record<string, number>;
+
+  expect(banner).toBeGreaterThan(backdrop);
+
+  // The header outranks every scrim, so the app's navigation is never dead
+  // while one is up. The trade scrim used to sit ABOVE it, which killed the
+  // rules link and the mute for as long as an offer was being assembled -
+  // pinned here so the ordering is a decision rather than an accident of
+  // import order. See tests/e2e/trade.spec.ts for the behaviour.
+  expect(header).toBeGreaterThan(backdrop);
+  expect(header).toBeGreaterThan(trade);
+  expect(trade).toBe(backdrop);
 });

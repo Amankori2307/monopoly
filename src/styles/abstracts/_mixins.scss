@@ -47,7 +47,7 @@
 /// height cap applied only above $breakpoint-board and was REPLACED by a plain
 /// width cap below it, so 812x375 rendered a 776px-tall board in a 375px window.
 @mixin landscape-compact {
-  @media (max-width: t.$breakpoint-board) and (max-height: t.$breakpoint-short) and (orientation: landscape) {
+  @media (max-width: #{t.$breakpoint-board}) and (max-height: t.$breakpoint-short) and (orientation: landscape) {
     @content;
   }
 }

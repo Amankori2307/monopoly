@@ -31,7 +31,7 @@
   min-height: 0;
   overflow-y: auto;
   // Room for the collapsed stack's outermost card, which insets as it tapers.
-  padding-right: #{t.$space-1};
+  padding-right: t.$space-1;
 }
 
 .player-stack {
@@ -44,7 +44,7 @@
 // rather than a separate highlight class.
 .player-stack .player-card:first-of-type {
   z-index: t.$max-players + 1;
-  box-shadow: 0 8px 22px rgba(28, 34, 27, 0.16);
+  box-shadow: t.$elevation-2 var(--shadow-ink);
 }
 
 .player-stack .player-card {
@@ -74,7 +74,7 @@
   .player-card:not(:first-of-type) {
     max-height: t.$stack-peek;
     margin-top: -1 * t.$stack-tuck;
-    box-shadow: 0 -1px 4px rgba(24, 30, 23, 0.1);
+    box-shadow: t.$elevation-tuck-hair var(--shadow-ink);
 
     // A sliver should read as colour, not as a cropped line of text.
     .player-card-strip {
@@ -143,7 +143,7 @@
 .player-stack-collapse {
   align-self: start;
   flex: none;
-  padding: #{t.$space-1} #{t.$space-2};
+  padding: t.$space-1 t.$space-2;
   border: 1px solid var(--border-subtle);
   border-radius: t.$radius-sharp;
   background: transparent;
@@ -172,7 +172,7 @@
   position: relative;
   overflow: hidden;
   // The right inset is where the chevron sits, so it never lands on a figure.
-  padding: #{t.$space-3} #{t.$space-10} #{t.$space-3} #{t.$space-3};
+  padding: t.$space-3 t.$space-10 t.$space-3 t.$space-3;
   border: 1px solid var(--border-input);
   // Left edge is tinted with the player's token colour, set inline from
   // ThemeToken.color so each player is identifiable at a glance.
@@ -187,7 +187,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: #{t.$space-2};
+  gap: t.$space-2;
 }
 
 .player-card-name {
@@ -200,7 +200,7 @@
 .player-card-worth {
   display: grid;
   justify-items: end;
-  gap: #{t.$space-hair};
+  gap: t.$space-hair;
   text-align: right;
   // The figure must not wrap under its own label.
   white-space: nowrap;
@@ -226,7 +226,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-inline-end: #{t.$space-2};
+  padding-inline-end: t.$space-2;
   border: 0;
   background: none;
   cursor: pointer;
@@ -269,13 +269,13 @@
 .player-metrics {
   display: flex;
   flex-wrap: wrap;
-  gap: #{t.$space-1} #{t.$space-4};
-  margin: #{t.$space-2} 0 0;
+  gap: t.$space-1 t.$space-4;
+  margin: t.$space-2 0 0;
 
   > div {
     display: flex;
     align-items: baseline;
-    gap: #{t.$space-1};
+    gap: t.$space-1;
     min-width: 0;
   }
 
@@ -297,12 +297,12 @@
 .player-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: #{t.$space-1};
-  margin-top: #{t.$space-2};
+  gap: t.$space-1;
+  margin-top: t.$space-2;
 }
 
 .player-badge {
-  padding: #{t.$space-1} #{t.$space-2};
+  padding: t.$space-1 t.$space-2;
   border-radius: t.$radius-sharp;
   @include t.text(micro);
   text-transform: uppercase;
@@ -327,13 +327,13 @@
 // Outlined rather than filled: a mortgage is a state to notice, not an alarm.
 .badge-mortgaged {
   border: 1px dashed var(--border-dashed);
-  padding: #{t.$space-1} #{t.$space-2};
+  padding: t.$space-1 t.$space-2;
   background: transparent;
   color: var(--text-muted);
 }
 
 .space-card {
-  padding: #{t.$space-3};
+  padding: t.$space-3;
   border-left: 5px solid var(--text-eyebrow);
   border-radius: t.$radius-sharp;
   background: var(--surface-muted);
@@ -341,6 +341,6 @@
 
   strong {
     display: block;
-    margin-bottom: #{t.$space-1};
+    margin-bottom: t.$space-1;
   }
 }
