@@ -20,8 +20,8 @@
 .player-config-grid label {
   display: grid;
   gap: 8px;
-  font-size: 0.82rem;
-  font-weight: 700;
+  @include t.text(body-sm);
+  font-weight: t.$weight-bold;
 }
 
 .player-config-row {

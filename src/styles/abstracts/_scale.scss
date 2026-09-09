@@ -35,6 +35,18 @@
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
+// The three faces.
+//
+// Here rather than in _tokens.scss because a family is a type decision, and
+// because a role names one: $type-families below is what lets `text(eyebrow)`
+// set the face along with everything else. _tokens.scss forwards this file, so
+// `t.$font-sans` still resolves in all 24 partials.
+// ---------------------------------------------------------------------------
+$font-sans: Manrope, 'Avenir Next', sans-serif;
+$font-serif: Fraunces, 'Iowan Old Style', Georgia, serif;
+$font-mono: 'DM Mono', monospace;
+
+// ---------------------------------------------------------------------------
 // Spacing: a 4px grid.
 //
 // The number IS the multiple, so $space-3 is unambiguously 12px. This is the
@@ -75,78 +87,19 @@ $space-11: space(11);
 $space-12: space(12);
 
 // ---------------------------------------------------------------------------
-// Type: role-named, and each size carries its own line height.
-//
-// Role-named because a token should express a decision - `body` says what the
-// text IS, where `sm` only says how big it is and gives the next person no
-// reason to pick it over `xs`. Spacing above is the deliberate exception.
-//
-// Size and leading travel together because they were the same decision all
-// along: fourteen line heights had drifted loose of the sizes they belong to,
-// including 1.04 and 1.05 in one partial. Reach for them through the text()
-// mixin, which sets both, rather than reading the map directly.
-// ---------------------------------------------------------------------------
-$type-scale: (
-  // Counters, badge digits, the smallest mono labels.
-  micro: (0.62rem, 1.1),
-  // An eyebrow, a definition term, any uppercase mono label.
-  label: (0.68rem, 1.1),
-  // Secondary and supporting text: meta rows, hints, table cells.
-  small: (0.76rem, 1.4),
-  // The default. Body copy, button labels, form fields.
-  body: (0.84rem, 1.5),
-  // A lede or an intro paragraph - body copy asked to carry a screen.
-  lead: (0.94rem, 1.55),
-  // h3, a panel's own heading, a deed's rent title.
-  heading: (1.1rem, 1.35),
-  // h2. Deliberately the value h2 already had, so the commonest heading in the
-  // app does not move at all.
-  title: (1.42rem, 1.15),
-  // h1 on an ordinary page.
-  display: (1.7rem, 1.1),
-  // A masthead. Usually the upper end of a clamp() rather than a flat size.
-  hero: (2rem, 1.05)
-);
-
-/// The size for one role, for a clamp() endpoint or a calc().
-///
-/// Prefer the text() mixin, which also sets the leading. This exists because a
-/// fluid heading needs the rung as a bound rather than as a declaration.
-@function text-size($role) {
-  $entry: map.get($type-scale, $role);
-  @if $entry == null {
-    @error 'Unknown type role "#{$role}". Roles: #{map.keys($type-scale)}.';
-  }
-  @return list.nth($entry, 1);
-}
-
-/// The line height for one role.
-@function text-leading($role) {
-  $entry: map.get($type-scale, $role);
-  @if $entry == null {
-    @error 'Unknown type role "#{$role}". Roles: #{map.keys($type-scale)}.';
-  }
-  @return list.nth($entry, 2);
-}
-
-/// One rung of the type scale, size and leading together.
-///
-/// @example scss
-///   .helper-text { @include text(small); }
-@mixin text($role) {
-  font-size: text-size($role);
-  line-height: text-leading($role);
-}
-
-// ---------------------------------------------------------------------------
 // Weight.
 //
-// Three, which is what was actually in use: 500, 700 and 800, plus a single
-// stray 600 in the lobby that had no reason to be different from its siblings.
+// Four. The declared weights were 500, 700 and 800 - but 400 is the weight
+// MOST rendered text actually has, because prose declares nothing and inherits
+// it. Leaving it unnamed is how `p` ended up as the only major text in the app
+// with no entry in the system. All four faces are loaded (index.html).
+//
+// A stray 600 in the lobby sat beside 700 siblings and was a typo.
 // ---------------------------------------------------------------------------
-$weight-regular: 500;
+$weight-normal: 400; // Prose. What an unstyled paragraph already is
+$weight-medium: 500; // A mono label, a figure
 $weight-bold: 700;
-$weight-heavy: 800;
+$weight-heavy: 800; // Buttons and display serif only
 
 // ---------------------------------------------------------------------------
 // Tracking.
@@ -163,9 +116,260 @@ $track-snug: -0.065em; // A masthead, hero size only
 $track-tight: -0.03em; // Headings from `title` up
 $track-normal: 0;
 $track-wide: 0.02em; // Mono figures, where digits need air
-$track-label: 0.08em; // A short uppercase label in the body face
-$track-caps: 0.14em; // An eyebrow: uppercase mono, needs the most
-$track-caps-loose: 0.2em; // A join code, read aloud one character at a time
+$track-caps: 0.14em; // Any uppercase mono label: eyebrow, key, wordmark
+$track-caps-loose: 0.22em; // A join code, read aloud one character at a time
+
+// Six, not eight. A first pass had $track-label at 0.08em beside $track-caps
+// at 0.14em, and a $track-caps-wide at 0.16em beside $track-caps-loose - which
+// is the same 0.02em drift this scale exists to remove, re-enshrined as
+// tokens. Every uppercase mono label tracks the same; only the join code,
+// which is read out one character at a time, does not.
+
+// ---------------------------------------------------------------------------
+// Type: role-named, and a role is the whole decision.
+//
+// Role-named because a token should express a decision - `body` says what the
+// text IS, where `sm` only says how big it is and gives the next person no
+// reason to pick it over `xs`. Spacing is the deliberate exception.
+//
+// A role carries size, leading, weight, tracking, family and case TOGETHER,
+// because they were always one decision and splitting them is exactly how they
+// drifted: 38 sizes, 14 leadings and 19 trackings, each set on its own line by
+// somebody who could not see the other two. The mono labels are the clearest
+// case - `mono-label($size, $tracking)` took the two decisions as ARGUMENTS,
+// which is a scale that never got written, and 12 more sites skipped it and
+// hand-wrote `font: 500 <size> $font-mono` at sizes it does not offer.
+//
+// Reach for a role through the text() mixin. text-size() exists only because a
+// fluid heading needs a rung as a clamp() bound rather than as a declaration.
+// ---------------------------------------------------------------------------
+$type-scale: (
+  // A masthead. Usually the ceiling of a clamp() rather than a flat size.
+  hero: (
+      size: 2rem,
+      leading: 0.95,
+      weight: $weight-heavy,
+      track: $track-snug,
+      family: serif,
+      caps: false,
+    ),
+  // h1 on an ordinary page.
+  display: (
+      size: 1.7rem,
+      leading: 1.1,
+      weight: $weight-heavy,
+      track: $track-tight,
+      family: serif,
+      caps: false,
+    ),
+  // h2. Deliberately the size h2 already had, so the commonest heading in the
+  // app does not move at all.
+  title: (
+      size: 1.42rem,
+      leading: 1.15,
+      weight: $weight-bold,
+      track: $track-tight,
+      family: serif,
+      caps: false,
+    ),
+  // h3, a panel's own heading, a deed's rent title.
+  heading: (
+      size: 1.15rem,
+      leading: 1.35,
+      weight: $weight-bold,
+      track: $track-normal,
+      family: serif,
+      caps: false,
+    ),
+  // PROSE. 1rem because that is what an unstyled paragraph already renders at,
+  // and 56 elements in the rules booklet do exactly that - so this rung is
+  // chosen to move nothing rather than to look tidy on a ladder.
+  body: (
+      size: 1rem,
+      leading: 1.5,
+      weight: $weight-normal,
+      track: $track-normal,
+      family: sans,
+      caps: false,
+    ),
+  // The rules booklet's reading text: the same size as body, with more air.
+  // Its own role rather than a loose line-height, because "prose you sit and
+  // read" is a different decision from "a paragraph in a panel" - and a free
+  // leading scale is exactly how fourteen of them drifted apart.
+  prose: (
+      size: 1rem,
+      leading: 1.65,
+      weight: $weight-normal,
+      track: $track-normal,
+      family: sans,
+      caps: false,
+    ),
+  // INTERFACE text, and the real workhorse: forms, cards, meta rows, buttons.
+  // The app has two body sizes and that is not drift - reading text and
+  // interface text are different jobs. 27 elements on /new sit right here.
+  body-sm: (
+      size: 0.86rem,
+      leading: 1.45,
+      weight: $weight-normal,
+      track: $track-normal,
+      family: sans,
+      caps: false,
+    ),
+  // Secondary interface text: a hint, a table cell, a source note.
+  small: (
+      size: 0.76rem,
+      leading: 1.4,
+      weight: $weight-normal,
+      track: $track-normal,
+      family: sans,
+      caps: false,
+    ),
+  // A figure the player reads and compares - money, a rent row, a bid. Money
+  // renders at four sizes in three families today across the toast, the player
+  // card, the deed and the trade panel; this is the rung that settles it.
+  numeric: (
+      size: 0.86rem,
+      leading: 1.45,
+      weight: $weight-medium,
+      track: $track-wide,
+      family: mono,
+      caps: false,
+    ),
+  // The wordmark.
+  brand: (
+      size: 0.78rem,
+      leading: 1,
+      weight: $weight-medium,
+      track: $track-caps,
+      family: mono,
+      caps: true,
+    ),
+  // An eyebrow above a heading.
+  eyebrow: (
+      size: 0.68rem,
+      leading: 1.1,
+      weight: $weight-medium,
+      track: $track-caps,
+      family: mono,
+      caps: true,
+    ),
+  // A definition term, a small uppercase key.
+  label: (
+      size: 0.72rem,
+      leading: 1.1,
+      weight: $weight-medium,
+      track: $track-caps,
+      family: mono,
+      caps: true,
+    ),
+  // The smallest label the type can carry: a counter, a badge digit.
+  micro: (
+      size: 0.62rem,
+      leading: 1.1,
+      weight: $weight-medium,
+      track: $track-caps,
+      family: mono,
+      caps: true,
+    ),
+  // Small mono text that is NOT a label: a deed's value line, a footnote under
+  // a rent table. Its own role because every other mono role uppercases, and
+  // the first pass proved why that matters - it turned "Houses: 50 each" into
+  // "HOUSES: 50 EACH" and the deed's values with it. Mono is not shorthand for
+  // uppercase; a label is uppercase, and a figure is not.
+  mono-sm: (
+      size: 0.72rem,
+      leading: 1.35,
+      weight: $weight-medium,
+      track: $track-wide,
+      family: mono,
+      caps: false,
+    ),
+  // A join code. Its own role because it is the one string in the app read
+  // ALOUD, character by character, which is why it tracks wider than any
+  // label - both sites already said so in their comments, and each had
+  // invented its own tracking to say it.
+  code: (
+      size: 1.5rem,
+      leading: 1.1,
+      weight: $weight-medium,
+      track: $track-caps-loose,
+      family: mono,
+      caps: true,
+    )
+);
+
+$type-families: (
+  sans: $font-sans,
+  serif: $font-serif,
+  mono: $font-mono,
+);
+
+@function _role($role) {
+  $entry: map.get($type-scale, $role);
+  @if $entry == null {
+    @error 'Unknown type role "#{$role}". Roles: #{map.keys($type-scale)}.';
+  }
+  @return $entry;
+}
+
+/// One field of a role, for a clamp() bound or a calc().
+@function text-size($role) {
+  @return map.get(_role($role), size);
+}
+
+/// One rung of the type scale: size, leading, weight, tracking, family, case.
+///
+/// Emitted as the `font` shorthand deliberately - it makes setting a size
+/// without its leading impossible, which is the failure this replaces.
+///
+/// `$size` renders one role at a second scale, for the two cases that genuinely
+/// need it: a fluid heading whose size is a clamp(), and the join code, which
+/// is bigger when shown to you than when you are typing it. It must be a rung
+/// or a clamp of rungs - a literal here is the door back to the drift.
+///
+/// @example scss
+///   .helper-text { @include text(small); }
+///   .eyebrow { @include text(eyebrow); }
+@mixin text($role, $size: null) {
+  $entry: _role($role);
+  $family: map.get($type-families, map.get($entry, family));
+  // $size overrides the rung for a fluid heading, which still wants the role's
+  // leading, weight and tracking. Passing a bare number here is the one way
+  // back onto the old drift, so it takes a clamp() or a rung, not a literal.
+  font: #{map.get($entry, weight)}
+    #{if($size, $size, map.get($entry, size))}/#{map.get($entry, leading)} $family;
+  letter-spacing: map.get($entry, track);
+  @if map.get($entry, caps) {
+    text-transform: uppercase;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Glyphs rendered as text: a chevron, an emoji player token, a close cross.
+//
+// Sized, and deliberately NOT given a type role. A glyph has no leading, no
+// tracking and no case, so a role would set three things it has no use for -
+// and the chevron's `line-height: 1` exists precisely to undo the leading it
+// would otherwise inherit.
+// ---------------------------------------------------------------------------
+$glyph-sm: 0.9rem;
+$glyph-md: 1.05rem;
+$glyph-lg: 1.2rem;
+
+// ---------------------------------------------------------------------------
+// Measure: how long a line of prose may run.
+//
+// In `ch` because the decision is "how many characters", not "how many pixels"
+// - it is the one width that should track the type rather than the layout. Two
+// ledes already said 52ch and a third beside them said 46ch, which was an
+// eyeball rather than a decision.
+//
+// A PAGE's max-width is deliberately not here: 1640/1000/920/820/780/620 are
+// six different answers to "how wide should this page's content be", driven by
+// what is in it - a board, two columns, a chooser grid - and tokenising them
+// would assert they are one decision.
+// ---------------------------------------------------------------------------
+$measure-prose: 52ch;
 
 // ---------------------------------------------------------------------------
 // Elevation: geometry only, until the ink exists.
@@ -310,10 +514,18 @@ $focus-ring-offset: 2px;
     'the two co-occur and the order must not depend on main.scss import order.';
 }
 
-// A role with no leading is how fourteen line heights drifted loose of the
-// sizes they belong to.
+// A role missing a field is how the fields drifted apart in the first place: a
+// size with no leading, a mono label with no tracking. All six or none.
 @each $role, $entry in $type-scale {
-  @if list.length($entry) != 2 {
-    @error 'Type role "#{$role}" must be (size, line-height); got #{$entry}.';
+  @each $field in (size, leading, weight, track, family, caps) {
+    @if not map.has-key($entry, $field) {
+      @error 'Type role "#{$role}" is missing "#{$field}". A role is the whole ' +
+        'decision - size, leading, weight, track, family, caps - or the fields ' +
+        'drift apart again.';
+    }
+  }
+  @if not map.has-key($type-families, map.get($entry, family)) {
+    @error 'Type role "#{$role}" names family "#{map.get($entry, family)}", which ' +
+      'is not one of #{map.keys($type-families)}.';
   }
 }

@@ -6,12 +6,6 @@
   }
 }
 
-@mixin mono-label($size: 0.7rem, $tracking: 0.12em) {
-  font: 500 #{$size} t.$font-mono;
-  letter-spacing: $tracking;
-  text-transform: uppercase;
-}
-
 /// A card's edge, ground and lift.
 ///
 /// Took a `$radius` argument and then ignored it, hardcoding $radius-sharp in

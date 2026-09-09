@@ -151,8 +151,7 @@
   border-radius: t.$radius-sharp;
   background: transparent;
   color: var(--text-muted);
-  font: 500 0.68rem t.$font-mono;
-  letter-spacing: 0.1em;
+  @include t.text(eyebrow);
   text-transform: uppercase;
 
   &:hover {
@@ -199,9 +198,9 @@
 
 .player-card-name {
   min-width: 0;
+  @include t.text(body);
+  font-weight: t.$weight-bold;
   font-family: t.$font-serif;
-  font-size: 1.02rem;
-  line-height: 1.2;
 }
 
 .player-card-worth {
@@ -213,9 +212,7 @@
   white-space: nowrap;
 
   strong {
-    font-family: t.$font-serif;
-    font-size: 1.2rem;
-    line-height: 1.1;
+    @include t.text(heading);
   }
 }
 
@@ -256,7 +253,9 @@
   border-radius: t.$radius-sharp;
   background: var(--button-secondary);
   color: var(--button-secondary-text);
-  font-size: 1.05rem;
+  // The chevron glyph, sized rather than typeset: line-height 1 is exactly
+  // the leading a type role would impose and this has no use for.
+  font-size: t.$glyph-md;
   line-height: 1;
   transition: background 120ms ease;
 }
@@ -290,7 +289,7 @@
   }
 
   dt {
-    @include m.mono-label(0.6rem, 0.1em);
+    @include t.text(micro);
 
     color: var(--text-muted);
   }
@@ -298,7 +297,8 @@
   dd {
     margin: 0;
     color: var(--text-primary);
-    font: 500 0.8rem t.$font-mono;
+    // A figure the player compares against the other cards.
+    @include t.text(numeric);
   }
 }
 
@@ -313,8 +313,7 @@
 .player-badge {
   padding: 3px 8px;
   border-radius: t.$radius-sharp;
-  font: 500 0.64rem t.$font-mono;
-  letter-spacing: 0.06em;
+  @include t.text(micro);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -347,7 +346,7 @@
   border-left: 5px solid var(--text-eyebrow);
   border-radius: t.$radius-sharp;
   background: var(--surface-muted);
-  font-size: 0.82rem;
+  @include t.text(body-sm);
 
   strong {
     display: block;

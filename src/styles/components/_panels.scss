@@ -37,7 +37,7 @@
   height: 30px;
   border-radius: t.$radius-sharp;
   background: var(--badge-bg);
-  font: 500 0.72rem t.$font-mono;
+  @include t.text(label);
 }
 
 // Plain white, like every other card. It used to be tinted and ringed in red,
@@ -53,10 +53,6 @@
     margin-bottom: 8px;
   }
 
-  p {
-    line-height: 1.45;
-  }
-
   @include m.below(t.$breakpoint-tablet) {
     padding: 16px;
   }
@@ -69,8 +65,7 @@
 .decision-blocked {
   margin: 0;
   color: var(--error-text);
-  font-size: 0.82rem;
-  line-height: 1.4;
+  @include t.text(body-sm);
 }
 
 // A rejected command has to reach the player wherever they are.
@@ -104,8 +99,7 @@
 .command-error-message {
   margin: 0;
   color: var(--text-body);
-  font-size: 0.86rem;
-  line-height: 1.4;
+  @include t.text(body-sm);
 }
 
 .command-error-dismiss {
@@ -114,7 +108,9 @@
   border: 1px solid var(--border-subtle);
   background: transparent;
   color: var(--text-muted);
-  font: 700 0.8rem t.$font-sans;
+  // A close cross, sized as a glyph rather than given a type role.
+  font-size: t.$glyph-sm;
+  font-weight: t.$weight-bold;
 }
 
 .empty-state {
@@ -128,8 +124,7 @@
 .event-item {
   padding: 11px 0;
   border-bottom: 1px dashed var(--border-dashed);
-  font-size: 0.81rem;
-  line-height: 1.4;
+  @include t.text(body-sm);
 
   &:last-child {
     border-bottom: 0;
@@ -144,9 +139,6 @@
   .player-card-name::after {
     content: ' away';
     color: var(--text-muted);
-    font-family: t.$font-mono;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    @include t.text(micro);
   }
 }

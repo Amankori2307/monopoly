@@ -48,8 +48,7 @@
 .auction-log-line {
   margin: 0;
   color: var(--text-body);
-  font-size: 0.83rem;
-  line-height: 1.35;
+  @include t.text(body-sm);
 }
 
 // The opening line is the bank's, and belongs to no player.
@@ -62,11 +61,11 @@
 .auction-log-line.is-pending {
   margin-top: 1px;
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: t.$weight-bold;
 }
 
 .auction-log-who {
-  font-weight: 700;
+  font-weight: t.$weight-bold;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,14 +103,14 @@
 .auction-bid-blocked {
   margin: 0;
   color: var(--error-text);
-  font-size: 0.76rem;
-  font-weight: 700;
+  @include t.text(small);
+  font-weight: t.$weight-bold;
 }
 
 .auction-bid-hint {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.76rem;
+  @include t.text(small);
 }
 
 .chip-button {
@@ -121,7 +120,8 @@
   border-radius: t.$radius-sharp;
   background: var(--surface-panel);
   color: var(--text-body);
-  font: 700 0.74rem t.$font-mono;
+  @include t.text(label);
+  font-weight: t.$weight-bold;
   cursor: pointer;
 
   &:not(:disabled):hover {

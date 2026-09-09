@@ -27,9 +27,8 @@
 
   h1 {
     margin-bottom: 9px;
-    font-size: clamp(2.6rem, 7vw, 5.25rem);
-    line-height: 0.88;
-    letter-spacing: -0.065em;
+    @include t.text(hero, clamp(2.6rem, 7vw, 5.25rem));
+    letter-spacing: t.$track-snug;
   }
 
   @include m.below(t.$breakpoint-mobile) {
@@ -55,7 +54,7 @@
   a {
     padding: 5px 9px;
     color: var(--text-muted);
-    font: 500 0.72rem t.$font-mono;
+    @include t.text(label);
     text-decoration: none;
     text-transform: uppercase;
 
@@ -88,20 +87,24 @@
 
   h2 {
     margin: 0 0 15px;
-    font-size: clamp(1.65rem, 3vw, 2.4rem);
-    letter-spacing: -0.045em;
+    @include t.text(display, clamp(t.text-size(title), 3vw, 2.4rem));
+    letter-spacing: t.$track-tight;
   }
 
   h3 {
     margin: 22px 0 8px;
-    font-size: 1.12rem;
+    @include t.text(heading);
   }
 
-  p,
+  // :not([class]) rather than naming .eyebrow and .source-note: a paragraph
+  // that carries a class has already said what it is. This selector used to
+  // set only a line-height and was silently overriding theirs; it now sets a
+  // whole role, which is what made the clash visible.
+  p:not([class]),
   li {
     max-width: 720px;
     color: var(--text-body);
-    line-height: 1.65;
+    @include t.text(prose);
   }
 
   ol,
@@ -114,27 +117,26 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88rem;
+    @include t.text(body-sm);
     text-align: left;
   }
 
   th {
     padding: 10px 12px;
     border-bottom: 2px solid var(--text-body);
-    font: 500 0.7rem t.$font-mono;
-    letter-spacing: 0.07em;
+    @include t.text(label);
+    letter-spacing: t.$track-caps;
     text-transform: uppercase;
   }
 
   td {
     padding: 13px 12px;
     border-bottom: 1px solid var(--border-subtle);
-    line-height: 1.45;
     vertical-align: top;
 
     &:first-child {
       width: 33%;
-      font-weight: 700;
+      font-weight: t.$weight-bold;
     }
   }
 
@@ -148,7 +150,7 @@
 
     td {
       padding: 10px 7px;
-      font-size: 0.78rem;
+      @include t.text(small);
 
       &:first-child {
         width: 38%;
@@ -163,7 +165,7 @@
 
 .source-note {
   color: var(--text-muted) !important;
-  font-size: 0.81rem;
+  @include t.text(body-sm);
 
   a {
     color: var(--accent-hover);
@@ -183,12 +185,13 @@
     padding: 13px;
     background: var(--surface-panel);
     color: var(--text-muted);
-    font-size: 0.7rem;
+    @include t.text(small);
   }
 
   strong {
     color: var(--text-primary);
-    font: 500 0.9rem t.$font-mono;
+    // A figure the reader compares - players, starting cash, GO salary.
+    @include t.text(numeric);
   }
 
   @include m.below(t.$breakpoint-mobile) {
@@ -232,9 +235,8 @@
   dt {
     margin-top: t.$gap-lg;
     color: var(--text-primary);
-    font-weight: 700;
-    font-size: 1.02rem;
-    line-height: 1.4;
+    @include t.text(body);
+    font-weight: t.$weight-bold;
 
     &:first-child {
       margin-top: 0;
@@ -246,6 +248,6 @@
     padding-left: t.$gap-md;
     border-left: 2px solid var(--border-subtle);
     color: var(--text-body);
-    line-height: 1.65;
+    @include t.text(prose);
   }
 }

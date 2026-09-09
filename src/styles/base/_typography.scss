@@ -1,5 +1,17 @@
 @use '../abstracts/tokens' as t;
-@use '../abstracts/mixins' as m;
+
+// ---------------------------------------------------------------------------
+// The global type layer.
+//
+// This file used to be 38 lines and cover almost nothing: `h2` was the only
+// heading in the app with a size, `h1` and `h3` had none, `p` had none, and
+// `dl/dt/dd` were styled three independent times in three partials. So every
+// screen sized its own text, and 38 distinct rem values grew up doing it.
+//
+// Everything here is a role from abstracts/_scale.scss. A role carries size,
+// leading, weight, tracking, family and case together, which is what stops
+// them drifting apart again.
+// ---------------------------------------------------------------------------
 
 h1,
 h2,
@@ -8,31 +20,67 @@ p {
   margin-top: 0;
 }
 
-h1,
-h2,
-h3 {
-  font-family: t.$font-serif;
+h1 {
+  @include t.text(display);
 }
 
 h2 {
   margin-bottom: 0;
-  font-size: 1.42rem;
-  line-height: 1.1;
+  @include t.text(title);
 }
 
+h3 {
+  @include t.text(heading);
+}
+
+// 1rem, which is what an unstyled paragraph already was - the rung was chosen
+// to leave the booklet's 56 paragraphs exactly where they are. What this adds
+// is the leading, which was the browser's default and therefore whatever the
+// browser felt like.
+p {
+  @include t.text(body);
+}
+
+// `dl/dt/dd` are deliberately NOT styled globally, and that is a finding
+// rather than an omission. This file did style them, briefly, and the
+// before/after diff showed what a global rule does: the rules booklet's FAQ
+// questions turned uppercase mono and its answers shrank from 16px to 13.76px.
+//
+// The reason is that the app uses a definition list for two different jobs -
+// the booklet's question-and-answer prose, and the player card's label-and-
+// figure metrics - and no single rule serves both. It is the same lesson
+// CLAUDE.md records for `.player-metrics`: a shared utility is not a layout.
+// Each context styles its own, from roles.
+dl {
+  margin: 0;
+}
+
+// The most-shared class in the app: 34 files. Its margin was neutralised in
+// eleven separate scopes, two of which disagreed by a pixel for what is
+// visually the same label-above-title relationship - so the margin is stated
+// once, on the grid, and the overrides are gone.
 .eyebrow {
-  margin: 0 0 7px;
+  margin: 0 0 t.$space-2;
   color: var(--text-eyebrow);
-  @include m.mono-label(0.67rem, 0.14em);
-  line-height: 1.1;
+  @include t.text(eyebrow);
+}
+
+// Moved here from pages/_home.scss, where being a page partial meant the same
+// class rendered two ways: 0.95rem body-coloured on /new and 0.88rem muted on
+// /host, both written as `className="masthead-lede"`.
+.masthead-lede {
+  max-width: t.$measure-prose;
+  margin-top: 0;
+  color: var(--text-body);
+  @include t.text(body-sm);
 }
 
 .helper-text,
 .error-text {
-  font-size: 0.86rem;
+  @include t.text(body-sm);
 }
 
 .error-text {
   color: var(--error-text);
-  font-weight: 700;
+  font-weight: t.$weight-bold;
 }

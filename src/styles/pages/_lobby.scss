@@ -25,8 +25,7 @@
 
 .lobby-panel h1 {
   margin: 0 0 t.$gap-lg;
-  font-family: t.$font-serif;
-  font-size: 1.6rem;
+  @include t.text(display);
 }
 
 // The empty chairs are drawn, not counted: somebody waiting for friends needs
@@ -60,16 +59,16 @@
 }
 
 .lobby-seat-token {
-  font-size: 1.2rem;
+  font-size: t.$glyph-lg;
 }
 
 .lobby-seat-name {
   flex: 1 1 auto;
-  font-weight: 700;
+  font-weight: t.$weight-bold;
 }
 
 .lobby-seat-you {
-  @include m.mono-label;
+  @include t.text(eyebrow);
   color: var(--text-eyebrow);
 }
 
@@ -89,11 +88,8 @@
 // ---------------------------------------------------------------------------
 .invite-code {
   margin: 6px 0 t.$gap-md;
-  font-family: t.$font-mono;
-  font-size: 2rem;
-  font-weight: 500;
-  // It gets read out loud, so it needs the room between characters.
-  letter-spacing: 0.18em;
+  // Bigger than the code you type, from the same role - see text()'s $size.
+  @include t.text(code, t.text-size(hero));
   color: var(--text-primary);
 }
 
@@ -104,8 +100,7 @@
   .text-input {
     flex: 1 1 auto;
     min-width: 0;
-    font-family: t.$font-mono;
-    font-size: 0.78rem;
+    @include t.text(mono-sm);
   }
 }
 
@@ -129,14 +124,13 @@
 
   h1 {
     margin: 0;
-    font-family: t.$font-serif;
-    font-size: 1.6rem;
+    @include t.text(display);
   }
 
   .masthead-lede {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.88rem;
+    @include t.text(body-sm);
   }
 }
 
@@ -159,8 +153,5 @@
 // .invite-code already gives the one being read out.
 .join-code-input {
   max-width: 260px;
-  font-family: t.$font-mono;
-  font-size: 1.5rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  @include t.text(code);
 }

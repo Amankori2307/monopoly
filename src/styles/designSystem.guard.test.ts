@@ -97,7 +97,13 @@ const offLadder = (property: string, value: string): boolean => {
   if (TYPE_PROPS.test(property)) {
     // Weight and leading are bare numbers, so a literal is any digit that is
     // not part of a token name.
-    if (property === 'font-weight' || property === 'line-height') {
+    // `line-height: 1` is the identity - "no extra leading" - the same kind of
+    // value as `0` for a length, and it is what a glyph rendered as text needs
+    // in order to undo the leading a type role would impose.
+    if (property === 'line-height') {
+      return !/^[01]$/.test(value.trim()) && /(?<![\w$.-])\d/.test(value);
+    }
+    if (property === 'font-weight') {
       return /(?<![\w$.-])\d/.test(value);
     }
     return LENGTH_LITERAL.test(value);
@@ -139,6 +145,11 @@ const MIGRATING =
   'Not yet migrated. The count is exact as of the day the scales landed, and ' +
   'the phase that migrates this axis drives it to zero. See docs/design-system.md.';
 
+// Type is DONE: 174 deviations across 14 partials are now zero, so its rows
+// are gone rather than sitting at 0 - the default budget already says 0, and a
+// zero row would only be a place for a future one to hide. What remains below
+// is spacing and colour, plus the two regions the system does not govern.
+
 const BUDGETS: Record<string, Budget> = {
   'abstracts/_scale.scss': {
     spacing: null,
@@ -172,33 +183,27 @@ const BUDGETS: Record<string, Budget> = {
       'sub-grid values inside a fluid cell where a 4px grid means nothing. Its nine ' +
       'colour literals shade an inline player colour - docs/theming.md.',
   },
-  'base/_typography.scss': {
-    spacing: 1,
-    type: 5,
-    colour: 0,
-    reason: MIGRATING,
-  },
   'components/_auction.scss': {
     spacing: 9,
-    type: 8,
+    type: 0,
     colour: 0,
     reason: MIGRATING,
   },
   'components/_buttons.scss': {
     spacing: 2,
-    type: 2,
+    type: 0,
     colour: 1,
     reason: MIGRATING,
   },
   'components/_dice.scss': {
     spacing: 5,
-    type: 4,
+    type: 0,
     colour: 12,
     reason: MIGRATING,
   },
   'components/_forms.scss': {
     spacing: 4,
-    type: 2,
+    type: 0,
     colour: 0,
     reason: MIGRATING,
   },
@@ -210,37 +215,37 @@ const BUDGETS: Record<string, Budget> = {
   },
   'components/_overlays.scss': {
     spacing: 24,
-    type: 39,
+    type: 0,
     colour: 4,
     reason: MIGRATING,
   },
   'components/_panels.scss': {
     spacing: 10,
-    type: 11,
+    type: 0,
     colour: 0,
     reason: MIGRATING,
   },
   'components/_player.scss': {
     spacing: 15,
-    type: 12,
+    type: 0,
     colour: 2,
     reason: MIGRATING,
   },
   'components/_space-detail.scss': {
     spacing: 24,
-    type: 19,
+    type: 0,
     colour: 2,
     reason: MIGRATING,
   },
   'components/_trade.scss': {
     spacing: 17,
-    type: 22,
+    type: 0,
     colour: 3,
     reason: MIGRATING,
   },
   'layout/_header.scss': {
     spacing: 3,
-    type: 3,
+    type: 0,
     colour: 0,
     reason: MIGRATING,
   },
@@ -258,19 +263,19 @@ const BUDGETS: Record<string, Budget> = {
   },
   'pages/_home.scss': {
     spacing: 14,
-    type: 15,
+    type: 0,
     colour: 0,
     reason: MIGRATING,
   },
   'pages/_lobby.scss': {
     spacing: 7,
-    type: 11,
+    type: 0,
     colour: 0,
     reason: MIGRATING,
   },
   'pages/_rules.scss': {
     spacing: 29,
-    type: 21,
+    type: 0,
     colour: 1,
     reason: MIGRATING,
   },
@@ -333,6 +338,37 @@ describe('the design system', () => {
           ...strip(file.scss).matchAll(/@media[^{]*\((?:min|max)-(?:width|height)[^{]*/g),
         ].map((match) => `${file.name}: ${match[0].trim()}`)
       );
+    expect(offenders).toEqual([]);
+  });
+
+  it('never lets a role silently reset the declaration above it', () => {
+    // text() emits the `font` shorthand, which resets weight, family, leading
+    // and tracking. So anything set BEFORE the include is discarded without a
+    // warning - and the migration hit this ten times, including on the rules
+    // booklet's FAQ questions, which lost their bold and said nothing.
+    //
+    // The rule is: the role first, then any override.
+    const RESETTABLE =
+      /^\s*(font-weight|letter-spacing|font-family|line-height|text-transform)\s*:/;
+    const offenders = files.flatMap((file) => {
+      const lines = strip(file.scss).split('\n');
+      return lines.flatMap((line, index) => {
+        if (!RESETTABLE.test(line)) return [];
+        for (
+          let ahead = index + 1;
+          ahead < Math.min(index + 8, lines.length);
+          ahead += 1
+        ) {
+          if (/^\s*[{}]/.test(lines[ahead])) break;
+          if (lines[ahead].includes('@include t.text(')) {
+            return [
+              `${file.name}:${index + 1}: ${line.trim()} is reset by the role below it`,
+            ];
+          }
+        }
+        return [];
+      });
+    });
     expect(offenders).toEqual([]);
   });
 

@@ -39,8 +39,8 @@
 
   h2 {
     margin: 0;
-    font-size: 1.5rem;
-    letter-spacing: -0.02em;
+    @include t.text(title);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow {
@@ -74,8 +74,8 @@
   gap: 6px;
   margin: 0;
   color: var(--text-primary);
-  font-weight: 800;
-  font-size: 0.85rem;
+  @include t.text(body-sm);
+  font-weight: t.$weight-heavy;
 }
 
 // The owner's token colour: theme data, applied inline, like the board's dot -
@@ -91,7 +91,7 @@
 .trade-column-cash {
   margin: 0;
   color: var(--text-muted);
-  font: 500 0.75rem/1.3 t.$font-mono;
+  @include t.text(label);
 }
 
 .trade-sites {
@@ -106,7 +106,7 @@
 
   li {
     color: var(--text-body);
-    font-size: 0.8rem;
+    @include t.text(body-sm);
   }
 
   label {
@@ -133,7 +133,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--text-body);
-  font-size: 0.8rem;
+  @include t.text(body-sm);
 
   input {
     width: 96px;
@@ -142,15 +142,14 @@
     border-radius: t.$radius-sharp;
     background: var(--surface-input);
     color: var(--text-primary);
-    font: 500 0.8rem t.$font-mono;
+    @include t.text(numeric);
   }
 }
 
 .trade-fee {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.45;
+  @include t.text(body-sm);
 }
 
 // The receiver's choice on each mortgaged site coming to them.
@@ -177,8 +176,8 @@
     border-radius: t.$radius-md;
     background: var(--surface-muted);
     color: var(--text-primary);
-    font-size: 0.82rem;
-    font-weight: 700;
+    @include t.text(body-sm);
+    font-weight: t.$weight-bold;
   }
 }
 
@@ -192,8 +191,8 @@
     align-items: center;
     gap: 6px;
     color: var(--text-body);
-    font-size: 0.8rem;
-    font-weight: 500;
+    @include t.text(body-sm);
+    font-weight: t.$weight-medium;
     cursor: pointer;
   }
 }
@@ -283,9 +282,10 @@
   z-index: 4;
   margin: 0;
   padding: 4px 8px;
-  font: 700 0.7rem t.$font-mono;
+  @include t.text(label);
+  font-weight: t.$weight-bold;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: t.$track-caps;
 }
 
 .trade-deed-blocked {
@@ -348,22 +348,22 @@
 }
 
 .trade-jail-card-title {
-  font-size: 0.8rem;
-  font-weight: 700;
+  @include t.text(body-sm);
+  font-weight: t.$weight-bold;
 }
 
 .trade-jail-card-state {
   color: var(--text-muted);
-  font-size: 0.68rem;
+  @include t.text(micro);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: t.$track-caps;
 }
 
 .trade-jail-count,
 .trade-field-label {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.74rem;
+  @include t.text(small);
 }
 
 .trade-summary-lines {
@@ -373,7 +373,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.83rem;
+  @include t.text(body-sm);
 }
 
 @include m.below(t.$breakpoint-tablet) {

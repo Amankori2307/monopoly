@@ -74,7 +74,7 @@
 }
 
 .decision-spectator-waiting {
-  @include m.mono-label;
+  @include t.text(eyebrow);
   margin: 0 0 8px;
   padding: 6px 10px;
   border: 1px solid var(--border-subtle);
@@ -164,11 +164,12 @@
 
     span {
       padding: 8px 10px;
-      font-size: 0.6rem;
+      // Sans, and not a label - a count is not uppercase.
+      @include t.text(small);
     }
 
     strong {
-      font-size: 0.9rem;
+      @include t.text(body-sm);
     }
   }
 
@@ -178,13 +179,14 @@
     padding: 12px;
     background: var(--surface-panel);
     color: var(--text-muted);
-    font: 500 0.64rem t.$font-mono;
+    @include t.text(micro);
     text-transform: uppercase;
   }
 
   strong {
     color: var(--text-primary);
-    font: 700 1rem t.$font-sans;
+    @include t.text(body);
+    font-weight: t.$weight-bold;
     text-transform: none;
   }
 }
@@ -208,7 +210,7 @@
   border-radius: t.$radius-sharp;
   background: var(--button-secondary);
   color: var(--button-secondary-text);
-  font-size: 0.9rem;
+  @include t.text(body-sm);
   cursor: pointer;
 
   &:hover {
@@ -233,7 +235,8 @@
   padding: 0 6px;
   border-radius: t.$radius-sharp;
   background: var(--badge-bg);
-  font: 500 0.68rem t.$font-mono;
+  // A count, not a label: digits, and nothing to uppercase.
+  @include t.text(mono-sm);
 }
 
 @keyframes overlay-fade {
@@ -341,8 +344,7 @@
   background: var(--surface-panel);
   box-shadow: 0 12px 28px rgba(24, 30, 23, 0.22);
   color: var(--text-body);
-  font-size: 0.83rem;
-  line-height: 1.4;
+  @include t.text(body-sm);
   text-align: left;
   animation: toast-in 0.2s cubic-bezier(0.22, 0.7, 0.3, 1);
 
@@ -394,8 +396,8 @@
 
   h2 {
     margin: 0;
-    font-size: 1.7rem;
-    letter-spacing: -0.03em;
+    @include t.text(display);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow {
@@ -406,15 +408,14 @@
 .card-draw-description {
   margin: 0;
   color: var(--text-body);
-  font-size: 1rem;
-  line-height: 1.5;
+  @include t.text(body);
 }
 
 .card-draw-player {
   margin: 0;
   color: var(--text-muted);
-  font: 500 0.68rem t.$font-mono;
-  letter-spacing: 0.08em;
+  @include t.text(label);
+  letter-spacing: t.$track-caps;
   text-transform: uppercase;
 }
 
@@ -442,8 +443,8 @@
 
   h2 {
     margin: 0;
-    font-size: 1.6rem;
-    letter-spacing: -0.03em;
+    @include t.text(display);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow,
@@ -460,7 +461,7 @@
 .liquidation-reason {
   margin: 0;
   color: var(--text-body);
-  font-size: 0.9rem;
+  @include t.text(body-sm);
 }
 
 .liquidation-sites {
@@ -486,7 +487,7 @@
   button {
     flex: none;
     padding: 5px 9px;
-    font-size: 0.76rem;
+    @include t.text(small);
     white-space: nowrap;
   }
 }
@@ -497,8 +498,7 @@
   padding: 10px 12px;
   border: 1px dashed var(--border-dashed);
   color: var(--error-text);
-  font-size: 0.88rem;
-  line-height: 1.5;
+  @include t.text(body-sm);
 }
 
 // Leaving the game is not the same kind of act as paying a debt, so it does not
@@ -522,8 +522,8 @@
 
   h2 {
     margin: 0;
-    font-size: 2rem;
-    letter-spacing: -0.04em;
+    @include t.text(hero);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow {
@@ -542,7 +542,6 @@
 .game-over-lede {
   margin: 0;
   color: var(--text-body);
-  line-height: 1.55;
 }
 
 /**
@@ -556,8 +555,8 @@
 
   h2 {
     margin: 0;
-    font-size: 1.5rem;
-    letter-spacing: -0.02em;
+    @include t.text(title);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow {
@@ -568,8 +567,7 @@
 .speed-die-lede {
   margin: 0;
   color: var(--text-body);
-  line-height: 1.5;
-  font-size: 0.85rem;
+  @include t.text(body-sm);
 }
 
 // Forty spaces, so it scrolls rather than growing the modal past the screen.
@@ -592,7 +590,7 @@
   button {
     width: 100%;
     text-align: left;
-    font-size: 0.78rem;
+    @include t.text(small);
   }
 }
 
@@ -600,7 +598,7 @@
 .liquidation-queued {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  @include t.text(small);
   font-style: italic;
 }
 
@@ -612,8 +610,8 @@
 
   h2 {
     margin: 0;
-    font-size: 1.5rem;
-    letter-spacing: -0.02em;
+    @include t.text(title);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow {
@@ -624,7 +622,6 @@
 .building-placement-lede {
   margin: 0;
   color: var(--text-body);
-  line-height: 1.5;
 }
 
 // The error boundary's fallback. Deliberately plain: whatever threw may have
@@ -642,8 +639,8 @@
 
   h1 {
     margin: 0;
-    font-size: 1.6rem;
-    letter-spacing: -0.02em;
+    @include t.text(display);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow {
@@ -662,14 +659,13 @@
   border-radius: t.$radius-md;
   background: var(--surface-muted);
   color: var(--error-text);
-  font: 500 0.85rem/1.45 t.$font-mono;
+  @include t.text(label);
   overflow-wrap: anywhere;
 }
 
 .error-panel-help {
   margin: 0;
   color: var(--text-body);
-  line-height: 1.55;
 }
 
 // The three ways out of Jail. Three buttons rather than two, so the free option
@@ -681,8 +677,8 @@
 
   h2 {
     margin: 0;
-    font-size: 1.4rem;
-    letter-spacing: -0.02em;
+    @include t.text(title);
+    letter-spacing: t.$track-tight;
   }
 
   .eyebrow {
@@ -697,7 +693,6 @@
 .jail-attempt {
   margin: 0;
   color: var(--text-body);
-  line-height: 1.5;
 }
 
 /**

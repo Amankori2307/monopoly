@@ -41,7 +41,8 @@
   border-radius: t.$radius-sharp;
   background: var(--surface-panel);
   color: var(--text-body);
-  font: 700 1rem/1 t.$font-sans;
+  @include t.text(body);
+  font-weight: t.$weight-bold;
 
   &:hover {
     background: var(--surface-muted);
@@ -145,7 +146,6 @@
 .decision-lede {
   margin: 0 0 16px;
   color: var(--text-body);
-  line-height: 1.45;
 }
 
 .space-detail-title-row {
@@ -157,9 +157,7 @@
   // Fixed, not viewport-relative: the card is a fixed width, so the name must
   // size to the card rather than to the window it happens to be shown in.
   h2 {
-    font-size: 1.65rem;
-    letter-spacing: -0.045em;
-    line-height: 1.15;
+    @include t.text(display);
   }
 }
 
@@ -204,13 +202,14 @@
     border-right: 1px solid var(--border-input);
     border-bottom: 1px solid var(--border-input);
     color: var(--text-muted);
-    font: 500 0.6rem/1.2 t.$font-mono;
+    @include t.text(micro);
     text-transform: uppercase;
   }
 
   strong {
     color: var(--text-primary);
-    font: 700 0.9rem/1.2 t.$font-sans;
+    @include t.text(body-sm);
+    font-weight: t.$weight-bold;
     text-transform: none;
   }
 }
@@ -218,8 +217,8 @@
 .deed-rent-title {
   margin: 10px 0 4px;
   color: var(--text-muted);
-  font: 500 0.62rem t.$font-mono;
-  letter-spacing: 0.1em;
+  @include t.text(micro);
+  letter-spacing: t.$track-caps;
   text-transform: uppercase;
 }
 
@@ -238,14 +237,13 @@
 
   dt {
     color: var(--text-body);
-    font-size: 0.78rem;
-    line-height: 1.35;
+    @include t.text(small);
   }
 
   dd {
     margin: 0;
     color: var(--text-primary);
-    font: 500 0.78rem/1.35 t.$font-mono;
+    @include t.text(mono-sm);
   }
 
   // The rent actually being charged right now. The card is a fixed height, so
@@ -256,7 +254,7 @@
     dt,
     dd {
       color: var(--text-primary);
-      font-weight: 700;
+      font-weight: t.$weight-bold;
     }
   }
 }
@@ -267,14 +265,13 @@
   gap: 10px;
   margin-top: 10px;
   color: var(--text-muted);
-  font: 500 0.66rem/1.35 t.$font-mono;
+  @include t.text(mono-sm);
 }
 
 .detail-copy {
   margin: 12px 0 0;
   color: var(--text-body);
-  font-size: 0.86rem;
-  line-height: 1.5;
+  @include t.text(body-sm);
 }
 
 // Struck through, like a stamp on the deed: a mortgaged site collects no rent,
@@ -302,8 +299,8 @@
   gap: 7px;
   margin: 0;
   color: var(--text-body);
-  font: 500 0.68rem t.$font-mono;
-  letter-spacing: 0.08em;
+  @include t.text(label);
+  letter-spacing: t.$track-caps;
   text-transform: uppercase;
 }
 
@@ -324,7 +321,7 @@
     flex: 1 1 auto;
     min-width: 72px;
     padding: 7px 9px;
-    font-size: 0.76rem;
+    @include t.text(small);
   }
 
   // Kept visible rather than hidden: the panel should say what will be possible

@@ -71,7 +71,7 @@
 }
 
 .app-brand {
-  @include m.mono-label(0.78rem, 0.16em);
+  @include t.text(brand);
 
   color: var(--text-primary);
   text-decoration: none;
@@ -93,7 +93,7 @@
   border: 1px solid transparent;
   border-radius: t.$radius-sharp;
   color: var(--text-muted);
-  font-size: 0.86rem;
+  @include t.text(body-sm);
   text-decoration: none;
 
   &:hover {
@@ -180,7 +180,7 @@
 }
 
 .settings-heading {
-  @include m.mono-label(0.62rem, 0.12em);
+  @include t.text(micro);
 
   margin: 0;
   color: var(--text-eyebrow);
@@ -191,7 +191,7 @@
   align-items: center;
   justify-content: space-between;
   gap: t.$gap-sm;
-  font-size: 0.86rem;
+  @include t.text(body-sm);
 }
 
 // A select needs the width its longest option asks for. Beside its label in a
@@ -205,7 +205,7 @@
 .settings-note {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.72rem;
+  @include t.text(small);
 }
 
 // The sound control is an icon now, so it needs a square footprint rather than

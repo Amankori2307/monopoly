@@ -32,8 +32,7 @@
   max-width: 52ch;
   margin: 0 0 t.$gap-lg;
   color: var(--text-body);
-  font-size: 0.95rem;
-  line-height: 1.55;
+  @include t.text(body);
 }
 
 // ---------------------------------------------------------------------------
@@ -45,8 +44,7 @@
   overflow: hidden;
 
   h2 {
-    font-family: t.$font-serif;
-    font-size: 1.35rem;
+    @include t.text(title);
   }
 }
 
@@ -79,8 +77,8 @@
   background: var(--surface-muted);
   cursor: pointer;
   color: var(--text-primary);
-  font-weight: 700;
-  font-size: 0.85rem;
+  @include t.text(body-sm);
+  font-weight: t.$weight-bold;
 
   input {
     margin-top: 2px;
@@ -90,8 +88,7 @@
   .helper-text {
     display: block;
     margin-top: 3px;
-    font-weight: 500;
-    line-height: 1.45;
+    font-weight: t.$weight-medium;
   }
 }
 
@@ -115,8 +112,8 @@
   > strong {
     display: block;
     padding-top: 4px;
+    @include t.text(body);
     font-family: t.$font-serif;
-    font-size: 1.02rem;
   }
 }
 
@@ -126,7 +123,7 @@
   gap: 4px 14px;
   margin: 6px 0 14px;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  @include t.text(small);
 }
 
 // A display preference, not a field of the game being created - so it sits on
@@ -165,8 +162,8 @@
 
   h1 {
     margin: 0;
-    font-size: clamp(1.9rem, 5vw, 2.9rem);
-    letter-spacing: -0.03em;
+    @include t.text(hero, clamp(t.text-size(hero), 5vw, 2.9rem));
+    letter-spacing: t.$track-tight;
   }
 
   .masthead-lede {
@@ -204,19 +201,18 @@
 }
 
 .chooser-continue-label {
-  @include m.mono-label(0.62rem, 0.12em);
+  @include t.text(micro);
 
   color: var(--text-eyebrow);
 }
 
 .chooser-continue-name {
-  font-family: t.$font-serif;
-  font-size: 1.1rem;
+  @include t.text(heading);
 }
 
 .chooser-continue-meta {
   color: var(--text-muted);
-  font-size: 0.76rem;
+  @include t.text(small);
 }
 
 .play-choices {
@@ -244,13 +240,12 @@
 }
 
 .play-choice-title {
-  font-family: t.$font-serif;
-  font-size: 1.15rem;
+  @include t.text(heading);
 }
 
 .play-choice-copy {
   color: var(--text-muted);
-  font-size: 0.84rem;
+  @include t.text(body-sm);
   max-width: 52ch;
 }
 
@@ -263,7 +258,7 @@
 }
 
 .recent-game-mode {
-  @include m.mono-label(0.58rem, 0.1em);
+  @include t.text(micro);
 
   padding: 2px 6px;
   border: 1px solid var(--border-subtle);

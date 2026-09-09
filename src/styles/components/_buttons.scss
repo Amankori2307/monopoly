@@ -14,8 +14,10 @@
   padding: 10px 15px;
   border: 0;
   border-radius: t.$radius-sharp;
-  font-size: 0.84rem;
-  font-weight: 800;
+  @include t.text(body-sm);
+  // Heavier than the role's default: a button's label is the action, and the
+  // weight is what makes it read as pressable rather than as prose.
+  font-weight: t.$weight-heavy;
   text-decoration: none;
   transition:
     transform 0.16s ease,
