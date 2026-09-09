@@ -103,23 +103,9 @@
 }
 
 .dice-roll-button {
-  min-height: 44px;
-  padding-inline: 16px;
+  padding-inline: t.$space-4;
   white-space: nowrap;
-  border: 0;
-  border-radius: t.$radius-sharp;
-  background: var(--button-primary);
-  color: var(--button-primary-text);
-  font-weight: t.$weight-heavy;
   letter-spacing: t.$track-wide;
-
-  &:disabled {
-    background: #9ba19a;
-  }
-
-  &:not(:disabled):hover {
-    background: var(--button-primary-hover);
-  }
 }
 
 @keyframes dice-tumble {

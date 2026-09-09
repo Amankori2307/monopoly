@@ -117,10 +117,7 @@
   border: 0;
   background: transparent;
 
-  &:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: -3px;
-  }
+  @include m.focus-ring($inset: true);
 }
 
 // Below this the card itself stops being fixed, so the stack follows it.

@@ -1,9 +1,0 @@
-there is no need of take a seat button
-
-
-create a design system for the whole repo, and follow that strictly
-
-
-Supabase:
-DB password: pZ$zRLIu1Rz!VkNE
-API Key: sb_publishable_bW-3Vm8qgi4za6s37x5R5A_TFwCJuK-

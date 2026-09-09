@@ -108,10 +108,7 @@
     color: var(--text-primary);
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
-  }
+  @include m.focus-ring;
 }
 
 // ---------------------------------------------------------------------------
@@ -126,34 +123,16 @@
 }
 
 .settings-trigger {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
+  // Square, and 44px everywhere rather than 40 on desktop and 44 below the
+  // tablet breakpoint: 44 is the touch minimum and a desktop can have a
+  // touchscreen. The base already sets that min-height.
+  width: t.$control-tap;
+  height: t.$control-tap;
   padding: 0;
-  border: 1px solid var(--border-input);
-  border-radius: t.$radius-sharp;
-  background: var(--button-secondary);
-  color: var(--button-secondary-text);
-  cursor: pointer;
 
   svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  &:hover {
-    background: var(--button-secondary-hover);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
-  }
-
-  @include m.below(t.$breakpoint-tablet) {
-    width: 44px;
-    height: 44px;
+    width: t.$glyph-icon;
+    height: t.$glyph-icon;
   }
 }
 

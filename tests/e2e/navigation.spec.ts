@@ -178,6 +178,54 @@ test('says so on a route that does not exist', async ({ page }) => {
   await expect(page.getByTestId(TEST_IDS.chooserPlayLocal)).toBeVisible();
 });
 
+/**
+ * Every control the keyboard can reach draws the same ring.
+ *
+ * `components/_buttons.scss` had no `:focus-visible` at all, so the app's three
+ * most-used controls - primary, secondary and danger - fell back to whatever
+ * the browser drew, which over a saturated background with `border: 0` is close
+ * to invisible. Eleven other controls each hand-rolled one instead, at two
+ * widths and five offsets.
+ *
+ * This has to be e2e: jsdom resolves no custom properties, so `--focus-ring`
+ * is empty there and the assertion would pass on nothing.
+ */
+test('draws one focus ring on every control the keyboard reaches', async ({ page }) => {
+  await openChooser(page);
+
+  const ringOf = async (selector: string) => {
+    await page.locator(selector).first().focus();
+    return page
+      .locator(selector)
+      .first()
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          style: style.outlineStyle,
+          width: style.outlineWidth,
+          colour: style.outlineColor,
+        };
+      });
+  };
+
+  const expected = await ringOf('.settings-trigger');
+  expect(expected.style).not.toBe('none');
+  expect(expected.width).toBe('3px');
+
+  // The chooser's tiles are links, and the header carries the icon button; the
+  // point is that they agree rather than that any one of them is right.
+  for (const selector of ['.play-choice', '.app-nav-link']) {
+    expect(await ringOf(selector)).toEqual(expected);
+  }
+
+  // And a real <button>, on a screen that has one.
+  await page.goto('/#/new');
+  const primary = await ringOf('.primary-button');
+  expect(primary.style).not.toBe('none');
+  expect(primary.width).toBe(expected.width);
+  expect(primary.colour).toBe(expected.colour);
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: VIEWPORTS.phone });
 

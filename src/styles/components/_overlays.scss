@@ -201,30 +201,8 @@
 // back the width it was taking from the tightest row on the screen.
 // ---------------------------------------------------------------------------
 .activity-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 10px;
-  border: 1px solid var(--border-input);
-  border-radius: t.$radius-sharp;
-  background: var(--button-secondary);
-  color: var(--button-secondary-text);
-  @include t.text(body-sm);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--button-secondary-hover);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
-  }
-
-  @include m.below(t.$breakpoint-tablet) {
-    min-height: t.$activity-button-height;
-  }
+  gap: t.$space-2;
+  padding: 0 t.$space-3;
 }
 
 .activity-button-count {
@@ -352,10 +330,7 @@
     background: var(--surface-muted);
   }
 
-  &:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
+  @include m.focus-ring;
 }
 
 // The left edge carries the direction money moved, so a glance is enough.

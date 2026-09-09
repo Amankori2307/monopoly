@@ -196,13 +196,13 @@ const BUDGETS: Record<string, Budget> = {
     reason: MIGRATING,
   },
   'components/_dice.scss': {
-    spacing: 5,
+    spacing: 4,
     type: 0,
-    colour: 12,
+    colour: 11,
     reason: MIGRATING,
   },
   'components/_forms.scss': {
-    spacing: 4,
+    spacing: 3,
     type: 0,
     colour: 0,
     reason: MIGRATING,
@@ -214,7 +214,7 @@ const BUDGETS: Record<string, Budget> = {
     reason: MIGRATING,
   },
   'components/_overlays.scss': {
-    spacing: 24,
+    spacing: 22,
     type: 0,
     colour: 4,
     reason: MIGRATING,

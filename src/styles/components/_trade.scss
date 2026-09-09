@@ -265,10 +265,7 @@
     cursor: not-allowed;
   }
 
-  &:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: -3px;
-  }
+  @include m.focus-ring($inset: true);
 }
 
 // Why it cannot go in, on the card - it used to be a title attribute nobody

@@ -1,9 +1,16 @@
 @use '../abstracts/tokens' as t;
 @use '../abstracts/mixins' as m;
 
+// Every control that looks like a button derives from here. Three of them
+// used to restate the whole surface instead - .dice-roll-button re-declared
+// the primary colour pair, and .settings-trigger and .activity-button the
+// secondary pair, so the pairs were written twice and three times over.
 .primary-button,
 .secondary-button,
-.danger-button {
+.danger-button,
+.dice-roll-button,
+.settings-trigger,
+.activity-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -23,13 +30,25 @@
     transform 0.16s ease,
     box-shadow 0.16s ease;
 
-  &:hover {
+  // :not(:disabled) - the unqualified hover lifted a disabled button too, and
+  // the auction panel carried a rule undoing exactly that.
+  &:not(:disabled):hover {
     transform: translateY(-1px);
     box-shadow: 0 5px 0 rgba(23, 29, 20, 0.18);
   }
+
+  // These three had no :focus-visible at all, so the app's most-used controls
+  // fell back to the browser's own outline - which, over a saturated
+  // background with `border: 0`, is close to invisible.
+  @include m.focus-ring;
+
+  &:disabled {
+    opacity: t.$opacity-disabled;
+  }
 }
 
-.primary-button {
+.primary-button,
+.dice-roll-button {
   background: var(--button-primary);
   color: var(--button-primary-text);
 
@@ -38,7 +57,17 @@
   }
 }
 
-.secondary-button {
+// The bordered secondaries: an icon button in the header, the activity
+// control. Their border is the only thing separating them from a plain
+// secondary, which is why they belong here rather than in their own partials.
+.settings-trigger,
+.activity-button {
+  border: t.$border-hairline solid var(--border-input);
+}
+
+.secondary-button,
+.settings-trigger,
+.activity-button {
   background: var(--button-secondary);
   color: var(--button-secondary-text);
 

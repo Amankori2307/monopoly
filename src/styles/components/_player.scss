@@ -136,10 +136,7 @@
   border-radius: t.$radius-sharp;
   background: transparent;
 
-  &:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
+  @include m.focus-ring;
 }
 
 /** Small text control, shown only while the stack is expanded. */
@@ -158,10 +155,7 @@
     color: var(--text-primary);
   }
 
-  &:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
+  @include m.focus-ring;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -237,11 +231,8 @@
   background: none;
   cursor: pointer;
 
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    // Inset, or the ring is clipped by the card's own overflow: hidden.
-    outline-offset: -2px;
-  }
+  // Inset, or the ring is clipped by the card's own overflow: hidden.
+  @include m.focus-ring($inset: true);
 }
 
 .player-card-chevron {

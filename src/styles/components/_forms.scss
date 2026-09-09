@@ -16,10 +16,15 @@
   gap: 12px;
 }
 
-.field-grid label,
-.player-config-grid label {
+// Every field's label, wherever the field lives.
+//
+// This was keyed to `.field-grid label, .player-config-grid label`, so the
+// three identical labels in HostPage - which sit in `.host-fields` - silently
+// got neither the weight nor the gap, and the two in LobbyPage neither. A
+// label is a label; the grid it happens to sit in is not what makes it one.
+label {
   display: grid;
-  gap: 8px;
+  gap: t.$space-2;
   @include t.text(body-sm);
   font-weight: t.$weight-bold;
 }

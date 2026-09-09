@@ -128,22 +128,6 @@
     border-color: var(--accent);
     background: var(--accent-soft);
   }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-
-.auction-decision .primary-button:disabled,
-.auction-decision .secondary-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-
-  &:hover {
-    transform: none;
-    box-shadow: none;
-  }
 }
 
 @include m.below(t.$breakpoint-tablet) {

@@ -6,6 +6,23 @@
   }
 }
 
+/// The one focus treatment.
+///
+/// `components/_buttons.scss` had NO `:focus-visible` at all, so the app's
+/// three most-used controls fell back to whatever the browser drew - over a
+/// saturated background with `border: 0`, close to nothing. Meanwhile eleven
+/// other controls each invented one, at two widths and five offsets.
+///
+/// @param {Bool} $inset - true when the control fills its parent, so an
+///   outset ring would be clipped: a board cell, a deed picker, a card-sized
+///   overlay.
+@mixin focus-ring($inset: false) {
+  &:focus-visible {
+    outline: t.$focus-ring-width solid var(--focus-ring);
+    outline-offset: if($inset, t.$focus-ring-offset-inset, t.$focus-ring-offset);
+  }
+}
+
 /// A card's edge, ground and lift.
 ///
 /// Took a `$radius` argument and then ignored it, hardcoding $radius-sharp in

@@ -243,9 +243,11 @@
   // not decoration.
   &:focus-visible {
     z-index: 4;
-    outline: 3px solid var(--focus-ring);
-    outline-offset: -3px;
   }
+
+  // Inset: the cell fills its grid area, so an outset ring is clipped by the
+  // board's own overflow.
+  @include m.focus-ring($inset: true);
 
   &.active-space {
     z-index: 2;

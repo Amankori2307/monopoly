@@ -90,11 +90,11 @@ $stack-expanded-max-height: 420px;
 // them - the links and the error banner - down to a clipped strip.
 $player-stack-max-share: 55%;
 
-// How tall the activity control is on a phone, where every tap target is 44px.
 // $floating-inset went with the floating pill: the activity button is a header
 // control now and the toast stack sits in the sidebar's own flow, so nothing
-// floats over the board any more.
-$activity-button-height: 44px;
+// floats over the board any more. $activity-button-height went with the
+// control surface - it was the 44px touch minimum wearing a component's name,
+// and it is $control-tap in _scale.scss.
 
 // Player token on the board. Big enough to follow while it moves.
 // Small pieces, like a real board, but big enough to follow while they move.

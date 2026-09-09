@@ -190,10 +190,7 @@
     background: var(--surface-muted);
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
+  @include m.focus-ring;
 
   @include m.below(t.$breakpoint-mobile) {
     grid-template-columns: 1fr;
@@ -233,10 +230,7 @@
     background: var(--surface-muted);
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
+  @include m.focus-ring;
 }
 
 .play-choice-title {

@@ -352,6 +352,7 @@ $type-families: (
 // and the chevron's `line-height: 1` exists precisely to undo the leading it
 // would otherwise inherit.
 // ---------------------------------------------------------------------------
+$glyph-icon: 18px; // An inline SVG inside a control
 $glyph-sm: 0.9rem;
 $glyph-md: 1.05rem;
 $glyph-lg: 1.2rem;
@@ -407,22 +408,16 @@ $elevation-4: 0 25px 70px; // Modal: the only thing on screen
 // never take the app's only navigation hostage, which is the bug CLAUDE.md
 // section 8 records at length.
 //
-// ONE OPEN QUESTION, deliberately left open until the layers are actually
-// migrated. `.trade-backdrop` is a full-viewport sheet at 60, i.e. ABOVE the
-// header, and nothing in _trade.scss explains it - its comment is about
-// two-column layout. Two readings, and they are both defensible:
+// One rule, no exceptions: the header outranks EVERY full-viewport scrim.
 //
-//   Keep it.  A trade closes on a click outside (GameOverlayLayer: "an offer
-//             nobody has sent yet is not a decision anyone is waiting on"), so
-//             there is always a way out. Covering the nav is only a trap when
-//             there is not.
-//   Lower it. Being able to LEAVE a trade is not the same as being able to
-//             mute the game while in one, and a trade is the longest-lived
-//             overlay in the app - you assemble an offer and wait for someone
-//             to read it. Every other backdrop here is 30-40.
-//
-// $z-modal-dismissible exists so the first reading has a name if it wins. It
-// is referenced by nothing yet.
+// `.trade-backdrop` was the exception, at 60, and nothing defended it - the
+// comment beside it is about two-column layout. The argument for keeping it
+// was that a trade closes on a click outside, so you are never trapped; the
+// argument against, which won, is that being able to LEAVE a trade is not the
+// same as being able to mute the game while in one - and a trade is the
+// longest-lived overlay in the app, since you assemble an offer and then wait
+// for somebody to read it. Two tiers of scrim would also have meant deciding,
+// for every future overlay, which tier it belonged to.
 //
 // Two apparent collisions, and they are not the same:
 //
@@ -441,7 +436,6 @@ $z-drawer: 38; // A drawer's scrim, above the veil by decision not by order
 $z-modal: 40; // A decision's scrim: no way out but answering it
 $z-notice: 45; // Toasts and the command-error banner, above any scrim
 $z-header: 50; // Above anything you cannot dismiss
-$z-modal-dismissible: 60; // A trade: closes on a click outside, so it may cover
 
 // ---------------------------------------------------------------------------
 // Motion.
@@ -473,8 +467,29 @@ $ease-plain: ease;
 $border-hairline: 1px; // Every surface edge
 $border-marker: 2px; // An emphasised edge
 $border-accent: 4px; // A card's coloured left-edge bar
-$focus-ring-width: 2px;
+
+// 3px, not 2px. Eleven controls hand-rolled a ring at two widths, and the 3px
+// ones are precisely those sitting on a coloured surface - a board cell, a
+// deed picker, a toast - where 2px disappears. A ring that is sometimes
+// invisible is worse than one that is sometimes chunky.
+//
+// The inset offset is for a control that FILLS its parent, where an outset
+// ring is clipped away: the board cell, a deed picker, the card-sized overlay
+// that opens a player's holdings. One parameter rather than a second mixin,
+// because all four sites are the same condition - the button IS the card.
+// The touch-target minimum. $activity-button-height carried this value under
+// a component's name while its own comment said "where every tap target is
+// 44px" - it was always this, wearing a disguise.
+$control-tap: 44px;
+
+$focus-ring-width: 3px;
 $focus-ring-offset: 2px;
+$focus-ring-offset-inset: -3px;
+
+// One disabled treatment. base/_reset.scss already applies 0.45 to every
+// button; three partials restated it at 0.45, 0.5 and 0.55, which is three
+// answers to a question the reset had already answered.
+$opacity-disabled: 0.45;
 
 // ---------------------------------------------------------------------------
 // The scale guards its own shape, at compile time.
