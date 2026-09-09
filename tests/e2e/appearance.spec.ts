@@ -87,6 +87,50 @@ test('recolours the board itself, not just the chrome', async ({ page }) => {
   expect(after.ribbon).not.toBe(before.ribbon);
 });
 
+/**
+ * Midnight, which is the design system's own acceptance test.
+ *
+ * This palette was fully defined and deliberately unselectable for a long
+ * time, blocked by three things docs/theming.md named: ink-tinted drop
+ * shadows, dark-translucent scrims, and a die hardcoded white with near-black
+ * pips. All three were literals in component partials rather than palette
+ * decisions, so no amount of theming could reach them.
+ *
+ * They are tokens now, and shipping this took one row in APPEARANCES. That is
+ * the claim being tested: if the system is real, a palette that was impossible
+ * simply drops in.
+ */
+test('wears a dark palette, dice and all', async ({ page }) => {
+  await startGame(page);
+  const before = await paletteOf(page);
+
+  await chooseAppearance(page, 'midnight');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'midnight');
+
+  const after = await paletteOf(page);
+  expect(after.shell).not.toBe(before.shell);
+  expect(after.cell).not.toBe(before.cell);
+  expect(after.ribbon).not.toBe(before.ribbon);
+  // Not .primary-button: the game screen has none - its primary control is the
+  // dice button, which is why the test above uses /#/new for that probe.
+
+  // The three named blockers, each read directly. A die that stayed white on a
+  // dark board is exactly what kept this palette on the shelf.
+  const blockers = await page.evaluate(() => {
+    const shell = document.querySelector('.app-shell');
+    if (!shell) return null;
+    const style = getComputedStyle(shell);
+    return {
+      die: style.getPropertyValue('--die-face').trim(),
+      ink: style.getPropertyValue('--shadow-ink').trim(),
+      scrim: style.getPropertyValue('--scrim').trim(),
+    };
+  });
+  expect(blockers?.die).toContain('#2b323b');
+  expect(blockers?.ink).toBe('rgba(0, 0, 0, 0.55)');
+  expect(blockers?.scrim).toBe('rgba(0, 0, 0, 0.66)');
+});
+
 test('keeps the edition it is playing while wearing another palette', async ({
   page,
 }) => {

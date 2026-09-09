@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1469 unit tests, 189 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1470 unit tests, 190 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -531,10 +531,18 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   `action-sell`, `action-redeem`, `action-text`), and every palette had to invent values for them.
   [themeContract.guard.test.ts](src/styles/themeContract.guard.test.ts) closes it, so **add a
   contract token in the same change as the rule that reads it, not before.**
-- **A dark appearance is not honest yet.** The dice are a hardcoded white gradient with near-black
-  pips, the modal scrims are dark translucent, and the drop shadows are ink-tinted - all correct
-  under a light palette and wrong under a dark one. That, not the engine, is what keeps `midnight`
-  out of `APPEARANCES`; it is fully defined and one row away.
+- **A dark appearance is honest now, and getting there is the design system's own receipt.**
+  `midnight` sat fully defined and unselectable because three things were literals in component
+  partials rather than palette decisions - a hardcoded white dice gradient with near-black pips,
+  dark-translucent scrims, and ink-tinted drop shadows. All three read correctly under a light
+  palette and wrongly under a dark one, and nothing about theming could reach them. They are
+  contract tokens now, so shipping it took **one row** in `APPEARANCES`.
+  The sweep afterwards found what only a selectable palette exposes: `.danger-button` paired
+  `--danger-bg` with `--text-inverse`, an assumption that holds in a light palette and renders
+  black-on-black at **1.03:1** in a dark one - so danger has its own `--danger-text` now, like every
+  other button variant. The same sweep found `aesthetic`'s eyebrow at **3.24:1**, shipped and
+  unnoticed. **Point a contrast probe at a new palette before shipping it**; the guards check that
+  a token is used, never that the result is legible.
 - **The header paints above the decision backdrop, and the side drawer starts below the header.**
   The backdrop is a fixed sheet over the whole viewport at `z-index: 40`, so an unpositioned header
   meant the app's only navigation went dead the moment a card or a buy decision came up - no rules,

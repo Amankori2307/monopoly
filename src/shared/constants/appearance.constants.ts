@@ -24,6 +24,11 @@ export const APPEARANCES = [
     label: 'Aesthetic',
     description: 'Modern, sharp and minimal',
   },
+  {
+    id: 'midnight',
+    label: 'Midnight',
+    description: 'Dark, for playing at night',
+  },
 ] as const;
 
 /**

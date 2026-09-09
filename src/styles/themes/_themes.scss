@@ -34,7 +34,7 @@ $theme-contract: surface-app surface-panel surface-board surface-input surface-m
   board-paper-tooth board-vignette jail-cell-bg jail-bars jail-visiting-bg ribbon-bg
   ribbon-border ribbon-outline ribbon-text ribbon-drop ribbon-keyline ribbon-sheen
   deck-community-bg deck-chance-bg deck-marker-border deck-marker-shadow deck-marker-text
-  badge-bg danger-bg error-text action-build action-mortgage building-house
+  badge-bg danger-bg danger-text error-text action-build action-mortgage building-house
   building-house-roof building-hotel building-hotel-roof building-window piece-outline
   button-primary button-primary-hover button-primary-text button-secondary
   button-secondary-hover button-secondary-text;
@@ -119,6 +119,7 @@ $india-palette: (
 
   badge-bg: #e5d37e,
   danger-bg: #2b3127,
+  danger-text: #fffaf0,
   error-text: #9a2e24,
 
   action-build: #1f7a3d,
@@ -174,9 +175,9 @@ $aesthetic-palette: (
 
   text-primary: #0d0f14,
   text-body: #2b2e36,
-  text-muted: #6f747e,
+  text-muted: #656b76,
   text-inverse: #ffffff,
-  text-eyebrow: #8a8f9a,
+  text-eyebrow: #626976,
 
   // The brand mark is ink, not red. A single near-black accent is what makes
   // the rest read as minimal rather than merely pale.
@@ -239,6 +240,7 @@ $aesthetic-palette: (
 
   badge-bg: #eceef2,
   danger-bg: #fdeceb,
+  danger-text: #8f231e,
   error-text: #bf332e,
 
   action-build: #15805a,
@@ -360,7 +362,8 @@ $themes: (
       deck-marker-text: #0e1116,
 
       badge-bg: #3a4250,
-      danger-bg: #0e1116,
+      danger-bg: #b3352a,
+      danger-text: #fff3f1,
       error-text: #ff8b7d,
 
       action-build: #2e9257,
@@ -371,9 +374,9 @@ $themes: (
       building-hotel-roof: #a3332a,
       building-window: #f0d9a8,
       piece-outline: rgba(0, 0, 0, 0.6),
-      button-primary: #4a6fd4,
+      button-primary: #4064c9,
       button-primary-hover: #5c81e6,
-      button-primary-text: #0e1116,
+      button-primary-text: #f4f7fd,
       button-secondary: #2f3844,
       button-secondary-hover: #3a4552,
       button-secondary-text: #e8ecf1,

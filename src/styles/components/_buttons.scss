@@ -78,9 +78,13 @@
   }
 }
 
+// Its own text token, like every other variant. It borrowed --text-inverse,
+// which is a fine pairing in a light palette and black-on-black in a dark one:
+// midnight rendered this at 1.03:1, and nothing said so until the appearance
+// became selectable and a contrast sweep was pointed at it.
 .danger-button {
   background: var(--danger-bg);
-  color: var(--text-inverse);
+  color: var(--danger-text);
 }
 
 // The appearance control names itself, until there is no room to.
