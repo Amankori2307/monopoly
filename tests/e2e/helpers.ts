@@ -18,6 +18,14 @@ export const VIEWPORTS = {
   phone: { width: 375, height: 812 },
   /** The smallest viewport the reset admits (`body { min-width: 320px }`). */
   phoneSmall: { width: 320, height: 568 },
+  /**
+   * The commonest small Android frame, and the tightest window the game has to
+   * work in for real: 360 CSS px is what almost every Android phone reports,
+   * and 640 is the short end of the range still in the field. It is narrower
+   * AND shorter than `phone`, so it is the frame that decides whether a
+   * decision modal fits.
+   */
+  android: { width: 360, height: 640 },
   /** The same phone turned sideways: wide, and very short. */
   phoneLandscape: { width: 812, height: 375 },
 } as const;

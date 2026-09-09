@@ -54,7 +54,13 @@
   }
 }
 
-@include m.below(t.$breakpoint-tablet) {
+// The small die, on any frame where the window is the constraint.
+//
+// A landscape phone is 812px WIDE, so the width query alone left a 58px die in
+// a 375px-tall window beside a 323px board - a sixth of the board, and the
+// biggest single object on the screen. It is the same phone either way up,
+// which is the whole reason landscape-compact is a height query.
+@mixin phone-die {
   .die-face {
     width: t.$die-size-phone;
     padding: t.$die-pad-phone;
@@ -65,6 +71,14 @@
       border-radius: t.$die-inner-radius-phone;
     }
   }
+}
+
+@include m.below(t.$breakpoint-tablet) {
+  @include phone-die;
+}
+
+@include m.landscape-compact {
+  @include phone-die;
 }
 
 .pip {

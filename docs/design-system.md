@@ -102,6 +102,49 @@ respectful without anyone remembering. Six partials used to undo their motion
 in a separate `reduce` block, and the dice proved why that fails: an infinite
 tumble with no block anywhere.
 
+### Controls — how big a thing you press has to be
+
+`$control-tap: 44px` is the floor for anything a thumb has to hit, and
+`$control-checkbox: 20px` is the one deliberate exception.
+
+The floor is not advisory, and it is not only for `<button>`. The button base
+states it once, so every button variant was already correct — and a measurement
+pass over a 360×640 Android frame found **five controls under it, every one of
+them something other than a button**: the header's nav links at 30px, the
+wordmark at 12, the booklet's ten section chips at 21, the deed sheet's close
+cross at 30×30 and a native checkbox at 13×13. What the misses have in common
+is that nothing stated the floor for them.
+
+A checkbox stays 20px because a native control drawn at 44 looks broken. The
+**`<label>` around it carries the tap area instead**, which only works while
+the label really is the target — so `.checkbox-field` is a `<label>`, and
+`mobile.spec.ts` measures the label rather than the box.
+
+Two things follow from the floor rather than being separate decisions:
+`$header-height-landscape` is `$control-tap`, because a bar cannot be shorter
+than the tallest thing standing in it; and the board's forty cells are exempt,
+because a square on a 336px board is 27px wide and cannot be 44 without
+ceasing to be a board.
+
+### The phone tier
+
+Most of the system is one size everywhere, and that is right: a rung is a
+decision, not a measurement of a particular screen. Three places genuinely
+differ on a phone, and each is a case where **the thing being sized has itself
+changed**, not merely the window around it:
+
+| What                                                   | Why it differs                                                                                             |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| The die (`$die-size-phone`)                            | 58px beside a 336px board is the biggest object on the screen                                              |
+| The deed's padding and labels (`$deed-card-pad-phone`) | Below `$breakpoint-mobile` the card stops being a fixed 340×380 object and becomes the width of the screen |
+| The scrim's inset                                      | 20px each side of a 360px window is 11% of it spent on inset                                               |
+
+**A phone override of a type role has to come last in its file.** Both
+selectors are the same specificity and a media query adds none, so source
+order is the whole of what decides it — a phone rule written beside the rule it
+overrides loses silently. `components/_space-detail.scss` keeps its phone tier
+in one block at the end of the file for exactly this reason.
+
 ---
 
 ## The rules
@@ -115,6 +158,10 @@ tumble with no block anywhere.
    restatement.
 6. **`text()` for type, `focus-ring()` for focus, `motion()` for movement,
    `card-surface()` for a card.**
+7. **Anything you press clears `$control-tap`** — including the ones that are
+   not buttons.
+8. **A phone override goes last in its file**, or specificity ties are settled
+   by accident.
 
 ## The exceptions
 

@@ -80,9 +80,15 @@
   @include t.text(body-sm);
   font-weight: t.$weight-bold;
 
+  // A native checkbox renders at 13x13 unless it is told otherwise, which on a
+  // phone is a target you aim at rather than press. The <label> around it is
+  // the real tap area - that is why this rule is on a label - so the box only
+  // has to be big enough to READ as checked.
   input {
     margin-top: t.$space-1;
     flex: 0 0 auto;
+    width: t.$control-checkbox;
+    height: t.$control-checkbox;
   }
 
   .helper-text {
@@ -198,7 +204,7 @@
 }
 
 .chooser-continue-label {
-  @include t.text(micro);
+  @include t.text(label);
 
   color: var(--text-eyebrow);
 }
@@ -251,8 +257,11 @@
   gap: t.$space-2;
 }
 
+// `label`, not `micro`. Both of these say a WORD - "Continue", "Local" - and
+// micro is the badge-digit rung: at 9.92px the word is smaller than the space
+// around it. Seven of these render on /new at once.
 .recent-game-mode {
-  @include t.text(micro);
+  @include t.text(label);
 
   padding: t.$space-1 t.$space-1;
   border: 1px solid var(--border-subtle);

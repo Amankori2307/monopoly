@@ -54,8 +54,15 @@ $board-color-bar-compact: 7px;
 $deed-card-width: 340px;
 $deed-card-height: 380px;
 // The colour strip bleeds to the card's top and side edges by negating this
-// padding, so the two must stay derived from one value.
+// padding, so the two must stay derived from one value - which is why the card
+// publishes it as --deed-pad rather than either site reading the variable.
+//
+// On a phone the card stops being a fixed 340px object and becomes the width
+// of the screen, so 18px of it is a much larger share of a much smaller card:
+// the phone rung buys 12px of vertical room and 12px of line length, and the
+// second of those is what stops a long station name wrapping to a third line.
 $deed-card-pad: 18px;
+$deed-card-pad-phone: 12px;
 
 // The holdings drawer is sized by its card, not the other way round: the panel
 // is exactly one card plus this padding either side.
@@ -129,7 +136,12 @@ $token-move-easing: cubic-bezier(0.45, 1, 0.55, 0);
 // ---------------------------------------------------------------------------
 $header-height: 56px;
 $header-height-compact: 48px;
-$header-height-landscape: 40px;
+// Derived, not 40px. The bar cannot be shorter than the tallest thing standing
+// in it: at 40 the settings trigger, the activity button and the header's nav
+// links all bled 2px past its own bottom border, which is the sort of thing
+// that reads as broken rather than as compact. Landscape pays 4px of board
+// height for it, on the one orientation where the board is height-capped.
+$header-height-landscape: $control-tap;
 $shell-frame-reserve: 72px;
 
 $breakpoint-board: 1250px;

@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1481 unit tests, 191 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1481 unit tests, 199 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -455,6 +455,32 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   which on a stalling connection is thirty seconds. The e2e browser also resolves both font hosts to
   nothing (`--host-resolver-rules` in `playwright.config.ts`): a test should not be able to pass or
   fail on somebody else's CDN.
+- **The tap floor is for everything you press, not just for `<button>`.**
+  `$control-tap` is 44px and the button base states it once, so every button
+  variant was already right - and a measurement pass over a 360x640 Android
+  frame found five controls under it, all of them something else: the header's
+  nav links at 30px, the wordmark at 12, the booklet's ten section chips at 21,
+  the deed sheet's close cross at 30x30, and a native checkbox at 13x13. A
+  checkbox stays 20px on purpose and the **`<label>` around it** is the target,
+  which is why `.checkbox-field` is a label and `mobile.spec.ts` measures the
+  label rather than the box. `$header-height-landscape` is derived from the
+  floor rather than set to 40, because a bar cannot be shorter than the tallest
+  thing standing in it. The board's forty cells are the one exemption: 27px on a
+  336px board, and a 44px square is not a board.
+- **A phone override of a type role must come LAST in its file.** The rule it
+  overrides is the same specificity and a media query adds none, so source
+  order is the whole of what decides it - written beside the rule it modifies,
+  a phone override loses silently and looks like it never compiled.
+  `components/_space-detail.scss` keeps its phone tier in one block at the end
+  for that reason, and the deed's title spent one round trip proving it.
+- **A modal is measured on the frame it has to fit, and that is 360x640.**
+  `VIEWPORTS.android` exists because `phone` (375x812) is neither the narrowest
+  nor the shortest window in the field, so it could not see that the buy
+  decision rendered **632px tall inside a 640px window** - the modal scrolled
+  internally and Buy, the whole reason it was up, sat below the fold. The
+  street case is the one that matters: seven rent rows against a railway's
+  four, which is why the test plays on until a street is on offer rather than
+  accepting the first purchase it meets.
 - **Every measurement a partial writes comes from a scale, and a guard says so.**
   [design-system.md](docs/design-system.md) is the reference and `#/style` renders it.
   Space is a 4px grid (`$space-N`, the number IS the multiple); type is a **role**

@@ -35,8 +35,10 @@
   right: 12px;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  // 30x30 before this: the only way out of a deed sheet or a drawer, drawn
+  // smaller than the tap floor every <button> in the app already keeps.
+  width: t.$control-tap;
+  height: t.$control-tap;
   border: 1px solid var(--border-input);
   border-radius: t.$radius-sharp;
   background: var(--surface-panel);
@@ -53,11 +55,16 @@
 // reads identically in the title-deed modal, the buy decision, and the holdings
 // drawer. Callers position it; they never restyle it.
 .deed-card {
+  // Published rather than read twice: .deed-band bleeds to the card's edges by
+  // negating this exact value, so a phone that tightens one has to tighten the
+  // other or the colour strip stops lining up.
+  --deed-pad: #{t.$deed-card-pad};
+
   // Positions the mortgage watermark, which is struck across the whole card.
   position: relative;
   width: t.$deed-card-width;
   height: t.$deed-card-height;
-  padding: t.$deed-card-pad;
+  padding: var(--deed-pad);
   overflow: hidden;
   border: 1px solid var(--border-space);
   background: var(--surface-panel);
@@ -81,6 +88,8 @@
 // Only where a 420px card cannot fit does it stop being fixed.
 @include m.below(t.$breakpoint-mobile) {
   .deed-card {
+    --deed-pad: #{t.$deed-card-pad-phone};
+
     width: 100%;
     height: auto;
   }
@@ -127,9 +136,11 @@
   gap: t.$space-3;
 }
 
+// No min-height of its own. It carried 52px, eight above the tap floor the
+// button base already sets - so on a phone, where these stack, the buy
+// decision spent 116px on two buttons whose labels are 13.76px tall.
 .buy-decision-buttons > * {
   flex: 1;
-  min-height: 52px;
 }
 
 @include m.below(t.$breakpoint-tablet) {
@@ -140,6 +151,13 @@
 
   .buy-decision-buttons {
     flex-direction: column;
+  }
+
+  // Stacked, the two halves are one reading order rather than two columns, so
+  // the gap that separated them side by side is now just height in a modal
+  // measured at 632px inside a 640px window.
+  .buy-decision-choice {
+    gap: t.$space-3;
   }
 }
 
@@ -179,7 +197,7 @@
   flex-shrink: 0;
   // Flush to the card's top and side edges by negating its padding - keep this
   // derived, or the strip stops lining up the moment that padding changes.
-  margin: (-1 * t.$deed-card-pad) (-1 * t.$deed-card-pad) t.$space-3;
+  margin: calc(-1 * var(--deed-pad)) calc(-1 * var(--deed-pad)) t.$space-3;
 }
 
 // Railways and utilities have no colour group, so they take ink: distinct from
@@ -329,5 +347,41 @@
   button:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The phone tier, and it has to be last in the file.
+//
+// Every selector here is (0,1,1) and so is the rule it overrides; a media
+// query adds no specificity at all, so source order is the whole of what
+// decides these. Written beside the rules they modify - up beside .deed-card,
+// where the other phone rules live - they lose silently, which is exactly what
+// happened to the title on the first attempt.
+//
+// What they have in common is that the deed stops being a fixed 340x380 object
+// below this breakpoint and becomes the width of the screen with a height of
+// its own. Both of the desktop comments say the size is chosen for the CARD -
+// so when the card changes, so do they. Desktop is untouched, and deliberately:
+// that 380px is calibrated against the tallest deed on the board.
+// ---------------------------------------------------------------------------
+@include m.below(t.$breakpoint-mobile) {
+  // 1.7rem put "Chennai Central Railway Station" on three lines and 117px of a
+  // modal that already did not fit its window.
+  .space-detail-title-row h2 {
+    @include t.text(display, t.text-size(title));
+  }
+
+  // `label`, not `micro`. These are the words that say what the numbers mean -
+  // PRICE, MORTGAGE VALUE, RENT BY STATIONS OWNED - and micro is the rung for a
+  // badge digit. At 9.92px on a phone they are decoration around the figures
+  // rather than the key to them.
+  //
+  // Phone-only because the desktop card is a fixed 380px with 14px of slack
+  // against its tallest deed, and this costs 4 of them. That budget is not
+  // mine to spend during a mobile pass.
+  .deed-primary-stats span,
+  .deed-rent-title {
+    @include t.text(label);
   }
 }

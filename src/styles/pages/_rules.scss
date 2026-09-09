@@ -27,7 +27,10 @@
 
   h1 {
     margin-bottom: t.$space-2;
-    @include t.text(hero, clamp(2.6rem, 7vw, 5.25rem));
+    // The floor was 2.6rem, which no phone ever escaped: 7vw only overtakes it
+    // at 594px, so a 360px screen got a 41.6px cover title and the viewport
+    // term did nothing. A rung, so the bottom of the ramp is a decision.
+    @include t.text(hero, clamp(t.text-size(hero), 7vw, 5.25rem));
     letter-spacing: t.$track-snug;
   }
 
@@ -52,6 +55,15 @@
   border-bottom: 1px solid var(--border-subtle);
 
   a {
+    // Ten of these, and they were 21px tall - the booklet's whole table of
+    // contents, under a thumb, at half the tap floor. Two rows of 44px costs
+    // about 46px on a phone, which is the right trade for a control that is
+    // the only way to jump around a very long document.
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: t.$control-tap;
+    min-height: t.$control-tap;
     padding: t.$space-1 t.$space-2;
     color: var(--text-muted);
     @include t.text(label);

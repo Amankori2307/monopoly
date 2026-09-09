@@ -496,3 +496,140 @@ test.describe('a desktop board', () => {
     await expect(page.locator('.space-label .space-name').first()).toBeVisible();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Size, on the frame most of the players are actually holding
+// ---------------------------------------------------------------------------
+//
+// 360x640 rather than VIEWPORTS.phone, and the difference is the whole point:
+// 360 is what almost every Android reports, and 640 is short enough that the
+// decision modal has to earn its height. A measurement pass over this frame is
+// what found the five controls below the tap floor and a buy decision 632px
+// tall inside a 640px window.
+test.describe('an Android phone', () => {
+  test.use({ viewport: VIEWPORTS.android });
+
+  /**
+   * Every control a thumb has to hit, on every screen, against `$control-tap`.
+   *
+   * Two exclusions, and neither is a waiver:
+   *
+   * - **The board's forty cells.** A square on a 336px board is 27px wide and
+   *   cannot be 44 without ceasing to be a board. `SpaceDetailCard` is how you
+   *   read one; the cell is a shortcut to it.
+   * - **A link inside a sentence.** WCAG 2.5.8 exempts inline text links for
+   *   the same reason: the target is the sentence's line box, and padding one
+   *   out to 44px would break the paragraph it sits in.
+   *
+   * A native checkbox is deliberately 20px and NOT excluded here - it passes
+   * because the rule measures the `<label>` that wraps it, which is the actual
+   * target. If `.checkbox-field` ever stops being a label, this fails, which is
+   * exactly when it should.
+   */
+  const undersizedControls = (page: Page) =>
+    page.evaluate((floor) => {
+      const inlineLink = (el: Element) =>
+        el.tagName === 'A' && el.closest('p, li, dd') !== null;
+
+      return Array.from(document.querySelectorAll('button, a, select, input'))
+        .filter((el) => {
+          const box = el as HTMLElement;
+          if (!box.offsetWidth || !box.offsetHeight) return false;
+          if (el.closest('.board-card')) return false;
+          if (inlineLink(el)) return false;
+          // The tappable thing is the label, where there is one.
+          const target = (el.closest('label') ?? el) as HTMLElement;
+          return target.offsetWidth < floor || target.offsetHeight < floor;
+        })
+        .map((el) => {
+          const target = (el.closest('label') ?? el) as HTMLElement;
+          const name = el.textContent?.trim().slice(0, 24) || el.tagName;
+          return `${name} (${target.offsetWidth}x${target.offsetHeight})`;
+        });
+    }, 44);
+
+  for (const route of ['#/', '#/new', '#/host', '#/join', '#/rules']) {
+    test(`meets the tap floor on ${route}`, async ({ page }) => {
+      await page.goto(`/${route}`);
+      await expect(page.locator('.app-header')).toBeVisible();
+
+      expect(await undersizedControls(page)).toEqual([]);
+    });
+  }
+
+  test('meets the tap floor on the game screen', async ({ page }) => {
+    await startGame(page);
+
+    expect(await undersizedControls(page)).toEqual([]);
+  });
+
+  /**
+   * Plays until a STREET is up for sale, not merely any buy decision.
+   *
+   * The distinction is the whole test: a railway carries four rent rows and a
+   * street carries seven plus a building-cost footer, which is about 60px more
+   * card. A check that accepted the first buy decision it met would pass on a
+   * railway and prove nothing about the case that actually overflowed.
+   */
+  const streetIsOnOffer = (page: Page) =>
+    page
+      .locator('.buy-decision .rent-schedule > div')
+      .count()
+      .then((rows) => rows >= 6);
+
+  const playToStreetPurchase = async (page: Page): Promise<boolean> => {
+    for (let step = 0; step < 80; step += 1) {
+      if (await streetIsOnOffer(page)) return true;
+
+      // `declineBuys: false` so THIS decides rather than the helper: a railway
+      // is declined and play goes on, a street is what we came for. Letting
+      // the helper decline would answer the street before it was measured.
+      const action = await advanceGame(page, { declineBuys: false });
+      if (action === 'buy-available') {
+        if (await streetIsOnOffer(page)) return true;
+        await page.getByTestId(TEST_IDS.declineButton).click();
+        continue;
+      }
+      if (action === 'none') return false;
+    }
+    return false;
+  };
+
+  /**
+   * The buy decision is the tallest thing the game ever puts on screen.
+   *
+   * It measured 632px inside a 640px window even for a RAILWAY, so the modal
+   * scrolled internally and `Buy` - the whole reason the modal is up - sat
+   * below the fold. Nothing about that was visible from a desktop, and no unit
+   * test could see it, because jsdom does no layout.
+   */
+  test('fits a street purchase without scrolling inside itself', async ({ page }) => {
+    await startGame(page);
+    test.skip(!(await playToStreetPurchase(page)), 'No street came up for sale.');
+
+    const modal = await page.evaluate(() => {
+      const el = document.querySelector('.decision-modal') as HTMLElement | null;
+      return el ? { client: el.clientHeight, scroll: el.scrollHeight } : null;
+    });
+
+    expect(modal).not.toBeNull();
+    expect(modal?.scroll).toBeLessThanOrEqual(modal?.client ?? 0);
+  });
+
+  // The primary action of the tallest decision, reachable without a scroll.
+  test('keeps the buy button on screen at the tap floor', async ({ page }) => {
+    await startGame(page);
+    test.skip(!(await playToStreetPurchase(page)), 'No street came up for sale.');
+
+    const buy = page.locator('.buy-decision-buttons .primary-button');
+    await expect(buy).toBeVisible();
+    await expect(buy).toBeInViewport();
+
+    // offsetHeight, not a bounding rect: the modal rises on a 200ms transform,
+    // so a rect measured while that is still running reports 44px of layout as
+    // 43.1px of paint. The claim here is about layout.
+    const height = await buy.evaluate((el: HTMLElement) => el.offsetHeight);
+    // The tap floor exactly, not the 52px this carried on top of it.
+    expect(height).toBe(44);
+  });
+});

@@ -23,6 +23,14 @@
   padding: t.$space-5;
   background: var(--scrim);
   backdrop-filter: blur(3px);
+
+  // 20px of scrim on each side of a 360px screen is 11% of the window spent
+  // on inset, and it is height the tallest decision does not have: a street's
+  // deed carries a seven-row rent schedule, which is 60px more card than the
+  // railway this was first measured against.
+  @include m.below(t.$breakpoint-mobile) {
+    padding: t.$space-3;
+  }
 }
 
 .decision-backdrop {
@@ -33,7 +41,9 @@
 
 .decision-modal {
   width: min(100%, 460px);
-  max-height: calc(100dvh - 40px);
+  // Twice the scrim's own padding, so the two cannot drift: the modal may be
+  // as tall as the window less the inset above and below it.
+  max-height: calc(100dvh - 2 * #{t.$space-5});
   overflow-y: auto;
   @include m.motion {
     animation: modal-rise t.$duration-base t.$ease-standard;
@@ -41,6 +51,10 @@
 
   .decision-card {
     margin: 0;
+  }
+
+  @include m.below(t.$breakpoint-mobile) {
+    max-height: calc(100dvh - 2 * #{t.$space-3});
   }
 }
 

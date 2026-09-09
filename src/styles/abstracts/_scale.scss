@@ -505,10 +505,29 @@ $border-accent: 4px; // A card's coloured left-edge bar
 // ring is clipped away: the board cell, a deed picker, the card-sized overlay
 // that opens a player's holdings. One parameter rather than a second mixin,
 // because all four sites are the same condition - the button IS the card.
-// The touch-target minimum. $activity-button-height carried this value under
-// a component's name while its own comment said "where every tap target is
-// 44px" - it was always this, wearing a disguise.
+
+// ---------------------------------------------------------------------------
+// Controls: how big a thing you press has to be.
+//
+// $activity-button-height carried the tap minimum under a component's name
+// while its own comment said "where every tap target is 44px" - it was always
+// this, wearing a disguise.
+//
+// The floor is not advisory. A measurement pass over a 360x640 Android frame
+// found five controls under it, and every one of them was a control that is
+// not a <button>: the header's nav links at 30px, the wordmark at 12, the
+// booklet's ten section chips at 21, the deed sheet's close cross at 30x30 and
+// a native checkbox at 13x13. .primary-button and friends were all correct,
+// because the button base states this once - so what the misses have in common
+// is that nothing stated it for them.
+//
+// A checkbox is the one exception, and deliberately: the box itself is 20px
+// because a native control drawn at 44px looks broken, and the LABEL around it
+// carries the tap area instead. That only works while the label is genuinely
+// the target, which is why .checkbox-field is a <label> rather than a <div>.
+// ---------------------------------------------------------------------------
 $control-tap: 44px;
+$control-checkbox: 20px;
 
 $focus-ring-width: 3px;
 $focus-ring-offset: 2px;

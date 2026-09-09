@@ -70,9 +70,15 @@
   background: var(--surface-panel);
 }
 
+// A link, so it needs the tap floor the button base gives every <button> for
+// free. It measured 12px tall on a phone - the wordmark's own cap height, and
+// nothing more, for the control that takes you home.
 .app-brand {
   @include t.text(brand);
 
+  display: inline-flex;
+  align-items: center;
+  min-height: t.$control-tap;
   color: var(--text-primary);
   text-decoration: none;
   white-space: nowrap;
@@ -89,6 +95,9 @@
 .app-nav-link {
   display: grid;
   place-items: center;
+  // 30px before this, on every route: padding around a 13.76px label is not a
+  // tap target, and a header link is the most-pressed control in the app.
+  min-height: t.$control-tap;
   padding: t.$space-1 t.$space-2;
   border: 1px solid transparent;
   border-radius: t.$radius-sharp;
@@ -154,7 +163,9 @@
 }
 
 .settings-heading {
-  @include t.text(micro);
+  // `label`, not `micro`: micro is for a badge DIGIT, and at 9.92px a word
+  // reads as a rendering artefact rather than as a heading.
+  @include t.text(label);
 
   margin: 0;
   color: var(--text-eyebrow);
