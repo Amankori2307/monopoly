@@ -292,10 +292,10 @@ test('dismisses a toast when it is clicked', async ({ page }) => {
  * The card is shown before it acts on the player.
  *
  * Seeded rather than played to: dice are real random, and this is about the
- * contract - the card is readable, and its effect lands only after OK. The
+ * contract - the card is readable, and its effect lands only after Continue. The
  * roll-to-draw path itself is covered deterministically in gameEngine.test.ts.
  */
-test('shows a drawn card and applies it only on OK', async ({ page }) => {
+test('shows a drawn card and applies it only on Continue', async ({ page }) => {
   await startGame(page);
 
   const startingCash = await page.evaluate(() => {

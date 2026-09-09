@@ -35,8 +35,8 @@ export function RulesBuildings() {
         <li>
           There are {HOUSES_AVAILABLE} houses and {HOTELS_AVAILABLE} hotels. When the Bank
           cannot supply everyone who could build, the next building is auctioned: bidding
-          opens at that site&apos;s printed cost, and the winner chooses where it goes.
-          When the Bank is empty, building waits until one comes back.
+          opens at that {nouns.site}&apos;s printed cost, and the winner chooses where it
+          goes. When the Bank is empty, building waits until one comes back.
         </li>
       </ul>
     </section>

@@ -229,7 +229,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1423 unit tests, 184 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1440 unit tests, 184 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -441,6 +441,24 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   which on a stalling connection is thirty seconds. The e2e browser also resolves both font hosts to
   nothing (`--host-resolver-rules` in `playwright.config.ts`): a test should not be able to pass or
   fail on somebody else's CDN.
+- **Player-facing copy has a shape, and it is written down.** [conventions.md](docs/conventions.md)
+  section 3d: a `*BlockedReason` is a **fragment** with no terminal full stop, anything else the
+  player is told is a **sentence**, a button is verb plus object, second person for the player and a
+  name for anybody else, and a kind of square is never spelled into a string. There was no such
+  convention until now, which is why the 32 refusals had grown four voices and two punctuation
+  styles, one rule was stated twice in different words, and "we cannot find that game" had four
+  spellings across three files. `blockedReasons.guard.test.ts` sweeps the board and fails on a
+  refusal in the wrong shape. Rewording is safe from the sound and toast systems - `GameEventCue` is
+  set where an event happens and is no longer regex-matched from the sentence - so nothing but the
+  convention stops it drifting again.
+- **The engine names a square in the edition's own word too, not just the booklet.**
+  [nouns.utils.ts](src/domain/themes/nouns.utils.ts) is `nounsFor` and `countSites`, and it is to
+  `nouns` what `money()` is to the currency symbol. The build and sell refusals said "Only streets
+  can be built on" on all four boards; two of them call them cities, and India - which does - is the
+  **default** edition, so the most-seen refusal in the app named something the board did not have.
+  A name and "You" cannot share one sentence either, because they do not share a verb form: the
+  trade refusals read "You does not have that much cash" until `TradeSide` carried the person
+  alongside the name.
 - **The rules booklet is edition-aware, and its vocabulary lives on the theme.** The printed rules
   are identical in every edition - only the names, the money and the _words_ differ. So each theme
   carries a `nouns` block (`site`/`sites`/`railway`/`railways`): India has cities and railway

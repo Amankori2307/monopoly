@@ -52,7 +52,7 @@ describe('SpaceDetailCard', () => {
 
     expect(screen.getByRole('dialog', { name: street.name })).toBeInTheDocument();
     expect(screen.getByText('Title deed')).toBeInTheDocument();
-    expect(screen.getByText('With whole colour set')).toBeInTheDocument();
+    expect(screen.getByText('With whole color set')).toBeInTheDocument();
     expect(screen.getByText('With hotel')).toBeInTheDocument();
   });
 

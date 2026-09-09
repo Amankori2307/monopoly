@@ -58,7 +58,7 @@ describe('BuyOrAuctionDecision', () => {
 
     expect(screen.getByTestId(TEST_IDS.spaceCard)).toBeInTheDocument();
     expect(screen.getByTestId(TEST_IDS.rentSchedule)).toBeInTheDocument();
-    expect(screen.getByText('With whole colour set')).toBeInTheDocument();
+    expect(screen.getByText('With whole color set')).toBeInTheDocument();
     expect(screen.getByText('Mortgage value')).toBeInTheDocument();
   });
 

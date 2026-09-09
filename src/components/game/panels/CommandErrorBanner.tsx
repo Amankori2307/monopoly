@@ -25,7 +25,12 @@ interface CommandErrorBannerProps {
 export function CommandErrorBanner({
   message,
   onDismiss,
-  title = 'Action not allowed',
+  // Not 'Action not allowed', which reads like an access-control system and
+  // is untrue of most of what appears beneath it: 'Turn cannot be ended yet'
+  // and 'There is no bus to catch' are timing and state, not permission. The
+  // file already had to override the title for the connection case for exactly
+  // that reason - a default that is true of every case needs no override.
+  title = 'That move did not happen',
   isDismissible = true,
 }: CommandErrorBannerProps) {
   if (!message) {

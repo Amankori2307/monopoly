@@ -94,7 +94,7 @@ export function AuctionBidForm({
         </p>
       ) : (
         <p className="auction-bid-hint">
-          Minimum {formatMoney(field.minimumBid, currencySymbol)} · holds{' '}
+          Minimum {formatMoney(field.minimumBid, currencySymbol)} · cash{' '}
           {formatMoney(field.maximumBid, currencySymbol)}
         </p>
       )}

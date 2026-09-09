@@ -112,6 +112,45 @@ single-class rules win over equal-specificity component rules.
   came from a 3-row template on a 2-child element. A conditional child needs a modifier class.
 - Adding a theme: [theming.md](theming.md).
 
+## 3d. Copy
+
+There was no convention here, which is why the copy drifted: the 32 blocked reasons had grown
+four voices and two punctuation styles, the same refusal existed twice in different words, and
+"we cannot find that game" had four spellings across three files. Rewording is safe from the
+sound and toast systems — `GameEventCue` is set where an event happens and is no longer
+regex-matched from the sentence (section 8 of CLAUDE.md) — so nothing but this stops it drifting
+again.
+
+| Kind of copy                            | Shape                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A blocked reason** (`*BlockedReason`) | A **fragment** completing "you cannot, because…": sentence case, capital initial, **no terminal full stop**, one clause. `Not enough cash`, `Already mortgaged`, `Only cities carry buildings`. Guarded by [blockedReasons.guard.test.ts](../src/domain/rules/blockedReasons.guard.test.ts), which sweeps the board and fails on a stop, a lower-case initial or a second sentence. |
+| **Anything else the player is told**    | A **sentence** with a full stop: banners, form errors, event history, empty states.                                                                                                                                                                                                                                                                                                 |
+| **A button**                            | Verb plus object — `Roll dice`, `Submit bid`, `End turn`, `Build here`. Never a bare acknowledgement (`OK`) or a bare state (`Done`), least of all on the highest-consequence click on the screen.                                                                                                                                                                                  |
+| **An eyebrow**                          | What the player is looking at, in their words — `In Jail`, `Trade offer`, `Raise cash`. Not the implementation's word for it (`Asset liquidation`).                                                                                                                                                                                                                                 |
+
+And four rules that hold across all of it:
+
+- **Second person for the player, a name for anybody else.** Never a role (`the proposer`), never
+  third person about the reader. A name and "You" cannot share one sentence, because they do not
+  share a verb form — see `TradeSide` in [trade.utils.ts](../src/domain/rules/trade.utils.ts).
+- **Name a square in the edition's own word.** Never write `street`, `city` or `site` into copy:
+  it comes from the theme's `nouns`, through
+  [nounsFor](../src/domain/themes/nouns.utils.ts) in the engine and
+  [useRulesEdition](../src/features/rules/useRulesEdition.ts) in the booklet. India and World
+  call them cities; India is the default edition, so a hardcoded "street" is wrong more often
+  than it is right.
+- **Count properly.** `countSites` and the like — never `site(s)`, and never a plural where one
+  thing is meant. Say nothing rather than "0 cities".
+- **American spelling**, matching `colorGroup`, `$color-groups` and every other identifier:
+  `color set`, `favor`. The engine and the booklet disagreed about this one word for a while.
+
+Money always carries the edition's symbol: `money(state, n)` in the engine, `formatMoney(n,
+symbol)` in the UI. A bare number is right in exactly one place — the rules booklet with no game
+open, where the amount is true in every currency.
+
+Repeated copy is a constant (section 3). `TABLE_MESSAGES` exists precisely because a refusal and
+the banner reporting it must read the same sentence.
+
 ## 4. Keep logic out of components
 
 This is what makes the code testable — a pure function needs no DOM, no store, no render.
@@ -286,6 +325,8 @@ split the file rather than raising the limit.
 | File/function size                         | `max-lines`, `max-lines-per-function`, `complexity` (warnings)    |
 | Formatting                                 | Prettier (`pnpm format`)                                          |
 | Theme token discipline                     | `@error` guard in `themes/_themes.scss` at compile time           |
+| Blocked-reason copy shape                  | `blockedReasons.guard.test.ts`                                    |
+| Every edition supplying its own nouns      | `themeNouns.guard.test.ts`                                        |
 
 Run everything before reporting work done:
 
@@ -299,6 +340,7 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 - [ ] Identifiers named per section 2
 - [ ] No literal strings/numbers with meaning — enum, constant, or token (section 3)
 - [ ] Logic in a `.utils.ts` / `.selectors.ts`, not in the component (section 4)
+- [ ] Player-facing copy in the right shape, and no hardcoded word for a square (section 3d)
 - [ ] `TEST_IDS` entry added for anything a test needs to select
 - [ ] Unit + integration + e2e tests ([coding-guidelines.md](coding-guidelines.md))
 - [ ] [file-index.md](file-index.md) row added

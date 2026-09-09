@@ -21,7 +21,7 @@ export const offlineBlockedReason = (
     return 'This table is no longer reachable. Your moves would not reach the others.';
   }
   if (connection === ConnectionState.Degraded) {
-    return 'Reconnecting to the table - your last move has not reached the others yet.';
+    return 'Reconnecting to the table. Your last move has not reached the others yet.';
   }
   return null;
 };

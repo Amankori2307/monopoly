@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
+import { MAX_PLAYERS, MIN_PLAYERS } from '../../domain/constants/game.constants';
 
 /**
  * The three ways in.
@@ -17,7 +18,8 @@ export function PlayChoices() {
       <Link className="play-choice" data-testid={TEST_IDS.chooserPlayLocal} to="/new">
         <strong className="play-choice-title">On this device</strong>
         <span className="play-choice-copy">
-          Two to eight players around one screen, passing it between turns.
+          {MIN_PLAYERS} to {MAX_PLAYERS} players around one screen, passing it between
+          turns.
         </span>
       </Link>
       <Link className="play-choice" data-testid={TEST_IDS.chooserHostOnline} to="/host">
@@ -29,9 +31,10 @@ export function PlayChoices() {
 
       <Link className="play-choice" data-testid={TEST_IDS.chooserJoinOnline} to="/join">
         <strong className="play-choice-title">Join a game</strong>
-        <span className="play-choice-copy">
-          Somebody sent you a six-character code? Type it in here.
-        </span>
+        {/* The only rhetorical question in the app used to live here, beside
+            two flat declaratives - and it spelled the code's length out in
+            words, a third phrasing of a fact the constant already states. */}
+        <span className="play-choice-copy">Enter the code the host gave you.</span>
       </Link>
     </div>
   );

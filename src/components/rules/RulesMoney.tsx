@@ -24,14 +24,14 @@ export function RulesMoney() {
       </ul>
       <h3>Deals and trades</h3>
       <p>
-        Offer a deal from any site another player owns. Trades may include cash, property,
-        and Get Out of Jail Free cards, in any combination and at any price you both
-        agree. Buildings cannot be traded and must first be sold to the Bank, and neither
-        can a site whose color set still holds any. A mortgaged site can be traded, and
-        the player receiving it chooses: pay the Bank {MORTGAGE_INTEREST_PERCENT}% and
-        keep it mortgaged, or clear the mortgage outright for its value plus the same{' '}
-        {MORTGAGE_INTEREST_PERCENT}%. No loans, future promises, or private rent
-        agreements are part of the game.
+        Offer a deal from any {nouns.site} another player owns. Trades may include cash,
+        property, and Get Out of Jail Free cards, in any combination and at any price you
+        both agree. Buildings cannot be traded and must first be sold to the Bank, and
+        neither can a {nouns.site} whose color set still holds any. A mortgaged{' '}
+        {nouns.site} can be traded, and the player receiving it chooses: pay the Bank{' '}
+        {MORTGAGE_INTEREST_PERCENT}% and keep it mortgaged, or clear the mortgage outright
+        for its value plus the same {MORTGAGE_INTEREST_PERCENT}%. No loans, future
+        promises, or private rent agreements are part of the game.
       </p>
       <h3>If you cannot pay</h3>
       <p>

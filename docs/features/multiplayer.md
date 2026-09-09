@@ -159,6 +159,16 @@ nothing on screen saying why.
 - A save whose code this device never had says so (`TABLE_MESSAGES.codeLost`) and the saved-games
   list refuses to offer it, rather than opening a game with every control dead.
 
+## Everything the table can say is in one place
+
+`TABLE_MESSAGES` was written to hold these sentences so a refusal and the banner reporting it
+could not diverge, and then they diverged anyway: `multiplayer.thunks` had grown byte-for-byte
+copies of three of them plus one that differed by a single noun (`That game is no longer there.`
+against the constant's `That table…`), and `JoinPage` had a third set with reassuring tails
+appended. Four spellings of "we cannot find that game", and three of the constants dead. Every
+one of them reads from the constant now; the tails were the best of the wordings, so they moved
+into it. See [conventions.md](../conventions.md) section 3d.
+
 ## The table's own options
 
 `useLobby.start()` hardcoded `themeId: availableThemes[0].id` and `useSpeedDie: false`, so every

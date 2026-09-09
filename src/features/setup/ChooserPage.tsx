@@ -43,8 +43,8 @@ export function ChooserPage() {
           <p className="eyebrow">Monopoly</p>
           <h1>How are you playing?</h1>
           <p className="masthead-lede">
-            Roll, buy, build, and bankrupt your friends. Every game saves itself as you
-            play, so you can stop mid-turn and pick it up later.
+            Buy, build, and bankrupt your friends. Games save as you play, so you can stop
+            mid-turn and come back later.
           </p>
         </section>
 
@@ -61,7 +61,7 @@ export function ChooserPage() {
             <strong className="chooser-continue-name">{latest.name}</strong>
             <span className="chooser-continue-meta">
               {savedGameModeLabels([latest])[latest.id]} · {latest.playerCount} players ·
-              turn {latest.turnNumber}
+              Turn {latest.turnNumber}
             </span>
           </Link>
         ) : null}

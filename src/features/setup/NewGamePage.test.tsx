@@ -20,7 +20,7 @@ describe('NewGamePage', () => {
     fireEvent.change(nameInputs[1], { target: { value: 'Asha' } });
     fireEvent.click(screen.getByRole('button', { name: /Create game/i }));
 
-    expect(screen.getByText(/Player names must be unique/i)).toBeInTheDocument();
+    expect(screen.getByText(/Two players cannot share a name/i)).toBeInTheDocument();
   });
 });
 

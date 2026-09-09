@@ -105,7 +105,7 @@ export const TURN_RULE_COVERAGE: RuleCoverageMap = {
   '7.6': ['charges Super Tax'],
   '7.7': [
     'holds the drawn card as a decision without applying it',
-    'shows a drawn card and applies it only on OK',
+    'shows a drawn card and applies it only on Continue',
   ],
   '7.8': ['logs the pass-GO salary with the theme currency, not a hardcoded symbol'],
   '7.9': ['pays nothing at all for Free Parking'],

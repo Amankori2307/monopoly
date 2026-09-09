@@ -26,9 +26,9 @@ const describe = (space: BoardSpace, currencySymbol: string): string | null => {
     case SpaceKind.Go:
       return `Collect ${formatMoney(GO_SALARY_DISPLAY_AMOUNT, currencySymbol)} when you land on or pass GO.`;
     case SpaceKind.FreeParking:
-      return 'Free Parking has no effect in this ruleset.';
+      return 'Free Parking has no effect in these rules.';
     case SpaceKind.Jail:
-      return 'Just visiting is safe. Players sent here must use a jail exit option on their turn.';
+      return 'Just visiting is safe. A player sent here has to get out on their turn: roll doubles, pay the fine, or use a card.';
     case SpaceKind.GoToJail:
       return 'Move directly to Jail. Do not collect salary for passing GO.';
     default:

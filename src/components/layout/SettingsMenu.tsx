@@ -47,7 +47,7 @@ export function SettingsMenu({
       <button
         aria-expanded={isOpen}
         aria-haspopup="true"
-        aria-label={`Settings - sound ${
+        aria-label={`Settings: sound ${
           soundEnabled ? 'on' : 'off'
         }, appearance: ${appearanceLabel}`}
         className="settings-trigger"
@@ -73,11 +73,12 @@ export function SettingsMenu({
             <span id="app-settings-sound">Sound</span>
             {/* An icon, so the button needs its own accessible name: the label
                 beside it is not the control's name, and a name must never live
-                in visible text alone (CLAUDE.md section 8). */}
+                in visible text alone (CLAUDE.md section 8). The name is the
+                thing, not its state - aria-pressed says which way it is set,
+                and the label used to announce that a second time and then
+                contradict it with an imperative ("Sound is on. Mute it."). */}
             <button
-              aria-label={
-                soundEnabled ? 'Sound is on. Mute it.' : 'Sound is muted. Turn it on.'
-              }
+              aria-label="Sound"
               aria-pressed={soundEnabled}
               className="secondary-button settings-icon-button"
               data-testid={TEST_IDS.soundToggle}

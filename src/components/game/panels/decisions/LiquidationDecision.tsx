@@ -54,7 +54,9 @@ export function LiquidationDecision({
 
   return (
     <div className="liquidation" data-testid={TEST_IDS.liquidationDecision}>
-      <p className="eyebrow">Asset liquidation</p>
+      {/* Not "Asset liquidation": accountancy, and the only jargon eyebrow
+          in the app, sitting beside In Jail, Game over and Trade offer. */}
+      <p className="eyebrow">Raise cash</p>
       <h2>
         {playerName} owes {formatMoney(amountDue, currencySymbol)}
       </h2>
@@ -66,7 +68,7 @@ export function LiquidationDecision({
       {queuedDebtCount > 0 ? (
         <p className="liquidation-queued" data-testid={TEST_IDS.liquidationQueued}>
           {queuedDebtCount} more debt{queuedDebtCount > 1 ? 's' : ''} from the same card
-          {queuedDebtCount > 1 ? ' are' : ' is'} waiting behind this one.
+          still to settle.
         </p>
       ) : null}
 

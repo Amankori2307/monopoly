@@ -121,7 +121,7 @@ describe('AuctionDecision', () => {
   it('shows the active bidder what they have to spend', () => {
     renderPanel();
 
-    expect(screen.getByText(/holds ₹1500/)).toBeInTheDocument();
+    expect(screen.getByText(/cash ₹1500/)).toBeInTheDocument();
   });
 
   // No roster: who is out is what the log's own "passed" lines say.

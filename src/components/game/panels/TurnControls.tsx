@@ -54,7 +54,10 @@ export function TurnControls({
           onClick={onEndTurn}
           type="button"
         >
-          {canRollAgain ? 'Take extra roll' : 'Done'}
+          {/* 'Done' - done with what? Every other action here is verb plus
+              object, including the other half of this same ternary, and this
+              is the highest-consequence routine click on the screen. */}
+          {canRollAgain ? 'Take extra roll' : 'End turn'}
         </button>
       ) : null}
       <DiceDock

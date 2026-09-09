@@ -76,8 +76,11 @@ test('shows a pending decision as a blocking centre modal', async ({ page }) => 
   await expect(modal).toBeVisible();
   // A drawn Chance or Community Chest card is a blocking decision too, so it
   // belongs in this list - it is one of the modals a roll can raise.
+  // Every alternative here must be copy that actually exists: "Buy or
+  // auction" and "Jail choice" had been gone for a while and the assertion was
+  // passing on the others, which is a test proving less than it looks.
   await expect(modal).toContainText(
-    /Buy or auction|Auction|Jail choice|liquidation|Chance|Community Chest/i
+    /send it to auction|Auction|In Jail|Raise cash|Chance|Community Chest/i
   );
 
   // Not dismissible: Escape leaves it in place.
@@ -255,7 +258,7 @@ test('always leaves the player at least one action', async ({ page }) => {
     // catch.
     const candidates = page.locator('button:not([disabled]):not(.toast)').filter({
       hasText:
-        /Roll dice|Roll for doubles|Done|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^OK$/,
+        /Roll dice|Roll for doubles|End turn|Take extra roll|Buy|Decline|Pay \u20b9|Use jail card|Submit bid|Pass|^Continue$/,
     });
     const count = await candidates.count();
     if (count === 0) {

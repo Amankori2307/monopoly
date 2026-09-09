@@ -13,7 +13,7 @@ interface StreetDeedProps {
 /** Rent rows in board order. Kept as data so the markup stays a single loop. */
 const rentRows = (space: StreetSpace): Array<[string, number]> => [
   ['Rent', space.rents.baseRent],
-  ['With whole colour set', space.rents.monopolyRent],
+  ['With whole color set', space.rents.monopolyRent],
   ['With 1 house', space.rents.with1House],
   ['With 2 houses', space.rents.with2Houses],
   ['With 3 houses', space.rents.with3Houses],

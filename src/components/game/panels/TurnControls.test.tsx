@@ -50,10 +50,10 @@ describe('TurnControls', () => {
     );
   });
 
-  it('says Done when there is no extra roll', () => {
+  it('says End turn when there is no extra roll', () => {
     renderControls({ canEndTurn: true });
 
-    expect(screen.getByTestId(TEST_IDS.endTurnButton)).toHaveTextContent('Done');
+    expect(screen.getByTestId(TEST_IDS.endTurnButton)).toHaveTextContent('End turn');
   });
 
   it('disables the roll button when rolling is not available', () => {

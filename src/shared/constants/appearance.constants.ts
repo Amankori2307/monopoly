@@ -17,7 +17,7 @@ export const APPEARANCES = [
   {
     id: 'edition',
     label: 'Match the edition',
-    description: "The edition's own colours",
+    description: "The edition's own colors",
   },
   {
     id: 'aesthetic',

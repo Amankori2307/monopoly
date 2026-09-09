@@ -64,7 +64,11 @@ disagree. Two things hold them together, both enforced by
   appears there — change `STARTING_CASH` and it fails naming the constant.
 
 Prose is not diffable, so wording remains a human responsibility: change a rule in one place and
-change it in the other.
+change it in the other. What the copy should sound like is written down in
+[conventions.md](../conventions.md) section 3d, including the rule this page exists to obey — a
+kind of square is never spelled into prose, it comes from `nouns`. Ten places in the FAQ, the
+trading section and the buildings section were still saying "site" after the first pass; they say
+whatever the edition says now.
 
 ## Known gaps
 

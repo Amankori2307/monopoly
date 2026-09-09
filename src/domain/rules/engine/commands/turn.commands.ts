@@ -36,7 +36,9 @@ export const turnCommands: CommandHandlers = {
     let nextState = state;
     const activePlayer = getActivePlayer(nextState);
     if (activePlayer.inJail) {
-      throw new Error('Player must choose a Jail action first.');
+      throw new Error(
+        `${getActivePlayer(state).name} must choose how to leave Jail first.`
+      );
     }
     if (
       nextState.turn.phase !== TurnPhase.AwaitRoll &&

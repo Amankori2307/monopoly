@@ -179,7 +179,7 @@ export const advanceGame = async (
           if ((button as HTMLButtonElement).disabled) {
             return false;
           }
-          return /Roll dice|Roll for doubles|Done|Take extra roll|Buy for|Decline|^OK$|Pay |Use jail card|Submit bid|^Pass$/.test(
+          return /Roll dice|Roll for doubles|End turn|Take extra roll|Buy for|Decline|^Continue$|Pay |Use jail card|Submit bid|^Pass$/.test(
             button.textContent?.trim() ?? ''
           );
         }),

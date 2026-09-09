@@ -10,6 +10,7 @@ import { saveGame } from '../persistence/persistence';
 import type { LobbySeat } from './lobby.interfaces';
 import { MAX_PLAYERS } from '../../domain/constants/game.constants';
 import { nextFreeSeatId } from './lobby.utils';
+import { TABLE_MESSAGES } from './multiplayer.constants';
 import { onlineConfig } from './onlineConfig.utils';
 import { createJoinCode, createOnlineSession } from './onlineSession';
 import { readDeviceId, writeJoinCode, writeSeatClaim } from './seatClaim.utils';
@@ -41,7 +42,7 @@ const PROTOCOL_VERSION = 1;
 /** `null` when this build has no backend configured - see onlineConfig. */
 const requireConfig = () => {
   if (!onlineConfig) {
-    throw new Error('This build has no game server configured.');
+    throw new Error(TABLE_MESSAGES.offlineBuild);
   }
   return onlineConfig;
 };
@@ -118,7 +119,7 @@ export const openOnlineTable =
     // a link with a friend running an older or offline copy. Say so, rather
     // than throwing out of an effect and leaving a blank table on screen.
     if (!onlineConfig) {
-      dispatch(setLobbyError('This copy of the game cannot play online.'));
+      dispatch(setLobbyError(TABLE_MESSAGES.offlineBuild));
       return 'missing';
     }
     const config = onlineConfig;
@@ -135,7 +136,7 @@ export const openOnlineTable =
       row = (await rpc.fetchGame(config, { gameId, joinCode })) as typeof row;
     } catch (error) {
       dispatch(setConnection(ConnectionState.Offline));
-      dispatch(setLobbyError('Could not reach the game server.'));
+      dispatch(setLobbyError(TABLE_MESSAGES.unreachable));
       logger.error('multiplayer', 'could not open the table', { error: String(error) });
       return 'missing';
     }
@@ -143,7 +144,7 @@ export const openOnlineTable =
     if (!row) {
       // The same answer for a wrong code and an unknown game, deliberately.
       dispatch(setConnection(ConnectionState.Offline));
-      dispatch(setLobbyError('No game with that code.'));
+      dispatch(setLobbyError(TABLE_MESSAGES.noSuchCode));
       return 'missing';
     }
 
@@ -182,7 +183,7 @@ export const claimLobbySeat =
       nextFreeSeatId(existing.filter((seat) => seat.deviceId !== deviceId));
 
     if (!seatId) {
-      dispatch(setLobbyError('This table is full.'));
+      dispatch(setLobbyError(TABLE_MESSAGES.tableFull));
       return;
     }
 
@@ -202,12 +203,12 @@ export const claimLobbySeat =
     })) as { seats: LobbySeat[]; phase: string; full?: boolean } | null;
 
     if (!row) {
-      dispatch(setLobbyError('That game is no longer there.'));
+      dispatch(setLobbyError(TABLE_MESSAGES.tableGone));
       return;
     }
     if (row.full) {
       dispatch(setLobby({ seats: row.seats, phase: 'lobby' }));
-      dispatch(setLobbyError('This table is full.'));
+      dispatch(setLobbyError(TABLE_MESSAGES.tableFull));
       return;
     }
 

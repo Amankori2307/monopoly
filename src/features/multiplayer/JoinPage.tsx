@@ -48,9 +48,7 @@ export function JoinPage() {
         // with that code" whatever the cause, which is a lie when the real
         // reason is that this build has no server to ask.
         setError(
-          isOnlineEnabled()
-            ? 'No game with that code. Check it and try again.'
-            : TABLE_MESSAGES.offlineBuild
+          isOnlineEnabled() ? TABLE_MESSAGES.noSuchCode : TABLE_MESSAGES.offlineBuild
         );
         return;
       }
@@ -62,7 +60,7 @@ export function JoinPage() {
           : `/game/${found.gameId}`
       );
     } catch {
-      setError('Could not reach the game server. Try again in a moment.');
+      setError(TABLE_MESSAGES.unreachable);
     } finally {
       setIsJoining(false);
     }

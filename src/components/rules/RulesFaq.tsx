@@ -34,9 +34,9 @@ export function RulesFaq() {
         <dt>What happens to my earlier rolls if the third one jails me?</dt>
         <dd>
           They still happened. Only the {DOUBLES_BEFORE_JAIL}rd roll is discarded — you
-          move nowhere, resolve no space, and collect no GO salary for it. A site you
-          bought on your first roll is still yours, and rent you paid on your second stays
-          paid. You simply end up in Jail having done all of it.
+          move nowhere, resolve no space, and collect no GO salary for it. A {nouns.site}{' '}
+          you bought on your first roll is still yours, and rent you paid on your second
+          stays paid. You simply end up in Jail having done all of it.
         </dd>
 
         <dt>I rolled a double and landed in Jail. Do I roll again?</dt>
@@ -55,33 +55,34 @@ export function RulesFaq() {
           count towards the {DOUBLES_BEFORE_JAIL}-doubles rule.
         </dd>
 
-        <dt>Can I sell a site I own?</dt>
+        <dt>Can I sell a {nouns.site} I own?</dt>
         <dd>
           Only to another player, at any price you both agree. The Bank never buys
           property back, and you cannot auction property you own — an auction only ever
-          happens when a player declines an <em>unowned</em> property. A mortgaged site
-          can be traded; a site with buildings on it cannot until they are sold.
+          happens when a player declines an <em>unowned</em> property. A mortgaged{' '}
+          {nouns.site} can be traded; a {nouns.site} with buildings on it cannot until
+          they are sold.
         </dd>
 
-        <dt>Can I mortgage a site with houses on it?</dt>
+        <dt>Can I mortgage a {nouns.site} with houses on it?</dt>
         <dd>
-          No. Sell every building in that colour set back to the Bank first. The same
+          No. Sell every building in that color set back to the Bank first. The same
           restriction blocks trading it.
         </dd>
 
         <dt>What do buildings sell for?</dt>
         <dd>
           Half what you paid, to the Bank only — never to another player. Selling must be
-          even across the colour set, the same rule as building, in reverse.
+          even across the color set, the same rule as building, in reverse.
         </dd>
 
         <dt>What does it cost to lift a mortgage?</dt>
         <dd>The mortgage value plus {MORTGAGE_INTEREST_PERCENT}%.</dd>
 
-        <dt>Does a mortgaged site still count towards my colour set?</dt>
+        <dt>Does a mortgaged {nouns.site} still count towards my color set?</dt>
         <dd>
-          Yes. Mortgaging is a loan, not a sale. Own all three of a colour set and
-          mortgage one, and the other two still charge doubled rent. The same applies to
+          Yes. Mortgaging is a loan, not a sale. Own all three of a color set and mortgage
+          one, and the other two still charge doubled rent. The same applies to
           {nouns.railway} and utility counts.
         </dd>
 
@@ -94,8 +95,8 @@ export function RulesFaq() {
       </dl>
 
       <p className="source-note">
-        Every rule on this page is playable. Manage a site you own by clicking it on the
-        board.
+        Every rule on this page is playable. Manage a {nouns.site} you own by clicking it
+        on the board.
       </p>
     </section>
   );

@@ -16,7 +16,7 @@ export function NotFoundPage() {
     <AppShell editionId={defaultTheme.id}>
       <div className="page">
         <section className="panel" data-testid={TEST_IDS.notFoundPanel}>
-          <p className="eyebrow">Nothing here</p>
+          <p className="eyebrow">Not found</p>
           <h1>That page does not exist</h1>
           <p className="masthead-lede">
             The link may be out of date, or mistyped. Nothing has happened to your saved

@@ -120,7 +120,7 @@ describe('going to jail ends the turn', () => {
   // Regression: a Chance card that jails the player used to route back through
   // resolveCurrentSpace, which reassigned the phase from the doubles roll and
   // handed a jailed player an extra roll. The next roll then hit the engine's
-  // "Player must choose a Jail action first" guard and threw.
+  // "must choose how to leave Jail first" guard and threw.
   const jailCardGame = () => {
     const game = createBaseGame();
     const activePlayerId = game.playerOrder[game.activePlayerIndex];
@@ -186,7 +186,7 @@ describe('going to jail ends the turn', () => {
 
     expect(() =>
       executeGameCommand(game, { type: GameCommandType.RollTurnDice })
-    ).toThrow('Player must choose a Jail action first.');
+    ).toThrow(/must choose how to leave Jail first/);
   });
 });
 
@@ -4903,7 +4903,7 @@ describe('doubles, without a Speed Die', () => {
         { type: GameCommandType.RollTurnDice },
         scriptedRolls([{ white: [4, 4] }])
       )
-    ).toThrow(/Jail action first/i);
+    ).toThrow(/must choose how to leave Jail first/i);
   });
 
   it('grants an ordinary double after leaving Jail with a card', () => {

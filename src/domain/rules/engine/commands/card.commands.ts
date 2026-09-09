@@ -142,7 +142,7 @@ export const cardCommands: CommandHandlers = {
     let nextState = state;
     const decision = nextState.pendingDecision;
     if (decision.type !== PendingDecisionType.CardDraw) {
-      throw new Error('There is no drawn card to acknowledge');
+      throw new Error('There is no drawn card to acknowledge.');
     }
 
     // Clear the decision *before* applying. A MoveTo card routes back through

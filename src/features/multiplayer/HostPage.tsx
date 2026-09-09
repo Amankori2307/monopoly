@@ -30,7 +30,7 @@ export function HostPage() {
   if (!isOnlineEnabled()) {
     return (
       <AppShell editionId={form.themeId}>
-        <NoServerPanel title="This copy cannot host a game" />
+        <NoServerPanel title="This copy cannot play online" />
       </AppShell>
     );
   }

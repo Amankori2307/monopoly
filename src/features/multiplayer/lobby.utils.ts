@@ -40,10 +40,10 @@ export const claimBlockedReason = (
     return 'This table is full';
   }
   if (held.some((seat) => seat.tokenId === tokenId)) {
-    return 'Somebody has already taken that token';
+    return 'That token is taken';
   }
   if (held.some((seat) => seat.name.trim().toLowerCase() === name.trim().toLowerCase())) {
-    return 'Somebody is already using that name';
+    return 'That name is taken';
   }
   return null;
 };
@@ -51,10 +51,10 @@ export const claimBlockedReason = (
 /** Why the game cannot start yet, or null when it can. */
 export const startBlockedReason = (seats: LobbySeat[]): string | null => {
   if (seats.length < MIN_PLAYERS) {
-    return `Waiting for players - ${MIN_PLAYERS} is the minimum`;
+    return `${MIN_PLAYERS} players are needed to start`;
   }
   if (seats.length > MAX_PLAYERS) {
-    return `Too many players - ${MAX_PLAYERS} is the maximum`;
+    return `${MAX_PLAYERS} players is the most a table holds`;
   }
   return null;
 };

@@ -34,7 +34,7 @@ export function CardDrawDecision({
         onClick={onAcknowledge}
         type="button"
       >
-        OK
+        Continue
       </button>
     </div>
   );

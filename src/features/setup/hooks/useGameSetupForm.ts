@@ -139,7 +139,7 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
       setPlayerCountState(clamped);
       setPlayerCountNotice(
         Number.isFinite(value) && value !== clamped
-          ? `This game takes ${MIN_PLAYERS} to ${MAX_PLAYERS} players, so that is now ${clamped}.`
+          ? `A game takes ${MIN_PLAYERS} to ${MAX_PLAYERS} players. Set to ${clamped}.`
           : null
       );
     },

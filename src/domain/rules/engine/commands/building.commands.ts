@@ -175,7 +175,7 @@ export const buildingCommands: CommandHandlers = {
       decision.buildingKind
     );
     if (!legalSites.some((site) => site.spaceId === command.spaceId)) {
-      throw new Error('That site cannot take this building.');
+      throw new Error('That square cannot take this building.');
     }
 
     const space = getSpaceById(nextState, command.spaceId);

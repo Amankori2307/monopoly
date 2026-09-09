@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
+import { TABLE_MESSAGES } from './multiplayer.constants';
 
 interface NoServerPanelProps {
   title: string;
@@ -17,10 +18,12 @@ export function NoServerPanel({ title }: NoServerPanelProps) {
     <div className="page">
       <section className="panel" data-testid={TEST_IDS.noServerPanel}>
         <h1>{title}</h1>
+        {/* It said "this copy was built without a game server, so there is
+            nothing to host a table on" - three clauses of build engineering for
+            somebody who typed a URL. TABLE_MESSAGES already had the sentence. */}
         <p className="masthead-lede">
-          This copy was built without a game server, so there is nothing to host a table
-          on. Everything else works: a game on this device plays exactly the same, and
-          saves itself as you go.
+          {TABLE_MESSAGES.offlineBuild} A game on this device plays exactly the same, and
+          saves as you go.
         </p>
         <Link className="primary-button" to="/new">
           Play on this device

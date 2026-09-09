@@ -39,7 +39,7 @@ export const joinBlockedReason = (code: string): string | null => {
     return 'Enter the code you were given';
   }
   if (normalised.length < JOIN_CODE_LENGTH) {
-    return `A code is ${JOIN_CODE_LENGTH} characters`;
+    return `A code is ${JOIN_CODE_LENGTH} characters long`;
   }
   return null;
 };

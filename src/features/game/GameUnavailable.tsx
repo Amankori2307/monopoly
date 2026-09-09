@@ -14,7 +14,7 @@ export function GameUnavailable({ loadError }: GameUnavailableProps) {
         <h1>Saved game unavailable</h1>
         <p>{loadError ?? 'This game could not be loaded.'}</p>
         <Link className="primary-button" to="/">
-          Back to home
+          Back to games
         </Link>
       </div>
     </AppShell>
