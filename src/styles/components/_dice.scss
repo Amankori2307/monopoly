@@ -1,4 +1,5 @@
 @use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
 
 // Sits in the sidebar beside the board with no panel of its own - the dice and
 // the roll button are the only chrome.
@@ -45,7 +46,11 @@
   }
 
   &.is-rolling {
-    animation: dice-tumble 0.16s linear infinite;
+    // This had no prefers-reduced-motion block anywhere, and it is the one
+    // animation in the app that never stops on its own.
+    @include m.motion {
+      animation: dice-tumble t.$duration-fast linear infinite;
+    }
   }
 }
 

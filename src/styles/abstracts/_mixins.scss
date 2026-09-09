@@ -6,6 +6,24 @@
   }
 }
 
+/// Motion, only for somebody who has not asked for less of it.
+///
+/// The polarity is inverted on purpose. Six partials each carried a
+/// `prefers-reduced-motion: reduce` block undoing a transition declared
+/// elsewhere, which means forgetting the block is the default - and the dice
+/// proved it: `dice-tumble ... infinite` had no block anywhere, an endlessly
+/// spinning animation being exactly the case the query exists for.
+///
+/// Wrap the motion instead, and the still state is what you get for free.
+///
+/// @example scss
+///   .card { @include m.motion { transition: transform t.$duration-fast; } }
+@mixin motion {
+  @media (prefers-reduced-motion: no-preference) {
+    @content;
+  }
+}
+
 /// The one focus treatment.
 ///
 /// `components/_buttons.scss` had NO `:focus-visible` at all, so the app's

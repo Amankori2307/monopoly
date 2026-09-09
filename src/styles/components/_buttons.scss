@@ -26,9 +26,11 @@
   // weight is what makes it read as pressable rather than as prose.
   font-weight: t.$weight-heavy;
   text-decoration: none;
-  transition:
-    transform 0.16s ease,
-    box-shadow 0.16s ease;
+  @include m.motion {
+    transition:
+      transform t.$duration-fast t.$ease-plain,
+      box-shadow t.$duration-fast t.$ease-plain;
+  }
 
   // :not(:disabled) - the unqualified hover lifted a disabled button too, and
   // the auction panel carried a rule undoing exactly that.

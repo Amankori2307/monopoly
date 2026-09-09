@@ -215,9 +215,11 @@
   max-height: t.$holdings-peek;
   overflow: hidden;
   box-shadow: t.$elevation-tuck var(--shadow-ink);
-  transition:
-    max-height 0.18s ease,
-    box-shadow 0.18s ease;
+  @include m.motion {
+    transition:
+      max-height t.$duration-base t.$ease-plain,
+      box-shadow t.$duration-base t.$ease-plain;
+  }
 
   & + & {
     margin-top: -1 * t.$holdings-tuck;

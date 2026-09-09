@@ -62,7 +62,9 @@
   max-height: t.$holdings-peek;
   overflow: hidden;
   box-shadow: t.$elevation-tuck var(--shadow-ink);
-  transition: transform 0.18s ease;
+  @include m.motion {
+    transition: transform t.$duration-base t.$ease-plain;
+  }
 
   & + & {
     margin-top: -1 * t.$holdings-tuck;
@@ -124,11 +126,5 @@
 @include m.below(t.$breakpoint-mobile) {
   .holdings-stack-card {
     width: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .holdings-stack-card {
-    transition: none;
   }
 }

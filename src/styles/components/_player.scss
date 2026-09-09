@@ -51,13 +51,17 @@
   position: relative;
   max-height: t.$stack-expanded-max-height;
   overflow: hidden;
-  transition:
-    max-height 0.32s cubic-bezier(0.22, 0.7, 0.3, 1),
-    opacity 0.24s ease,
-    margin-top 0.32s cubic-bezier(0.22, 0.7, 0.3, 1),
-    margin-inline 0.32s cubic-bezier(0.22, 0.7, 0.3, 1),
-    box-shadow 0.32s ease,
-    opacity 0.28s ease;
+  // One entry per property. This listed `opacity` TWICE - 0.24s and then
+  // 0.28s - and the later one won, so the first was dead and the card's
+  // opacity ran on a duration nothing else in the list shared.
+  @include m.motion {
+    transition:
+      max-height t.$duration-slow t.$ease-standard,
+      opacity t.$duration-slow t.$ease-plain,
+      margin-top t.$duration-slow t.$ease-standard,
+      margin-inline t.$duration-slow t.$ease-standard,
+      box-shadow t.$duration-slow t.$ease-plain;
+  }
 }
 
 .player-stack.is-collapsed {
@@ -158,12 +162,6 @@
   @include m.focus-ring;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .player-stack .player-card {
-    transition: none;
-  }
-}
-
 .player-list {
   gap: t.$space-2;
 }
@@ -248,18 +246,14 @@
   // the leading a type role would impose and this has no use for.
   font-size: t.$glyph-md;
   line-height: 1;
-  transition: background 120ms ease;
+  @include m.motion {
+    transition: background t.$duration-fast t.$ease-plain;
+  }
 }
 
 .player-card-open:hover .player-card-chevron,
 .player-card-open:focus-visible .player-card-chevron {
   background: var(--button-secondary-hover);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .player-card-chevron {
-    transition: none;
-  }
 }
 
 // Secondary figures, inline. These used to borrow `.player-metrics` from the

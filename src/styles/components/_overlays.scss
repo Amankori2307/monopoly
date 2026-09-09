@@ -26,14 +26,18 @@
 }
 
 .decision-backdrop {
-  animation: overlay-fade 0.18s ease;
+  @include m.motion {
+    animation: overlay-fade t.$duration-base t.$ease-plain;
+  }
 }
 
 .decision-modal {
   width: min(100%, 460px);
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
-  animation: modal-rise 0.22s cubic-bezier(0.22, 0.7, 0.3, 1);
+  @include m.motion {
+    animation: modal-rise t.$duration-base t.$ease-standard;
+  }
 
   .decision-card {
     margin: 0;
@@ -65,7 +69,9 @@
   // Belt and braces with the <fieldset disabled>: that makes every control
   // inert, this catches the parts of a panel that are not controls at all.
   pointer-events: none;
-  animation: modal-rise 0.22s cubic-bezier(0.22, 0.7, 0.3, 1);
+  @include m.motion {
+    animation: modal-rise t.$duration-base t.$ease-standard;
+  }
 
   fieldset {
     margin: 0;
@@ -116,7 +122,9 @@
   display: flex;
   justify-content: flex-end;
   background: var(--scrim-soft);
-  animation: overlay-fade 0.18s ease;
+  @include m.motion {
+    animation: overlay-fade t.$duration-base t.$ease-plain;
+  }
 }
 
 .side-drawer {
@@ -134,7 +142,9 @@
   border-left: 1px solid var(--border-subtle);
   background: var(--surface-panel);
   box-shadow: t.$elevation-drawer var(--shadow-ink-strong);
-  animation: drawer-slide 0.24s cubic-bezier(0.22, 0.7, 0.3, 1);
+  @include m.motion {
+    animation: drawer-slide t.$duration-slow t.$ease-standard;
+  }
 }
 
 .side-drawer-header {
@@ -258,15 +268,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .decision-backdrop,
-  .decision-modal,
-  .drawer-backdrop,
-  .side-drawer {
-    animation: none;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Toast stack
 //
@@ -334,7 +335,9 @@
   color: var(--text-body);
   @include t.text(body-sm);
   text-align: left;
-  animation: toast-in 0.2s cubic-bezier(0.22, 0.7, 0.3, 1);
+  @include m.motion {
+    animation: toast-in t.$duration-base t.$ease-standard;
+  }
 
   &:hover {
     background: var(--surface-muted);
@@ -407,12 +410,6 @@
 .card-draw .primary-button {
   margin-top: t.$space-2;
   min-height: 48px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .toast {
-    animation: none;
-  }
 }
 
 // ---------------------------------------------------------------------------

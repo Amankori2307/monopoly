@@ -712,14 +712,10 @@
     // Cast shadow, so the piece sits above the board.
     t.$elevation-1 var(--shadow-ink-strong);
   transform: translate(-50%, -50%);
-  transition:
-    left t.$token-move-duration t.$token-move-easing,
-    top t.$token-move-duration t.$token-move-easing;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .token-chip {
-    transition: none;
+  @include m.motion {
+    transition:
+      left t.$token-move-duration t.$token-move-easing,
+      top t.$token-move-duration t.$token-move-easing;
   }
 }
 

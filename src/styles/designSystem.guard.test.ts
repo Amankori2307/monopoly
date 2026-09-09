@@ -381,6 +381,43 @@ describe('the design system', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('takes every duration and easing from a token', () => {
+    const offenders = files.flatMap((file) =>
+      declarations(file.scss)
+        .filter(([property]) => /^(transition|animation)/.test(property))
+        .filter(([, value]) => /(?<![\w$.])\d*\.?\d+m?s\b|cubic-bezier\(/.test(value))
+        .map(([property, value]) => `${file.name}: ${property}: ${value.slice(0, 48)}`)
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('asks before it animates', () => {
+    // Every transition and animation sits inside motion(), so the still state
+    // is what a reader who asked for less of it gets by default. Six partials
+    // used to undo their motion in a separate `reduce` block, which means
+    // forgetting the block was the default - and the dice proved it: an
+    // infinite tumble with no block anywhere.
+    const offenders = files.flatMap((file) => {
+      const lines = strip(file.scss).split('\n');
+      let depth = 0;
+      let motionDepth: number | null = null;
+      return lines.flatMap((line, index) => {
+        if (line.includes('@include m.motion')) motionDepth = depth;
+        const opened = (line.match(/\{/g) ?? []).length;
+        const closed = (line.match(/\}/g) ?? []).length;
+        const before = depth;
+        depth += opened - closed;
+        if (motionDepth !== null && depth <= motionDepth) motionDepth = null;
+        const moving = /^\s*(transition|animation)\s*:/.test(line);
+        if (!moving || /:\s*none/.test(line)) return [];
+        return motionDepth === null && before > 0
+          ? [`${file.name}:${index + 1}: ${line.trim().slice(0, 44)} is outside motion()`]
+          : [];
+      });
+    });
+    expect(offenders).toEqual([]);
+  });
+
   it('takes every radius from a token', () => {
     // The sharp system is a decision, and the four physical pieces are its
     // documented exception - a pawn, a die, its pips and an owner's dot are
