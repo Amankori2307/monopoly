@@ -46,6 +46,14 @@ UI supplied one.
 
 ## Key decisions
 
+- **The card is one rectangle at a 2:3 ratio**, sized per tier (280×420, and 200×300 below
+  `$breakpoint-mobile`) with the height derived from `aspect-ratio` rather than written down
+  twice. Every kind pads out to it and leaves the bottom blank — see
+  [design-system.md](../design-system.md#the-site-card-is-one-rectangle-at-one-ratio).
+- **The rent tiers are drawn with the board's own house and hotel pieces**, with the full label
+  kept `visually-hidden` beside them. "With 3 houses" was the widest thing on the card, and its
+  width is what had been forcing the rows to wrap.
+
 - **Actions not yet built are rendered disabled with a reason, not hidden.** The panel says what will
   be possible, which is how the action rail already behaves. Deleting an entry from
   `SCAFFOLDED_COMMANDS` lights it up with no UI change — that is exactly how mortgage and redeem

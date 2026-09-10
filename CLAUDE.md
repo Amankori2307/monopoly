@@ -720,6 +720,21 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   sweep on all five routes - so pin `min-width` as well as `min-height`; and a text field under
   16px makes **iOS zoom the whole page on focus**, so `.text-input` pins `$input-font-phone`
   against the scale rather than inheriting it.
+- **The site card is ONE rectangle, at ONE ratio, and both axes are the rule.** Same width and
+  same height for every square; a square with less to say leaves the bottom blank. The ratio is
+  **structural** - `.deed-card` sets `aspect-ratio: 2 / 3` and takes only a width per tier
+  (`$deed-card-width` 280, `$deed-card-width-phone` 200), so the height is derived and the two
+  cannot drift. Every container is derived from the card and never the reverse: the drawer is one
+  card plus gutters, the buy modal two cards plus a gap, the stacked peek clears the card's own
+  head. Two failures to remember: a rule about ONE SIDE is half a rule - `board.spec.ts` checked
+  height and not width for months - and the phone had no check at all, which is precisely where it
+  drifted into seven different sizes. Both axes, every kind, every tier.
+- **The rent schedule is drawn, not written.** "With 3 houses" is the widest thing on the card, and
+  that width is what forced the rows to wrap and the card to grow with them; three `HousePiece`
+  SVGs - the same ones standing on the board's ribbons - are narrower and read faster. It is what
+  let the card come down from 340 wide to 280. **The full label stays in the DOM** on every row,
+  `visually-hidden` beside the icons: a rent tier read aloud as "three" is not a rent tier, and it
+  is what keeps every existing test querying by text honest.
 - **`width: 100%` on the deed is right only where a WRAPPER sets the width.** Below
   `$breakpoint-mobile` `.deed-card` is `width: 100%`, which the holdings drawer and the trade
   stack both want - they set the width themselves. Everywhere else it resolves against whatever

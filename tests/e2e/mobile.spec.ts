@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MAX_PLAYERS } from '../../src/domain/constants/game.constants';
-import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
+import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { advanceGame, startGame, VIEWPORTS } from './helpers';
 
 /**
@@ -921,91 +921,112 @@ test.describe('an Android phone', () => {
 
   // The primary action of the tallest decision, reachable without a scroll.
   /**
-   * The title deed, at about half the board - and still whole.
+   * The card is ONE rectangle, and every square gets the same one.
    *
-   * It measured 300x360 on a 360px phone: taller than the 336px BOARD it
-   * covers, with 183px of that being seven rent rows at 26px each, of which
-   * 8px a row was padding. Nothing was pinning its size on a phone at all -
-   * below $breakpoint-mobile it is `width: 100%; height: auto`, so it was
-   * simply however tall its contents came out.
+   * This is the guard that did not exist, and its absence is the whole story.
+   * The desktop card has been uniform for months because board.spec.ts checks
+   * it; the phone card had `width: 100%; height: auto` and nothing looking at
+   * it, so it sized to whatever container it landed in and to whatever the
+   * square happened to say. A street came out 244px tall and Free Parking
+   * 106, one card ran off the right edge, and each of the two decisions
+   * rendered it a different width again.
    *
-   * Both halves are asserted on purpose. Small is only correct if nothing was
-   * dropped to get there: a card that fits by losing the rent schedule has
-   * failed at the one job it has.
+   * Both axes and every kind. A rule about one side is half a rule, and a
+   * rule about one kind is no rule at all.
    */
-  test('shows the whole title deed in about half the board', async ({ page }) => {
+  test('renders every space card as the same rectangle', async ({ page }) => {
     await startGame(page);
 
-    await page.getByRole('button', { name: /View details for Bhopal/ }).click();
-    await expect(page.getByTestId(TEST_IDS.spaceDetailCard)).toBeVisible();
+    // One of every kind, by index: names like "Chance" repeat on the board.
+    const samples: Record<string, number> = {
+      street: 39,
+      railway: 15,
+      utility: 12,
+      tax: 4,
+      chance: 7,
+      'community chest': 2,
+      corner: 20,
+    };
 
-    const measured = await page.evaluate(() => {
-      const deed = document.querySelector('.deed-card') as HTMLElement | null;
-      const board = document.querySelector('.board-card');
-      if (!deed || !board) return null;
-      const d = deed.getBoundingClientRect();
-      const b = board.getBoundingClientRect();
-      const close = document
-        .querySelector('.space-detail-close')
-        ?.getBoundingClientRect();
-      const stats = deed.querySelector('.deed-primary-stats')?.getBoundingClientRect();
-      return {
-        share: (d.width * d.height) / (b.width * b.height),
-        rentRows: deed.querySelectorAll('.rent-schedule > div').length,
-        text: deed.textContent ?? '',
-        hasFooter: deed.querySelector('.deed-footer') !== null,
-        // `overflow: hidden` on the card means anything too tall is cut
-        // silently rather than scrolled to.
-        clipped: deed.scrollHeight > deed.clientHeight + 1,
-        // The close button is 44px and absolutely placed; with the eyebrow
-        // gone it landed on top of "Mortgage value".
-        buttonOverlapsStats: Boolean(
-          close && stats && close.bottom > stats.top && close.left < stats.right
-        ),
-      };
-    });
+    const sizes: Record<string, string> = {};
+    let tallestContent = 0;
 
-    // Half the board, near enough - measured 59% here and 54% on a taller
-    // phone, where the board itself is bigger.
-    expect(measured?.share).toBeLessThanOrEqual(0.6);
-    expect(measured?.clipped).toBe(false);
-    expect(measured?.buttonOverlapsStats).toBe(false);
+    for (const [label, index] of Object.entries(samples)) {
+      await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, index)).click();
+      const card = page.getByTestId(TEST_IDS.spaceCard);
+      await expect(card).toBeVisible();
 
-    // And it still says everything a player opens it for.
-    expect(measured?.rentRows).toBe(7);
-    expect(measured?.hasFooter).toBe(true);
-    expect(measured?.text).toMatch(/Price/i);
-    expect(measured?.text).toMatch(/Mortgage value/i);
-    expect(measured?.text).toMatch(/With hotel/i);
+      const measured = await card.evaluate((element) => {
+        const el = element as HTMLElement;
+        // What the content WANTS, which is the only way to see a clip: the
+        // card is `overflow: hidden`, so anything too tall is cut silently.
+        // Release the ratio as well as the height - the height comes FROM
+        // `aspect-ratio` now, so clearing `height` alone releases nothing and
+        // the measurement is a tautology.
+        const height = el.style.height;
+        const overflow = el.style.overflow;
+        const ratio = el.style.aspectRatio;
+        el.style.height = 'auto';
+        el.style.overflow = 'visible';
+        el.style.aspectRatio = 'auto';
+        const natural = el.offsetHeight;
+        el.style.height = height;
+        el.style.overflow = overflow;
+        el.style.aspectRatio = ratio;
+        // offsetWidth/Height, not a bounding rect: the decision modal's
+        // `modal-rise` animation carries a transform, and a rect is scaled by
+        // it - the same trap the buy-button test below documents. It reported
+        // a 200x300 card as 197x296 mid-flight.
+        return { w: el.offsetWidth, h: el.offsetHeight, natural };
+      });
+
+      sizes[label] = `${measured.w}x${measured.h}`;
+      tallestContent = Math.max(tallestContent, measured.natural);
+
+      await page.getByRole('button', { name: 'Close space details' }).click();
+      await expect(card).toHaveCount(0);
+    }
+
+    // One rectangle, for all seven kinds.
+    expect(new Set(Object.values(sizes)).size, JSON.stringify(sizes)).toBe(1);
+
+    const [width, height] = Object.values(sizes)[0].split('x').map(Number);
+
+    // Vacuity guard: a card that measured zero everywhere would be uniform.
+    expect(width).toBeGreaterThan(100);
+
+    // 2:3, the same ratio the desktop card holds. Structural, not a token
+    // pair - the card sets `aspect-ratio` and takes only a width per tier.
+    expect(height / width).toBeCloseTo(1.5, 2);
+
+    // And the box is big enough for the fullest square on it. Uniform is only
+    // correct if the tallest content still fits: the alternative is a card
+    // that is the same size everywhere and silently cut on a street.
+    expect(tallestContent, `tallest content vs ${height}px card`).toBeLessThanOrEqual(
+      height
+    );
   });
 
   /**
-   * The deed is one object, at one size, wherever a phone shows it.
+   * The same rectangle in a DECISION, not just in the title-deed modal.
    *
-   * overlays.spec.ts asserts exactly this on a desktop - "renders the site
-   * card at one fixed size in the drawer and the modal" - and nothing said it
-   * on a phone, where the card has no fixed size at all. It drifted: below
-   * $breakpoint-mobile `.deed-card` is `width: 100%`, which is right where a
-   * WRAPPER sets the width (the holdings drawer, the trade stack) but resolves
-   * against whatever the parent happens to be everywhere else. In the
-   * title-deed modal that parent is `max-content` and gave ~246px; in the buy
-   * decision it is a `1fr` grid track and gave 302. Same card, two widths, in
-   * the two places a player sees it against the board.
+   * The two are different containers - the modal sizes to the card, a
+   * decision drops it into a `1fr` grid track - and that is exactly where the
+   * card drifted twice: `width: 100%` gave 246px in one and 302px in the
+   * other. Now the card carries its own width and neither container can
+   * change it.
    */
-  test('shows the deed at one width, in the modal and in a decision', async ({
-    page,
-  }) => {
+  test('shows the same rectangle in a decision as on the board', async ({ page }) => {
     await startGame(page);
 
-    // The title-deed modal, opened from the board.
     await page.getByRole('button', { name: /View details for Bhopal/ }).click();
     await expect(page.getByTestId(TEST_IDS.spaceDetailCard)).toBeVisible();
-    const fromBoard = await page
-      .locator('.deed-card')
-      .evaluate((el) => el.getBoundingClientRect().width);
+    const fromBoard = await page.locator('.deed-card').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return `${Math.round(r.width)}x${Math.round(r.height)}`;
+    });
     await page.getByRole('button', { name: 'Close space details' }).click();
 
-    // The same square's deed, inside a buy decision.
     for (let step = 0; step < 80; step += 1) {
       if (
         await page
@@ -1017,26 +1038,29 @@ test.describe('an Android phone', () => {
       if ((await advanceGame(page, { declineBuys: false })) === 'none') break;
     }
     await expect(page.locator('.buy-decision')).toBeVisible();
+
+    // Let `modal-rise` finish before measuring. It runs
+    // `transform: scale(0.98) -> none`, so a card caught mid-flight measures
+    // 196x294 rather than 200x300 - which is 0.98 of it, and reads exactly
+    // like a real 4px layout difference instead of a moving picture.
+    await page
+      .locator('.decision-modal')
+      .evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+
     const inDecision = await page
       .locator('.buy-decision .deed-card')
-      .evaluate((el) => el.getBoundingClientRect().width);
+      .evaluate((el: HTMLElement) => `${el.offsetWidth}x${el.offsetHeight}`);
 
-    // Vacuity guard: a card that measured zero in both places would pass.
-    expect(fromBoard).toBeGreaterThan(100);
+    // Exact, not approximate. Both are the same fixed token now, so any
+    // difference at all is the container leaking into the card again.
+    expect(inDecision).toBe(fromBoard);
 
-    // The sharp one, and the exact shape of the bug: the deed is sized by its
-    // CONTENT, not by the column it was dropped into.
+    // And it is not simply filling the column - the shape the bug took, and
+    // what "the two match" alone would still allow if both went full width.
     const column = await page
       .locator('.buy-decision')
-      .evaluate((el) => el.getBoundingClientRect().width);
-    expect(inDecision).toBeLessThan(column - 8);
-
-    // And the two are the same object. Not to the pixel: these are two
-    // different squares - the second is whatever the dice found - and
-    // max-content means a longer name or a wider rent label legitimately
-    // measures a little differently. The bug was 56px; this catches it with
-    // room for the content to vary.
-    expect(Math.abs(fromBoard - inDecision)).toBeLessThanOrEqual(24);
+      .evaluate((el: HTMLElement) => el.offsetWidth);
+    expect(Number(inDecision.split('x')[0])).toBeLessThan(column - 8);
   });
 
   test('keeps the buy button on screen at the tap floor', async ({ page }) => {

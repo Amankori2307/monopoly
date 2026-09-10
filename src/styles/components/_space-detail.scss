@@ -2,6 +2,11 @@
 @use '../abstracts/tokens' as t;
 
 .space-detail-backdrop {
+  // Published here rather than on the card, because .site-actions is the
+  // card's SIBLING and has to match its width - a custom property on the card
+  // itself would be invisible to it.
+  --deed-width: #{t.$deed-card-width};
+
   position: fixed;
   inset: 0;
   z-index: t.$z-space-detail;
@@ -59,11 +64,20 @@
   // negating this exact value, so a phone that tightens one has to tighten the
   // other or the colour strip stops lining up.
   --deed-pad: #{t.$deed-card-pad};
+  // The one number a tier sets. Everything else about the card's box follows.
+  // Declared here as well as on the backdrop, because the card is rendered in
+  // six places and only one of them is that modal.
+  --deed-width: #{t.$deed-card-width};
 
   // Positions the mortgage watermark, which is struck across the whole card.
   position: relative;
-  width: t.$deed-card-width;
-  height: t.$deed-card-height;
+  width: var(--deed-width);
+  // 2:3, and the height is never written down beside it. A printed title deed
+  // is a tall rectangle; the ratio is the thing that must not drift, so it is
+  // structural rather than a second token to keep in step. A tier changes the
+  // width and the height follows by construction.
+  aspect-ratio: 2 / 3;
+  height: auto;
   padding: var(--deed-pad);
   overflow: hidden;
   border: 1px solid var(--border-space);
@@ -85,13 +99,22 @@
   margin-top: auto;
 }
 
-// Only where a 420px card cannot fit does it stop being fixed.
+// A phone gets a SMALLER fixed rectangle, not a fluid one.
+//
+// It used to go `width: 100%; height: auto` here, which is the bug this whole
+// pass is about: the card then sized to whatever container it landed in and to
+// whatever the square happened to say, so a street was 244px tall and Free
+// Parking 106, and the two decisions rendered it 56px wider than the modal
+// did. Every square is one box; the ones with less to say leave the bottom
+// blank, exactly as they do on a desktop.
 @include m.below(t.$breakpoint-mobile) {
+  .space-detail-backdrop,
   .deed-card {
-    --deed-pad: #{t.$deed-card-pad-phone};
+    --deed-width: #{t.$deed-card-width-phone};
+  }
 
-    width: 100%;
-    height: auto;
+  .deed-card {
+    --deed-pad: #{t.$deed-card-pad-tight};
   }
 }
 
@@ -267,6 +290,10 @@
   }
 
   dt {
+    display: flex;
+    align-items: center;
+    gap: t.$space-hair;
+    min-height: t.$deed-tier-piece;
     color: var(--text-body);
     @include t.text(small);
   }
@@ -288,6 +315,26 @@
       font-weight: t.$weight-bold;
     }
   }
+}
+
+// A rent tier, drawn. The same pieces that stand on the board's colour
+// ribbons, so a house means the same thing in both places - and four of them
+// are narrower than the words "With 4 houses", which is what let the card come
+// down from 340 wide to 280 without the rows wrapping.
+.rent-tier {
+  display: flex;
+  gap: t.$space-hair;
+  align-items: center;
+}
+
+.rent-tier-house {
+  width: t.$deed-tier-piece;
+  height: t.$deed-tier-piece;
+}
+
+.rent-tier-hotel {
+  width: t.$deed-tier-hotel;
+  height: t.$deed-tier-piece;
 }
 
 .deed-footer {
@@ -317,7 +364,10 @@
   display: flex;
   flex-direction: column;
   gap: t.$space-2;
-  width: t.$deed-card-width;
+  // The card's width, so the two read as one object stacked. Per tier, or the
+  // actions box is wider than the deed above it - which is what the phone
+  // showed once the card came down to 200.
+  width: var(--deed-width);
   max-width: 100%;
   padding: t.$space-3;
   border: 1px solid var(--border-space);
@@ -394,28 +444,6 @@
 // specificity as the rules above and a media query adds none.
 // ---------------------------------------------------------------------------
 @include m.below(t.$breakpoint-mobile) {
-  .deed-card {
-    --deed-pad: #{t.$deed-card-pad-tight};
-  }
-
-  // The deed sizes to its CONTENT in a decision, not to the column.
-  //
-  // `.deed-card` is `width: 100%` on a phone, which is right where a wrapper
-  // sets the width - the holdings drawer and the trade stack both do. In the
-  // title-deed modal it resolves against a `max-content` parent and comes out
-  // at its natural ~246px. In the buy and auction decisions the parent is a
-  // `1fr` grid track, so the very same declaration made it 302: the same card
-  // at two different widths, in the two places a player sees it side by side
-  // with the board.
-  //
-  // max-content with a 100% ceiling gives one answer in all of them, and the
-  // long-named boards still wrap rather than overflow.
-  .buy-decision .deed-card,
-  .auction-decision .deed-card {
-    width: max-content;
-    max-width: 100%;
-  }
-
   // The band is decoration with a job - it says which colour set this is - and
   // it does that job at 10px as well as at 14.
   .deed-band {

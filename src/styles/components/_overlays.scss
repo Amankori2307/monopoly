@@ -151,6 +151,13 @@
   // The border-left is in the box too, or the card sits a pixel off centre.
   &.is-wide {
     width: min(100%, calc(t.$deed-card-width + 2 * t.$drawer-pad + 1px));
+
+    // The drawer is one card plus its gutters, at whichever tier the card is.
+    @include m.below(t.$breakpoint-mobile) {
+      --drawer-gutter: #{t.$drawer-pad-phone};
+
+      width: min(100%, calc(t.$deed-card-width-phone + 2 * t.$drawer-pad-phone + 1px));
+    }
   }
   height: 100%;
   border-left: 1px solid var(--border-subtle);
@@ -166,7 +173,7 @@
   align-items: start;
   justify-content: space-between;
   gap: t.$space-4;
-  padding: t.$space-5 t.$drawer-pad t.$space-3;
+  padding: t.$space-5 var(--drawer-gutter, #{t.$drawer-pad}) t.$space-3;
   border-bottom: 1px solid var(--border-subtle);
 
   .space-detail-close {
@@ -179,7 +186,7 @@
   min-height: 0;
   overflow-y: auto;
   // Horizontal padding is the same value .is-wide derives its width from.
-  padding: t.$space-4 t.$drawer-pad t.$space-6;
+  padding: t.$space-4 var(--drawer-gutter, #{t.$drawer-pad}) t.$space-6;
 }
 
 .drawer-stats {

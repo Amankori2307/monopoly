@@ -55,48 +55,67 @@ $board-color-bar: clamp(5px, 2.2cqw, 12px);
 
 // Width of the property-action rail beside the board.
 
-// The site card is one fixed object. It measures the same in the title-deed
-// modal, the buy decision, the featured holding, and a stacked holding - that
-// uniformity is the point of having a single card component. The height is
-// sized to the tallest card: a street at this width, whose seven-row rent
-// schedule is the longest body on the board. Every other kind - railway,
-// utility, tax, Chance, corner - pads out to match, so the card never resizes
-// as you move around the board. Shrinking this clips the tallest deed rather
-// than growing the card, so re-measure before you change either dimension.
-$deed-card-width: 340px;
-// 392, not 380. With the title on one line the tallest deed - a street's
-// seven-row rent schedule - measures 380px of content, which in a 380px card
-// with `overflow: hidden` is exactly zero slack: any future row, or a wider
-// currency symbol, clips the footer again with nothing to say so. Three grid
-// steps of room, and "the deed card > fits the longest street name on the
-// board" in overlays.spec.ts is what keeps it honest.
-$deed-card-height: 392px;
+// ---------------------------------------------------------------------------
+// The site card: ONE rectangle, at ONE ratio.
+//
+// It measures the same in the title-deed modal, the buy decision, the auction,
+// the featured holding, a stacked holding and a trade column - that uniformity
+// is the whole point of having a single card component. The height is sized to
+// the tallest body on the board, a street's seven-row rent schedule; every
+// other kind - railway, utility, tax, Chance, corner - pads out to match and
+// leaves the bottom blank, so the card never resizes as you move around the
+// board.
+//
+// **2:3, and the height is DERIVED.** A printed title deed is a tall
+// rectangle, and the ratio is the thing that must not drift, so it is not
+// written down twice: `.deed-card` sets `aspect-ratio: 2 / 3` and takes only a
+// width. Changing a width changes its height by construction, and no rule can
+// set one without the other.
+//
+// A tier is a width. Two of them cover every supported viewport: 200 fits the
+// tightest container at a 320px window (the holdings drawer, 263px of content
+// box) and 280 fits at 620. Add a third and the ratio still holds for free.
+$deed-card-width: 280px;
+// 200 x 300 on a 360px phone, where the board is 336: the card is about half
+// the board's area and every fact still fits. Measured at 200 wide, the
+// tallest street on any edition - "North Carolina Avenue", seven rows plus the
+// building-cost footer - wants 269px, so there is 31px of slack.
+$deed-card-width-phone: 200px;
+// Derived, never independent. This exists only because .auction-decision and
+// .trade-deed read a height directly; it is the same number aspect-ratio
+// produces, and it must stay that way.
+$deed-card-ratio: 1.5;
+$deed-card-height: $deed-card-width * $deed-card-ratio;
+$deed-card-height-phone: $deed-card-width-phone * $deed-card-ratio;
 // The colour strip bleeds to the card's top and side edges by negating this
 // padding, so the two must stay derived from one value - which is why the card
 // publishes it as --deed-pad rather than either site reading the variable.
 //
-// On a phone the card stops being a fixed 340px object and becomes the width
-// of the screen, so 18px of it is a much larger share of a much smaller card:
-// the phone rung buys 12px of vertical room and 12px of line length, and the
-// second of those is what stops a long station name wrapping to a third line.
+// The card gets smaller in two steps, so the padding does too: 18px is a fine
+// share of a 280px card and a sixth of a 200px one.
 $deed-card-pad: 18px;
 $deed-card-pad-phone: 12px;
-// And a rung tighter again below $breakpoint-mobile, where the card is the
-// width of the screen and its height is released: measured at 360px it was
-// 300x360, taller than the board it covers. See the phone tier at the end of
-// components/_space-detail.scss for the whole budget.
 $deed-card-pad-tight: 8px;
 // The colour band only has to say which set this is, which it does at 10px.
 $deed-band-height-phone: 10px;
+// The rent schedule's building pieces. Bigger than the board's 8px, because
+// here they are the row's LABEL rather than scenery on a 30px square - four
+// houses have to read as four at a glance against "₹700" beside them.
+$deed-tier-piece: 11px;
+$deed-tier-hotel: 20px;
 
 // The holdings drawer is sized by its card, not the other way round: the panel
 // is exactly one card plus this padding either side.
 $drawer-pad: $space-7;
+$drawer-pad-phone: $space-3;
 
 // Collapsed holding in the stack: tall enough to clear the colour strip, the
 // eyebrow, and the full-size deed heading - nothing more - plus how far each
 // card tucks under the one in front of it.
 $holdings-peek: 78px;
+// On a phone the band is 10px, the eyebrow is hidden and the title row is a
+// 44px tap strip, so the same peek would cut through the middle of the name.
+$holdings-peek-phone: 62px;
 $holdings-tuck: 10px;
 
 // Player card stack. $max-players must match MAX_PLAYERS in

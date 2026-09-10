@@ -452,8 +452,14 @@ test("opens any player's holdings from any player card", async ({ page }) => {
 // started restyling a card it is only supposed to be positioning.
 // Mirrors $deed-card-width / $deed-card-height / $holdings-peek / $drawer-pad
 // in src/styles/abstracts/_tokens.scss.
-const DEED_CARD_WIDTH = 340;
-const DEED_CARD_HEIGHT = 392;
+const DEED_CARD_WIDTH = 280;
+// Derived, not chosen: the card is `aspect-ratio: 2 / 3`, so the height is
+// always 1.5x the width and the two cannot drift apart. Written out here as
+// the arithmetic rather than as a number, so this file says the same thing
+// $deed-card-height does.
+const DEED_CARD_HEIGHT = DEED_CARD_WIDTH * 1.5;
+/** The card's other tier, below $breakpoint-mobile. Mirrors $deed-card-width-phone. */
+const PHONE_CARD_WIDTH = 200;
 const HOLDINGS_PEEK = 78;
 /** The card's own 1px border, inside its width and height box. */
 const CARD_BORDER = 1;
@@ -597,9 +603,12 @@ test('promotes a stacked holding without removing it from the deck', async ({ pa
   await expect(stackCards).toHaveCount(3);
 });
 
-// Below the mobile breakpoint a 420px card cannot fit, so it - and the drawer
-// derived from it - go fluid rather than forcing a sideways scroll.
-test('relaxes the card to full width on a narrow screen', async ({ page }) => {
+// Below the mobile breakpoint the card steps DOWN a tier rather than going
+// fluid: still one fixed rectangle, still 2:3, just a smaller one - and the
+// drawer, which is derived from it, follows. It used to go `width: 100%`
+// here, which is how the same card ended up a different size in every
+// container it was dropped into.
+test('steps the card down a tier on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 });
   await startGame(page);
   await seedHoldings(page);
@@ -615,7 +624,10 @@ test('relaxes the card to full width on a narrow screen', async ({ page }) => {
     throw new Error('Featured holding has no layout box');
   }
 
-  expect(box.width).toBeLessThanOrEqual(390);
+  // The phone tier, exactly - not "something that fits".
+  expect(Math.round(box.width)).toBe(PHONE_CARD_WIDTH);
+  expect(Math.round(box.height)).toBe(PHONE_CARD_WIDTH * 1.5);
+
   // No sideways scroll: the page never grows past the viewport.
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth
@@ -785,11 +797,17 @@ test.describe('the deed card', () => {
         // it, put it back.
         const height = card.style.height;
         const overflow = card.style.overflow;
+        const ratio = card.style.aspectRatio;
         card.style.height = 'auto';
         card.style.overflow = 'visible';
+        // And the ratio: the card's height comes from `aspect-ratio: 2 / 3`
+        // now, so releasing `height` alone releases nothing - offsetHeight
+        // stays exactly 1.5x the width and the measurement is a tautology.
+        card.style.aspectRatio = 'auto';
         const natural = card.offsetHeight;
         card.style.height = height;
         card.style.overflow = overflow;
+        card.style.aspectRatio = ratio;
 
         return {
           natural,

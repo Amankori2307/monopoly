@@ -183,13 +183,42 @@ decision, not a measurement of a particular screen. A handful of places
 genuinely differ on a phone, and each is a case where **the thing being sized
 has itself changed**, not merely the window around it:
 
-| What                                                   | Why it differs                                                                                             |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| The type, all of it (`$root-scale-phone`)              | See below — one root scale, not a rung per role                                                            |
-| The die (`$die-size-phone`)                            | 58px beside a 336px board is the biggest object on the screen                                              |
-| The deed's padding and labels (`$deed-card-pad-phone`) | Below `$breakpoint-mobile` the card stops being a fixed 340×380 object and becomes the width of the screen |
-| The deed again, tighter (`$deed-card-pad-tight`)       | At 360px it measured 300×360 — taller than the 336px board it covers                                       |
-| The scrim's inset                                      | 20px each side of a 360px window is 11% of it spent on inset                                               |
+| What                                               | Why it differs                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| The type, all of it (`$root-scale-phone`)          | See below — one root scale, not a rung per role                                                   |
+| The die (`$die-size-phone`)                        | 58px beside a 336px board is the biggest object on the screen                                     |
+| The deed card's tier (`$deed-card-width-phone`)    | It is a fixed rectangle at every size — just a smaller one below `$breakpoint-mobile`. See below. |
+| The deed's padding (`$deed-card-pad-phone/-tight`) | 18px is a fine share of a 280px card and a sixth of a 200px one                                   |
+| The scrim's inset                                  | 20px each side of a 360px window is 11% of it spent on inset                                      |
+
+#### The site card is one rectangle, at one ratio
+
+The deed card is **one fixed box** — same width, same height, for every square
+— and a square with less to say leaves the bottom blank. That is the point of
+having a single card component: it must not resize as you move around the
+board.
+
+**The ratio is structural, not a second token.** The card sets
+`aspect-ratio: 2 / 3` and takes only a **width per tier** (`$deed-card-width`
+280, `$deed-card-width-phone` 200). The height is derived, so the two cannot
+drift apart, and adding a third tier keeps the ratio for free.
+`$deed-card-height` still exists because the auction panel and a selected
+trade deed read a height directly — but it is computed from the width, never
+chosen.
+
+Every container is derived from the card, never the other way round: the
+drawer is one card plus its gutters, the buy modal is two cards plus a gap,
+the stacked peek clears the card's own head. When a tier changes, they follow.
+
+Two ways this has actually broken, both worth knowing:
+
+- **`width: 100%` is only right where a WRAPPER sets the width.** The holdings
+  drawer and the trade stack do; a decision's `1fr` grid track does not. The
+  same declaration gave 246px in the title-deed modal and 302px in the buy
+  decision — one card, two sizes.
+- **A rule about one side is half a rule.** `board.spec.ts` checked the height
+  and not the width for months, and the phone had no check at all — which is
+  exactly where it drifted. Both axes, every kind, both tiers.
 
 #### Type on a phone is one declaration
 

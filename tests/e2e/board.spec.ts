@@ -551,7 +551,7 @@ test('renders the dice as real dice: rounded face, circular pips', async ({ page
 // Cards used to size to their content - a street (7 rent rows) was 507px, a
 // railway 362, a utility 294, a tax card 111 - so the card jumped as you moved
 // around the board. Every space kind now renders at one height.
-test('renders every space card at the same height', async ({ page }) => {
+test('renders every space card at the same size', async ({ page }) => {
   await startGame(page);
 
   // Selected by board index: names like "Chance" appear three times.
@@ -562,7 +562,10 @@ test('renders every space card at the same height', async ({ page }) => {
     const box = await card.boundingBox();
     await page.getByRole('button', { name: 'Close space details' }).click();
     await expect(card).toHaveCount(0);
-    return box ? Math.round(box.height) : 0;
+    // Both axes. This checked only the height, which let a width drift
+    // through unseen - and one did, on the phone, where nothing checked
+    // either. A card is a rectangle; a rule about one side is half a rule.
+    return box ? `${Math.round(box.width)}x${Math.round(box.height)}` : '0x0';
   };
 
   // One of every kind: street, railway, utility, tax, both decks, and a corner.
@@ -576,12 +579,18 @@ test('renders every space card at the same height', async ({ page }) => {
     'corner (Free Parking)': 20,
   };
 
-  const heights: Record<string, number> = {};
+  const sizes: Record<string, string> = {};
   for (const [label, index] of Object.entries(samples)) {
-    heights[label] = await measure(index);
+    sizes[label] = await measure(index);
   }
 
-  expect(new Set(Object.values(heights)).size, JSON.stringify(heights)).toBe(1);
+  expect(new Set(Object.values(sizes)).size, JSON.stringify(sizes)).toBe(1);
+
+  // And that one size is 2:3. The ratio is structural - `aspect-ratio` on the
+  // card, with only a width per tier - so this is the assertion that says the
+  // structure is still doing its job.
+  const [width, height] = Object.values(sizes)[0].split('x').map(Number);
+  expect(height / width).toBeCloseTo(1.5, 2);
 });
 
 // Tokens are drawn over the board, not inside the space cells. In the flow an

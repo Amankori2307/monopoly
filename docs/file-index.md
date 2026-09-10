@@ -400,31 +400,32 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 
 ## `src/styles/` — SCSS
 
-| File                                                                              | What it does                                                                                                        |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| [main.scss](../src/styles/main.scss)                                              | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.                                     |
-| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                         | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                                          |
-| [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)       | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.                         |
-| [abstracts/\_scale.scss](../src/styles/abstracts/_scale.scss)                     | The design system's ladders: space, type, weight, tracking, elevation, layers, motion, borders.                     |
-| [pages/\_styleguide.scss](../src/styles/pages/_styleguide.scss)                   | The style guide's own layout, written entirely from the scales it displays.                                         |
-| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)                   | This app's own metrics: fonts, radii, breakpoints, board and deed geometry, header heights. Forwards `_scale.scss`. |
-| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)                   | Shared mixins: `below()`, `landscape-compact()`, `mono-label()`, `card-surface()`.                                  |
-| [base/\_reset.scss](../src/styles/base/_reset.scss)                               | Box-sizing, body, default control resets.                                                                           |
-| [base/\_typography.scss](../src/styles/base/_typography.scss)                     | Headings, `.eyebrow`, helper and error text.                                                                        |
-| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                           | `.app-shell`, `.page`, shared grid/flex helpers.                                                                    |
-| [components/\_board.scss](../src/styles/components/_board.scss)                   | Board grid, centre ribbon, deck markers, and **space row templates**.                                               |
-| [components/\_buttons.scss](../src/styles/components/_buttons.scss)               | Primary / secondary / danger buttons.                                                                               |
-| [components/\_forms.scss](../src/styles/components/_forms.scss)                   | Inputs, selects, labels, setup form grids.                                                                          |
-| [components/\_panels.scss](../src/styles/components/_panels.scss)                 | Panel/hero/summary/decision surfaces, headings, badges, empty states.                                               |
-| [components/\_dice.scss](../src/styles/components/_dice.scss)                     | Dice dock, die faces, pip grid positions, tumble keyframes.                                                         |
-| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss)     | Title-deed modal: backdrop, card, colour band, rent table.                                                          |
-| [components/\_mortgage-stamp.scss](../src/styles/components/_mortgage-stamp.scss) | The mortgage watermark's placement and opacity, on a deed and on a board square.                                    |
-| [components/\_auction.scss](../src/styles/components/_auction.scss)               | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                                          |
-| [components/\_player.scss](../src/styles/components/_player.scss)                 | Player cards, metrics, owned-property cards.                                                                        |
-| [components/\_action-rail.scss](../src/styles/components/_action-rail.scss)       | The action rail's five equal tracks.                                                                                |
-| [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Two-column game layout, the phone app frame, and the landscape arrangement.                                         |
-| [pages/\_home.scss](../src/styles/pages/_home.scss)                               | The setup screen: the deed-band masthead, the ruleset glance, the form and the saved games.                         |
-| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                             | Rules booklet typography and tables.                                                                                |
+| File                                                                              | What it does                                                                                                            |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [main.scss](../src/styles/main.scss)                                              | Entry point. Imports every layer in order; the only stylesheet App.tsx imports.                                         |
+| [themes/\_themes.scss](../src/styles/themes/_themes.scss)                         | **The theme engine.** Token maps, contract guard, `[data-theme]` emission.                                              |
+| [utilities/\_visually-hidden.scss](../src/styles/utilities/_visually-hidden.scss) | Text that is read but not seen. Clipped, not hidden - `display: none` loses it from the a11y tree AND from textContent. |
+| [utilities/\_color-groups.scss](../src/styles/utilities/_color-groups.scss)       | Generated `.group-*` classes. **Must stay last in main.scss** so utilities win the cascade.                             |
+| [abstracts/\_scale.scss](../src/styles/abstracts/_scale.scss)                     | The design system's ladders: space, type, weight, tracking, elevation, layers, motion, borders.                         |
+| [pages/\_styleguide.scss](../src/styles/pages/_styleguide.scss)                   | The style guide's own layout, written entirely from the scales it displays.                                             |
+| [abstracts/\_tokens.scss](../src/styles/abstracts/_tokens.scss)                   | This app's own metrics: fonts, radii, breakpoints, board and deed geometry, header heights. Forwards `_scale.scss`.     |
+| [abstracts/\_mixins.scss](../src/styles/abstracts/_mixins.scss)                   | Shared mixins: `below()`, `landscape-compact()`, `mono-label()`, `card-surface()`.                                      |
+| [base/\_reset.scss](../src/styles/base/_reset.scss)                               | Box-sizing, body, default control resets.                                                                               |
+| [base/\_typography.scss](../src/styles/base/_typography.scss)                     | Headings, `.eyebrow`, helper and error text.                                                                            |
+| [layout/\_shell.scss](../src/styles/layout/_shell.scss)                           | `.app-shell`, `.page`, shared grid/flex helpers.                                                                        |
+| [components/\_board.scss](../src/styles/components/_board.scss)                   | Board grid, centre ribbon, deck markers, and **space row templates**.                                                   |
+| [components/\_buttons.scss](../src/styles/components/_buttons.scss)               | Primary / secondary / danger buttons.                                                                                   |
+| [components/\_forms.scss](../src/styles/components/_forms.scss)                   | Inputs, selects, labels, setup form grids.                                                                              |
+| [components/\_panels.scss](../src/styles/components/_panels.scss)                 | Panel/hero/summary/decision surfaces, headings, badges, empty states.                                                   |
+| [components/\_dice.scss](../src/styles/components/_dice.scss)                     | Dice dock, die faces, pip grid positions, tumble keyframes.                                                             |
+| [components/\_space-detail.scss](../src/styles/components/_space-detail.scss)     | Title-deed modal: backdrop, card, colour band, rent table.                                                              |
+| [components/\_mortgage-stamp.scss](../src/styles/components/_mortgage-stamp.scss) | The mortgage watermark's placement and opacity, on a deed and on a board square.                                        |
+| [components/\_auction.scss](../src/styles/components/_auction.scss)               | Auction panel: the fixed two columns, the scrolling chat log, raise chips.                                              |
+| [components/\_player.scss](../src/styles/components/_player.scss)                 | Player cards, metrics, owned-property cards.                                                                            |
+| [components/\_action-rail.scss](../src/styles/components/_action-rail.scss)       | The action rail's five equal tracks.                                                                                    |
+| [pages/\_game.scss](../src/styles/pages/_game.scss)                               | Two-column game layout, the phone app frame, and the landscape arrangement.                                             |
+| [pages/\_home.scss](../src/styles/pages/_home.scss)                               | The setup screen: the deed-band masthead, the ruleset glance, the form and the saved games.                             |
+| [pages/\_rules.scss](../src/styles/pages/_rules.scss)                             | Rules booklet typography and tables.                                                                                    |
 
 ## Test infrastructure
 

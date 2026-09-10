@@ -38,4 +38,5 @@
 @use 'pages/styleguide';
 
 // Utilities last: they must win over equal-specificity component rules.
+@use 'utilities/visually-hidden';
 @use 'utilities/color-groups';
