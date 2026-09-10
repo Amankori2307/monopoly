@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://amankori2307.github.io/monopoly/sitemap.xml
