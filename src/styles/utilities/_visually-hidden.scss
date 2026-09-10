@@ -1,0 +1,23 @@
+@use '../abstracts/tokens' as t;
+
+// ---------------------------------------------------------------------------
+// Text that is read but not seen.
+//
+// Clipped rather than `display: none`, which is the whole point: a hidden
+// element is out of the accessibility tree AND out of `textContent`, so a
+// screen reader loses the label and so does any test reading the element's
+// text. This keeps both.
+//
+// Extracted on the third copy. The jail corner's name joiner and the visiting
+// band's label both rolled this by hand, and the deed's icon rent rows would
+// have been a fourth - "fix duplication on contact", per the DRY table in
+// CLAUDE.md.
+// ---------------------------------------------------------------------------
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

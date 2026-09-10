@@ -241,7 +241,7 @@ export const tokenColor = async (page: Page, token: string): Promise<string> => 
  * game has no buildings on it, so the pieces were never in the DOM to measure.
  *
  * A pawn, a die and its pips are the documented exception: real objects rather
- * than UI surfaces. The owner dot belongs with them - it is a player's token
+ * than UI surfaces. A trade column's owner dot belongs with them - it is a player's token
  * drawn small, takes its colour from the same theme data, and reuses the very
  * same $token-radius. It went unlisted only because it needs an owned site to
  * exist, and a fresh game has none.
@@ -255,10 +255,13 @@ export const findRoundedElements = (page: Page): Promise<string[]> =>
       'token-chip',
       'die-face',
       'pip',
-      'space-owner-dot',
-      // A trade column's owner dot: the same piece as the board's, so the same
-      // exception. It escaped notice because no trade modal is open when this
-      // sweep runs - the identical vacuity buildings.spec.ts was written for.
+      // The board's owner mark is a square-ended BAR now, not a dot, so it no
+      // longer needs an exception here - one fewer thing exempt from the
+      // sharp-corner rule.
+      // A trade column's owner dot: a physical piece, so the same exception the
+      // board's dot used to take. It escaped notice because no trade modal is
+      // open when this sweep runs - the identical vacuity buildings.spec.ts was
+      // written for.
       'trade-column-dot',
     ];
     return Array.from(document.querySelectorAll('body *'))

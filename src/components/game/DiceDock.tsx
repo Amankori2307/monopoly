@@ -1,40 +1,31 @@
-import diceRollSound from '../../assets/audio/dice-roll.wav';
-import { SpeedDieFace } from '../../domain/types/game.enums';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
-import { DieFace } from './DieFace';
-import { useDiceRoller } from './hooks/useDiceRoller';
+import type { UseDiceRollerResult } from './hooks/useDiceRoller';
+import { type SpeedDieFace } from '../../domain/types/game.enums';
+import { DicePair } from './DicePair';
 
 interface DiceDockProps {
   canRoll: boolean;
-  lastRoll: number[] | null;
-  /** Identifies the throw, so every device replays it exactly once. */
-  lastRollId: string | null;
-  onRoll: () => void;
+  /** The one roller, owned by GameSidebar. See below. */
+  dice: UseDiceRollerResult;
   rollLabel: string;
-  /** False when the player has muted the game. */
-  soundEnabled: boolean;
   /** The Speed Die's face, when this game is playing with one. */
   speedDieFace: SpeedDieFace | null;
 }
 
-/** Markup only - the animation and timing live in useDiceRoller. */
-export function DiceDock({
-  canRoll,
-  lastRoll,
-  lastRollId,
-  onRoll,
-  rollLabel,
-  soundEnabled,
-  speedDieFace,
-}: DiceDockProps) {
-  const { displayValues, isRolling, isSubmitting, roll } = useDiceRoller({
-    canRoll,
-    lastRoll,
-    lastRollId,
-    onRoll,
-    soundEnabled,
-    soundSrc: diceRollSound,
-  });
+/**
+ * The dice and the button that throws them.
+ *
+ * It used to call `useDiceRoller` itself. It cannot any more, because the phone
+ * draws the same throw a second time between the two columns of player cards -
+ * and the hook plays the roll SOUND, so two of them would sound the roll twice.
+ * `GameSidebar` owns the one roller and hands the result to both mounts.
+ *
+ * The button stays here, on every viewport. `controls.spec.ts` requires every
+ * control in this row to be exactly 44px tall, and the HUD's middle column is
+ * about 90px wide - which cannot hold a 44px control with a real label on it.
+ */
+export function DiceDock({ canRoll, dice, rollLabel, speedDieFace }: DiceDockProps) {
+  const { displayValues, isRolling, isSubmitting, roll } = dice;
 
   return (
     <section
@@ -42,13 +33,12 @@ export function DiceDock({
       className="dice-dock"
       data-testid={TEST_IDS.diceDock}
     >
-      <div aria-live="polite" className="dice-pair">
-        <DieFace index={0} isRolling={isRolling} value={displayValues[0]} />
-        <DieFace index={1} isRolling={isRolling} value={displayValues[1]} />
-        {/* Beside the white dice but visibly not one of them: only the white
-            dice decide doubles and Jail, and the board has to show that. */}
-        {speedDieFace ? <SpeedDie face={speedDieFace} isRolling={isRolling} /> : null}
-      </div>
+      <DicePair
+        displayValues={displayValues}
+        isRolling={isRolling}
+        scope="dock"
+        speedDieFace={speedDieFace}
+      />
       <button
         className="dice-roll-button"
         data-testid={TEST_IDS.rollButton}
@@ -60,31 +50,5 @@ export function DiceDock({
         {isRolling || isSubmitting ? 'Rolling…' : rollLabel}
       </button>
     </section>
-  );
-}
-
-interface SpeedDieProps {
-  face: SpeedDieFace;
-  isRolling: boolean;
-}
-
-/** What each face shows. Numbers keep pips; the other two carry a mark. */
-const SPEED_DIE_LABELS: Record<SpeedDieFace, string> = {
-  [SpeedDieFace.One]: '1',
-  [SpeedDieFace.Two]: '2',
-  [SpeedDieFace.Three]: '3',
-  [SpeedDieFace.Bus]: 'BUS',
-  [SpeedDieFace.MrMonopoly]: 'MR. M',
-};
-
-function SpeedDie({ face, isRolling }: SpeedDieProps) {
-  return (
-    <div
-      aria-label={`Speed Die: ${SPEED_DIE_LABELS[face]}`}
-      className={`die-face is-speed-die ${isRolling ? 'is-rolling' : ''}`}
-      data-testid={TEST_IDS.speedDieFace}
-    >
-      <span className="speed-die-label">{SPEED_DIE_LABELS[face]}</span>
-    </div>
   );
 }

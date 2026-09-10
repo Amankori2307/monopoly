@@ -27,6 +27,7 @@
 @use 'components/auction';
 @use 'components/overlays';
 @use 'components/trade';
+@use 'components/action-rail';
 @use 'components/player';
 @use 'components/holdings';
 
@@ -37,4 +38,5 @@
 @use 'pages/styleguide';
 
 // Utilities last: they must win over equal-specificity component rules.
+@use 'utilities/visually-hidden';
 @use 'utilities/color-groups';

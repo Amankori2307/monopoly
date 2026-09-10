@@ -123,8 +123,13 @@
 }
 
 // Below this the card itself stops being fixed, so the stack follows it.
+// The stacked deeds are the same card, clipped to a peek - so they follow the
+// card's tier width rather than filling the drawer, and the peek follows the
+// card's own head: on a phone the band is 10px and the title row is a 44px tap
+// strip, so the desktop peek would cut through the middle of the name.
 @include m.below(t.$breakpoint-mobile) {
   .holdings-stack-card {
-    width: 100%;
+    width: t.$deed-card-width-phone;
+    max-height: t.$holdings-peek-phone;
   }
 }

@@ -1,3 +1,4 @@
+import type React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { MAX_PLAYERS } from '../../../domain/constants/game.constants';
@@ -26,11 +27,18 @@ const makeSummary = (index: number): PlayerSummary => ({
   netWorth: 1500,
   mortgagedCount: 0,
   setProgress: [],
+  isActive: false,
+  seatIndex: index,
 });
 
-const renderPanel = (playerCount = 2, onSelectPlayer = vi.fn()) => {
+const renderPanel = (
+  playerCount = 2,
+  onSelectPlayer = vi.fn(),
+  centre?: React.ReactNode
+) => {
   const view = render(
     <PlayersPanel
+      centre={centre}
       currencySymbol="M"
       onSelectPlayer={onSelectPlayer}
       summaries={Array.from({ length: playerCount }, (_, i) => makeSummary(i))}
@@ -144,5 +152,57 @@ describe('PlayersPanel', () => {
 
     const stack = screen.getByTestId(TEST_IDS.playerStack);
     expect(within(stack).getAllByRole('article')).toHaveLength(MAX_PLAYERS);
+  });
+});
+
+/**
+ * The phone HUD is two columns of cards with something between them, and the
+ * grid is CSS - but two facts have to come from the component, because CSS
+ * cannot count.
+ */
+describe('the phone HUD slot', () => {
+  it('renders nothing in the middle when nothing is given', () => {
+    renderPanel(4);
+
+    expect(screen.queryByTestId(TEST_IDS.playerStackCentre)).not.toBeInTheDocument();
+  });
+
+  it('puts what it is given between the two columns', () => {
+    renderPanel(4, vi.fn(), <span>dice</span>);
+
+    expect(
+      within(screen.getByTestId(TEST_IDS.playerStackCentre)).getByText('dice')
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * The middle column spans every row, and `grid-row: 1 / -1` cannot address
+   * implicit rows - so the count has to be published for the stylesheet to
+   * template against. Two cards a row, rounded up.
+   */
+  it.each([
+    [2, '1'],
+    [3, '2'],
+    [4, '2'],
+    [7, '4'],
+    [MAX_PLAYERS, '4'],
+  ])('publishes the row count for %i players as %s', (players, rows) => {
+    renderPanel(players);
+
+    expect(screen.getByTestId(TEST_IDS.playerStack)).toHaveAttribute('data-rows', rows);
+  });
+
+  /**
+   * DOM order is TURN order, which is what the desktop fan's :nth-of-type
+   * rules read. The phone grid orders by seat through CSS, so a player keeps
+   * their cell all game - and that only works if the seat is on the card.
+   */
+  it('publishes each seat, so the grid can order by it', () => {
+    renderPanel(4);
+
+    const seats = screen
+      .getAllByTestId(/^player-card-/)
+      .map((card) => card.getAttribute('data-seat'));
+    expect(seats).toEqual(['0', '1', '2', '3']);
   });
 });

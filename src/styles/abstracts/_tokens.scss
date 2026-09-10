@@ -11,6 +11,8 @@
 // CSS, so an @error in a partial nothing @uses is never evaluated. _scale.scss
 // guards its own grid and its own layer order at compile time, and both guards
 // were silently inert until this line put the file in everyone's graph.
+@use 'sass:math';
+
 @forward 'scale';
 // @use as well as @forward: a forward exposes the scale to this file's
 // importers, not to this file, and the gap tokens below are defined from it.
@@ -36,47 +38,96 @@ $radius-round: $radius-sharp;
 // Board geometry. The colour bar only exists on street spaces - see components/_board.scss.
 $board-corner-track: 1.7fr;
 // Padding for a board cell's content. The cell itself has none, so the colour
-// ribbon can run edge to edge.
+// ribbon can run edge to edge. Corner cells only: they are 1.7fr square and
+// have room for a viewport-scaled inset.
 $space-inset: clamp(3px, 0.55vw, 7px);
-$board-color-bar: 12px;
-$board-color-bar-compact: 7px;
+// The two axes of an edge cell are not equally scarce, and one inset for both
+// spends the scarce one at the plentiful one's rate. A top-row square is 1fr
+// WIDE and 1.7fr deep: the name and the price stack across the width, so every
+// pixel there is a line of type, while the depth only has to hold a word.
+// cqw rather than vw because a 768px tablet renders a ~370px board - the same
+// size as a phone's - and no media query can see that.
+$board-inset-short: clamp(0.5px, 0.28cqw, 3px);
+$board-inset-long: clamp(1px, 0.55cqw, 7px);
+// A fraction of the board, so the band keeps its printed-board proportion at
+// every size - about a sixth of the square's depth. It was a 12px literal plus
+// a 7px override behind a media query, which gave a 768px tablet the desktop
+// ribbon on a phone-sized board.
+$board-color-bar: clamp(5px, 2.2cqw, 12px);
 
 // Width of the property-action rail beside the board.
 
-// The site card is one fixed object. It measures the same in the title-deed
-// modal, the buy decision, the featured holding, and a stacked holding - that
-// uniformity is the point of having a single card component. The height is
-// sized to the tallest card: a street at this width, whose seven-row rent
-// schedule is the longest body on the board. Every other kind - railway,
-// utility, tax, Chance, corner - pads out to match, so the card never resizes
-// as you move around the board. Shrinking this clips the tallest deed rather
-// than growing the card, so re-measure before you change either dimension.
-$deed-card-width: 340px;
-// 392, not 380. With the title on one line the tallest deed - a street's
-// seven-row rent schedule - measures 380px of content, which in a 380px card
-// with `overflow: hidden` is exactly zero slack: any future row, or a wider
-// currency symbol, clips the footer again with nothing to say so. Three grid
-// steps of room, and deedFits in space-detail.spec.ts is what keeps it honest.
-$deed-card-height: 392px;
+// ---------------------------------------------------------------------------
+// The site card: ONE rectangle, at ONE ratio.
+//
+// It measures the same in the title-deed modal, the buy decision, the auction,
+// the featured holding, a stacked holding and a trade column - that uniformity
+// is the whole point of having a single card component. The height is sized to
+// the tallest body on the board, a street's seven-row rent schedule; every
+// other kind - railway, utility, tax, Chance, corner - pads out to match and
+// leaves the bottom blank, so the card never resizes as you move around the
+// board.
+//
+// **4:5, and the height is DERIVED.** The ratio is the thing that must not
+// drift, so it is not written down twice: `.deed-card` sets
+// `aspect-ratio: 4 / 5` and takes only a width. Changing a width changes its
+// height by construction, and no rule can set one without the other - which
+// is why 2:3, then 3:5, then this have each been one declaration and this one
+// number.
+//
+// A tier is a width, and the right width is the smallest one whose box clears
+// its own content - with a step of margin, not to the pixel. Measured on the
+// longest-named board: at 300 the tallest street wants 397px against a 375px
+// box and clips; at 312 it wants 359 against 390. 320 is the next step up and
+// the safer side of that wrap boundary.
+$deed-card-width: 320px;
+// 240 x 300. The smallest FITTING phone width at 4:5 is 216 (270px box
+// against 263px of content), but 7px is the zero-slack trap this file already
+// records once - and 240 is the step where a wrap resolves and the content
+// drops to 249, so it sits on the stable side of the boundary rather than the
+// edge of it.
+//
+// One phone tier is now enough. At 3:5 the 200px card was 333 tall and needed
+// a third, narrower tier to keep the buy decision inside its modal at
+// 320x568; a 4:5 card of the same width is 33px shorter, so 240x300 clears
+// every container at 320 too - the drawer gives 295px and the decision
+// column 264.
+$deed-card-width-phone: 240px;
+// Derived, never independent. This exists only because .auction-decision and
+// .trade-deed read a height directly; it is the same number aspect-ratio
+// produces, and it must stay that way.
+$deed-card-ratio: math.div(5, 4);
+$deed-card-height: $deed-card-width * $deed-card-ratio;
+$deed-card-height-phone: $deed-card-width-phone * $deed-card-ratio;
 // The colour strip bleeds to the card's top and side edges by negating this
 // padding, so the two must stay derived from one value - which is why the card
 // publishes it as --deed-pad rather than either site reading the variable.
 //
-// On a phone the card stops being a fixed 340px object and becomes the width
-// of the screen, so 18px of it is a much larger share of a much smaller card:
-// the phone rung buys 12px of vertical room and 12px of line length, and the
-// second of those is what stops a long station name wrapping to a third line.
+// The card gets smaller in two steps, so the padding does too: 18px is a fine
+// share of a 280px card and a sixth of a 200px one.
 $deed-card-pad: 18px;
 $deed-card-pad-phone: 12px;
+$deed-card-pad-tight: 8px;
+// The colour band only has to say which set this is, which it does at 10px.
+$deed-band-height-phone: 10px;
+// The rent schedule's building pieces. Bigger than the board's 8px, because
+// here they are the row's LABEL rather than scenery on a 30px square - four
+// houses have to read as four at a glance against "₹700" beside them.
+$deed-tier-piece: 11px;
+$deed-tier-hotel: 20px;
 
 // The holdings drawer is sized by its card, not the other way round: the panel
 // is exactly one card plus this padding either side.
 $drawer-pad: $space-7;
+$drawer-pad-phone: $space-3;
 
 // Collapsed holding in the stack: tall enough to clear the colour strip, the
 // eyebrow, and the full-size deed heading - nothing more - plus how far each
 // card tucks under the one in front of it.
 $holdings-peek: 78px;
+// On a phone the band is 10px, the eyebrow is hidden and the title row is a
+// 44px tap strip, so the same peek would cut through the middle of the name.
+$holdings-peek-phone: 62px;
 $holdings-tuck: 10px;
 
 // Player card stack. $max-players must match MAX_PLAYERS in
@@ -89,9 +140,10 @@ $stack-peek: 15px;
 // reads as a fanned deck rather than a cropped list.
 $stack-tuck: 7px;
 $stack-inset: 9px;
-// The fan's taper on a phone. At $stack-inset the deepest of eight slivers is
-// inset 63px each side, which is most of a phone-width card.
-$stack-inset-phone: 3px;
+// There is no phone taper any more, and no $stack-inset-phone: below the
+// tablet breakpoint the fan is gone entirely - the players are a two-column
+// grid with the dice between them. The 3px taper it used to shrink to was
+// already an admission that the fan did not read at that width.
 $stack-strip-height: 5px;
 $stack-expanded-max-height: 420px;
 // Most of the sidebar the player stack may claim. Eight expanded cards are
@@ -133,6 +185,28 @@ $token-move-duration: 170ms;
 $token-move-easing: cubic-bezier(0.45, 1, 0.55, 0);
 
 // ---------------------------------------------------------------------------
+// Type, on a phone.
+//
+// One root scale rather than a phone rung per role. Every entry in $type-scale
+// is in `rem`, so this moves all fifteen together and none of them can be left
+// behind - which a sweep of per-component overrides cannot promise, and which
+// is why there is no `*-phone` type role anywhere in _scale.scss.
+//
+// Three things deliberately do NOT follow it, and each is the point rather
+// than an oversight: $space-scale is in px, so the 4px grid is untouched;
+// $control-tap is px, so a button stays 44px tall while its label gets
+// smaller; and the board sizes its type in cqw against its own width, which is
+// exactly why it was built that way.
+$root-scale-phone: 87.5%; // 14px, from the browser's 16.
+
+// The one thing that must NOT shrink with it. iOS zooms the whole page when
+// a field it is focusing sets type under 16px, so a smaller field costs the
+// player their place on the screen every time they tap one. `font: inherit` in
+// the reset means every control follows the root by default, so this has to be
+// said out loud.
+$input-font-phone: 16px;
+
+// ---------------------------------------------------------------------------
 // The header, and what it leaves for the page.
 //
 // Published as a custom property by layout/_header.scss so every calc() reads
@@ -162,12 +236,30 @@ $breakpoint-phone: 560px;
 // landscape-compact mixin.
 $breakpoint-short: 560px;
 
-// Below this BOARD width a space name cannot be set legibly - the squares are
-// under ~42px and the name lands near 7px. A board-width threshold rather than a
-// viewport one on purpose: in landscape the board is sized by viewport HEIGHT, so
-// a 844x390 phone has an 844px-wide window and a 380px board. Used by a container
-// query in components/_board.scss, not by a media query.
-$board-name-floor: 520px;
+// Below this BOARD width the six squares with a long name - the four railways
+// and the two utilities - print the edition's short word for what they are
+// instead of their full name. The name and the price themselves are set at
+// every size; this is the board's ONLY tier.
+//
+// Measured, not chosen: "Chennai Central Railway Station" wraps to four lines
+// at any board size, and four lines plus a price needs more than 8.06% of the
+// board above a 5px legibility floor - which breaks below a 347px board. 420
+// is that threshold with about 10% of margin, and it also catches the ~370px
+// board a 768px tablet renders in its two-column layout.
+//
+// A board-width threshold rather than a viewport one on purpose: in landscape
+// the board is sized by viewport HEIGHT, so an 812x375 phone has an 812px-wide
+// window and a 331px board. Used by a container query in components/_board.scss,
+// not by a media query.
+$board-short-name-floor: 420px;
+// And below THIS board width the type itself has to give a little. Measured on
+// the London board at 320x568, the narrowest device this app supports, where
+// the height cap leaves a 281px board and a street square 22.6 x 38.5px:
+// "The Angel Islington" has 27.8px of run to set in, and "Islington" alone is
+// 30.6px at 5px Manrope. No arrangement of the ribbon or the insets closes a
+// 3px gap, so the type does - on this device class and no other. The two
+// common phones (360 and 375, boards of 320 and 351) stay at the 5px floor.
+$board-tight-floor: 300px;
 
 // The shell's padding on a phone. A token because pages/_rules.scss negates it
 // to bleed the booklet full width, and the two must stay derived from one value

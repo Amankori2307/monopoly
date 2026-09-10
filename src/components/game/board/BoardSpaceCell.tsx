@@ -6,6 +6,8 @@ import { BoardSide, SpaceKind } from '../../../domain/types/game.enums';
 import type { BoardSpace } from '../../../domain/types/game.interfaces';
 import { boardIndexToGridPosition } from '../../../domain/board/boardLayout.utils';
 import { getBoardSide } from '../../../domain/board/boardSide.utils';
+import { boardPriceOf, boardShortName } from '../../../domain/themes/boardNames.utils';
+import { formatMoney } from '../../../shared/utils/money.utils';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { MortgageStamp } from '../deed/MortgageStamp';
 import { HotelPiece, HousePiece } from './BuildingPiece';
@@ -24,18 +26,28 @@ const isPortraitSide = (side: BoardSide): boolean =>
   side === BoardSide.Bottom || side === BoardSide.Top;
 
 /** The cell's own classes: its kind, its edge, and whether anything is on it. */
-const cellClassName = (space: BoardSpace, side: BoardSide, isOccupied: boolean): string =>
+const cellClassName = (
+  space: BoardSpace,
+  side: BoardSide,
+  isOccupied: boolean,
+  isOwned: boolean
+): string =>
   [
     'board-space',
     `space-${space.kind}`,
     `side-${side}`,
     isOccupied ? 'active-space' : '',
+    // Carries the owner's wash. A class rather than a bare custom property,
+    // because CSS cannot ask whether one is set.
+    isOwned ? 'is-owned' : '',
     CORNER_POSITIONS.includes(space.index as never) ? 'corner-space' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
 interface BoardSpaceCellProps {
+  /** Prefixes the price. The edition's symbol, never a default. */
+  currencySymbol: string;
   /** Whether any token currently sits here - tokens themselves are drawn by
    * BoardTokenLayer, over the board rather than inside the cell. */
   isOccupied: boolean;
@@ -43,6 +55,8 @@ interface BoardSpaceCellProps {
   /** Who owns this space, when anyone does. */
   ownerMark?: SpaceOwnerMark;
   space: BoardSpace;
+  /** Picks the edition's own word for a railway. See boardNames.utils. */
+  themeId: string;
 }
 
 /**
@@ -53,10 +67,12 @@ interface BoardSpaceCellProps {
  * per side lives in components/_board.scss.
  */
 export function BoardSpaceCell({
+  currencySymbol,
   isOccupied,
   onSelect,
   ownerMark,
   space,
+  themeId,
 }: BoardSpaceCellProps) {
   const side = getBoardSide(space.index);
   const position = boardIndexToGridPosition(space.index);
@@ -64,7 +80,7 @@ export function BoardSpaceCell({
   // The top and bottom rows are portrait squares, so the word runs down them -
   // the same way their space names already do.
   const stampVariant = isPortraitSide(side) ? 'space-tall' : 'space-wide';
-  const className = cellClassName(space, side, isOccupied);
+  const className = cellClassName(space, side, isOccupied, Boolean(ownerMark));
 
   return (
     <button
@@ -76,7 +92,14 @@ export function BoardSpaceCell({
       className={className}
       data-testid={scopedTestId(TEST_IDS.boardSpace, space.index)}
       onClick={() => onSelect(space.id)}
-      style={{ gridRow: position.row, gridColumn: position.column }}
+      style={{
+        gridRow: position.row,
+        gridColumn: position.column,
+        // The wash the stylesheet mixes down. Inline because a player's token
+        // colour is theme DATA, not a CSS token - the same sanctioned
+        // exception BoardTokenLayer and PlayerCard already take.
+        ...(ownerMark ? { ['--space-owner' as string]: ownerMark.color } : {}),
+      }}
       type="button"
     >
       {space.kind === SpaceKind.Street ? (
@@ -94,19 +117,17 @@ export function BoardSpaceCell({
         </div>
       ) : null}
 
-      {/* The owner's token colour, so control of a colour set reads off the
-          board. Inline colour is the sanctioned exception to the no-hardcoded-
-          colour rule: token colours are theme data, not CSS tokens. A mortgaged
-          site is hollow - it collects no rent. */}
+      {/* The owner's token colour, run the whole length of the square's outer
+          edge, so control of a colour set reads across forty squares rather
+          than out of a five-pixel dot. Inline colour is the sanctioned
+          exception to the no-hardcoded-colour rule: token colours are theme
+          data, not CSS tokens. A mortgaged site fades - it collects no rent -
+          and the stamp struck across the square is what says so outright. */}
       {ownerMark ? (
         <span
-          className={`space-owner-dot ${ownerMark.mortgaged ? 'is-mortgaged' : ''}`}
-          data-testid={scopedTestId(TEST_IDS.spaceOwnerDot, space.index)}
-          style={
-            ownerMark.mortgaged
-              ? { borderColor: ownerMark.color }
-              : { backgroundColor: ownerMark.color }
-          }
+          className={`space-owner-bar ${ownerMark.mortgaged ? 'is-mortgaged' : ''}`}
+          data-testid={scopedTestId(TEST_IDS.spaceOwnerBar, space.index)}
+          style={{ backgroundColor: ownerMark.color }}
         />
       ) : null}
 
@@ -118,7 +139,7 @@ export function BoardSpaceCell({
 
       {/* Wrapper so the ribbon can sit on any edge while the text keeps the rest. */}
       <div className="space-body">
-        <CellBody space={space} />
+        <CellBody currencySymbol={currencySymbol} space={space} themeId={themeId} />
       </div>
     </button>
   );
@@ -131,7 +152,15 @@ export function BoardSpaceCell({
  * Its own component rather than a chain of ternaries in the cell: three
  * outcomes is where that stops being readable, and the linter agrees.
  */
-function CellBody({ space }: { space: BoardSpace }) {
+function CellBody({
+  currencySymbol,
+  space,
+  themeId,
+}: {
+  currencySymbol: string;
+  space: BoardSpace;
+  themeId: string;
+}) {
   // Jail is the one corner with interior structure, so it owns its markup. Its
   // glyph stays registered for the deed card; the square itself cannot hold
   // bars, a 34px icon and a word at this size.
@@ -150,10 +179,34 @@ function CellBody({ space }: { space: BoardSpace }) {
   }
 
   const spaceIcon = getSpaceIcon(space);
+  const price = boardPriceOf(space);
+  // Both names render and the board's container query picks one: CSS cannot
+  // substitute text, and a JS width check is what this codebase deliberately
+  // does not do for layout. Only six squares a board have one at all.
+  const shortName = boardShortName(space, themeId);
+
   return (
     <div className="space-label">
       {spaceIcon ? <SpaceIcon className="space-icon" glyph={spaceIcon} /> : null}
-      <strong className="space-name">{space.name}</strong>
+      {/* Two lines across the square's SHORT axis, each running along its long
+          one: the name beside the ribbon, the price beyond it, as printed. */}
+      <span className="space-text">
+        {/* has-short is what the container query keys on: only these six
+            squares have a replacement to swap in, and :has() is avoidable
+            for one class. */}
+        <strong className={`space-name${shortName ? ' has-short' : ''}`}>
+          {space.name}
+        </strong>
+        {shortName ? <strong className="space-name-short">{shortName}</strong> : null}
+        {price === null ? null : (
+          <span
+            className="space-price"
+            data-testid={scopedTestId(TEST_IDS.spacePrice, space.index)}
+          >
+            {formatMoney(price, currencySymbol)}
+          </span>
+        )}
+      </span>
     </div>
   );
 }

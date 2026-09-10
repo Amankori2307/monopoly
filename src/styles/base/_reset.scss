@@ -1,4 +1,5 @@
 @use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
 
 * {
   box-sizing: border-box;
@@ -30,5 +31,24 @@ button {
   &:disabled {
     cursor: not-allowed;
     opacity: t.$opacity-disabled;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Type, on a phone.
+//
+// One declaration, and it is the whole phone type tier. Every role in
+// $type-scale is in `rem`, so this scales all fifteen at once and none can be
+// left behind - the thing a sweep of per-component overrides cannot promise.
+//
+// Last in the file on purpose, per the design system's rule 8: `:root` above
+// is the same specificity and a media query adds none, so source order is the
+// entire difference between this applying and silently not.
+//
+// See $root-scale-phone for what deliberately does NOT follow it.
+// ---------------------------------------------------------------------------
+@include m.below(t.$breakpoint-tablet) {
+  :root {
+    font-size: t.$root-scale-phone;
   }
 }

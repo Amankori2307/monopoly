@@ -97,6 +97,13 @@
   place-items: center;
   // 30px before this, on every route: padding around a 13.76px label is not a
   // tap target, and a header link is the most-pressed control in the app.
+  //
+  // Both axes, and the width is not belt-and-braces: the height was pinned but
+  // the WIDTH was left to the label, so "Play" cleared 44px only because of
+  // how wide the word happened to be. The phone type scale took it to 40 and
+  // the tap-floor sweep failed on all five routes at once. A tap target is
+  // 44 square whatever it says.
+  min-width: t.$control-tap;
   min-height: t.$control-tap;
   padding: t.$space-1 t.$space-2;
   border: 1px solid transparent;

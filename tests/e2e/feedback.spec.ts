@@ -395,7 +395,7 @@ test('marks owned sites in the owner colour and hollows a mortgaged one', async 
     { street: 2, seat: 1 },
   ]);
 
-  const dots = page.locator(`[data-testid^="${TEST_IDS.spaceOwnerDot}-"]`);
+  const dots = page.locator(`[data-testid^="${TEST_IDS.spaceOwnerBar}-"]`);
   await expect(dots).toHaveCount(3);
 
   // Two owners, so two distinct colours - the mark has to say who, not just that.

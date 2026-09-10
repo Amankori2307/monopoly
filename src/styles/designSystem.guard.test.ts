@@ -49,7 +49,13 @@ const THEMES_FILE = join(STYLES_DIR, 'themes/_themes.scss');
  */
 const strip = (scss: string): string =>
   scss
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    // Blanked in place, NOT collapsed to a space. A block comment spans lines,
+    // and replacing it with one space renumbered every line after it - while
+    // `exemptions()` reads the original. So a `design-system-exempt:` marker
+    // stopped covering the literal directly beneath it as soon as any doc
+    // comment was added above them, and the failure's line numbers pointed at
+    // the wrong rows. Both are worklists; both have to count the same lines.
+    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '))
     .replace(/\/\/[^\n]*/g, ' ')
     .replace(/'[^'\n]*'/g, "''")
     .replace(/"[^"\n]*"/g, '""');
@@ -252,6 +258,26 @@ describe('the design system', () => {
     path,
     scss: readFileSync(path, 'utf8'),
   }));
+
+  /**
+   * The guard's own two halves have to agree about what line a thing is on.
+   *
+   * `strip()` used to replace a whole block comment with a single space, which
+   * renumbered every line after it - while `exemptions()` reads the original
+   * text. So adding one `/** ... *\/` doc comment to a partial silently slid a
+   * `design-system-exempt:` marker off the literal beneath it, and the
+   * failure's own worklist pointed at the wrong rows. It cost a real debugging
+   * detour on the board; this is the test that would have said so outright.
+   */
+  it('counts the same lines on both sides of a block comment', () => {
+    const scss = ['a {', '/**', ' * two', ' * lines', ' */', '  color: #abc;', '}'].join(
+      '\n'
+    );
+
+    expect(strip(scss).split('\n')).toHaveLength(scss.split('\n').length);
+    // And the literal is still found where it actually is: line 6, not line 2.
+    expect(rawColours(scss)).toEqual(['6: #abc']);
+  });
 
   it('found the stylesheet tree', () => {
     // A sanity check on the walk and the declaration regex together: if either

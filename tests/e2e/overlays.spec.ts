@@ -452,8 +452,15 @@ test("opens any player's holdings from any player card", async ({ page }) => {
 // started restyling a card it is only supposed to be positioning.
 // Mirrors $deed-card-width / $deed-card-height / $holdings-peek / $drawer-pad
 // in src/styles/abstracts/_tokens.scss.
-const DEED_CARD_WIDTH = 340;
-const DEED_CARD_HEIGHT = 392;
+const DEED_CARD_WIDTH = 320;
+// Derived, not chosen: the card is `aspect-ratio: 4 / 5`, so the height is
+// always 5/4 of the width and the two cannot drift apart. Written out here as
+// the arithmetic rather than as a number, so this file says the same thing
+// $deed-card-height does.
+const DEED_CARD_RATIO = 5 / 4;
+const DEED_CARD_HEIGHT = Math.round(DEED_CARD_WIDTH * DEED_CARD_RATIO);
+/** The card's other tier, below $breakpoint-mobile. Mirrors $deed-card-width-phone. */
+const PHONE_CARD_WIDTH = 240;
 const HOLDINGS_PEEK = 78;
 /** The card's own 1px border, inside its width and height box. */
 const CARD_BORDER = 1;
@@ -480,8 +487,19 @@ const seedHoldings = async (page: Page) => {
   await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
 };
 
+/**
+ * Expand the stack first only where there IS one.
+ *
+ * Below the tablet breakpoint the players are a two-column grid with every
+ * card drawn, so `.player-stack-expand` is not rendered and each card's own
+ * button is reachable from the first frame. Above it the fan is still a fan,
+ * and a collapsed sliver's button is `display: none` until it opens.
+ */
 const openFirstPlayerHoldings = async (page: Page) => {
-  await page.getByTestId(TEST_IDS.playerStackExpand).click();
+  const expand = page.getByTestId(TEST_IDS.playerStackExpand);
+  if (await expand.isVisible()) {
+    await expand.click();
+  }
   await page
     .getByRole('button', { name: /View .* holdings/ })
     .first()
@@ -586,9 +604,12 @@ test('promotes a stacked holding without removing it from the deck', async ({ pa
   await expect(stackCards).toHaveCount(3);
 });
 
-// Below the mobile breakpoint a 420px card cannot fit, so it - and the drawer
-// derived from it - go fluid rather than forcing a sideways scroll.
-test('relaxes the card to full width on a narrow screen', async ({ page }) => {
+// Below the mobile breakpoint the card steps DOWN a tier rather than going
+// fluid: still one fixed rectangle, still 2:3, just a smaller one - and the
+// drawer, which is derived from it, follows. It used to go `width: 100%`
+// here, which is how the same card ended up a different size in every
+// container it was dropped into.
+test('steps the card down a tier on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 });
   await startGame(page);
   await seedHoldings(page);
@@ -604,7 +625,10 @@ test('relaxes the card to full width on a narrow screen', async ({ page }) => {
     throw new Error('Featured holding has no layout box');
   }
 
-  expect(box.width).toBeLessThanOrEqual(390);
+  // The phone tier, exactly - not "something that fits".
+  expect(Math.round(box.width)).toBe(PHONE_CARD_WIDTH);
+  expect(Math.round(box.height)).toBe(Math.round(PHONE_CARD_WIDTH * DEED_CARD_RATIO));
+
   // No sideways scroll: the page never grows past the viewport.
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth
@@ -774,11 +798,17 @@ test.describe('the deed card', () => {
         // it, put it back.
         const height = card.style.height;
         const overflow = card.style.overflow;
+        const ratio = card.style.aspectRatio;
         card.style.height = 'auto';
         card.style.overflow = 'visible';
+        // And the ratio: the card's height comes from `aspect-ratio: 2 / 3`
+        // now, so releasing `height` alone releases nothing - offsetHeight
+        // stays exactly 1.5x the width and the measurement is a tautology.
+        card.style.aspectRatio = 'auto';
         const natural = card.offsetHeight;
         card.style.height = height;
         card.style.overflow = overflow;
+        card.style.aspectRatio = ratio;
 
         return {
           natural,

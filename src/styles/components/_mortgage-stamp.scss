@@ -37,7 +37,7 @@
 /**
  * On a board square.
  *
- * z-index 7 puts it over the cell's ::after divider (5) and the owner dot (6).
+ * z-index 7 puts it over the cell's ::after divider (5) and the owner bar (4).
  * The dot stays, because it is the one mortgage signal that still reads once the
  * squares shrink on a phone - which is also where the wording comes off.
  */
@@ -73,7 +73,7 @@
 
 /**
  * A phone's squares are about 29x49px, where the word cannot be read at any
- * weight. The frame carries it there, with the hollow owner dot.
+ * weight. The frame carries it there, with the faded owner bar.
  */
 @include m.below(t.$breakpoint-tablet) {
   .mortgage-stamp.is-space .mortgage-stamp-word {

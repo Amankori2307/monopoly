@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { MAX_PLAYERS } from '../../src/domain/constants/game.constants';
-import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
+import { scopedTestId, TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { advanceGame, startGame, VIEWPORTS } from './helpers';
 
 /**
@@ -78,17 +78,15 @@ test.describe('a phone in portrait', () => {
   // child, which is what makes this promise keepable without anyone having to
   // know the bar's height.
   //
-  // Both stack states are checked, because the collapsed fan and the expanded
-  // list are different heights and only the taller one is the real test.
-  for (const stack of ['collapsed', 'expanded'] as const) {
-    test(`lets the last player card clear the action bar, ${stack}`, async ({ page }) => {
-      await startGame(page, { players: MAX_PLAYERS });
-
-      if (stack === 'expanded') {
-        await page.locator('.player-stack-expand').click();
-        // The stack animates its max-height, which otherwise mismeasures.
-        await page.waitForTimeout(600);
-      }
+  // Two table sizes rather than two stack states: the phone HUD is a grid with
+  // no fan to expand, so `.player-stack-expand` is not rendered there any
+  // more. A full table is what makes the column tall, which was always the
+  // point of checking the expanded case.
+  for (const players of [2, MAX_PLAYERS] as const) {
+    test(`lets the last player card clear the action bar, ${players} players`, async ({
+      page,
+    }) => {
+      await startGame(page, { players });
 
       // The assertion that caught the bug this test was written for, stated
       // directly: the stack must CONTAIN its own cards. A flex item shrinks
@@ -143,32 +141,129 @@ test.describe('a phone in portrait', () => {
     expect(overlaps(activity, roll)).toBe(false);
   });
 
-  // A 30px-wide square cannot hold a name at any size - it was set at 5px, which
-  // is texture rather than type. What must NOT go with it is the square's
-  // accessible name, which is an explicit aria-label on the button.
-  test('drops the space names but keeps each square identifiable', async ({ page }) => {
+  /**
+   * A square says what it is and what it costs, at phone size.
+   *
+   * This test used to assert the opposite - that every name computed
+   * `display: none` below a 520px board, because "a 30px-wide square cannot
+   * hold a name at any size". The geometry says otherwise: rows 1 and 11 are
+   * 1.7fr DEEP against 1fr wide, so the square is ~30x51 and two runs of type
+   * fit side by side across those 30px. What it left behind was a street with
+   * a colour ribbon, a dot, and nothing else at all - streets carry no glyph.
+   */
+  test('names and prices every square, and clips none of it', async ({ page }) => {
     await startGame(page);
 
-    const names = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.space-name')).map(
-        (name) => getComputedStyle(name).display
-      )
+    const board = await page.evaluate(
+      () => document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0
     );
-    expect(names.length).toBeGreaterThan(0);
-    expect(new Set(names)).toEqual(new Set(['none']));
 
-    // The name is still how the square is addressed, and still one tap away.
+    const measured = await page.evaluate(() => {
+      const clipped: string[] = [];
+      let names = 0;
+      let prices = 0;
+      let smallest = Infinity;
+
+      document.querySelectorAll('.board-space').forEach((cell) => {
+        const cellBox = cell.getBoundingClientRect();
+        cell
+          .querySelectorAll('.space-name, .space-name-short, .space-price')
+          .forEach((element) => {
+            const style = getComputedStyle(element);
+            // Skip what is not being read: the swapped-out long name, and the
+            // Jail band's label, which is a 1px clip-path box on purpose so it
+            // stays in the accessible string.
+            if (style.display === 'none' || style.clipPath !== 'none') return;
+            if (element.clientWidth <= 1) return;
+
+            if (element.classList.contains('space-price')) prices += 1;
+            else names += 1;
+            smallest = Math.min(smallest, Number.parseFloat(style.fontSize));
+
+            const box = element.getBoundingClientRect();
+            const overflowsItself =
+              element.scrollWidth > element.clientWidth + 1 ||
+              element.scrollHeight > element.clientHeight + 1;
+            // Containment as well as self-overflow: a flex pair inside a
+            // hidden-overflow cell can escape the LABEL while every child
+            // still reports zero scroll.
+            const escapesItsCell =
+              box.left < cellBox.left - 0.5 ||
+              box.right > cellBox.right + 0.5 ||
+              box.top < cellBox.top - 0.5 ||
+              box.bottom > cellBox.bottom + 0.5;
+
+            if (overflowsItself || escapesItsCell) {
+              clipped.push(`${element.textContent} (${element.className})`);
+            }
+          });
+      });
+
+      return { clipped, names, prices, smallest };
+    });
+
+    // Vacuity guards. The board must actually be small, and the text must
+    // actually be there - the assertion this replaced passed for the wrong
+    // reason on a phone precisely because display:none reports zero for both
+    // scrollWidth and clientWidth.
+    expect(board).toBeLessThan(520);
+    expect(measured.names).toBeGreaterThanOrEqual(40);
+    // 22 streets + 4 railways + 2 utilities + 2 taxes.
+    expect(measured.prices).toBe(30);
+
+    expect(measured.clipped).toEqual([]);
+
+    // The legibility floor is the decision being reversed here, and the one
+    // most easily eroded by a later tweak to the ramp.
+    expect(measured.smallest).toBeGreaterThanOrEqual(5);
+
+    // The name is still how the square is addressed, whatever is drawn in it.
     await expect(
       page.getByRole('button', { name: 'View details for Guwahati', exact: true })
     ).toBeVisible();
 
-    // The colour ribbon and the glyphs are what identify a square now.
     expect(
       await page.evaluate(() => document.querySelectorAll('.space-color').length)
     ).toBe(22);
-    expect(
-      await page.evaluate(() => document.querySelectorAll('.space-icon').length)
-    ).toBeGreaterThan(0);
+  });
+
+  /**
+   * Six squares a board carry a name too long to set in one: the four railways
+   * and the two utilities. "Chennai Central Railway Station" is four wrapped
+   * lines at ANY board size, and four lines plus a price does not fit above the
+   * 5px floor. They print the edition's own word for what they are instead -
+   * and the full name stays in the DOM, so the accessible name is untouched.
+   */
+  test('prints what the long squares ARE, in the edition own word', async ({ page }) => {
+    await startGame(page);
+
+    const swapped = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.board-space'))
+        .filter((cell) => cell.querySelector('.space-name-short'))
+        .map((cell) => ({
+          label: cell.getAttribute('aria-label') ?? '',
+          shortShown:
+            getComputedStyle(cell.querySelector('.space-name-short')!).display !== 'none',
+          fullHidden:
+            getComputedStyle(cell.querySelector('.space-name.has-short')!).display ===
+            'none',
+        }))
+    );
+
+    expect(swapped).toHaveLength(6);
+    swapped.forEach((square) => {
+      expect(square.shortShown, square.label).toBe(true);
+      expect(square.fullHidden, square.label).toBe(true);
+    });
+
+    // India calls them railway stations; the accessible name keeps the whole
+    // thing either way.
+    await expect(
+      page.getByRole('button', {
+        name: 'View details for Chennai Central Railway Station',
+        exact: true,
+      })
+    ).toBeVisible();
   });
 
   /**
@@ -184,13 +279,33 @@ test.describe('a phone in portrait', () => {
     await startGame(page);
 
     const card = await boxOf(page, '.player-card');
-    expect(card.bottom - card.top).toBeLessThan(130);
+    expect(card.bottom - card.top).toBeLessThan(80);
 
-    // Compact, but still carrying all four facts.
+    // A name and one figure. The card is ~115px wide in the two-column HUD -
+    // there is room for nothing else - and cash is the figure a player checks.
     const text = await page.locator('.player-card').first().innerText();
-    expect(text).toMatch(/Net worth/i);
-    expect(text).toMatch(/Cash/i);
-    expect(text).toMatch(/Owned/i);
+    expect(text).toMatch(/₹/);
+    expect(text).not.toMatch(/Net worth/i);
+    expect(text).not.toMatch(/Owned/i);
+  });
+
+  /**
+   * The other half of that claim, and the one that makes dropping them
+   * defensible: nothing was lost, it moved one tap away.
+   */
+  test('keeps the facts the card dropped, one tap away', async ({ page }) => {
+    await startGame(page);
+
+    await page
+      .getByRole('button', { name: /View .* holdings/ })
+      .first()
+      .click();
+    await expect(page.getByTestId(TEST_IDS.playerDetailDrawer)).toBeVisible();
+
+    const drawer = await page.getByTestId(TEST_IDS.playerDetailDrawer).innerText();
+    expect(drawer).toMatch(/Net worth/i);
+    expect(drawer).toMatch(/Cash/i);
+    expect(drawer).toMatch(/Owned/i);
   });
 
   /**
@@ -202,24 +317,20 @@ test.describe('a phone in portrait', () => {
   test('makes the holdings control look and behave like a control', async ({ page }) => {
     await startGame(page);
 
-    // Collapsed, the stack's own overlay owns the click - a card's controls are
-    // only reachable once it is expanded.
-    await page.getByTestId(TEST_IDS.playerStackExpand).click();
-
+    // No expand step: the HUD is a grid, every card is fully drawn, and its
+    // own button is reachable from the first frame. The chevron goes with the
+    // fan - on a ~115px card the room it reserved was a third of the card.
     const open = page.getByRole('button', { name: /View .* holdings/ }).first();
-    const chevron = page.locator('.player-card-chevron').first();
-    await expect(chevron).toBeVisible();
 
-    // Painted, rather than a transparent default button.
-    const background = await chevron.evaluate(
-      (element) => getComputedStyle(element).backgroundColor
-    );
-    expect(background).not.toBe('rgba(0, 0, 0, 0)');
-
-    // The whole card is the target, so the tap is comfortably over 44px.
+    // The whole card is the target, so the tap clears the floor on both axes.
+    const card = await boxOf(page, '.player-card');
     const box = await open.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
-    expect(box?.width ?? 0).toBeGreaterThan(200);
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    // It covers the card rather than sitting somewhere on it. `inset: 0` is
+    // measured against the padding box, so the card's 1px frame and its 5px
+    // token-coloured left edge are outside it by design.
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(card.right - card.left - 8);
 
     // And it actually opens the drawer.
     await open.click();
@@ -235,7 +346,6 @@ test.describe('a phone in portrait', () => {
   test('keeps the player drawer stats to a compact grid', async ({ page }) => {
     await startGame(page);
 
-    await page.getByTestId(TEST_IDS.playerStackExpand).click();
     await page
       .getByRole('button', { name: /View .* holdings/ })
       .first()
@@ -349,6 +459,46 @@ test.describe('a phone in portrait', () => {
    * them, because the stack reserves a gutter on ONE side for the fan's
    * outermost card. On a phone both edges are in view at once, so that showed.
    */
+  /**
+   * The dice sit BETWEEN the two columns of cards, not welded to them.
+   *
+   * This is the third time one bug has produced a broken layout here, and the
+   * first time anything has tested for it. `.player-stack.is-collapsed` sets
+   * `gap: 0` at 0,2,0; the phone tier set `column-gap` on `.player-stack` at
+   * 0,1,0 and lost, so the computed gap really was `0px` and a 42px die had a
+   * card hard against each of its faces. The same specificity had already
+   * eaten the fan's inset and the sliver rules, silently, both times.
+   *
+   * Measured as clearance on both sides rather than as a computed `gap`,
+   * because what matters is the pixels between the two boxes - which is what
+   * a `gap` on the wrong selector fails to produce while still reading back
+   * as whatever value you wrote somewhere else.
+   */
+  test('leaves the dice room on both sides of the middle column', async ({ page }) => {
+    await startGame(page, { players: 4 });
+
+    const clearance = await page.evaluate(() => {
+      const dice = document.querySelector('.dice-pair.is-hud')?.getBoundingClientRect();
+      if (!dice) return null;
+      const cards = Array.from(document.querySelectorAll('.player-card')).map((card) =>
+        card.getBoundingClientRect()
+      );
+      const left = cards.filter((card) => card.right <= dice.left + 1);
+      const right = cards.filter((card) => card.left >= dice.right - 1);
+      return {
+        cards: cards.length,
+        left: Math.min(...left.map((card) => dice.left - card.right)),
+        right: Math.min(...right.map((card) => card.left - dice.right)),
+      };
+    });
+
+    // Vacuity guard: cards on both sides of the dice, or there is no gap to
+    // measure and this passes by having found nothing.
+    expect(clearance?.cards).toBe(4);
+    expect(clearance?.left).toBeGreaterThanOrEqual(8);
+    expect(clearance?.right).toBeGreaterThanOrEqual(8);
+  });
+
   test('insets the board evenly and clears the header', async ({ page }) => {
     await startGame(page);
 
@@ -366,11 +516,28 @@ test.describe('a phone in portrait', () => {
     // Every stacked element shares those edges. The board is the widest thing
     // on the screen, so anything narrower reads as misaligned rather than as
     // inset - which is what the stack's one-sided gutter was doing.
-    for (const selector of ['.player-card', '.game-side-footer']) {
+    //
+    // The player cards are a two-column grid now, so it is the GRID that has
+    // to line up with the board; a single card is half of it by design.
+    for (const selector of ['.player-stack', '.game-side-footer']) {
       const box = await boxOf(page, selector);
       expect(box.left, `${selector} left edge`).toBe(board.left);
       expect(box.right, `${selector} right edge`).toBe(board.right);
     }
+
+    // And the outermost cards sit flush inside it, which is what proves the
+    // `minmax(0, 1fr) auto minmax(0, 1fr)` template is not leaving a gutter.
+    const columns = await page.evaluate(() => {
+      const cards = Array.from(document.querySelectorAll('.player-card')).map((card) =>
+        card.getBoundingClientRect()
+      );
+      return {
+        leftmost: Math.min(...cards.map((box) => box.left)),
+        rightmost: Math.max(...cards.map((box) => box.right)),
+      };
+    });
+    expect(Math.abs(columns.leftmost - board.left)).toBeLessThanOrEqual(1);
+    expect(Math.abs(columns.rightmost - board.right)).toBeLessThanOrEqual(1);
   });
 
   test('keeps a decision modal inside the window', async ({ page }) => {
@@ -403,6 +570,75 @@ test.describe('a 320px phone', () => {
   test.use({ viewport: VIEWPORTS.phoneSmall });
 
   // `body { min-width: 320px }` is the floor the reset commits to.
+  /**
+   * The narrowest board in the app, playing the longest names in it.
+   *
+   * At 320x568 the height cap gives a **281px** board - a street square 22.6px
+   * wide and 38.5px deep - and that is where the name-and-price budget is
+   * genuinely tight. Two real defects only showed here: `.space-name` kept an
+   * `align-self: center` from when it was a direct child of `.space-label`,
+   * which shrink-wrapped every line instead of giving it the cell's full run;
+   * and the colour ribbon was a 7px literal rather than a fraction of the
+   * board. "The Angel Islington" clipped on both counts.
+   *
+   * The London board is the fixture because India's longest STREET is
+   * "Bhubaneshwar", which has always fitted - this spec would pass on the
+   * default edition while proving nothing, the same trap overlays.spec.ts
+   * documents for the deed card.
+   */
+  test('fits the longest names on the smallest board', async ({ page }) => {
+    await startGame(page, { edition: 'Monopoly Classic (London)' });
+
+    const measured = await page.evaluate(() => {
+      const clipped: string[] = [];
+      let read = 0;
+
+      document.querySelectorAll('.board-space').forEach((cell) => {
+        const cellBox = cell.getBoundingClientRect();
+        cell
+          .querySelectorAll('.space-name, .space-name-short, .space-price')
+          .forEach((element) => {
+            const style = getComputedStyle(element);
+            if (style.display === 'none' || style.clipPath !== 'none') return;
+            if (element.clientWidth <= 1) return;
+            read += 1;
+
+            const box = element.getBoundingClientRect();
+            const overflowsItself =
+              element.scrollWidth > element.clientWidth + 1 ||
+              element.scrollHeight > element.clientHeight + 1;
+            const escapesItsCell =
+              box.left < cellBox.left - 0.5 ||
+              box.right > cellBox.right + 0.5 ||
+              box.top < cellBox.top - 0.5 ||
+              box.bottom > cellBox.bottom + 0.5;
+
+            if (overflowsItself || escapesItsCell) {
+              clipped.push(String(element.textContent));
+            }
+          });
+      });
+
+      return {
+        clipped,
+        read,
+        board: document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0,
+      };
+    });
+
+    // Vacuity guards: the smallest board really is small, and the sweep really
+    // did read the text.
+    expect(measured.board).toBeLessThan(300);
+    expect(measured.read).toBeGreaterThanOrEqual(60);
+
+    // "The Angel Islington" is the square that broke: three words whose
+    // longest alone exceeds the line, beside a price.
+    await expect(
+      page.getByRole('button', { name: 'View details for The Angel Islington' })
+    ).toBeVisible();
+    expect(measured.clipped).toEqual([]);
+  });
+
   test('does not scroll sideways at the narrowest supported width', async ({ page }) => {
     await startGame(page);
 
@@ -449,31 +685,43 @@ test.describe('a phone held sideways', () => {
   });
 
   /**
-   * The names are hidden by a CONTAINER query on the board, not a media query
-   * on the viewport, and this is the case that forces the distinction.
+   * Everything on the board is sized by the BOARD, not by the window, and this
+   * is the case that forces the distinction.
    *
-   * Landscape sizes the board by viewport HEIGHT, so this window is 844px wide
-   * with a ~380px board - every bit as small as the portrait one. A
+   * Landscape sizes the board by viewport HEIGHT, so this window is 812px wide
+   * with a ~320px board - every bit as small as the portrait one. A
    * viewport-width rule reported "not a phone" and left 6.72px names on it.
+   * The rule under test is now the short-name swap rather than hiding the
+   * name, but the trap it guards is identical.
    */
-  test('hides the names on a small board even in a wide window', async ({ page }) => {
+  test('sizes the type by the board, not by the window', async ({ page }) => {
     await startGame(page);
 
-    const board = await page.evaluate(
-      () => document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0
-    );
+    const measured = await page.evaluate(() => {
+      const board =
+        document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0;
+      const name = document.querySelector('.space-label .space-name');
+      return {
+        board,
+        fontSize: name ? Number.parseFloat(getComputedStyle(name).fontSize) : 0,
+        shortsShown: Array.from(document.querySelectorAll('.space-name-short')).filter(
+          (element) => getComputedStyle(element).display !== 'none'
+        ).length,
+      };
+    });
 
     // The window is far wider than any phone breakpoint, and the board is not.
     expect(page.viewportSize()?.width).toBeGreaterThan(720);
-    expect(board).toBeLessThan(520);
+    expect(measured.board).toBeLessThan(520);
 
-    const names = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.space-name')).map(
-        (name) => getComputedStyle(name).display
-      )
-    );
-    expect(names.length).toBeGreaterThan(0);
-    expect(new Set(names)).toEqual(new Set(['none']));
+    // The swap is on, in a window three breakpoints too wide for it to be. No
+    // media query could reach this state.
+    expect(measured.shortsShown).toBe(6);
+
+    // And the type is at its floor, as it is on a portrait phone with the same
+    // board - not the ~8px a window this wide would have produced from `vw`.
+    expect(measured.fontSize).toBeLessThanOrEqual(6);
+    expect(measured.fontSize).toBeGreaterThanOrEqual(5);
   });
 });
 
@@ -484,8 +732,8 @@ test.describe('a desktop board', () => {
   test.use({ viewport: VIEWPORTS.desktop });
 
   // The container query has to be a threshold, not a one-way trip: a board with
-  // the room for its names must still show them.
-  test('still sets the names on a board with room for them', async ({ page }) => {
+  // the room for its full names must show those rather than the short ones.
+  test('sets the full names on a board with room for them', async ({ page }) => {
     await startGame(page);
 
     const board = await page.evaluate(
@@ -494,6 +742,19 @@ test.describe('a desktop board', () => {
     expect(board).toBeGreaterThan(520);
 
     await expect(page.locator('.space-label .space-name').first()).toBeVisible();
+
+    // The six long squares are back to their own names, and the short ones are
+    // the hidden half of the pair.
+    const swap = await page.evaluate(() => ({
+      shortsShown: Array.from(document.querySelectorAll('.space-name-short')).filter(
+        (element) => getComputedStyle(element).display !== 'none'
+      ).length,
+      longsShown: Array.from(document.querySelectorAll('.space-name.has-short')).filter(
+        (element) => getComputedStyle(element).display !== 'none'
+      ).length,
+    }));
+    expect(swap.shortsShown).toBe(0);
+    expect(swap.longsShown).toBe(6);
   });
 });
 
@@ -596,27 +857,26 @@ test.describe('an Android phone', () => {
   };
 
   /**
-   * 100px for a name and three numbers, in the scarcest column in the app.
+   * 100px for a name and three numbers, in the scarcest column in the app -
+   * and then half the width of that, once the cards became two columns with
+   * the dice between them.
    *
-   * The head was 46px of that because the label sat ABOVE its figure, and the
-   * `.eyebrow` inside it carried the global type layer's 8px bottom margin
-   * against the block's own declared 1px gap. Inline, and with the paddings a
-   * rung down, the card is about two thirds of what it was - and it still
-   * carries all four facts, which is the half of this that matters.
+   * At ~110px wide there is room for a name and one figure, so the card is a
+   * name and its cash. Everything else it used to carry is in the holdings
+   * drawer that the whole card opens, which the portrait suite asserts
+   * directly - the facts moved, they did not go.
    */
-  test('shows a player in a card two thirds the height, losing no fact', async ({
-    page,
-  }) => {
+  test('shows a player in a card a name and a figure tall', async ({ page }) => {
     await startGame(page);
 
     const card = page.locator('.player-card').first();
     const height = await card.evaluate((el: HTMLElement) => el.offsetHeight);
-    expect(height).toBeLessThan(80);
+    expect(height).toBeLessThan(70);
 
+    // The two facts that survive, and the currency they are counted in.
     const text = await card.innerText();
-    for (const fact of [/Net worth/i, /Cash/i, /Owned/i]) {
-      expect(text).toMatch(fact);
-    }
+    expect(text).toMatch(/₹\d/);
+    expect(text.split('\n').filter(Boolean).length).toBeLessThanOrEqual(2);
   });
 
   /**
@@ -660,6 +920,149 @@ test.describe('an Android phone', () => {
   });
 
   // The primary action of the tallest decision, reachable without a scroll.
+  /**
+   * The card is ONE rectangle, and every square gets the same one.
+   *
+   * This is the guard that did not exist, and its absence is the whole story.
+   * The desktop card has been uniform for months because board.spec.ts checks
+   * it; the phone card had `width: 100%; height: auto` and nothing looking at
+   * it, so it sized to whatever container it landed in and to whatever the
+   * square happened to say. A street came out 244px tall and Free Parking
+   * 106, one card ran off the right edge, and each of the two decisions
+   * rendered it a different width again.
+   *
+   * Both axes and every kind. A rule about one side is half a rule, and a
+   * rule about one kind is no rule at all.
+   */
+  test('renders every space card as the same rectangle', async ({ page }) => {
+    await startGame(page);
+
+    // One of every kind, by index: names like "Chance" repeat on the board.
+    const samples: Record<string, number> = {
+      street: 39,
+      railway: 15,
+      utility: 12,
+      tax: 4,
+      chance: 7,
+      'community chest': 2,
+      corner: 20,
+    };
+
+    const sizes: Record<string, string> = {};
+    let tallestContent = 0;
+
+    for (const [label, index] of Object.entries(samples)) {
+      await page.getByTestId(scopedTestId(TEST_IDS.boardSpace, index)).click();
+      const card = page.getByTestId(TEST_IDS.spaceCard);
+      await expect(card).toBeVisible();
+
+      const measured = await card.evaluate((element) => {
+        const el = element as HTMLElement;
+        // What the content WANTS, which is the only way to see a clip: the
+        // card is `overflow: hidden`, so anything too tall is cut silently.
+        // Release the ratio as well as the height - the height comes FROM
+        // `aspect-ratio` now, so clearing `height` alone releases nothing and
+        // the measurement is a tautology.
+        const height = el.style.height;
+        const overflow = el.style.overflow;
+        const ratio = el.style.aspectRatio;
+        el.style.height = 'auto';
+        el.style.overflow = 'visible';
+        el.style.aspectRatio = 'auto';
+        const natural = el.offsetHeight;
+        el.style.height = height;
+        el.style.overflow = overflow;
+        el.style.aspectRatio = ratio;
+        // offsetWidth/Height, not a bounding rect: the decision modal's
+        // `modal-rise` animation carries a transform, and a rect is scaled by
+        // it - the same trap the buy-button test below documents. It reported
+        // a 200x300 card as 197x296 mid-flight.
+        return { w: el.offsetWidth, h: el.offsetHeight, natural };
+      });
+
+      sizes[label] = `${measured.w}x${measured.h}`;
+      tallestContent = Math.max(tallestContent, measured.natural);
+
+      await page.getByRole('button', { name: 'Close space details' }).click();
+      await expect(card).toHaveCount(0);
+    }
+
+    // One rectangle, for all seven kinds.
+    expect(new Set(Object.values(sizes)).size, JSON.stringify(sizes)).toBe(1);
+
+    const [width, height] = Object.values(sizes)[0].split('x').map(Number);
+
+    // Vacuity guard: a card that measured zero everywhere would be uniform.
+    expect(width).toBeGreaterThan(100);
+
+    // 4:5, the same ratio the desktop card holds. Structural, not a token
+    // pair - the card sets `aspect-ratio` and takes only a width per tier.
+    expect(height / width).toBeCloseTo(5 / 4, 2);
+
+    // And the box is big enough for the fullest square on it. Uniform is only
+    // correct if the tallest content still fits: the alternative is a card
+    // that is the same size everywhere and silently cut on a street.
+    expect(tallestContent, `tallest content vs ${height}px card`).toBeLessThanOrEqual(
+      height
+    );
+  });
+
+  /**
+   * The same rectangle in a DECISION, not just in the title-deed modal.
+   *
+   * The two are different containers - the modal sizes to the card, a
+   * decision drops it into a `1fr` grid track - and that is exactly where the
+   * card drifted twice: `width: 100%` gave 246px in one and 302px in the
+   * other. Now the card carries its own width and neither container can
+   * change it.
+   */
+  test('shows the same rectangle in a decision as on the board', async ({ page }) => {
+    await startGame(page);
+
+    await page.getByRole('button', { name: /View details for Bhopal/ }).click();
+    await expect(page.getByTestId(TEST_IDS.spaceDetailCard)).toBeVisible();
+    const fromBoard = await page.locator('.deed-card').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return `${Math.round(r.width)}x${Math.round(r.height)}`;
+    });
+    await page.getByRole('button', { name: 'Close space details' }).click();
+
+    for (let step = 0; step < 80; step += 1) {
+      if (
+        await page
+          .locator('.buy-decision')
+          .isVisible()
+          .catch(() => false)
+      )
+        break;
+      if ((await advanceGame(page, { declineBuys: false })) === 'none') break;
+    }
+    await expect(page.locator('.buy-decision')).toBeVisible();
+
+    // Let `modal-rise` finish before measuring. It runs
+    // `transform: scale(0.98) -> none`, so a card caught mid-flight measures
+    // 196x294 rather than 200x300 - which is 0.98 of it, and reads exactly
+    // like a real 4px layout difference instead of a moving picture.
+    await page
+      .locator('.decision-modal')
+      .evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+
+    const inDecision = await page
+      .locator('.buy-decision .deed-card')
+      .evaluate((el: HTMLElement) => `${el.offsetWidth}x${el.offsetHeight}`);
+
+    // Exact, not approximate. Both are the same fixed token now, so any
+    // difference at all is the container leaking into the card again.
+    expect(inDecision).toBe(fromBoard);
+
+    // And it is not simply filling the column - the shape the bug took, and
+    // what "the two match" alone would still allow if both went full width.
+    const column = await page
+      .locator('.buy-decision')
+      .evaluate((el: HTMLElement) => el.offsetWidth);
+    expect(Number(inDecision.split('x')[0])).toBeLessThan(column - 8);
+  });
+
   test('keeps the buy button on screen at the tap floor', async ({ page }) => {
     await startGame(page);
     test.skip(!(await playToStreetPurchase(page)), 'No street came up for sale.');
@@ -683,30 +1086,46 @@ test.describe('an Android phone', () => {
 //
 // The board is square and a phone is not, so on a tall screen the board is
 // limited by WIDTH and the column under it has height to spare - 145px of it
-// at 360x740 with two players. All of it used to fall between the last player
-// card and the bottom bar, because the bar's `margin-top: auto` took the lot:
-// one hole, at the bottom, which reads as something missing rather than as
-// space.
+// at 360x740 with two players.
+//
+// This used to assert the opposite: that the space was SHARED, half above the
+// cards and half below. That was right when the player stack was the only
+// thing between the board and the bar - all the space fell into one hole at
+// the bottom, which read as something missing.
+//
+// It stopped being right when the action rail arrived between them. Halving
+// the space then put a 72px gap between the rail and the players, which reads
+// as the two being unrelated rather than as air: the board, the actions you
+// can take on it and the people playing are one group. So the column packs
+// upward now and the leftover collects above the sticky bar, where it is
+// plainly just the bottom of the screen.
 test.describe('a tall phone', () => {
   test.use({ viewport: { width: 360, height: 740 } });
 
-  test('shares the spare height above and below the player cards', async ({ page }) => {
+  test('packs the column under the board and leaves the room at the bottom', async ({
+    page,
+  }) => {
     await startGame(page);
 
-    const board = await boxOf(page, '.board-card');
+    const rail = await boxOf(page, '.action-rail');
     const stack = await boxOf(page, '.player-stack-region');
     const footer = await boxOf(page, '.game-side-footer');
 
-    const above = stack.top - board.bottom;
+    const above = stack.top - rail.bottom;
     const below = footer.top - stack.bottom;
 
     // Vacuity guard: with two players there IS spare height here. If the board
     // ever grew to fill the column this test would be asserting nothing.
     expect(above + below).toBeGreaterThan(80);
 
-    // Shared, not piled at one end. The two are not exactly equal because the
-    // layout's own 12px gap sits above the sidebar, so allow for it.
-    expect(Math.abs(above - below)).toBeLessThanOrEqual(16);
+    // The cards sit directly under the rail - one gap, not a hole.
+    expect(above).toBeLessThanOrEqual(16);
+
+    // And all of it is at the bottom, which is the half of this that changed.
+    expect(below).toBeGreaterThan(above);
+
+    // Still nothing underneath the bar: the column packs up, it does not spill.
+    expect(stack.bottom).toBeLessThanOrEqual(footer.top);
   });
 });
 
@@ -718,13 +1137,15 @@ test.describe('a tall phone', () => {
  * in a 740px phone with room to spare, so "a full table" stopped being a full
  * column and the test quietly stopped testing anything. Height is what makes
  * the column full; the number of players only used to.
+ *
+ * There is no expand step any more: the HUD is a grid with every card drawn,
+ * so eight players at 320x568 overflow on their own.
  */
 test.describe('a short phone', () => {
   test.use({ viewport: VIEWPORTS.phoneSmall });
 
   test('gives the shared space back when the column overflows', async ({ page }) => {
     await startGame(page, { players: MAX_PLAYERS });
-    await page.locator('.player-stack-expand').click();
 
     const state = await page.evaluate(() => {
       const side = document.querySelector('.game-side') as HTMLElement;

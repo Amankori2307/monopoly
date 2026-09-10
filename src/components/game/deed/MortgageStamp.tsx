@@ -160,7 +160,7 @@ function DeedStamp({ filterId }: DeedStampProps) {
  *
  * Below the tablet breakpoint the squares are about 29x49px and the word
  * genuinely cannot be read, so the stylesheet hides it there and the frame plus
- * the hollow owner dot carry the state.
+ * the faded owner bar carry the state.
  */
 interface SpaceStampProps {
   /** True on the portrait squares, where the word runs down the cell. */

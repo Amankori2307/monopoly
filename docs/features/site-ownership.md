@@ -46,6 +46,14 @@ UI supplied one.
 
 ## Key decisions
 
+- **The card is one rectangle at a 4:5 ratio**, sized per tier (320×400, and 240×300 below
+  `$breakpoint-mobile`) with the height derived from `aspect-ratio` rather than written down
+  twice. Every kind pads out to it and leaves the bottom blank — see
+  [design-system.md](../design-system.md#the-site-card-is-one-rectangle-at-one-ratio).
+- **The rent tiers are drawn with the board's own house and hotel pieces**, with the full label
+  kept `visually-hidden` beside them. "With 3 houses" was the widest thing on the card, and its
+  width is what had been forcing the rows to wrap.
+
 - **Actions not yet built are rendered disabled with a reason, not hidden.** The panel says what will
   be possible, which is how the action rail already behaves. Deleting an entry from
   `SCAFFOLDED_COMMANDS` lights it up with no UI change — that is exactly how mortgage and redeem
@@ -92,7 +100,7 @@ UI supplied one.
   looked "a bit heavy". A test pins the class now.
 
 - **The word comes off below the tablet breakpoint.** At about 29x49px it cannot be read at any
-  weight, and the hollow owner dot carries the state there - which is why the dot stays.
+  weight, and the faded owner bar carries the state there - which is why the bar stays.
 
 - **The stamp takes `--action-mortgage`**, the token the mortgage button already uses, so it needs no
   new theme token and reads in both themes. Colour comes through `currentColor` and opacity from CSS,
@@ -121,7 +129,7 @@ the whole ladder. `isOwnedBy` was made public in `holdings.utils.ts`.
 | Unit  | [playerActions.utils.test.ts](../../src/domain/rules/playerActions.utils.test.ts) | `getSiteActions` for unowned, opponent-owned, owner-owned, non-ownable, unknown id                                                                                |
 | Unit  | [SpaceDetailCard.test.tsx](../../src/components/game/SpaceDetailCard.test.tsx)    | all three states, the mortgaged stamp, the picked space reaching the command                                                                                      |
 | Unit  | [PlayerBadges.test.tsx](../../src/components/game/panels/PlayerBadges.test.tsx)   | the mortgaged badge and its pluralisation                                                                                                                         |
-| E2E   | [feedback.spec.ts](../../tests/e2e/feedback.spec.ts)                              | owner dots in two colours, hollow when mortgaged, the three panel states, the deed stamp                                                                          |
+| E2E   | [feedback.spec.ts](../../tests/e2e/feedback.spec.ts)                              | owner bars in two colours, faded when mortgaged, the three panel states, the deed stamp                                                                           |
 | E2E   | [buildings.spec.ts](../../tests/e2e/buildings.spec.ts)                            | building and selling from the panel, the even rules, the pieces standing on the ribbon and fitting along it, and the sharp-corner scan run with buildings present |
 
 ## Known gaps
@@ -153,10 +161,30 @@ the whole ladder. `isOwnedBy` was made public in `holdings.utils.ts`.
   comes off `.space-label` on exactly the axis the name-clipping e2e test measures, and the longest
   street names have no margin left. A cramped house is cosmetic; a clipped name is a failure.
 
-- **The owner dot hugs the cell's outer edge**, the opposite one to the ribbon, per side. It used to
-  sit top-right on every side — which on the bottom row is where the ribbon is, so it covered the
-  pieces standing on it. With 6px pips that was a nibble; with real houses it hid the fourth one and
-  a hotel's windows outright.
+- **The owner mark is a bar and a wash, not a dot.** A 5px dot in a corner was a quarter of a phone
+  cell and had to be hunted for on every square; `.space-owner-bar` runs the full length of the
+  cell's outer edge in the owner's token colour, and `.board-space.is-owned` washes the square with
+  `color-mix(in srgb, var(--space-owner) 14%, transparent)`. Both derive from the player's colour
+  set inline, so neither needs a theme token — a token colour is theme _data_, the same sanctioned
+  exception `BoardTokenLayer` and `PlayerCard` take. Contrast was measured on both extremes:
+  13.3:1 → 11.3:1 on the India palette, 12.5:1 → 9.4:1 on `midnight`.
+
+  Three things about it are load-bearing:
+  - **It hugs the cell's OUTER edge**, the opposite one to the ribbon, per side. The dot used to sit
+    top-right on every side — which on the bottom row is where the ribbon is, so it covered the
+    pieces standing on it. With 6px pips that was a nibble; with real houses it hid the fourth one
+    and a hotel's windows outright.
+  - **It paints at `z-index: 4`, below the cell's `::after` divider at 5.** At 6 it painted over the
+    divider, so on the bottom row it erased the 1px line the cell draws and bled colour to the
+    board's outer boundary. `board.spec.ts` only reads the pseudo-element's shadow, so nothing
+    catches this but the eye.
+  - **`.space-label` reserves `--owner-bar-weight` on that edge whether or not anyone owns the
+    square.** Reserved only when owned, a street re-wraps its name the moment somebody buys it and
+    the whole board twitches.
+
+  A mortgaged site keeps the colour and fades to `opacity: 0.4`; the stamp struck across the square
+  is what says "mortgaged", because a 3px bar cannot carry two meanings in its own geometry.
+
 - **The deed marks the rent tier it is actually charging.** A bare site marks nothing: which of the
   two unbuilt rents applies depends on whether the owner holds the rest of the set, which the deed
   cannot see.

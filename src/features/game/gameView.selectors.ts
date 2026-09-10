@@ -62,6 +62,10 @@ export const selectPlayerSummaries = (
   theme: ThemeConfig | undefined
 ): PlayerSummary[] => {
   const findToken = makeTokenFinder(theme);
+  const activePlayerId = game.playerOrder[game.activePlayerIndex];
+  // Turn order, still: DOM order is what the desktop fan's :nth-of-type rules
+  // read, and what makes the top card the active player. The phone grid orders
+  // by seatIndex through CSS instead - see PlayerSummary.
   return selectPlayerOrderFromActive(game).map((playerId) => {
     const player = game.players[playerId];
     return {
@@ -71,6 +75,8 @@ export const selectPlayerSummaries = (
       netWorth: getNetWorth(game, playerId),
       mortgagedCount: getMortgagedCount(game, playerId),
       setProgress: getColorGroupProgress(game, playerId),
+      isActive: playerId === activePlayerId,
+      seatIndex: game.playerOrder.indexOf(playerId),
     };
   });
 };

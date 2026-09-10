@@ -41,7 +41,97 @@ Three arrangements, from one set of components. Breakpoints are tokens in
 
 `.app-shell.is-game` becomes a `100dvh` flex column that never scrolls. Inside it the board is
 pinned at the top, `.game-side` is the **one** scroll container, and `.game-side-footer` is its
-sticky last child holding the toasts and the dice.
+sticky last child holding the toasts and the roll controls.
+
+### Everything on a phone is drawn at phone scale
+
+The layout landed before the sizing did: the structure was right and every
+number in it was a desktop number. Measured at 360×740 the player name was a
+16px serif on a 124px card, the deed card was 300×360 — _taller than the 336px
+board it covers_ — and the gap between a card and the dice was **0px**.
+
+- **Type is one root scale**, `$root-scale-phone` at 87.5%. See
+  [design-system.md](../design-system.md#the-phone-tier) for what deliberately
+  does not follow it, and for the two traps it sprang (a tap target whose width
+  came from its label, and iOS zooming a sub-16px field).
+- **The column packs up.** Board → rail → cards sit together and the leftover
+  collects above the sticky bar. It used to be shared evenly above and below
+  the cards, which was right until the action rail arrived between them: after
+  that, halving it put a 72px hole between the rail and the players.
+- **The player card is a name and a figure**, at ~47px from 64. The two facts
+  are the same two; what went was leading and padding.
+- **The deed card is about half the board** — 246×244, from 300×360 — and loses
+  nothing: name, price, mortgage value, all seven rent tiers and the building
+  cost are all still on it. Below `$breakpoint-mobile` it is already
+  `width: 100%; height: auto`, so this is a phone tier and the desktop card's
+  exactly-pinned 340×392 never moves. **`width: 100%` is right only where a
+  wrapper sets the width** — the holdings drawer and the trade stack do; a
+  decision's `1fr` grid track does not, and the same declaration gave 302px
+  there against 246 in the title-deed modal. The decisions size the card by
+  `max-content` with a 100% ceiling, so it is one object at one width wherever
+  a phone shows it, which is what `overlays.spec.ts` already asserts on a
+  desktop. Where the height went: the rent rows'
+  padding (8px × 7 rows), the "Title deed" eyebrow and the "Rent schedule"
+  heading — both labelling something the colour band, the name and the rows
+  already say — and a rung off the title. **Hiding the eyebrow moved the stats
+  grid up under the 44px close button**, so the title row now reserves a
+  tap-target-tall strip beside the name.
+
+### The phone HUD: two columns with the dice between them
+
+Below `$breakpoint-tablet` the player cards stop being a fanned deck and become a grid —
+`minmax(0, 1fr) auto minmax(0, 1fr)`, seats down the outside, the dice in the middle. **One DOM
+serves both arrangements**, which is the whole design: there is no viewport check in JavaScript
+anywhere in it.
+
+Four things make that possible, and each is load-bearing:
+
+- **The middle slot is a `<div>` among `<article>` cards.** The collapsed fan is laid out entirely
+  by `:nth-of-type` on `.player-card`, so a sibling of a different element type is invisible to
+  every one of those rules. `layout.spec.ts` and `full-table.spec.ts` pin the desktop fan and did
+  not change at all.
+- **The fan's measurements are custom properties, not tokens read directly** — `--stack-peek`,
+  `--stack-strip`, `--stack-tuck`, `--stack-inset`, `--stack-fade`, `--sliver-content`,
+  `--sliver-open`. The phone tier turns the whole fan off by redeclaring seven values instead of
+  undoing eleven rules. The last two matter most: they are read five classes deep, inside
+  `.is-collapsed .player-card:not(:first-of-type) …`, and **a custom property inherits, so the
+  reader's specificity is irrelevant.** A media query trying to override those selectors directly
+  loses on specificity however late in the file it comes — which it did, twice, before this.
+- **The resets go on `.player-stack.is-collapsed`, not `.player-stack`.** The collapsed block
+  declares the same variables at 0,2,0, so a 0,1,0 rule in the phone tier loses. The phone stack is
+  always collapsed — there is nothing to expand — so that is the selector that governs.
+- **`minmax(0, 1fr)`, never `1fr`.** A plain `1fr` has an `auto` minimum, so a 43-character player
+  name would push its own track wider and the grid off the screen; the card's ellipsis cannot help
+  until the track stops growing.
+
+**The row count comes from the data.** `PlayersPanel` publishes `data-rows` (two cards a row,
+rounded up) because the middle column spans every row and `grid-row: 1 / -1` cannot address
+implicit ones.
+
+**Order is by seat, not by turn.** DOM order stays turn order — that is what the fan reads, and
+what makes its top card the active player — and the grid reorders with CSS `order` from a
+`data-seat` attribute, so a player keeps their cell for the whole game instead of jumping every
+turn. Whose turn it is is carried explicitly by `.is-active`, which took over the emphasis from
+`:first-of-type`: identical on the fan, and the only thing that says it on a grid.
+
+**The card is a name and one figure.** At ~115px wide there is room for nothing else, so net worth,
+the owned count and the colour-set pips come off and cash stays. Every one of them is in the
+holdings drawer the whole card opens, and `mobile.spec.ts` asserts they are actually there rather
+than only that the card is small. The badges stay in the DOM as absolutely-positioned corner
+markers — jail and bankruptcy still have to read, and they must not cost the card a line.
+
+**The dice are drawn twice and rolled once.** `DicePair` is mounted in the dock and in the middle
+column, and the stylesheet shows one; `GameSidebar` owns the single `useDiceRoller` and hands the
+result to both. That is not a refinement — **the hook plays the roll sound**, so a second call
+sounds every throw twice. The two mounts also need separate test ids (`die-face-*` and
+`die-face-hud-*`): two elements answering one id is a Playwright strict-mode failure even when one
+of them is `display: none`. The Roll button stays in the bar on every viewport, because
+`controls.spec.ts` requires every control in that row to be exactly 44px tall and a ~90px column
+cannot hold one with a real label.
+
+**Landscape puts it all back.** The `landscape-compact` block restores a single column, hides the
+middle slot and shows the dock's dice again — and it must stay **after** the portrait block,
+because a 667×375 phone matches both.
 
 - **The board is capped by height as well as width** (`max-width: min(100%, 54dvh)`). This is the
   bug the frame fixes: below `$breakpoint-board` the height term used to be _replaced_ by a plain
@@ -151,27 +241,60 @@ it, and is about **88px** tall. It used to be roughly **300px** on a phone.
 from a small desktop window, and it is the **height** that breaks the board. The board takes
 `height: 100%` and derives its width from `aspect-ratio`, so it always fits.
 
-### A small board is a map, not a document
+### Every square says what it is and what it costs
 
-Below a **board width** of `$board-name-floor` (520px) the squares **drop their name text**. A
-street cell is about 30px wide when the board is 375px and the name was set at a hardcoded `5px`,
-which is texture rather than type. What stays is what identifies a square at a glance: the colour
-ribbon, the glyph, the owner's dot, buildings, and the tokens. The name is one tap away in the
-title-deed card a square already opens.
+Every square carries its **name** and its **price** at every board size, phone included, and shows
+**who owns it** in the owner's own colour. It did not use to: below a 520px board the name was
+deleted outright, and the price was never drawn on any viewport. That left a street as a colour
+ribbon and a 5px dot — with literally nothing identifying it, because streets carry no glyph.
+
+The geometry is what makes it possible. Rows 1 and 11 are `$board-corner-track` (1.7fr) **deep**
+while the columns between them are 1fr wide, so a top-row square is roughly **30 × 51px** on a
+370px board — and two runs of type fit side by side across those 30px.
+
+- **`.space-text` holds the pair, and its `flex-direction` is `column`** — which is the _block_
+  axis, whatever the writing mode. One rule serves all four sides: on the rows it makes two vertical
+  columns side by side, on the columns two horizontal lines stacked, and the price always lands
+  exactly where a further wrapped line of the name would have gone. `row` is the trap: with
+  `vertical-rl` a multi-line name stacks its lines right-to-left, so a row puts the price _before_
+  line one and the reader takes the price first.
+- **Six squares a board print what they ARE instead.** "Chennai Central Railway Station" wraps to
+  four lines at _any_ board size, and four lines plus a price breaks the 5px legibility floor below
+  a 347px board. So the four railways and the two utilities swap to the edition's own word —
+  `nouns.railway`, and Electric/Water — below `$board-short-name-floor` (420px), which also catches
+  the ~370px board a 768px tablet renders. Both names are in the DOM and a container query picks
+  one: CSS cannot substitute text, and a JS width check is not how this codebase does layout. See
+  [boardNames.utils.ts](../../src/domain/themes/boardNames.utils.ts).
+- **One more tier, for one device class.** Below `$board-tight-floor` (300px board) the type drops
+  to 4.2px. Measured on the London board at 320×568 — the narrowest device supported — where the
+  height cap leaves a 281px board: "The Angel Islington" has 27.8px of run and "Islington" alone is
+  30.6px at 5px. No arrangement of the ribbon or the insets closes a 3px gap. The two common phones
+  (360 and 375, boards of 320 and 351) stay at the 5px floor.
+- **The insets are two tokens, not one.** `$board-inset-short` across the cell's scarce axis, where
+  every pixel is a line of type, and `$board-inset-long` along the plentiful one. One inset for both
+  spent the scarce axis at the plentiful axis's rate.
+- **The Jail band is the one place the old reasoning still holds.** Its visiting strip is 34% of a
+  corner — 25 × 13px on a 281px board — and "Just Visiting" needs three lines of 5px type in 21px of
+  width. Below the short-name floor its label is clipped the way `.jail-name-joiner` already is:
+  visually gone, still in the accessibility tree and in `textContent`.
 
 - **It is a `@container` query on `.board-card`, not a media query**, and the distinction is the
   whole point. The threshold is a fact about the _board_ — how wide a square is — and the board's
   width is not a function of the viewport's. Landscape sizes the board by viewport **height**, so an
-  844×390 phone has an 844px-wide window and a 380px board: a viewport-width rule reported "not a
+  812×375 phone has an 812px-wide window and a 320px board: a viewport-width rule reported "not a
   phone" and left **6.72px** names on a board every bit as small as the portrait one it correctly
   cleared. Found by looking at it in landscape, not by reading the rule.
 
-- **Only the visible text is hidden.** The cell's accessible name is an explicit `aria-label` on the
-  button ([BoardSpaceCell](../../src/components/game/board/BoardSpaceCell.tsx)), so screen readers
-  and role-based queries are untouched.
-- **`board.spec.ts`'s "never clips a space name" scan is vacuous at phone width.** It measures
-  `scrollWidth` against `clientWidth`, and a `display: none` element reports zero for both. That
-  spec pins the desktop viewport for exactly this reason — do not remove it.
+- **The full name always stays in the DOM**, and the cell's accessible name is an explicit
+  `aria-label` on the button ([BoardSpaceCell](../../src/components/game/board/BoardSpaceCell.tsx)),
+  so screen readers and role-based queries are untouched by the swap.
+- **The clipping scan is no longer vacuous on a phone**, and it must not be allowed to become so
+  again. `mobile.spec.ts` sweeps every _visible_ name and price for self-overflow **and** for
+  containment in its cell, with vacuity guards on the board width and the element count — a
+  `display: none` element reports zero for both `scrollWidth` and `clientWidth`, which is how the
+  old assertion passed while proving nothing. The 320px case plays the **London** board, because
+  India's longest street is "Bhubaneshwar" and would prove nothing.
+
 - **Board decorations are sized in `cqw`, not `vw`.** `.board-card` is a `container-type:
 inline-size` container and publishes a `--token-size` custom property. `vw` tracks the _viewport_,
   which stops agreeing with the board the moment the board is capped by `dvh` — and in landscape the
@@ -302,9 +425,12 @@ on its side — the same reason `MortgageStamp` picks its box per variant. House
 all: a rotated word still reads, a rotated house reads as a broken shape. The windows come off below
 the tablet breakpoint, where they are under a device pixel.
 
-The **owner dot hugs the cell's outer edge**, opposite the ribbon, per side — it used to sit
-top-right on every side, which on the bottom row is where the ribbon is, so it covered the pieces
-standing on it.
+The **owner bar runs the full length of the cell's outer edge**, opposite the ribbon, per side, in
+the owner's token colour, and `.is-owned` washes the whole square with 14% of it. It replaced a 5px
+corner dot, which was a quarter of a phone cell and had to be hunted for on each square. It hugs
+the outer edge because the dot used to sit top-right on every side — which on the bottom row is
+where the ribbon is, so it covered the pieces standing on it. See
+[site-ownership.md](site-ownership.md) for the z-index and padding traps.
 
 ### Player tokens
 

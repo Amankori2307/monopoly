@@ -2,6 +2,11 @@
 @use '../abstracts/tokens' as t;
 
 .space-detail-backdrop {
+  // Published here rather than on the card, because .site-actions is the
+  // card's SIBLING and has to match its width - a custom property on the card
+  // itself would be invisible to it.
+  --deed-width: #{t.$deed-card-width};
+
   position: fixed;
   inset: 0;
   z-index: t.$z-space-detail;
@@ -59,11 +64,21 @@
   // negating this exact value, so a phone that tightens one has to tighten the
   // other or the colour strip stops lining up.
   --deed-pad: #{t.$deed-card-pad};
+  // The one number a tier sets. Everything else about the card's box follows.
+  // Declared here as well as on the backdrop, because the card is rendered in
+  // six places and only one of them is that modal.
+  --deed-width: #{t.$deed-card-width};
 
   // Positions the mortgage watermark, which is struck across the whole card.
   position: relative;
-  width: t.$deed-card-width;
-  height: t.$deed-card-height;
+  width: var(--deed-width);
+  // 4:5, and the height is never written down beside it. A printed title deed
+  // is a tall rectangle; the ratio is the thing that must not drift, so it is
+  // structural rather than a second token to keep in step. A tier changes the
+  // width and the height follows by construction - which is why 2:3, then
+  // 3:5, then this have each been this line and one token.
+  aspect-ratio: 4 / 5;
+  height: auto;
   padding: var(--deed-pad);
   overflow: hidden;
   border: 1px solid var(--border-space);
@@ -85,13 +100,22 @@
   margin-top: auto;
 }
 
-// Only where a 420px card cannot fit does it stop being fixed.
+// A phone gets a SMALLER fixed rectangle, not a fluid one.
+//
+// It used to go `width: 100%; height: auto` here, which is the bug this whole
+// pass is about: the card then sized to whatever container it landed in and to
+// whatever the square happened to say, so a street was 244px tall and Free
+// Parking 106, and the two decisions rendered it 56px wider than the modal
+// did. Every square is one box; the ones with less to say leave the bottom
+// blank, exactly as they do on a desktop.
 @include m.below(t.$breakpoint-mobile) {
+  .space-detail-backdrop,
   .deed-card {
-    --deed-pad: #{t.$deed-card-pad-phone};
+    --deed-width: #{t.$deed-card-width-phone};
+  }
 
-    width: 100%;
-    height: auto;
+  .deed-card {
+    --deed-pad: #{t.$deed-card-pad-tight};
   }
 }
 
@@ -267,6 +291,10 @@
   }
 
   dt {
+    display: flex;
+    align-items: center;
+    gap: t.$space-hair;
+    min-height: t.$deed-tier-piece;
     color: var(--text-body);
     @include t.text(small);
   }
@@ -288,6 +316,26 @@
       font-weight: t.$weight-bold;
     }
   }
+}
+
+// A rent tier, drawn. The same pieces that stand on the board's colour
+// ribbons, so a house means the same thing in both places - and four of them
+// are narrower than the words "With 4 houses", which is what let the card come
+// down from 340 wide to 280 without the rows wrapping.
+.rent-tier {
+  display: flex;
+  gap: t.$space-hair;
+  align-items: center;
+}
+
+.rent-tier-house {
+  width: t.$deed-tier-piece;
+  height: t.$deed-tier-piece;
+}
+
+.rent-tier-hotel {
+  width: t.$deed-tier-hotel;
+  height: t.$deed-tier-piece;
 }
 
 .deed-footer {
@@ -317,7 +365,10 @@
   display: flex;
   flex-direction: column;
   gap: t.$space-2;
-  width: t.$deed-card-width;
+  // The card's width, so the two read as one object stacked. Per tier, or the
+  // actions box is wider than the deed above it - which is what the phone
+  // showed once the card came down to 200.
+  width: var(--deed-width);
   max-width: 100%;
   padding: t.$space-3;
   border: 1px solid var(--border-space);
@@ -335,7 +386,7 @@
   text-transform: uppercase;
 }
 
-// Matches the board's owner dot, so the same colour means the same player.
+// Matches the board's owner bar, so the same colour means the same player.
 .site-owner-dot {
   width: 9px;
   height: 9px;
@@ -364,11 +415,90 @@
   }
 }
 
-// There is deliberately no phone tier left in this file.
+// ---------------------------------------------------------------------------
+// The phone tier.
 //
-// Both rules that lived here - the title a rung down, and the deed's labels
-// promoted off `micro` - turned out to be right on every screen rather than
-// only on a small one, so they are the plain rules above now. The phone-only
-// versions existed because the desktop card was believed to have 14px of slack
-// to protect; measuring it properly showed it had none at all and was already
-// clipping, which is a different bug with the same fix.
+// This file used to say there was deliberately none, and it was right about
+// its own case: the two rules that had lived here - the title a rung down and
+// the deed's labels promoted off `micro` - turned out to be right on EVERY
+// screen, so they became the plain rules above. That is still true.
+//
+// This block is a different argument. Below $breakpoint-mobile the card stops
+// being a fixed 340x392 object and becomes the width of the screen with its
+// height released, which is the same reason $deed-card-pad-phone already
+// exists: it genuinely is a different object, not the same one in a smaller
+// window. Measured on a 360px phone it came out 300x360 - taller than the
+// 336px BOARD it is covering - and 183px of that was seven rent rows at 26px
+// each, of which 8px a row was padding.
+//
+// Nothing is dropped to get it down. Every fact a player opens this card for -
+// the name, the price, the mortgage value, all seven rent tiers and what a
+// house costs - is still on it. What goes is the space between them, and one
+// eyebrow that was labelling something the colour band and the name already
+// say.
+//
+// Desktop is untouched, and must be: overlays.spec.ts pins 340x392 exactly, in
+// two places, plus the band's bleed and a drawer width derived from the card's.
+// Everything here is inside the breakpoint where those pins do not reach.
+//
+// Last in the file, per the design system's rule 8 - these are the same
+// specificity as the rules above and a media query adds none.
+// ---------------------------------------------------------------------------
+@include m.below(t.$breakpoint-mobile) {
+  // The band is decoration with a job - it says which colour set this is - and
+  // it does that job at 10px as well as at 14.
+  .deed-band {
+    height: t.$deed-band-height-phone;
+  }
+
+  // "Title deed" over a card with a colour band and a street name on it.
+  // Hidden rather than removed: it is the deed's accessible label on desktop,
+  // where the card sits among other cards in the holdings drawer.
+  .space-card-body.is-deed > .eyebrow {
+    display: none;
+  }
+
+  // The close button gets its own strip.
+  //
+  // It is 44px tall and absolutely positioned at the card's top-right, and it
+  // used to be cleared by the eyebrow above the title. With the eyebrow gone
+  // the stats grid rose under it and the button sat on top of "Mortgage
+  // value" - 11px of overlap, which a screenshot showed and no test would
+  // have. So the title row is at least as tall as the control beside it, and
+  // reserves its width as well as its height: `padding-right` clears the
+  // button so a long street name cannot run under it either.
+  .space-detail-title-row {
+    min-height: t.$control-tap;
+    align-items: center;
+    padding-right: calc(#{t.$control-tap} + #{t.$space-1});
+
+    h2 {
+      @include t.text(heading);
+    }
+  }
+
+  // The button follows the card's own tighter padding, rather than staying at
+  // the 12px the roomier card used.
+  .space-detail-close {
+    top: t.$deed-card-pad-tight;
+    right: t.$deed-card-pad-tight;
+  }
+
+  .deed-primary-stats span {
+    padding: t.$space-1;
+  }
+
+  // "Rent schedule", over a list whose first row says "Rent" and whose last
+  // says "With hotel". It is a heading for something that names itself, and
+  // with its margins it is 20px of a card that is trying to be half a board.
+  .deed-rent-title {
+    display: none;
+  }
+
+  // Where the card's height actually is: seven rows on a street, so a rung of
+  // padding here is 56px of card. The rows keep their rules, which is what
+  // still makes them read as a table.
+  .rent-schedule div {
+    padding: 0;
+  }
+}

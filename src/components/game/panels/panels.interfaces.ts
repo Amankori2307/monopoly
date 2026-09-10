@@ -4,11 +4,13 @@ import type {
   ColorGroupProgress,
   MortgageableSite,
 } from '../../../domain/rules/holdings.utils';
+import type { EligibleSite } from '../../../domain/rules/playerActions.utils';
 import type {
   AuctionLedgerKind,
   BuildingKind,
   MortgageChoice,
   PendingDecisionType,
+  PropertyAction,
 } from '../../../domain/types/game.enums';
 import type {
   AuctionState,
@@ -39,6 +41,24 @@ export interface PlayerSummary {
   mortgagedCount: number;
   /** Colour groups they hold any of, and how close each is to a full set. */
   setProgress: ColorGroupProgress[];
+  /**
+   * Whose turn it is.
+   *
+   * The desktop fan says this by POSITION - `selectPlayerSummaries` returns the
+   * active player first and the top card carries the emphasis. The phone grid
+   * cannot: it is a fixed two-column layout, and reordering it every turn would
+   * make eight cards jump between cells. So the fact is carried explicitly and
+   * both arrangements read it.
+   */
+  isActive: boolean;
+  /**
+   * Where this player sits at the table, independent of whose turn it is.
+   *
+   * The phone grid orders by this (through CSS `order`), so a player stays in
+   * the same cell all game. DOM order stays turn order, which is what every
+   * `:nth-of-type` rule in the fan depends on.
+   */
+  seatIndex: number;
 }
 
 export interface HoldingEntry {
@@ -243,4 +263,33 @@ export interface DecisionHandlers {
   onChooseBuildingSite: (spaceId: SpaceId) => void;
   onChooseBusMove: (steps: number) => void;
   onChooseDestination: (spaceId: SpaceId) => void;
+}
+
+/** One opponent the trade picker can offer. */
+export interface TradeOpponent {
+  playerId: PlayerId;
+  name: string;
+  tokenId: string;
+}
+
+/**
+ * One button in the action rail under the board.
+ *
+ * Five of them: the four property actions, plus Trade - which is `action:
+ * null` because it is not a `PropertyAction` and does not pick one of your own
+ * sites. Inventing a fifth enum member to make the row uniform would put a
+ * value into the engine's vocabulary that no command takes.
+ */
+export interface PlayerActionRow {
+  action: PropertyAction | null;
+  /** One word: five buttons share the width of a phone. */
+  label: string;
+  /** Verb plus object, in the edition's noun, where it costs no pixels. */
+  accessibleName: string;
+  isEnabled: boolean;
+  /** Why it is unavailable. Empty when it is not. */
+  disabledReason: string;
+  sites: EligibleSite[];
+  /** Only Trade has these. */
+  opponents?: TradeOpponent[];
 }

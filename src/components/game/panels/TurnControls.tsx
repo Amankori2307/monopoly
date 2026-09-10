@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { SpeedDieFace } from '../../../domain/types/game.enums';
+import type { UseDiceRollerResult } from '../hooks/useDiceRoller';
 import { DiceDock } from '../DiceDock';
 
 interface TurnControlsProps {
@@ -12,18 +13,14 @@ interface TurnControlsProps {
    * it happens to live in the DOM.
    */
   leading?: ReactNode;
-  /** False when the player has muted the game. */
-  soundEnabled: boolean;
   canEndTurn: boolean;
   canRoll: boolean;
   canRollAgain: boolean;
+  /** The one roller, owned by GameSidebar so the roll sounds once. */
+  dice: UseDiceRollerResult;
   /** The Speed Die's face this turn, or null in a game without one. */
   speedDieFace: SpeedDieFace | null;
-  lastRoll: number[] | null;
-  /** Identifies the throw, so every device replays it exactly once. */
-  lastRollId: string | null;
   onEndTurn: () => void;
-  onRoll: () => void;
   rollLabel: string;
 }
 
@@ -35,13 +32,10 @@ export function TurnControls({
   canEndTurn,
   canRoll,
   canRollAgain,
-  lastRoll,
-  lastRollId,
+  dice,
   leading,
   onEndTurn,
-  onRoll,
   rollLabel,
-  soundEnabled,
   speedDieFace,
 }: TurnControlsProps) {
   return (
@@ -61,13 +55,10 @@ export function TurnControls({
         </button>
       ) : null}
       <DiceDock
-        soundEnabled={soundEnabled}
         canRoll={canRoll}
-        speedDieFace={speedDieFace}
-        lastRoll={lastRoll}
-        lastRollId={lastRollId}
-        onRoll={onRoll}
+        dice={dice}
         rollLabel={rollLabel}
+        speedDieFace={speedDieFace}
       />
     </div>
   );

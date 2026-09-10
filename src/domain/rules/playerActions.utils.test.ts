@@ -3,7 +3,12 @@ import { HOTEL_BUILD_LEVEL } from '../constants/game.constants';
 import { GameCommandType, PropertyAction } from '../types/game.enums';
 import type { GameState } from '../types/game.interfaces';
 import { createGameState } from './gameEngine';
-import { buyBlockedReason, getSiteActions } from './playerActions.utils';
+import {
+  buyBlockedReason,
+  getPlayerActionOptions,
+  getRedemptionCost,
+  getSiteActions,
+} from './playerActions.utils';
 import { SeededRandomSource } from './rng';
 
 const createGame = (): GameState =>
@@ -214,5 +219,140 @@ describe('buyBlockedReason', () => {
 
   it('blocks a broke player', () => {
     expect(buyBlockedReason(0, 60)).toMatch(/not enough cash/i);
+  });
+});
+
+/**
+ * The same rules, asked of everything a player holds rather than one square.
+ *
+ * This is what lets the action rail offer Build without a spaceId - the
+ * objection that removed the old rail. Nothing about what is legal is restated
+ * here; every answer comes from getSiteActions, so a live rail button and the
+ * command behind it cannot disagree.
+ */
+describe('getPlayerActionOptions', () => {
+  const optionFor = (game: GameState, playerId: string, action: PropertyAction) =>
+    getPlayerActionOptions(game, playerId).find((option) => option.action === action)!;
+
+  it('offers all four actions, always, so the rail never changes shape', () => {
+    const game = createGame();
+
+    const actions = getPlayerActionOptions(game, game.playerOrder[0]).map(
+      (option) => option.action
+    );
+    expect(actions).toEqual([
+      PropertyAction.Build,
+      PropertyAction.Sell,
+      PropertyAction.Mortgage,
+      PropertyAction.Redeem,
+    ]);
+  });
+
+  it('says so plainly when the player owns nothing at all', () => {
+    const game = createGame();
+
+    getPlayerActionOptions(game, game.playerOrder[0]).forEach((option) => {
+      expect(option.isEnabled).toBe(false);
+      expect(option.sites).toEqual([]);
+      expect(option.disabledReason).toBe('You do not own anything yet');
+    });
+  });
+
+  it('lists a mortgageable site with what the bank would pay', () => {
+    const game = createGame();
+    const spaceId = giveFirstStreetTo(game, game.playerOrder[0]);
+    const street = game.board.find((space) => space.id === spaceId)!;
+
+    const option = optionFor(game, game.playerOrder[0], PropertyAction.Mortgage);
+    expect(option.isEnabled).toBe(true);
+    expect(option.sites).toEqual([
+      {
+        spaceId,
+        name: street.name,
+        command: GameCommandType.MortgageAsset,
+        amount: (street as { mortgageValue: number }).mortgageValue,
+      },
+    ]);
+  });
+
+  /**
+   * When every holding refuses for the SAME reason, that reason is more use
+   * than a summary of it - the rail should say "Already mortgaged", not "no
+   * site of yours can be mortgaged".
+   */
+  it('passes the one reason through when the holdings all agree', () => {
+    const game = createGame();
+    const spaceId = giveFirstStreetTo(game, game.playerOrder[0]);
+    game.ownership[spaceId].mortgaged = true;
+
+    expect(optionFor(game, game.playerOrder[0], PropertyAction.Mortgage)).toMatchObject({
+      isEnabled: false,
+      disabledReason: 'Already mortgaged',
+    });
+  });
+
+  /**
+   * And summarises when they differ, because four different reasons on one
+   * button is a report rather than a refusal. The edition's own word for a
+   * square, per docs/conventions.md section 3d.
+   */
+  it('summarises in the edition own word when the reasons differ', () => {
+    const game = createGame();
+    // A street in an incomplete colour set, and a railway - two holdings that
+    // refuse Build for genuinely different reasons.
+    const street = game.board.find((space) => space.kind === 'street')!;
+    const railway = game.board.find((space) => space.kind === 'railway')!;
+    game.ownership[street.id].ownerPlayerId = game.playerOrder[0];
+    game.ownership[railway.id].ownerPlayerId = game.playerOrder[0];
+
+    const perSite = [street, railway].map(
+      (space) =>
+        getSiteActions(game, space.id, game.playerOrder[0]).find(
+          (candidate) => candidate.action === PropertyAction.Build
+        )!.disabledReason
+    );
+    // Vacuity guard: this test is only about the case where they disagree.
+    expect(new Set(perSite).size).toBe(2);
+
+    const option = optionFor(game, game.playerOrder[0], PropertyAction.Build);
+    expect(option.isEnabled).toBe(false);
+    // India calls them cities, and India is the default edition.
+    expect(option.disabledReason).toBe('No city of yours can take a building');
+  });
+
+  it('prices a redemption at the mortgage value plus its interest', () => {
+    const game = createGame();
+    const spaceId = giveFirstStreetTo(game, game.playerOrder[0]);
+    game.ownership[spaceId].mortgaged = true;
+    const street = game.board.find((space) => space.id === spaceId)!;
+    game.players[game.playerOrder[0]].cash = 5000;
+
+    const option = optionFor(game, game.playerOrder[0], PropertyAction.Redeem);
+    expect(option.sites[0].amount).toBe(
+      getRedemptionCost(street as Parameters<typeof getRedemptionCost>[0])
+    );
+    // The same number the refusal is computed from, which is the point of
+    // getRedemptionCost being a function at all.
+    expect(option.sites[0].amount).toBeGreaterThan(
+      (street as { mortgageValue: number }).mortgageValue
+    );
+  });
+
+  it('never offers a site the command would refuse', () => {
+    const game = createGame();
+    const streets = game.board.filter((space) => space.kind === 'street');
+    streets.slice(0, 6).forEach((street) => {
+      game.ownership[street.id].ownerPlayerId = game.playerOrder[0];
+    });
+
+    getPlayerActionOptions(game, game.playerOrder[0]).forEach((option) => {
+      option.sites.forEach((site) => {
+        const descriptor = getSiteActions(game, site.spaceId, game.playerOrder[0]).find(
+          (candidate) => candidate.action === option.action
+        );
+        expect(descriptor?.isEnabled, `${option.action} on ${site.name}`).toBe(true);
+        expect(descriptor?.command).toBe(site.command);
+      });
+    });
   });
 });

@@ -20,6 +20,7 @@ which the code itself cannot tell them.
 | Trading                    | [trading.md](trading.md)                   | Shipped                            |
 | Persistence and resume     | [persistence.md](persistence.md)           | Shipped                            |
 | Game screen layout         | [game-layout.md](game-layout.md)           | Shipped (responsive)               |
+| Property actions           | [property-actions.md](property-actions.md) | Shipped                            |
 | Play from your own devices | [multiplayer.md](multiplayer.md)           | 🚧 In progress                     |
 | Theming and appearances    | [../theming.md](../theming.md)             | Shipped                            |
 | Rules booklet              | [rules-page.md](rules-page.md)             | Shipped                            |

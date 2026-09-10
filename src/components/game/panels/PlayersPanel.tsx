@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { PlayerId } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { PlayerSummary } from './panels.interfaces';
 import { PlayerCard } from './PlayerCard';
 
 interface PlayersPanelProps {
+  /**
+   * Rendered in the middle column of the phone HUD, between the two columns of
+   * player cards - the dice, today. Hidden above the phone tier.
+   *
+   * A `<div>` among `<article>` cards on purpose: the collapsed fan is laid
+   * out entirely by `:nth-of-type` on `.player-card`, so a sibling of a
+   * different element type is invisible to every one of those rules. That is
+   * what lets one DOM serve the desktop fan and the phone grid without a
+   * viewport check in JavaScript.
+   */
+  centre?: ReactNode;
   currencySymbol: string;
   onSelectPlayer: (playerId: PlayerId) => void;
   summaries: PlayerSummary[];
@@ -28,6 +39,7 @@ interface PlayersPanelProps {
  * button that opens that player's details.
  */
 export function PlayersPanel({
+  centre,
   currencySymbol,
   onSelectPlayer,
   summaries,
@@ -46,6 +58,10 @@ export function PlayersPanel({
       <div className="player-stack-scroll">
         <div
           className={`player-stack ${isExpanded ? 'is-expanded' : 'is-collapsed'}`}
+          // The grid's row count comes from the data rather than a guessed
+          // `repeat()`, so the middle column can span exactly the rows there
+          // are: `1 / -1` cannot be used against implicit rows.
+          data-rows={Math.ceil(summaries.length / 2)}
           data-testid={TEST_IDS.playerStack}
         >
           {/*
@@ -66,7 +82,6 @@ export function PlayersPanel({
           {summaries.map((summary) => (
             <PlayerCard
               currencySymbol={currencySymbol}
-              isInteractive={isExpanded}
               isAway={
                 connectedSeatIds !== undefined &&
                 connectedSeatIds.size > 0 &&
@@ -77,6 +92,12 @@ export function PlayersPanel({
               summary={summary}
             />
           ))}
+
+          {centre ? (
+            <div className="player-stack-centre" data-testid={TEST_IDS.playerStackCentre}>
+              {centre}
+            </div>
+          ) : null}
         </div>
       </div>
 

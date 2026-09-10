@@ -151,6 +151,13 @@
   // The border-left is in the box too, or the card sits a pixel off centre.
   &.is-wide {
     width: min(100%, calc(t.$deed-card-width + 2 * t.$drawer-pad + 1px));
+
+    // The drawer is one card plus its gutters, at whichever tier the card is.
+    @include m.below(t.$breakpoint-mobile) {
+      --drawer-gutter: #{t.$drawer-pad-phone};
+
+      width: min(100%, calc(t.$deed-card-width-phone + 2 * t.$drawer-pad-phone + 1px));
+    }
   }
   height: 100%;
   border-left: 1px solid var(--border-subtle);
@@ -166,7 +173,7 @@
   align-items: start;
   justify-content: space-between;
   gap: t.$space-4;
-  padding: t.$space-5 t.$drawer-pad t.$space-3;
+  padding: t.$space-5 var(--drawer-gutter, #{t.$drawer-pad}) t.$space-3;
   border-bottom: 1px solid var(--border-subtle);
 
   .space-detail-close {
@@ -179,7 +186,7 @@
   min-height: 0;
   overflow-y: auto;
   // Horizontal padding is the same value .is-wide derives its width from.
-  padding: t.$space-4 t.$drawer-pad t.$space-6;
+  padding: t.$space-4 var(--drawer-gutter, #{t.$drawer-pad}) t.$space-6;
 }
 
 .drawer-stats {
@@ -707,4 +714,65 @@
   display: flex;
   gap: t.$space-2;
   margin: t.$space-1 0 t.$space-1;
+}
+
+// ---------------------------------------------------------------------------
+// The action picker, as a sheet.
+//
+// A picker answers "which one?" about something the player just tapped below
+// the board, so on a phone it comes up from where the thumb is. Above the
+// phone tier it stays the ordinary right-hand drawer every other overlay is -
+// which is why this is a class on SideDrawer rather than a second component.
+// ---------------------------------------------------------------------------
+.side-drawer.is-sheet {
+  @include m.below(t.$breakpoint-tablet) {
+    width: 100%;
+    height: auto;
+    max-height: 70dvh;
+    margin-top: auto;
+    border-top: t.$border-hairline solid var(--border-subtle);
+    border-left: 0;
+  }
+}
+
+.drawer-backdrop.is-sheet-backdrop {
+  @include m.below(t.$breakpoint-tablet) {
+    display: flex;
+    align-items: flex-end;
+  }
+}
+
+/**
+ * One row per thing that can be picked: what it is, and what it is worth.
+ *
+ * The amount is half the reason the list exists - "which of my sites" is not a
+ * question anyone can answer without knowing what each one costs or pays.
+ */
+.site-choice-list {
+  display: grid;
+  gap: t.$space-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: t.$space-3;
+    width: 100%;
+  }
+}
+
+.site-choice-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-choice-amount {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  @include t.text(numeric);
 }

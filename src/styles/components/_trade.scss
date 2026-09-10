@@ -362,9 +362,23 @@
   @include t.text(body-sm);
 }
 
-@include m.below(t.$breakpoint-tablet) {
-  // The deed goes full width below the tablet breakpoint, so the stack follows.
+// The same card, so the same width - not the column's. It used to go full
+// width here, which is the drift this pass is about: a card that fills
+// whatever it is dropped into is a different card in every place it appears.
+// Its peek follows the card's own head, the way the holdings stack's does: on
+// a phone the band is 10px and the title row is a 44px tap strip, so the
+// desktop peek would cut through the middle of the name.
+@include m.below(t.$breakpoint-mobile) {
   .trade-deed {
-    width: 100%;
+    width: t.$deed-card-width-phone;
+    max-height: t.$holdings-peek-phone;
+
+    &.is-selected {
+      max-height: t.$deed-card-height-phone;
+    }
+  }
+
+  .trade-deed-stack.is-readonly .trade-deed {
+    max-height: t.$deed-card-height-phone;
   }
 }

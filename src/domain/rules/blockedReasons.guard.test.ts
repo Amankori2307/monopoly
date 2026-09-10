@@ -5,7 +5,11 @@ import type { AuctionState, GameState, StreetSpace } from '../types/game.interfa
 import { bidBlockedReason } from './auctionBids.utils';
 import { buildBlockedReason, sellBlockedReason } from './buildings.utils';
 import { createGameState } from './gameEngine';
-import { buyBlockedReason, getSiteActions } from './playerActions.utils';
+import {
+  buyBlockedReason,
+  getPlayerActionOptions,
+  getSiteActions,
+} from './playerActions.utils';
 import { SeededRandomSource } from './rng';
 import { isStreetSpace } from './space.utils';
 import { tradeBlockedReason } from './trade.utils';
@@ -97,6 +101,15 @@ const collectReasons = (): string[] => {
 
   const reasons: string[] = [];
   states.forEach((state) => {
+    // The action rail's refusals, which are the SAME questions asked across a
+    // whole holding rather than one square - including the aggregates it falls
+    // back to when the per-site reasons differ.
+    [owner, other].forEach((playerId) => {
+      getPlayerActionOptions(state, playerId).forEach((option) =>
+        reasons.push(option.disabledReason)
+      );
+    });
+
     state.board.forEach((space) => {
       [owner, other].forEach((playerId) => {
         reasons.push(buildBlockedReason(state, space.id, playerId));

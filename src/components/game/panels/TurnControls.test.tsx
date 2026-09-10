@@ -2,27 +2,38 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SpeedDieFace } from '../../../domain/types/game.enums';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
+import type { UseDiceRollerResult } from '../hooks/useDiceRoller';
 import { TurnControls } from './TurnControls';
+
+/**
+ * The roller is owned by GameSidebar now, so this component takes its result
+ * rather than calling the hook. A plain stub is right here: the hook has its
+ * own tests, and the row's job is to lay out what it is handed.
+ */
+const diceStub = (overrides: Partial<UseDiceRollerResult> = {}): UseDiceRollerResult => ({
+  displayValues: [3, 4],
+  isRolling: false,
+  isSubmitting: false,
+  roll: vi.fn(),
+  ...overrides,
+});
 
 const renderControls = (overrides: Partial<Parameters<typeof TurnControls>[0]> = {}) => {
   const onEndTurn = vi.fn();
-  const onRoll = vi.fn();
+  const roll = vi.fn();
   render(
     <TurnControls
       canEndTurn={false}
       canRoll={true}
       canRollAgain={false}
-      lastRoll={[3, 4]}
-      lastRollId={null}
+      dice={diceStub({ roll })}
       onEndTurn={onEndTurn}
-      soundEnabled
-      onRoll={onRoll}
       rollLabel="Roll dice"
       speedDieFace={null}
       {...overrides}
     />
   );
-  return { onEndTurn, onRoll };
+  return { onEndTurn, onRoll: roll };
 };
 
 describe('TurnControls', () => {
@@ -74,11 +85,8 @@ describe('TurnControls', () => {
         canEndTurn={false}
         canRoll={true}
         canRollAgain={false}
-        soundEnabled
-        lastRoll={[3, 4]}
-        lastRollId={null}
+        dice={diceStub()}
         onEndTurn={vi.fn()}
-        onRoll={vi.fn()}
         rollLabel="Roll dice"
         speedDieFace={SpeedDieFace.Bus}
       />

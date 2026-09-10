@@ -1,0 +1,19 @@
+@use '../abstracts/tokens' as t;
+@use '../abstracts/mixins' as m;
+
+// ---------------------------------------------------------------------------
+// Build, Sell, Mortgage, Redeem, Trade.
+//
+// Five equal tracks rather than a flex row: every button is the same width
+// whatever its label, so the row reads as one control surface and does not
+// re-flow as the labels change with the game. At 320px each track is about
+// 56px, which clears the 44px tap floor on both axes.
+//
+// A rail like this existed once and was removed because every action it
+// listed needs a spaceId. The picker sheet is where one now comes from.
+// ---------------------------------------------------------------------------
+.action-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: t.$space-1;
+}

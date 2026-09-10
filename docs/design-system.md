@@ -179,15 +179,72 @@ ceasing to be a board.
 ### The phone tier
 
 Most of the system is one size everywhere, and that is right: a rung is a
-decision, not a measurement of a particular screen. Three places genuinely
-differ on a phone, and each is a case where **the thing being sized has itself
-changed**, not merely the window around it:
+decision, not a measurement of a particular screen. A handful of places
+genuinely differ on a phone, and each is a case where **the thing being sized
+has itself changed**, not merely the window around it:
 
-| What                                                   | Why it differs                                                                                             |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| The die (`$die-size-phone`)                            | 58px beside a 336px board is the biggest object on the screen                                              |
-| The deed's padding and labels (`$deed-card-pad-phone`) | Below `$breakpoint-mobile` the card stops being a fixed 340×380 object and becomes the width of the screen |
-| The scrim's inset                                      | 20px each side of a 360px window is 11% of it spent on inset                                               |
+| What                                               | Why it differs                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| The type, all of it (`$root-scale-phone`)          | See below — one root scale, not a rung per role                                                   |
+| The die (`$die-size-phone`)                        | 58px beside a 336px board is the biggest object on the screen                                     |
+| The deed card's tier (`$deed-card-width-phone`)    | It is a fixed rectangle at every size — just a smaller one below `$breakpoint-mobile`. See below. |
+| The deed's padding (`$deed-card-pad-phone/-tight`) | 18px is a fine share of a 280px card and a sixth of a 200px one                                   |
+| The scrim's inset                                  | 20px each side of a 360px window is 11% of it spent on inset                                      |
+
+#### The site card is one rectangle, at one ratio
+
+The deed card is **one fixed box** — same width, same height, for every square
+— and a square with less to say leaves the bottom blank. That is the point of
+having a single card component: it must not resize as you move around the
+board.
+
+**The ratio is structural, not a second token.** The card sets
+`aspect-ratio: 4 / 5` and takes only a **width per tier** (`$deed-card-width`
+320, `$deed-card-width-phone` 240). The height is derived, so the two cannot
+drift apart, and adding a third tier keeps the ratio for free.
+`$deed-card-height` still exists because the auction panel and a selected
+trade deed read a height directly — but it is computed from the width, never
+chosen.
+
+Every container is derived from the card, never the other way round: the
+drawer is one card plus its gutters, the buy modal is two cards plus a gap,
+the stacked peek clears the card's own head. When a tier changes, they follow.
+
+Two ways this has actually broken, both worth knowing:
+
+- **`width: 100%` is only right where a WRAPPER sets the width.** The holdings
+  drawer and the trade stack do; a decision's `1fr` grid track does not. The
+  same declaration gave 246px in the title-deed modal and 302px in the buy
+  decision — one card, two sizes.
+- **A rule about one side is half a rule.** `board.spec.ts` checked the height
+  and not the width for months, and the phone had no check at all — which is
+  exactly where it drifted. Both axes, every kind, both tiers.
+
+#### Type on a phone is one declaration
+
+`:root { font-size: $root-scale-phone }` — 87.5%, so 14px — in a `below()`
+block at the end of `base/_reset.scss`. Every role in `$type-scale` is in
+`rem`, so that moves all fifteen together and none can be left behind, which a
+sweep of per-component overrides cannot promise. **There is no `*-phone` type
+role, and there should not be**: a rung is a decision, and "this screen is
+smaller" is a measurement.
+
+Three things deliberately do not follow it, and each is the point:
+
+- **Spacing.** `$space-scale` is in `px`, so the 4px grid is untouched.
+- **The tap floor.** `$control-tap` is `px`, so a control stays 44px tall while
+  its label gets smaller. But **pin the width too where a label sets it**: the
+  header's nav links were 44px tall and as wide as the word "Play" happened to
+  be, which was 44 before the scale and 40 after — the tap-floor sweep failed
+  on all five routes at once.
+- **The board.** Its type is a `cqw` function of the board's own width, which
+  is exactly why it was built that way.
+
+And one thing must actively resist it. **A field under 16px makes iOS zoom the
+page on focus**, and the reset gives every control `font: inherit`, so
+`.text-input` / `.select-input` pin `$input-font-phone` in their own phone
+block. A smaller field costs the player their place on the screen every time
+they tap one.
 
 **A phone override of a type role has to come last in its file.** Both
 selectors are the same specificity and a media query adds none, so source
@@ -221,9 +278,24 @@ Two different things, and the difference matters.
 
 **Out of scope is not an exception.** `components/_board.scss` is frozen: its
 geometry is calibrated by 21 e2e tests, its type is a continuous function of
-board size (`clamp(5px, 1.4cqw, 0.67rem)`) which a rem ramp cannot express, and
+board size (`clamp(5px, 1.3cqw, 0.67rem)`) which a rem ramp cannot express, and
 its spacing literals are sub-grid values inside a fluid cell where a 4px grid
 means nothing. The guard states that once, with the reason.
+
+Everything drawn on the board is that kind of function, and its metrics live in
+`_tokens.scss` beside the other board geometry: `$board-color-bar`,
+`$board-inset-short` / `$board-inset-long` (the cell's two axes are not equally
+scarce, and one inset for both spends the scarce one at the plentiful one's
+rate), and the two container thresholds `$board-short-name-floor` and
+`$board-tight-floor`. They are `cqw`, never `vw` — a 768px tablet renders a
+board the size of a phone's, and no media query can see that.
+
+**A guard that reads line numbers has to strip comments in place.** The design
+system guard's `strip()` used to replace a whole block comment with a single
+space, renumbering every line after it, while `exemptions()` read the original
+text. Adding one doc comment to a partial therefore slid a
+`design-system-exempt:` marker off the literal beneath it, and the failure's own
+worklist pointed at the wrong rows. Both halves have to count the same lines.
 
 **A genuine exception is marked inline, at the site:**
 

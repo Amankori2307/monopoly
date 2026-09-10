@@ -59,6 +59,8 @@ const summary: PlayerSummary = {
   netWorth: 1820,
   mortgagedCount: 1,
   setProgress: [],
+  isActive: false,
+  seatIndex: 0,
 };
 
 /** Mortgage state by space, which is what the deeds in here read. */
