@@ -221,9 +221,24 @@ Two different things, and the difference matters.
 
 **Out of scope is not an exception.** `components/_board.scss` is frozen: its
 geometry is calibrated by 21 e2e tests, its type is a continuous function of
-board size (`clamp(5px, 1.4cqw, 0.67rem)`) which a rem ramp cannot express, and
+board size (`clamp(5px, 1.3cqw, 0.67rem)`) which a rem ramp cannot express, and
 its spacing literals are sub-grid values inside a fluid cell where a 4px grid
 means nothing. The guard states that once, with the reason.
+
+Everything drawn on the board is that kind of function, and its metrics live in
+`_tokens.scss` beside the other board geometry: `$board-color-bar`,
+`$board-inset-short` / `$board-inset-long` (the cell's two axes are not equally
+scarce, and one inset for both spends the scarce one at the plentiful one's
+rate), and the two container thresholds `$board-short-name-floor` and
+`$board-tight-floor`. They are `cqw`, never `vw` — a 768px tablet renders a
+board the size of a phone's, and no media query can see that.
+
+**A guard that reads line numbers has to strip comments in place.** The design
+system guard's `strip()` used to replace a whole block comment with a single
+space, renumbering every line after it, while `exemptions()` read the original
+text. Adding one doc comment to a partial therefore slid a
+`design-system-exempt:` marker off the literal beneath it, and the failure's own
+worklist pointed at the wrong rows. Both halves have to count the same lines.
 
 **A genuine exception is marked inline, at the site:**
 

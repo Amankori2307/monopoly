@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
+import { indiaTheme } from '../../../domain/themes/india.theme';
 import {
   HOTEL_BUILD_LEVEL,
   JAIL_POSITION,
@@ -33,10 +34,12 @@ const renderCell = (
 ) => {
   render(
     <BoardSpaceCell
+      currencySymbol="₹"
       isOccupied={false}
       onSelect={onSelect}
       ownerMark={ownerMark}
       space={space}
+      themeId={indiaTheme.id}
     />
   );
   return onSelect;
@@ -108,22 +111,141 @@ describe('BoardSpaceCell', () => {
     expect(screen.getByText(corner.name)).toBeInTheDocument();
   });
 
-  // A mortgaged site collects no rent, so its dot is hollow - the colour is
-  // spent on identifying the owner either way.
-  it('hollows out the owner dot when the site is mortgaged', () => {
+  // A mortgaged site collects no rent, so its bar fades - but it keeps the
+  // owner's colour either way, because the question the bar answers is whose
+  // it is. The stamp struck across the square is what says "mortgaged".
+  it('fades the owner bar when the site is mortgaged', () => {
     renderCell(street, mark({ mortgaged: true }));
 
-    const dot = screen.getByTestId(scopedTestId(TEST_IDS.spaceOwnerDot, street.index));
-    expect(dot).toHaveClass('is-mortgaged');
-    expect(dot).toHaveStyle({ borderColor: '#1466ff' });
+    const bar = screen.getByTestId(scopedTestId(TEST_IDS.spaceOwnerBar, street.index));
+    expect(bar).toHaveClass('is-mortgaged');
+    expect(bar).toHaveStyle({ backgroundColor: '#1466ff' });
   });
 
-  it('fills the owner dot when it is not', () => {
+  it('paints the owner bar in their token colour when it is not', () => {
     renderCell(street, mark());
 
+    const bar = screen.getByTestId(scopedTestId(TEST_IDS.spaceOwnerBar, street.index));
+    expect(bar).not.toHaveClass('is-mortgaged');
+    expect(bar).toHaveStyle({ backgroundColor: '#1466ff' });
+  });
+
+  it('shows no owner mark at all on a square nobody owns', () => {
+    renderCell(street);
+
     expect(
-      screen.getByTestId(scopedTestId(TEST_IDS.spaceOwnerDot, street.index))
-    ).toHaveStyle({ backgroundColor: '#1466ff' });
+      screen.queryByTestId(scopedTestId(TEST_IDS.spaceOwnerBar, street.index))
+    ).not.toBeInTheDocument();
+  });
+
+  // The wash across the square is the other half of the owner mark. It is a
+  // class rather than a bare custom property because CSS cannot ask whether
+  // one is set.
+  it('marks an owned square so the stylesheet can wash it in the owner colour', () => {
+    const { rerender } = render(
+      <BoardSpaceCell
+        currencySymbol="₹"
+        isOccupied={false}
+        onSelect={vi.fn()}
+        space={street}
+        themeId={indiaTheme.id}
+      />
+    );
+    expect(screen.getByRole('button')).not.toHaveClass('is-owned');
+
+    rerender(
+      <BoardSpaceCell
+        currencySymbol="₹"
+        isOccupied={false}
+        onSelect={vi.fn()}
+        ownerMark={mark()}
+        space={street}
+        themeId={indiaTheme.id}
+      />
+    );
+    const cell = screen.getByRole('button');
+    expect(cell).toHaveClass('is-owned');
+    expect(cell.style.getPropertyValue('--space-owner')).toBe('#1466ff');
+  });
+
+  // What a square costs is the fact a player scans for, and until now the board
+  // never printed it at any size - it was one tap away in the deed, on every
+  // viewport.
+  describe('the printed amount', () => {
+    const priceOn = (space: BoardSpace) => {
+      renderCell(space);
+      return screen.queryByTestId(scopedTestId(TEST_IDS.spacePrice, space.index));
+    };
+
+    it('prints the price of a street in the edition currency', () => {
+      expect(priceOn(street)).toHaveTextContent(`₹${street.price}`);
+    });
+
+    it('prints the price of a railway and of a utility', () => {
+      const railway = indiaEditionBoard.find(
+        (space) => space.kind === SpaceKind.Railway
+      ) as BoardSpace & { price: number };
+      expect(priceOn(railway)).toHaveTextContent(`₹${railway.price}`);
+    });
+
+    it('prints what a tax square charges, which is not a price', () => {
+      const tax = indiaEditionBoard.find(
+        (space) => space.kind === SpaceKind.Tax
+      ) as BoardSpace & { amount: number };
+      expect(priceOn(tax)).toHaveTextContent(`₹${tax.amount}`);
+    });
+
+    it('prints nothing on a square with no fixed amount', () => {
+      expect(priceOn(corner)).not.toBeInTheDocument();
+      const chance = indiaEditionBoard.find(
+        (space) => space.kind === SpaceKind.Chance
+      ) as BoardSpace;
+      expect(priceOn(chance)).not.toBeInTheDocument();
+    });
+  });
+
+  // Six squares a board carry a name too long to set in a 30px one. Both are
+  // rendered and the board's container query picks: CSS cannot substitute text.
+  describe('the short name a small board swaps in', () => {
+    it('offers a railway the edition own word for one', () => {
+      const railway = indiaEditionBoard.find(
+        (space) => space.kind === SpaceKind.Railway
+      ) as BoardSpace;
+      renderCell(railway);
+
+      // Both in the DOM, so the container query has something to choose.
+      expect(screen.getByText(railway.name)).toBeInTheDocument();
+      expect(screen.getByText(indiaTheme.nouns.railway)).toBeInTheDocument();
+    });
+
+    it('tells the two utilities apart', () => {
+      const utilities = indiaEditionBoard.filter(
+        (space) => space.kind === SpaceKind.Utility
+      );
+      const labels = utilities.map((space) => {
+        const view = render(
+          <BoardSpaceCell
+            currencySymbol="₹"
+            isOccupied={false}
+            onSelect={vi.fn()}
+            space={space}
+            themeId={indiaTheme.id}
+          />
+        );
+        const short = view.container.querySelector('.space-name-short')?.textContent;
+        view.unmount();
+        return short;
+      });
+
+      expect(new Set(labels).size).toBe(2);
+    });
+
+    it('leaves an ordinary street its own name and nothing else', () => {
+      renderCell(street);
+
+      expect(screen.getByText(street.name)).toBeInTheDocument();
+      expect(document.querySelector('.space-name-short')).toBeNull();
+    });
   });
 
   describe('building pips', () => {
@@ -185,10 +307,12 @@ describe('BoardSpaceCell', () => {
       const hotelOn = (space: StreetSpace) => {
         const view = render(
           <BoardSpaceCell
+            currencySymbol="₹"
             isOccupied={false}
             onSelect={vi.fn()}
             ownerMark={mark({ buildLevel: HOTEL_BUILD_LEVEL })}
             space={space}
+            themeId={indiaTheme.id}
           />
         );
         const hotel = view.container.querySelector('.building-hotel');
@@ -207,7 +331,7 @@ describe('BoardSpaceCell', () => {
 /**
  * The mortgage stamp, struck across the square.
  *
- * The hollow owner dot stays - it is the one signal that still reads when the
+ * The faded owner bar stays - it is the one signal that still reads when the
  * squares shrink to 29px on a phone - but a 7px dot is not something anyone
  * spots across forty squares, which is what the stamp is for.
  */
@@ -226,11 +350,11 @@ describe('a mortgaged square', () => {
     expect(screen.getByText(street.name)).toBeInTheDocument();
   });
 
-  it('keeps the hollow owner dot as well', () => {
+  it('keeps the faded owner bar as well', () => {
     renderCell(street, mark({ mortgaged: true }));
 
     expect(
-      screen.getByTestId(scopedTestId(TEST_IDS.spaceOwnerDot, street.index))
+      screen.getByTestId(scopedTestId(TEST_IDS.spaceOwnerBar, street.index))
     ).toHaveClass('is-mortgaged');
   });
 

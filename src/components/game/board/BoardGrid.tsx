@@ -13,11 +13,15 @@ interface BoardGridProps {
   board: BoardSpace[];
   centerTitle: string;
   centerSubtitle: string;
+  /** Prefixes every price printed on a square. The edition's, not a default. */
+  currencySymbol: string;
   findToken: (tokenId: string) => ThemeToken | undefined;
   onSelectSpace: (spaceId: string) => void;
   /** Owner marks by space id, for the spaces someone owns. */
   ownerMarks: Record<string, SpaceOwnerMark>;
   players: PlayerState[];
+  /** Picks the edition's own short name for a railway. See boardNames.utils. */
+  themeId: string;
   /** Display positions, which lag the engine while a token walks. */
   tokenPositions: TokenPositions;
 }
@@ -26,10 +30,12 @@ export function BoardGrid({
   board,
   centerTitle,
   centerSubtitle,
+  currencySymbol,
   findToken,
   onSelectSpace,
   ownerMarks,
   players,
+  themeId,
   tokenPositions,
 }: BoardGridProps) {
   const occupied = new Set(Object.values(tokenPositions));
@@ -40,11 +46,13 @@ export function BoardGrid({
         <BoardCenter subtitle={centerSubtitle} title={centerTitle} />
         {board.map((space) => (
           <BoardSpaceCell
+            currencySymbol={currencySymbol}
             isOccupied={occupied.has(space.index)}
             key={space.id}
             onSelect={onSelectSpace}
             ownerMark={ownerMarks[space.id]}
             space={space}
+            themeId={themeId}
           />
         ))}
         <BoardTokenLayer

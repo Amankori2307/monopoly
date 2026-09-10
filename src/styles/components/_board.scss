@@ -199,7 +199,17 @@
   padding: 0;
   overflow: hidden;
   border: 0;
-  background: var(--board-space-bg);
+  // The owner bar's thickness, declared on the CELL rather than on the bar,
+  // because the label has to reserve exactly this much on the same edge - and
+  // it reserves it whether or not anyone owns the square, or a street would
+  // re-wrap its name the moment somebody bought it and the board would twitch.
+  // A fraction of the board, so the mark keeps its weight relative to the
+  // square it marks.
+  --owner-bar-weight: clamp(3px, 0.9cqw, 6px);
+  // background-COLOR, not the shorthand: the owner's wash is a
+  // background-image layer, and the shorthand resets it. Same below on hover
+  // and on an occupied cell, which is where that bug would first show.
+  background-color: var(--board-space-bg);
   color: var(--text-body);
   font-size: clamp(0.42rem, 0.67vw, 0.67rem);
   text-align: left;
@@ -236,7 +246,7 @@
   // that used to ring them made the board look boxed in.
   &:not(:disabled):hover {
     z-index: 3;
-    background: var(--board-space-hover);
+    background-color: var(--board-space-hover);
   }
 
   // Keyboard focus keeps a visible ring - that one is an accessibility need,
@@ -251,7 +261,24 @@
 
   &.active-space {
     z-index: 2;
-    background: var(--board-space-hover);
+    background-color: var(--board-space-hover);
+  }
+
+  // A wash of the owner's colour across the whole square, under the ribbon and
+  // the text. It is the second half of the owner mark: the bar says WHO at a
+  // glance down one edge, the wash says THIS ONE IS TAKEN across forty squares
+  // at once. A background-image layer rather than a pseudo-element, so it
+  // paints beneath the ribbon and the type rather than over them.
+  //
+  // --space-owner is set inline from the player's token colour. color-mix has
+  // been Baseline since 2023; where it is not understood the declaration is
+  // dropped and there is simply no wash - and the bar still says who owns it,
+  // so the square never loses the fact.
+  &.is-owned {
+    background-image: linear-gradient(
+      color-mix(in srgb, var(--space-owner) 14%, transparent),
+      color-mix(in srgb, var(--space-owner) 14%, transparent)
+    );
   }
 
   // Was a flat 5px: a viewport-independent literal that tracked nothing, so it
@@ -276,6 +303,10 @@
  * Street colour ribbon. Full bleed along the cell's short side: a horizontal band
  * on the top and bottom rows, a vertical band on the left and right columns.
  */
+// The ribbon's thickness is a fraction of the BOARD, like everything else
+// drawn on it. It was a 12px literal with a 7px phone override behind a media
+// query - which meant a 768px tablet, whose two-column layout renders a board
+// the size of a phone's, got the desktop ribbon: 12px out of a 50px cell.
 .space-color {
   flex: 0 0 t.$board-color-bar;
   border-radius: t.$radius-sharp;
@@ -322,20 +353,6 @@
   .side-left & {
     box-shadow: inset 1px 0 0 var(--ribbon-keyline);
   }
-
-  @include m.below(t.$breakpoint-tablet) {
-    flex-basis: t.$board-color-bar-compact;
-
-    .side-bottom &,
-    .side-top & {
-      height: t.$board-color-bar-compact;
-    }
-
-    .side-left &,
-    .side-right & {
-      width: t.$board-color-bar-compact;
-    }
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -350,10 +367,32 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
   min-height: 0;
-  padding: t.$space-inset;
+}
+
+// Padding per side: mean across the cell's SHORT axis, where every pixel is a
+// line of type, and generous along the LONG one. The outer edge reserves the
+// owner bar's own weight so a full line of the name is never painted over.
+.side-bottom .space-label {
+  padding-block: t.$board-inset-long var(--owner-bar-weight);
+  padding-inline: t.$board-inset-short;
+}
+
+.side-top .space-label {
+  padding-block: var(--owner-bar-weight) t.$board-inset-long;
+  padding-inline: t.$board-inset-short;
+}
+
+.side-right .space-label {
+  padding-block: t.$board-inset-short;
+  padding-inline: t.$board-inset-long var(--owner-bar-weight);
+}
+
+.side-left .space-label {
+  padding-block: t.$board-inset-short;
+  padding-inline: var(--owner-bar-weight) t.$board-inset-long;
 }
 
 // Ribbon at the top: icon then text, running down.
@@ -376,12 +415,59 @@
   flex-direction: row-reverse;
 }
 
-// Side columns put the icon beside the text, so the name has less width and
-// wraps to more lines. Trim the vertical padding to buy those lines room -
-// "Chhatrapati Shivaji Terminus" needs three.
-.side-left .space-label,
-.side-right .space-label {
-  padding-block: 3px;
+// ---------------------------------------------------------------------------
+// The name and the price: two lines across the cell's SHORT axis, each running
+// along its LONG one, exactly as a printed board sets them.
+//
+// .space-text is what makes that true on all four sides. On the top and bottom
+// rows the cell is portrait, so the two lines are vertical columns sitting side
+// by side across its width; on the left and right the cell is landscape, so
+// they are horizontal lines stacked down its height. Either way: name first,
+// price second, reading outward.
+// ---------------------------------------------------------------------------
+.space-text {
+  display: flex;
+  // The BLOCK axis, whatever the writing mode - which is the whole trick. On
+  // the rows that makes two vertical columns side by side; on the columns, two
+  // horizontal lines stacked. One rule, four sides, and the price always lands
+  // exactly where a further wrapped line of the name would have gone.
+  //
+  // `row` is the trap: with vertical-rl a multi-line name stacks its lines
+  // RIGHT to left, so its first line is at the right of its own box - and a
+  // row then puts the price to the right of the whole box, i.e. before line 1.
+  // The reader takes the price first.
+  flex-direction: column;
+  // STRETCH, not center. On the cross axis - which is the cell's long one,
+  // whichever side it is - a centred flex item shrink-wraps, so the name got
+  // its max-content width capped at whatever it could grab rather than the
+  // whole line. "The Angel Islington" then wanted four lines in a box with
+  // room for three and clipped on the London board. Stretch gives every line
+  // the full run, and text-align does the centring instead.
+  align-items: stretch;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(0px, 0.2cqw, 2px);
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  // Bounds the name's line length. Do not drop it: without it a long name sets
+  // one line as long as it likes and runs out of the square.
+  max-height: 100%;
+}
+
+// The writing mode goes on the WRAPPER, so it is inherited by the name, the
+// short name and the price together - they can never end up set on different
+// axes - and `flex-direction: column` above resolves against it.
+.side-bottom .space-text,
+.side-top .space-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+// The two rows mirror each other, and the whole pair turns rather than each
+// line: rotating the children individually would swap their order on this row.
+.side-bottom .space-text {
+  rotate: 180deg;
 }
 
 // ---------------------------------------------------------------------------
@@ -391,23 +477,16 @@
 // the long way. Top and bottom row cells are portrait, so their names are set
 // vertically - otherwise a name like "Chennai Central Railway Station" wraps
 // into four cramped lines across the short side.
-//
-// The two rows mirror each other: text flows from the board edge inward, so the
-// bottom row reads upward and the top row reads downward.
 // ---------------------------------------------------------------------------
+// Long names wrap into further lines rather than being clipped, and a single
+// long word like "Bhubaneshwar" has to break, as printed boards do. The
+// writing mode itself is inherited from .space-text above.
 .side-bottom .space-label .space-name,
-.side-top .space-label .space-name {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  // Long names wrap into further vertical lines rather than being clipped -
-  // "Chennai Central Railway Station" does not fit one line at this size, and a
-  // single long word like "Bhubaneshwar" has to break, as printed boards do.
+.side-top .space-label .space-name,
+.side-bottom .space-label .space-name-short,
+.side-top .space-label .space-name-short {
   max-height: 100%;
   text-wrap: balance;
-}
-
-.side-bottom .space-label .space-name {
-  rotate: 180deg;
 }
 
 // Corner cells are square and keep their upright, centred label.
@@ -416,9 +495,16 @@
   rotate: none;
 }
 
-.space-name {
-  align-self: center;
-  // Lets the name shrink inside the flex label instead of forcing overflow.
+// The compact label a small board swaps in - see the container query below.
+// Hidden until then: only six squares a board have one at all.
+.space-name-short {
+  display: none;
+}
+
+.space-name,
+.space-name-short {
+  // No align-self: it would override .space-text's stretch and shrink-wrap the
+  // line back to where it was.
   min-width: 0;
   overflow: hidden;
   // A single word can be wider than its cell - "Chhatrapati" does not fit the
@@ -437,71 +523,115 @@
   // sides of the board. A halo needs no per-side branching.
   text-shadow: 0 0 1px var(--board-emboss);
   text-wrap: balance;
+  // A continuous function of the BOARD's width, so the name shrinks and grows
+  // with the square it sits in rather than with the window. No phone override:
+  // this one clamp is right at every size, which is why the board is exempt
+  // from the type-role rule (see docs/design-system.md).
+  //
+  // 1.3cqw is measured, not chosen. The budget is
+  // `lines x 1.04F + 1.04F_price + gap <= 1fr - 2 x inset`, and the worst case
+  // is a three-line street name beside a price: "NORTHUMBERLAND AVENUE" and
+  // "MEDITERRANEAN AVENUE" both wrap to three. At 1.55cqw that came to two
+  // lines on a 296px board and clipped the London and US boards outright, and
+  // it capped the desktop name at 9.92px, which clips a four-line railway in a
+  // 48.64px cell. 1.3 leaves about 10% of margin at every board size.
+  font-size: clamp(5px, 1.3cqw, 0.67rem);
+}
 
-  @include m.below(t.$breakpoint-tablet) {
-    font-size: clamp(5px, 1.4cqw, 0.67rem);
-  }
+/**
+ * What the square costs.
+ *
+ * Set a shade larger than the name, as a printed board does and as the
+ * reference mobile boards do: the price is what a player scans for, and the
+ * name is what confirms it. tabular-nums so the figures line up down a row of
+ * squares rather than dancing with the digit widths.
+ */
+.space-price {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  // The SAME ramp as the name below the caps, and only a shade larger above
+  // them. A bigger price on a small board reads well right up until it steals
+  // the name's third line, which is where three-word street names clip.
+  font-size: clamp(5px, 1.3cqw, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.04;
+  text-shadow: 0 0 1px var(--board-emboss);
+  white-space: nowrap;
 }
 
 // ---------------------------------------------------------------------------
-// On a small board, the board is a map rather than a document.
+// The one tier the board has: long names give way to short ones.
 //
-// A street cell is about 30px wide when the board is 375px. There is no size at
-// which a name can be set in one - it was 5px, which is not reading, it is
-// texture. So the text goes and the square keeps what identifies it at a
-// glance: its colour ribbon, its glyph, the owner's dot, and any buildings
-// standing on it. The name is one tap away, in the title-deed card that a
-// square already opens.
+// This block used to delete the space NAME below a 520px board, concluding
+// that a 30px square could not hold one - which left a street as a colour
+// ribbon and a 5px dot, with nothing identifying it at all, because streets
+// carry no glyph. That was too pessimistic about the geometry: rows 1 and 11
+// are 1.7fr DEEP while the columns between them are 1fr wide, so the square is
+// 30 x 51 and two runs of type fit side by side across those 30px. The name
+// stays at every size, and so does the price. Everything else on this board -
+// type, glyph, padding, the owner bar - is now a continuous cqw function with
+// no tier at all.
+//
+// What genuinely does not fit is six squares a board: the four railways and
+// the two utilities. "CHENNAI CENTRAL" is 9.44em and the available line is
+// never that long, so that name is four wrapped lines at ANY board size, and
+// four lines plus a price needs 5 x 1.04F across 8.06% of the board - which
+// breaks the 5px legibility floor below a 347px board. 420 is that threshold
+// with about 10% of margin. Those six print the kind of square they are, the
+// way a small printed board does. Both names are in the DOM and this query
+// picks one: CSS cannot substitute text, and a JS width check is what this
+// codebase deliberately does not do for layout.
 //
 // This is a CONTAINER query, not a media query, and that distinction is the
-// whole point. The threshold is a fact about the BOARD - how wide a square is -
-// and the board's width is not a function of the viewport's. In landscape the
-// board is sized by viewport HEIGHT, so a 844x390 phone has an 844px window and
-// a 380px board: a viewport-width rule left 6.72px names on a board every bit
-// as small as the portrait one it correctly cleared.
+// whole point. The threshold is a fact about the BOARD, and the board's width
+// is not a function of the viewport's: in landscape the board is sized by
+// viewport HEIGHT, so an 812x375 phone has an 812px window and a 331px board -
+// and a 768px tablet renders a ~370px board in a 768px window. A viewport rule
+// misses both.
 //
-// Only the visible text is hidden. The cell's accessible name is an explicit
-// aria-label on the button (see BoardSpaceCell), so screen readers and
-// role-based queries are untouched.
-//
-// Note for whoever maintains board.spec.ts: its "never clips a space name" scan
-// measures scrollWidth against clientWidth, and a display:none element reports
-// zero for both. That test runs at the desktop viewport, where the board is
-// 648px, the names are visible and it means something. Run it on a small board
-// and it passes for the wrong reason.
+// The full name stays in the DOM and the button's aria-label is unchanged, so
+// screen readers and role-based queries keep the whole name either way.
 // ---------------------------------------------------------------------------
-@container (max-width: #{t.$board-name-floor}) {
-  .space-label .space-name,
-  .corner-title .space-name {
+@container (max-width: #{t.$board-short-name-floor}) {
+  .space-name.has-short {
     display: none;
   }
 
-  // The glyph is the only thing identifying the square now, so it takes the
-  // room the name gave up. Only .space-label's padding is relaxed - the corner
-  // titles keep their own place-content, because the Jail cell overrides it to
-  // `start center` to keep its label clear of the bars.
-  .space-label {
-    padding: 1px;
+  .space-name-short {
+    display: block;
   }
 
-  .space-icon {
-    width: clamp(11px, 5.4cqw, 19px);
-    height: clamp(11px, 5.4cqw, 19px);
-    opacity: 0.9;
+  // The one square where "a small board is a map" is still true, and it is a
+  // 13px strip rather than a square. The visiting band is 34% of a corner - on
+  // a 281px board that is 25 x 13px, and "Just Visiting" needs three lines of
+  // 5px type to set in 21px of width. There is no size that works: two lines
+  // would need 4px type, which is under the legibility floor, and so would
+  // three. The coloured strip is what identifies it, and the cell beside it
+  // already says Jail.
+  //
+  // Clipped rather than display:none, exactly as .jail-name-joiner is and for
+  // the same reason: display:none would take the words out of the
+  // accessibility tree and out of textContent, and board.spec.ts reads the
+  // corner's text as one contiguous "Jail / Just Visiting".
+  .jail-visiting-band .space-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
+}
 
-  .space-railway,
-  .space-tax,
-  .space-utility {
-    .space-icon {
-      width: clamp(12px, 6cqw, 23px);
-      height: clamp(12px, 6cqw, 23px);
-    }
-  }
-
-  .corner-title .corner-icon {
-    width: clamp(16px, 9cqw, 34px);
-    height: clamp(16px, 9cqw, 34px);
+// The narrowest device the app supports, and the only place the 5px floor has
+// to bend. See $board-tight-floor for the measurement that sets 4.2.
+@container (max-width: #{t.$board-tight-floor}) {
+  .space-name,
+  .space-name-short,
+  .space-price {
+    font-size: 4.2px;
   }
 }
 
@@ -512,10 +642,14 @@
 // The opacity steps below stay as they are: they encode relative hierarchy
 // between kinds of space, which is the same under any theme, so one ink token
 // layered with them beats a token per weight.
+// cqw, not vw, and one function at every board size rather than a small-board
+// tier. The glyph never competes with the name: it eats the cell's LONG axis,
+// where even a 296px board leaves ~26px of line and the longest word set there
+// is 22px. So it costs no line, and there is nothing to trade it against.
 .space-icon {
   flex: 0 0 auto;
-  width: clamp(12px, 1.35vw, 19px);
-  height: clamp(12px, 1.35vw, 19px);
+  width: clamp(7px, 2.1cqw, 19px);
+  height: clamp(7px, 2.1cqw, 19px);
   color: var(--board-icon-ink);
   opacity: 0.74;
 }
@@ -534,8 +668,8 @@
 .space-tax,
 .space-utility {
   .space-icon {
-    width: clamp(15px, 1.7vw, 23px);
-    height: clamp(15px, 1.7vw, 23px);
+    width: clamp(8px, 2.5cqw, 23px);
+    height: clamp(8px, 2.5cqw, 23px);
   }
 }
 
@@ -558,9 +692,13 @@
 
   // A class rather than `img`: the glyph is an <svg> now, and a selector that
   // names the element couples the stylesheet to the shape of the markup.
+  // cqw like every other glyph. At the old 9cqw a corner icon was 26.6px
+  // inside a 34.6px content box on a 296px board - which was fine while the
+  // corner carried no text worth reading, and overflows now that FREE PARKING
+  // needs two lines beside it.
   .corner-icon {
-    width: clamp(15px, 2.2vw, 34px);
-    height: clamp(15px, 2.2vw, 34px);
+    width: clamp(12px, 4.6cqw, 34px);
+    height: clamp(12px, 4.6cqw, 34px);
     color: var(--board-icon-ink);
     opacity: 0.82;
   }
@@ -722,57 +860,64 @@
 // ---------------------------------------------------------------------------
 // Owner marker
 //
-// A dot in the owner's token colour, so who controls which colour set reads
-// straight off the board. Deliberately small and cornered: the colour-group
-// ribbon on the inner edge is a different fact and must stay readable.
-// The colour itself is an inline style - token colours are theme data.
 // ---------------------------------------------------------------------------
-// The owner's mark, kept off the ribbon.
+// The owner's mark: a bar in their token colour, down the square's outer edge.
 //
-// It used to sit at the cell's top-right on every side, which on the bottom row
-// is precisely where the ribbon is - so it covered the pieces standing on it.
-// With 6px pips that was a nibble; with real houses it hid the fourth one and a
-// hotel's windows outright. It now hugs the cell's OUTER edge, the opposite one
-// to the ribbon, per side.
-.space-owner-dot {
+// It was a 5px dot in a corner - a quarter of a phone cell at its floor, and
+// the only thing on a small board that said a square was taken at all. A bar
+// running the full length of the edge reads across forty squares; a dot has to
+// be looked for on each one.
+//
+// It hugs the OUTER edge, the opposite one to the colour ribbon, per side.
+// (The dot learned this the hard way: at the cell's top-right on every side it
+// sat exactly on the bottom row's ribbon and covered the houses standing on
+// it.) The colour itself is an inline style - token colours are theme data,
+// not CSS tokens.
+// ---------------------------------------------------------------------------
+.space-owner-bar {
   position: absolute;
-  // Above the cell's ::after divider, which sits at z-index 5.
-  z-index: 6;
-  // A fraction of the board rather than a literal, so it stays the same size
-  // relative to the square it marks. 7px was a quarter of a phone cell and a
-  // ninth of a desktop one.
-  width: clamp(5px, 1.1cqw, 7px);
-  height: clamp(5px, 1.1cqw, 7px);
-  border: 1px solid transparent;
-  border-radius: t.$token-radius;
-  box-shadow: 0 0 0 1px var(--surface-panel);
+  // BELOW the cell's ::after divider, which sits at z-index 5, and above the
+  // ribbon. At 6 the bar painted over the divider - so on the bottom row it
+  // erased the 1px line the cell is responsible for drawing and bled colour to
+  // the board's outer boundary. board.spec.ts only reads the pseudo-element's
+  // shadow, so it cannot catch that; the eye is the only evidence.
+  z-index: 4;
 
-  // Hollow: a mortgaged site is owned but collects no rent.
+  // Faded, not hollow: a mortgaged site is owned but collects no rent, and the
+  // stamp struck across the square is what says so outright. A 4px bar cannot
+  // carry a second meaning in its own geometry.
   &.is-mortgaged {
-    background: var(--surface-panel);
-    border-width: 2px;
+    opacity: 0.4;
   }
 
   // The ribbon hugs the inner edge (see .space-color), so the outer edge is
   // whichever one it is not on.
   .side-bottom & {
-    right: 3px;
-    bottom: 3px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: var(--owner-bar-weight);
   }
 
   .side-top & {
-    top: 3px;
-    right: 3px;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: var(--owner-bar-weight);
   }
 
   .side-left & {
-    top: 3px;
-    left: 3px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--owner-bar-weight);
   }
 
   .side-right & {
-    top: 3px;
-    right: 3px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--owner-bar-weight);
   }
 }
 

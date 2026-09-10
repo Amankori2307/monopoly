@@ -36,10 +36,22 @@ $radius-round: $radius-sharp;
 // Board geometry. The colour bar only exists on street spaces - see components/_board.scss.
 $board-corner-track: 1.7fr;
 // Padding for a board cell's content. The cell itself has none, so the colour
-// ribbon can run edge to edge.
+// ribbon can run edge to edge. Corner cells only: they are 1.7fr square and
+// have room for a viewport-scaled inset.
 $space-inset: clamp(3px, 0.55vw, 7px);
-$board-color-bar: 12px;
-$board-color-bar-compact: 7px;
+// The two axes of an edge cell are not equally scarce, and one inset for both
+// spends the scarce one at the plentiful one's rate. A top-row square is 1fr
+// WIDE and 1.7fr deep: the name and the price stack across the width, so every
+// pixel there is a line of type, while the depth only has to hold a word.
+// cqw rather than vw because a 768px tablet renders a ~370px board - the same
+// size as a phone's - and no media query can see that.
+$board-inset-short: clamp(0.5px, 0.28cqw, 3px);
+$board-inset-long: clamp(1px, 0.55cqw, 7px);
+// A fraction of the board, so the band keeps its printed-board proportion at
+// every size - about a sixth of the square's depth. It was a 12px literal plus
+// a 7px override behind a media query, which gave a 768px tablet the desktop
+// ribbon on a phone-sized board.
+$board-color-bar: clamp(5px, 2.2cqw, 12px);
 
 // Width of the property-action rail beside the board.
 
@@ -162,12 +174,30 @@ $breakpoint-phone: 560px;
 // landscape-compact mixin.
 $breakpoint-short: 560px;
 
-// Below this BOARD width a space name cannot be set legibly - the squares are
-// under ~42px and the name lands near 7px. A board-width threshold rather than a
-// viewport one on purpose: in landscape the board is sized by viewport HEIGHT, so
-// a 844x390 phone has an 844px-wide window and a 380px board. Used by a container
-// query in components/_board.scss, not by a media query.
-$board-name-floor: 520px;
+// Below this BOARD width the six squares with a long name - the four railways
+// and the two utilities - print the edition's short word for what they are
+// instead of their full name. The name and the price themselves are set at
+// every size; this is the board's ONLY tier.
+//
+// Measured, not chosen: "Chennai Central Railway Station" wraps to four lines
+// at any board size, and four lines plus a price needs more than 8.06% of the
+// board above a 5px legibility floor - which breaks below a 347px board. 420
+// is that threshold with about 10% of margin, and it also catches the ~370px
+// board a 768px tablet renders in its two-column layout.
+//
+// A board-width threshold rather than a viewport one on purpose: in landscape
+// the board is sized by viewport HEIGHT, so an 812x375 phone has an 812px-wide
+// window and a 331px board. Used by a container query in components/_board.scss,
+// not by a media query.
+$board-short-name-floor: 420px;
+// And below THIS board width the type itself has to give a little. Measured on
+// the London board at 320x568, the narrowest device this app supports, where
+// the height cap leaves a 281px board and a street square 22.6 x 38.5px:
+// "The Angel Islington" has 27.8px of run to set in, and "Islington" alone is
+// 30.6px at 5px Manrope. No arrangement of the ribbon or the insets closes a
+// 3px gap, so the type does - on this device class and no other. The two
+// common phones (360 and 375, boards of 320 and 351) stay at the 5px floor.
+$board-tight-floor: 300px;
 
 // The shell's padding on a phone. A token because pages/_rules.scss negates it
 // to bleed the booklet full width, and the two must stay derived from one value

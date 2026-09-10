@@ -151,27 +151,60 @@ it, and is about **88px** tall. It used to be roughly **300px** on a phone.
 from a small desktop window, and it is the **height** that breaks the board. The board takes
 `height: 100%` and derives its width from `aspect-ratio`, so it always fits.
 
-### A small board is a map, not a document
+### Every square says what it is and what it costs
 
-Below a **board width** of `$board-name-floor` (520px) the squares **drop their name text**. A
-street cell is about 30px wide when the board is 375px and the name was set at a hardcoded `5px`,
-which is texture rather than type. What stays is what identifies a square at a glance: the colour
-ribbon, the glyph, the owner's dot, buildings, and the tokens. The name is one tap away in the
-title-deed card a square already opens.
+Every square carries its **name** and its **price** at every board size, phone included, and shows
+**who owns it** in the owner's own colour. It did not use to: below a 520px board the name was
+deleted outright, and the price was never drawn on any viewport. That left a street as a colour
+ribbon and a 5px dot — with literally nothing identifying it, because streets carry no glyph.
+
+The geometry is what makes it possible. Rows 1 and 11 are `$board-corner-track` (1.7fr) **deep**
+while the columns between them are 1fr wide, so a top-row square is roughly **30 × 51px** on a
+370px board — and two runs of type fit side by side across those 30px.
+
+- **`.space-text` holds the pair, and its `flex-direction` is `column`** — which is the _block_
+  axis, whatever the writing mode. One rule serves all four sides: on the rows it makes two vertical
+  columns side by side, on the columns two horizontal lines stacked, and the price always lands
+  exactly where a further wrapped line of the name would have gone. `row` is the trap: with
+  `vertical-rl` a multi-line name stacks its lines right-to-left, so a row puts the price _before_
+  line one and the reader takes the price first.
+- **Six squares a board print what they ARE instead.** "Chennai Central Railway Station" wraps to
+  four lines at _any_ board size, and four lines plus a price breaks the 5px legibility floor below
+  a 347px board. So the four railways and the two utilities swap to the edition's own word —
+  `nouns.railway`, and Electric/Water — below `$board-short-name-floor` (420px), which also catches
+  the ~370px board a 768px tablet renders. Both names are in the DOM and a container query picks
+  one: CSS cannot substitute text, and a JS width check is not how this codebase does layout. See
+  [boardNames.utils.ts](../../src/domain/themes/boardNames.utils.ts).
+- **One more tier, for one device class.** Below `$board-tight-floor` (300px board) the type drops
+  to 4.2px. Measured on the London board at 320×568 — the narrowest device supported — where the
+  height cap leaves a 281px board: "The Angel Islington" has 27.8px of run and "Islington" alone is
+  30.6px at 5px. No arrangement of the ribbon or the insets closes a 3px gap. The two common phones
+  (360 and 375, boards of 320 and 351) stay at the 5px floor.
+- **The insets are two tokens, not one.** `$board-inset-short` across the cell's scarce axis, where
+  every pixel is a line of type, and `$board-inset-long` along the plentiful one. One inset for both
+  spent the scarce axis at the plentiful axis's rate.
+- **The Jail band is the one place the old reasoning still holds.** Its visiting strip is 34% of a
+  corner — 25 × 13px on a 281px board — and "Just Visiting" needs three lines of 5px type in 21px of
+  width. Below the short-name floor its label is clipped the way `.jail-name-joiner` already is:
+  visually gone, still in the accessibility tree and in `textContent`.
 
 - **It is a `@container` query on `.board-card`, not a media query**, and the distinction is the
   whole point. The threshold is a fact about the _board_ — how wide a square is — and the board's
   width is not a function of the viewport's. Landscape sizes the board by viewport **height**, so an
-  844×390 phone has an 844px-wide window and a 380px board: a viewport-width rule reported "not a
+  812×375 phone has an 812px-wide window and a 320px board: a viewport-width rule reported "not a
   phone" and left **6.72px** names on a board every bit as small as the portrait one it correctly
   cleared. Found by looking at it in landscape, not by reading the rule.
 
-- **Only the visible text is hidden.** The cell's accessible name is an explicit `aria-label` on the
-  button ([BoardSpaceCell](../../src/components/game/board/BoardSpaceCell.tsx)), so screen readers
-  and role-based queries are untouched.
-- **`board.spec.ts`'s "never clips a space name" scan is vacuous at phone width.** It measures
-  `scrollWidth` against `clientWidth`, and a `display: none` element reports zero for both. That
-  spec pins the desktop viewport for exactly this reason — do not remove it.
+- **The full name always stays in the DOM**, and the cell's accessible name is an explicit
+  `aria-label` on the button ([BoardSpaceCell](../../src/components/game/board/BoardSpaceCell.tsx)),
+  so screen readers and role-based queries are untouched by the swap.
+- **The clipping scan is no longer vacuous on a phone**, and it must not be allowed to become so
+  again. `mobile.spec.ts` sweeps every _visible_ name and price for self-overflow **and** for
+  containment in its cell, with vacuity guards on the board width and the element count — a
+  `display: none` element reports zero for both `scrollWidth` and `clientWidth`, which is how the
+  old assertion passed while proving nothing. The 320px case plays the **London** board, because
+  India's longest street is "Bhubaneshwar" and would prove nothing.
+
 - **Board decorations are sized in `cqw`, not `vw`.** `.board-card` is a `container-type:
 inline-size` container and publishes a `--token-size` custom property. `vw` tracks the _viewport_,
   which stops agreeing with the board the moment the board is capped by `dvh` — and in landscape the
@@ -302,9 +335,12 @@ on its side — the same reason `MortgageStamp` picks its box per variant. House
 all: a rotated word still reads, a rotated house reads as a broken shape. The windows come off below
 the tablet breakpoint, where they are under a device pixel.
 
-The **owner dot hugs the cell's outer edge**, opposite the ribbon, per side — it used to sit
-top-right on every side, which on the bottom row is where the ribbon is, so it covered the pieces
-standing on it.
+The **owner bar runs the full length of the cell's outer edge**, opposite the ribbon, per side, in
+the owner's token colour, and `.is-owned` washes the whole square with 14% of it. It replaced a 5px
+corner dot, which was a quarter of a phone cell and had to be hunted for on each square. It hugs
+the outer edge because the dot used to sit top-right on every side — which on the bottom row is
+where the ribbon is, so it covered the pieces standing on it. See
+[site-ownership.md](site-ownership.md) for the z-index and padding traps.
 
 ### Player tokens
 

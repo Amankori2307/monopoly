@@ -691,20 +691,50 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   rather than as something to press. It is an `inset: 0` overlay over the whole card (so the tap is
   well past 44px) with a visible chevron, hidden on collapsed slivers because the stack's own
   expand overlay owns the click there.
-- **The board hides its space names on a `@container` query, not a media query.** The threshold
-  (`$board-name-floor`, 520px) is a fact about the **board's** width, and that is not a function of
-  the viewport's: landscape sizes the board by viewport _height_, so an 844×390 phone has an 844px
-  window and a 380px board. The first attempt keyed on viewport width, reported "not a phone", and
-  left 6.72px names on a board exactly as small as the portrait one it had correctly cleared. If a
-  rule is about how big the board is, ask the board.
-- **The phone board hides its space names, which makes one existing test vacuous.**
-  `board.spec.ts`'s "never clips a space name" scan compares `scrollWidth` to `clientWidth`, and a
-  `display: none` element reports zero for both. That spec — and `layout.spec.ts` and
-  `full-table.spec.ts` — now pin `VIEWPORTS.desktop` via `test.use`. Do not remove those: the
-  assertions are about the desktop arrangement and would otherwise pass for the wrong reason.
-- **The square's name survives as its `aria-label`.** Hiding `.space-name` is safe precisely because
-  `BoardSpaceCell` sets an explicit `aria-label`, so `getByRole('button', { name: /View details
-for/ })` and every screen reader are untouched. Never move that name into the visible text alone.
+- **The board asks the BOARD how big it is, not the window.** Everything drawn on a square - the
+  type, the glyph, the colour ribbon, the owner bar, the insets - is a `cqw` function of
+  `.board-card`, and its two thresholds are `@container` queries. That is not a style preference:
+  landscape sizes the board by viewport _height_, so an 812x375 phone has an 812px window and a
+  320px board, and a 768px tablet renders a ~370px board in a 768px window. A viewport rule misses
+  both - the first attempt reported "not a phone" and left 6.72px names on a board exactly as small
+  as the portrait one it had correctly cleared. **If a rule is about how big the board is, ask the
+  board.**
+- **Every square prints its name AND its price, at every size.** It used to do neither on a phone:
+  below a 520px board the name was deleted and the price was never drawn anywhere. A street was
+  then a colour ribbon and a 5px dot with nothing identifying it, because streets carry no glyph.
+  The geometry allows it - rows 1 and 11 are 1.7fr _deep_ against 1fr wide, so a square is ~30x51
+  and two runs of type fit side by side. `.space-text` is `flex-direction: column`, the BLOCK axis,
+  which serves all four sides at once; `row` puts the price before line one of the name, because
+  `vertical-rl` stacks lines right-to-left.
+- **Two tiers, both measured, and no others.** `$board-short-name-floor` (420px board): the four
+  railways and two utilities print the edition's own word for what they are, because "Chennai
+  Central Railway Station" is four wrapped lines at any size and four lines plus a price breaks the
+  5px floor below a 347px board. `$board-tight-floor` (300px board): the type itself drops to
+  4.2px, for the narrowest device only - at 320x568 the height cap leaves a 281px board where
+  "Islington" alone needs 30.6px of a 27.8px run. Both names render and CSS picks one; CSS cannot
+  substitute text and a JS width check is not how layout is done here.
+- **Ownership is a bar and a wash, not a dot.** A 5px dot was a quarter of a phone cell and had to
+  be hunted for on each square. The bar runs the full outer edge in the owner's token colour
+  (inline - a player colour is theme DATA, the sanctioned exception), and `.is-owned` washes the
+  square with `color-mix(... 14%, transparent)` over `--space-owner`. Two traps: the bar sits at
+  **z-index 4**, below the cell's `::after` divider at 5, or it erases the grid line it is painted
+  over; and `.space-label` reserves `--owner-bar-weight` on that edge **whether or not anyone owns
+  the square**, or a street re-wraps its name the moment somebody buys it. `.board-space` had to
+  move from the `background` shorthand to `background-color` for the wash to survive hover.
+- **The square's name survives as its `aria-label`.** Swapping the visible name for a short one is
+  safe precisely because `BoardSpaceCell` sets an explicit `aria-label` with the full name, so
+  `getByRole('button', { name: /View details for/ })` and every screen reader are untouched. Never
+  move that name into the visible text alone.
+- **The clipping scan can pass by proving nothing, and did.** `board.spec.ts`'s "never clips a
+  space name" compares `scrollWidth` to `clientWidth`, and a `display: none` element reports zero
+  for both - so while the phone hid its names it was vacuous there. It is desktop-pinned, and
+  `mobile.spec.ts` now carries the phone sweep, which checks containment in the cell as well as
+  self-overflow and guards its own vacuity on the board width and the element count. The 320px
+  case plays the **London** board on purpose: India's longest street is "Bhubaneshwar", which has
+  always fitted, so the default edition would prove nothing - the same trap `overlays.spec.ts`
+  documents for the deed card. Two real defects only ever showed there: a leftover
+  `align-self: center` that shrink-wrapped every line instead of giving it the cell's run, and a
+  7px literal colour ribbon that should have been a fraction of the board.
 - **`.rules-booklet` negates the shell's phone padding to bleed full width.** Both sides now come
   from `$shell-pad-phone`; they were two independent `10px` literals that cancelled by coincidence,
   so changing the shell's padding left the booklet inset or overhanging.

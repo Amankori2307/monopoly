@@ -143,32 +143,129 @@ test.describe('a phone in portrait', () => {
     expect(overlaps(activity, roll)).toBe(false);
   });
 
-  // A 30px-wide square cannot hold a name at any size - it was set at 5px, which
-  // is texture rather than type. What must NOT go with it is the square's
-  // accessible name, which is an explicit aria-label on the button.
-  test('drops the space names but keeps each square identifiable', async ({ page }) => {
+  /**
+   * A square says what it is and what it costs, at phone size.
+   *
+   * This test used to assert the opposite - that every name computed
+   * `display: none` below a 520px board, because "a 30px-wide square cannot
+   * hold a name at any size". The geometry says otherwise: rows 1 and 11 are
+   * 1.7fr DEEP against 1fr wide, so the square is ~30x51 and two runs of type
+   * fit side by side across those 30px. What it left behind was a street with
+   * a colour ribbon, a dot, and nothing else at all - streets carry no glyph.
+   */
+  test('names and prices every square, and clips none of it', async ({ page }) => {
     await startGame(page);
 
-    const names = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.space-name')).map(
-        (name) => getComputedStyle(name).display
-      )
+    const board = await page.evaluate(
+      () => document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0
     );
-    expect(names.length).toBeGreaterThan(0);
-    expect(new Set(names)).toEqual(new Set(['none']));
 
-    // The name is still how the square is addressed, and still one tap away.
+    const measured = await page.evaluate(() => {
+      const clipped: string[] = [];
+      let names = 0;
+      let prices = 0;
+      let smallest = Infinity;
+
+      document.querySelectorAll('.board-space').forEach((cell) => {
+        const cellBox = cell.getBoundingClientRect();
+        cell
+          .querySelectorAll('.space-name, .space-name-short, .space-price')
+          .forEach((element) => {
+            const style = getComputedStyle(element);
+            // Skip what is not being read: the swapped-out long name, and the
+            // Jail band's label, which is a 1px clip-path box on purpose so it
+            // stays in the accessible string.
+            if (style.display === 'none' || style.clipPath !== 'none') return;
+            if (element.clientWidth <= 1) return;
+
+            if (element.classList.contains('space-price')) prices += 1;
+            else names += 1;
+            smallest = Math.min(smallest, Number.parseFloat(style.fontSize));
+
+            const box = element.getBoundingClientRect();
+            const overflowsItself =
+              element.scrollWidth > element.clientWidth + 1 ||
+              element.scrollHeight > element.clientHeight + 1;
+            // Containment as well as self-overflow: a flex pair inside a
+            // hidden-overflow cell can escape the LABEL while every child
+            // still reports zero scroll.
+            const escapesItsCell =
+              box.left < cellBox.left - 0.5 ||
+              box.right > cellBox.right + 0.5 ||
+              box.top < cellBox.top - 0.5 ||
+              box.bottom > cellBox.bottom + 0.5;
+
+            if (overflowsItself || escapesItsCell) {
+              clipped.push(`${element.textContent} (${element.className})`);
+            }
+          });
+      });
+
+      return { clipped, names, prices, smallest };
+    });
+
+    // Vacuity guards. The board must actually be small, and the text must
+    // actually be there - the assertion this replaced passed for the wrong
+    // reason on a phone precisely because display:none reports zero for both
+    // scrollWidth and clientWidth.
+    expect(board).toBeLessThan(520);
+    expect(measured.names).toBeGreaterThanOrEqual(40);
+    // 22 streets + 4 railways + 2 utilities + 2 taxes.
+    expect(measured.prices).toBe(30);
+
+    expect(measured.clipped).toEqual([]);
+
+    // The legibility floor is the decision being reversed here, and the one
+    // most easily eroded by a later tweak to the ramp.
+    expect(measured.smallest).toBeGreaterThanOrEqual(5);
+
+    // The name is still how the square is addressed, whatever is drawn in it.
     await expect(
       page.getByRole('button', { name: 'View details for Guwahati', exact: true })
     ).toBeVisible();
 
-    // The colour ribbon and the glyphs are what identify a square now.
     expect(
       await page.evaluate(() => document.querySelectorAll('.space-color').length)
     ).toBe(22);
-    expect(
-      await page.evaluate(() => document.querySelectorAll('.space-icon').length)
-    ).toBeGreaterThan(0);
+  });
+
+  /**
+   * Six squares a board carry a name too long to set in one: the four railways
+   * and the two utilities. "Chennai Central Railway Station" is four wrapped
+   * lines at ANY board size, and four lines plus a price does not fit above the
+   * 5px floor. They print the edition's own word for what they are instead -
+   * and the full name stays in the DOM, so the accessible name is untouched.
+   */
+  test('prints what the long squares ARE, in the edition own word', async ({ page }) => {
+    await startGame(page);
+
+    const swapped = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.board-space'))
+        .filter((cell) => cell.querySelector('.space-name-short'))
+        .map((cell) => ({
+          label: cell.getAttribute('aria-label') ?? '',
+          shortShown:
+            getComputedStyle(cell.querySelector('.space-name-short')!).display !== 'none',
+          fullHidden:
+            getComputedStyle(cell.querySelector('.space-name.has-short')!).display ===
+            'none',
+        }))
+    );
+
+    expect(swapped).toHaveLength(6);
+    swapped.forEach((square) => {
+      expect(square.shortShown, square.label).toBe(true);
+      expect(square.fullHidden, square.label).toBe(true);
+    });
+
+    // India calls them railway stations; the accessible name keeps the whole
+    // thing either way.
+    await expect(
+      page.getByRole('button', {
+        name: 'View details for Chennai Central Railway Station',
+        exact: true,
+      })
+    ).toBeVisible();
   });
 
   /**
@@ -403,6 +500,75 @@ test.describe('a 320px phone', () => {
   test.use({ viewport: VIEWPORTS.phoneSmall });
 
   // `body { min-width: 320px }` is the floor the reset commits to.
+  /**
+   * The narrowest board in the app, playing the longest names in it.
+   *
+   * At 320x568 the height cap gives a **281px** board - a street square 22.6px
+   * wide and 38.5px deep - and that is where the name-and-price budget is
+   * genuinely tight. Two real defects only showed here: `.space-name` kept an
+   * `align-self: center` from when it was a direct child of `.space-label`,
+   * which shrink-wrapped every line instead of giving it the cell's full run;
+   * and the colour ribbon was a 7px literal rather than a fraction of the
+   * board. "The Angel Islington" clipped on both counts.
+   *
+   * The London board is the fixture because India's longest STREET is
+   * "Bhubaneshwar", which has always fitted - this spec would pass on the
+   * default edition while proving nothing, the same trap overlays.spec.ts
+   * documents for the deed card.
+   */
+  test('fits the longest names on the smallest board', async ({ page }) => {
+    await startGame(page, { edition: 'Monopoly Classic (London)' });
+
+    const measured = await page.evaluate(() => {
+      const clipped: string[] = [];
+      let read = 0;
+
+      document.querySelectorAll('.board-space').forEach((cell) => {
+        const cellBox = cell.getBoundingClientRect();
+        cell
+          .querySelectorAll('.space-name, .space-name-short, .space-price')
+          .forEach((element) => {
+            const style = getComputedStyle(element);
+            if (style.display === 'none' || style.clipPath !== 'none') return;
+            if (element.clientWidth <= 1) return;
+            read += 1;
+
+            const box = element.getBoundingClientRect();
+            const overflowsItself =
+              element.scrollWidth > element.clientWidth + 1 ||
+              element.scrollHeight > element.clientHeight + 1;
+            const escapesItsCell =
+              box.left < cellBox.left - 0.5 ||
+              box.right > cellBox.right + 0.5 ||
+              box.top < cellBox.top - 0.5 ||
+              box.bottom > cellBox.bottom + 0.5;
+
+            if (overflowsItself || escapesItsCell) {
+              clipped.push(String(element.textContent));
+            }
+          });
+      });
+
+      return {
+        clipped,
+        read,
+        board: document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0,
+      };
+    });
+
+    // Vacuity guards: the smallest board really is small, and the sweep really
+    // did read the text.
+    expect(measured.board).toBeLessThan(300);
+    expect(measured.read).toBeGreaterThanOrEqual(60);
+
+    // "The Angel Islington" is the square that broke: three words whose
+    // longest alone exceeds the line, beside a price.
+    await expect(
+      page.getByRole('button', { name: 'View details for The Angel Islington' })
+    ).toBeVisible();
+    expect(measured.clipped).toEqual([]);
+  });
+
   test('does not scroll sideways at the narrowest supported width', async ({ page }) => {
     await startGame(page);
 
@@ -449,31 +615,43 @@ test.describe('a phone held sideways', () => {
   });
 
   /**
-   * The names are hidden by a CONTAINER query on the board, not a media query
-   * on the viewport, and this is the case that forces the distinction.
+   * Everything on the board is sized by the BOARD, not by the window, and this
+   * is the case that forces the distinction.
    *
-   * Landscape sizes the board by viewport HEIGHT, so this window is 844px wide
-   * with a ~380px board - every bit as small as the portrait one. A
+   * Landscape sizes the board by viewport HEIGHT, so this window is 812px wide
+   * with a ~320px board - every bit as small as the portrait one. A
    * viewport-width rule reported "not a phone" and left 6.72px names on it.
+   * The rule under test is now the short-name swap rather than hiding the
+   * name, but the trap it guards is identical.
    */
-  test('hides the names on a small board even in a wide window', async ({ page }) => {
+  test('sizes the type by the board, not by the window', async ({ page }) => {
     await startGame(page);
 
-    const board = await page.evaluate(
-      () => document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0
-    );
+    const measured = await page.evaluate(() => {
+      const board =
+        document.querySelector('.board-card')?.getBoundingClientRect().width ?? 0;
+      const name = document.querySelector('.space-label .space-name');
+      return {
+        board,
+        fontSize: name ? Number.parseFloat(getComputedStyle(name).fontSize) : 0,
+        shortsShown: Array.from(document.querySelectorAll('.space-name-short')).filter(
+          (element) => getComputedStyle(element).display !== 'none'
+        ).length,
+      };
+    });
 
     // The window is far wider than any phone breakpoint, and the board is not.
     expect(page.viewportSize()?.width).toBeGreaterThan(720);
-    expect(board).toBeLessThan(520);
+    expect(measured.board).toBeLessThan(520);
 
-    const names = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.space-name')).map(
-        (name) => getComputedStyle(name).display
-      )
-    );
-    expect(names.length).toBeGreaterThan(0);
-    expect(new Set(names)).toEqual(new Set(['none']));
+    // The swap is on, in a window three breakpoints too wide for it to be. No
+    // media query could reach this state.
+    expect(measured.shortsShown).toBe(6);
+
+    // And the type is at its floor, as it is on a portrait phone with the same
+    // board - not the ~8px a window this wide would have produced from `vw`.
+    expect(measured.fontSize).toBeLessThanOrEqual(6);
+    expect(measured.fontSize).toBeGreaterThanOrEqual(5);
   });
 });
 
@@ -484,8 +662,8 @@ test.describe('a desktop board', () => {
   test.use({ viewport: VIEWPORTS.desktop });
 
   // The container query has to be a threshold, not a one-way trip: a board with
-  // the room for its names must still show them.
-  test('still sets the names on a board with room for them', async ({ page }) => {
+  // the room for its full names must show those rather than the short ones.
+  test('sets the full names on a board with room for them', async ({ page }) => {
     await startGame(page);
 
     const board = await page.evaluate(
@@ -494,6 +672,19 @@ test.describe('a desktop board', () => {
     expect(board).toBeGreaterThan(520);
 
     await expect(page.locator('.space-label .space-name').first()).toBeVisible();
+
+    // The six long squares are back to their own names, and the short ones are
+    // the hidden half of the pair.
+    const swap = await page.evaluate(() => ({
+      shortsShown: Array.from(document.querySelectorAll('.space-name-short')).filter(
+        (element) => getComputedStyle(element).display !== 'none'
+      ).length,
+      longsShown: Array.from(document.querySelectorAll('.space-name.has-short')).filter(
+        (element) => getComputedStyle(element).display !== 'none'
+      ).length,
+    }));
+    expect(swap.shortsShown).toBe(0);
+    expect(swap.longsShown).toBe(6);
   });
 });
 

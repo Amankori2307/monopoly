@@ -101,10 +101,12 @@ export function GamePage() {
             board={activeGame.board}
             centerSubtitle={theme.boardCenter.subtitle}
             centerTitle={theme.boardCenter.title}
+            currencySymbol={currencySymbol}
             findToken={findToken}
             onSelectSpace={overlays.selectSpace}
             ownerMarks={ownerMarks}
             players={players}
+            themeId={activeGame.themeId}
             tokenPositions={tokenPositions}
           />
 
