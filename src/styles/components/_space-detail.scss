@@ -31,27 +31,47 @@
   box-shadow: t.$elevation-4 var(--shadow-ink-strong);
 }
 
+// The tap target is 44px. What you SEE is not.
+//
+// It was 30x30 once - smaller than the tap floor every other button keeps -
+// so it grew to 44 and drew its whole bordered box at that size. On a 240px
+// card that is a fifth of the width, and it read as the loudest thing on a
+// title deed. The two sizes are separable, and the checkbox in this codebase
+// already separates them: `$control-checkbox` stays 20px while the <label>
+// around it carries the 44. Here the button keeps the 44 - the android
+// tap-floor sweep measures the button itself - and the visible chrome is a
+// pseudo-element inset inside it.
 .space-detail-close {
   position: absolute;
   // Above the deed, which is positioned so it can hold the mortgage watermark -
   // and, being later in the DOM, painted over this button without it.
   z-index: 2;
-  top: 12px;
-  right: 12px;
+  // So the chrome's own `z-index: -1` stays inside this button rather than
+  // sliding behind the card.
+  isolation: isolate;
+  top: t.$space-1;
+  right: t.$space-1;
   display: grid;
   place-items: center;
-  // 30x30 before this: the only way out of a deed sheet or a drawer, drawn
-  // smaller than the tap floor every <button> in the app already keeps.
   width: t.$control-tap;
   height: t.$control-tap;
-  border: 1px solid var(--border-input);
-  border-radius: t.$radius-sharp;
-  background: var(--surface-panel);
+  border: 0;
+  background: transparent;
   color: var(--text-body);
   @include t.text(body);
   font-weight: t.$weight-bold;
 
-  &:hover {
+  &::before {
+    position: absolute;
+    z-index: -1;
+    inset: t.$space-2;
+    border: 1px solid var(--border-input);
+    border-radius: t.$radius-sharp;
+    background: var(--surface-panel);
+    content: '';
+  }
+
+  &:hover::before {
     background: var(--surface-muted);
   }
 }
@@ -475,13 +495,6 @@
     h2 {
       @include t.text(heading);
     }
-  }
-
-  // The button follows the card's own tighter padding, rather than staying at
-  // the 12px the roomier card used.
-  .space-detail-close {
-    top: t.$deed-card-pad-tight;
-    right: t.$deed-card-pad-tight;
   }
 
   .deed-primary-stats span {

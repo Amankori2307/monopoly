@@ -720,6 +720,15 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   sweep on all five routes - so pin `min-width` as well as `min-height`; and a text field under
   16px makes **iOS zoom the whole page on focus**, so `.text-input` pins `$input-font-phone`
   against the scale rather than inheriting it.
+- **A tap target and the thing you SEE are separable, and the close button is the second case.**
+  It is 44x44 because the android sweep measures the button itself, and it used to draw its whole
+  bordered box at that size - a fifth of the width of a 240px card, and the loudest thing on a
+  title deed. The chrome is a `::before` inset inside it now, the same way `$control-checkbox`
+  stays 20px while its `<label>` carries the 44. **The trap: an absolutely-positioned pseudo needs
+  its own element to be a containing block**, and the drawer header set the button `position:
+static` - so the chrome resolved against `.side-drawer` and became a transparent sheet over the
+  whole panel that swallowed every click. It is `relative` there now, which lays out identically.
+  Three tests timed out on "element is visible, enabled and stable" and none of them said why.
 - **The site card is ONE rectangle, at ONE ratio, and both axes are the rule.** Same width and
   same height for every square; a square with less to say leaves the bottom blank. The ratio is
   **structural** - `.deed-card` sets `aspect-ratio: 4 / 5` and takes only a width per tier

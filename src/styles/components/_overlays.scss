@@ -176,8 +176,18 @@
   padding: t.$space-5 var(--drawer-gutter, #{t.$drawer-pad}) t.$space-3;
   border-bottom: 1px solid var(--border-subtle);
 
+  // In flow here, not pinned to a corner - the drawer's header is a row and
+  // the button is the end of it.
+  //
+  // `relative`, and NOT `static`: the button draws its visible chrome with an
+  // absolutely-positioned `::before`, and a static button is not a containing
+  // block for it. As `static` that pseudo-element resolved against
+  // `.side-drawer` instead and became a transparent sheet over the whole
+  // panel, swallowing every click in it - three tests timed out on
+  // "element is visible, enabled and stable" with no hint as to what was on
+  // top. `relative` lays out identically and fixes the containing block.
   .space-detail-close {
-    position: static;
+    position: relative;
   }
 }
 
