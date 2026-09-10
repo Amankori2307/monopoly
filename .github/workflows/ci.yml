@@ -3,7 +3,12 @@ name: CI
 on:
   push:
     branches: [master]
-  pull_request:
+  # There is deliberately no `pull_request:`. Work here lands on master, so a
+  # PR run was a second copy of the very same commits - opening one and merging
+  # it fired the whole suite twice for one change - and the concurrency group
+  # below cannot collapse them, because a PR's ref is `refs/pull/N/merge` and
+  # the merge push's is `refs/heads/master`. Add it back the day this repo
+  # takes changes it did not write itself.
   workflow_dispatch:
 
 # A new push to the same branch makes the in-flight run pointless.

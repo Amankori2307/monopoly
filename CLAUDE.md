@@ -233,8 +233,13 @@ pnpm deploy       # gh-pages → build/
 **Baseline as of the last verified run: `pnpm check-all` clean, 1564 unit tests, 232 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
-baseline is enforced rather than remembered. A push to `master` that passes both jobs then
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on **every push to
+`master`, and on nothing else**, so the baseline is enforced rather than remembered. There is no
+`pull_request:` trigger: work here lands on master, so a PR ran the same commits a second time -
+opening one and merging it fired the whole suite twice - and the concurrency group cannot collapse
+those, because it keys on `github.ref` and a PR's is `refs/pull/N/merge` while the merge push's is
+`refs/heads/master`. `workflow_dispatch` is the way to run it against anything else. A push to
+`master` that passes both jobs then
 **deploys** to https://amankori2307.github.io/monopoly/ - the built tree is force-pushed to the
 `gh-pages` branch, which is where Pages serves this repo from (`build_type: legacy`, source
 `gh-pages` at root), so no repository setting is involved. The deploy has its own concurrency group
