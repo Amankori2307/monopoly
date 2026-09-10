@@ -14,9 +14,18 @@
   box-shadow: none;
 }
 
+// The same throw is drawn twice - once in the dock beside the board, once in
+// the phone HUD's middle column - and exactly one of them is ever visible.
+// Both mounts share one `useDiceRoller`, owned by GameSidebar, because the
+// hook plays the roll SOUND and two of them would sound every throw twice.
 .dice-pair {
   display: flex;
   gap: t.$space-2;
+
+  // The dock owns the faces everywhere except the phone frame.
+  &.is-hud {
+    display: none;
+  }
 }
 
 .die-face {
@@ -75,10 +84,36 @@
 
 @include m.below(t.$breakpoint-tablet) {
   @include phone-die;
+
+  // The dice move between the two columns of player cards; the dock keeps the
+  // Roll button, which needs a 44px control and a real label and cannot fit a
+  // ~90px column. The swap is here rather than in the markup so there is one
+  // DOM and no viewport check in JavaScript.
+  .dice-pair.is-dock {
+    display: none;
+  }
+
+  .dice-pair.is-hud {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: t.$space-1;
+    place-content: center;
+  }
 }
 
+// Landscape puts the sidebar back beside the board, so the dock owns the faces
+// again. This block must stay AFTER the portrait one: a 667x375 phone matches
+// both, and landscape has to win.
 @include m.landscape-compact {
   @include phone-die;
+
+  .dice-pair.is-dock {
+    display: flex;
+  }
+
+  .dice-pair.is-hud {
+    display: none;
+  }
 }
 
 .pip {

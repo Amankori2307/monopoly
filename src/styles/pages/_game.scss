@@ -320,6 +320,20 @@
 
   // Height-driven, which is the whole point: the board takes the full column
   // height and derives its width from aspect-ratio, so it always fits.
+  // The stack is a single column again beside the board - the two-column HUD
+  // is a portrait arrangement, and 667x375 matches the portrait block too.
+  .app-shell.is-game .player-stack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-shell.is-game .player-stack-centre {
+    display: none;
+  }
+
+  .app-shell.is-game .player-stack .player-card {
+    grid-column: 1;
+  }
+
   .app-shell.is-game .board-card {
     width: auto;
     height: 100%;

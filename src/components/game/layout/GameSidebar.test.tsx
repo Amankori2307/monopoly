@@ -1,7 +1,7 @@
-import {} from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
-import { TurnPhase } from '../../../domain/types/game.enums';
+import { SpeedDieFace, TurnPhase } from '../../../domain/types/game.enums';
 import type { GameState } from '../../../domain/types/game.interfaces';
 import { renderWithProviders } from '../../../test/renderWithProviders';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
@@ -28,6 +28,8 @@ const summary = (index: number): PlayerSummary => ({
   netWorth: 1500,
   mortgagedCount: 0,
   setProgress: [],
+  isActive: index === 0,
+  seatIndex: index,
 });
 
 const turn: GameState['turn'] = {
@@ -107,5 +109,65 @@ describe('GameSidebar', () => {
     expect(
       container.querySelector(`[data-testid="${TEST_IDS.activityButton}"]`)
     ).toBeNull();
+  });
+});
+
+/**
+ * The dice are drawn twice and rolled once.
+ *
+ * The phone puts the faces between the two columns of player cards, as the
+ * reference boards do, while the Roll button stays in the bar where it has
+ * room for a 44px control and a real label. Both mounts are always rendered
+ * and the stylesheet shows one - there is no viewport check in JavaScript.
+ *
+ * The number of ROLLERS is the part that matters: `useDiceRoller` plays the
+ * roll sound itself, so a second call would sound every throw twice, and
+ * CLAUDE.md is explicit that a half-muted game is worse than none.
+ */
+describe('the dice, drawn twice', () => {
+  it('mounts the faces in the dock and in the HUD', () => {
+    renderSidebar();
+
+    expect(screen.getByTestId(`${TEST_IDS.dieFace}-0`)).toBeInTheDocument();
+    expect(screen.getByTestId(`${TEST_IDS.dieFaceHud}-0`)).toBeInTheDocument();
+  });
+
+  it('gives the two mounts separate ids, so a query can name one', () => {
+    renderSidebar();
+
+    // Playwright's strict mode fails on two matches even when one of them is
+    // display:none, which is exactly the situation here.
+    expect(screen.getAllByTestId(new RegExp(`^${TEST_IDS.dieFace}-\\d$`))).toHaveLength(
+      2
+    );
+    expect(
+      screen.getAllByTestId(new RegExp(`^${TEST_IDS.dieFaceHud}-\\d$`))
+    ).toHaveLength(2);
+  });
+
+  it('keeps the roll button in the turn row, not in the middle column', () => {
+    const { container } = renderSidebar();
+
+    const row = container.querySelector(`[data-testid="${TEST_IDS.turnControls}"]`);
+    expect(row?.querySelector(`[data-testid="${TEST_IDS.rollButton}"]`)).not.toBeNull();
+
+    const centre = screen.getByTestId(TEST_IDS.playerStackCentre);
+    expect(centre.querySelector(`[data-testid="${TEST_IDS.rollButton}"]`)).toBeNull();
+    expect(
+      centre.querySelector(`[data-testid="${TEST_IDS.dieFaceHud}-0"]`)
+    ).not.toBeNull();
+  });
+
+  it('shows both Speed Dice, or neither, from the one turn state', () => {
+    const { unmount } = renderSidebar({
+      turn: { ...turn, speedDieFace: SpeedDieFace.Bus },
+    });
+    expect(screen.getByTestId(TEST_IDS.speedDieFace)).toBeInTheDocument();
+    expect(screen.getByTestId(TEST_IDS.speedDieFaceHud)).toBeInTheDocument();
+
+    unmount();
+    renderSidebar();
+    expect(screen.queryByTestId(TEST_IDS.speedDieFace)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(TEST_IDS.speedDieFaceHud)).not.toBeInTheDocument();
   });
 });

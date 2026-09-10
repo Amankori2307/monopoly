@@ -38,13 +38,37 @@
   position: relative;
   display: grid;
   gap: t.$space-2;
+  // The fan's four measurements, as variables rather than tokens read
+  // directly, so the phone tier can turn the whole thing off in one block
+  // instead of undoing eleven rules one at a time. There is no `above()`
+  // mixin and this does not need one.
+  --stack-peek: #{t.$stack-expanded-max-height};
+  --stack-strip: 100%;
+  --stack-tuck: 0px;
+  --stack-inset: 0px;
+  --stack-fade: 1;
+  // What a SLIVER shows. Read far down the cascade - inside
+  // `.is-collapsed .player-card:not(:first-of-type) …`, which is five classes
+  // deep - so they have to be custom properties: a property inherits, and the
+  // reader's specificity is irrelevant. Any attempt to override those rules
+  // from a media query directly loses on specificity however late it comes.
+  --sliver-content: 0;
+  --sliver-open: none;
 }
 
-// Whoever is on top is the active player, so the top card carries the emphasis
-// rather than a separate highlight class.
-.player-stack .player-card:first-of-type {
+// Whose turn it is carries the emphasis. This used to be `:first-of-type`,
+// which is identical on the desktop fan - selectPlayerSummaries returns the
+// active player first, so the top card IS them - but says nothing on a phone,
+// where the grid is ordered by seat so a player keeps their cell all game.
+.player-stack .player-card.is-active {
   z-index: t.$max-players + 1;
-  box-shadow: t.$elevation-2 var(--shadow-ink);
+  border-color: var(--accent);
+  // A ring, and then the elevation. On the fan the top card was the active one
+  // by position and the lift alone said so; in a grid of eight identical cards
+  // nothing does, so the accent has to be drawn rather than implied.
+  box-shadow:
+    0 0 0 1px var(--accent),
+    t.$elevation-2 var(--shadow-ink);
 }
 
 .player-stack .player-card {
@@ -67,6 +91,11 @@
 .player-stack.is-collapsed {
   gap: 0;
   cursor: pointer;
+  --stack-peek: #{t.$stack-peek};
+  --stack-strip: #{t.$stack-peek};
+  --stack-tuck: #{t.$stack-tuck};
+  --stack-inset: #{t.$stack-inset};
+  --stack-fade: 0.55;
 
   // Painted back-to-front so earlier cards sit above later ones.
   @for $index from 1 through t.$max-players {
@@ -76,13 +105,13 @@
   }
 
   .player-card:not(:first-of-type) {
-    max-height: t.$stack-peek;
-    margin-top: -1 * t.$stack-tuck;
+    max-height: var(--stack-peek);
+    margin-top: calc(-1 * var(--stack-tuck));
     box-shadow: t.$elevation-tuck-hair var(--shadow-ink);
 
     // A sliver should read as colour, not as a cropped line of text.
     .player-card-strip {
-      height: t.$stack-peek;
+      height: var(--stack-strip);
     }
 
     // A sliver reads as colour, not as a cropped line of text. This block was
@@ -95,38 +124,27 @@
     .player-metrics,
     .group-pips,
     .player-badges {
-      opacity: 0;
+      opacity: var(--sliver-content);
     }
 
     // And no chevron. The stack's own expand overlay owns the click while
     // collapsed - four slivers each painting one read as four broken controls
     // stacked on each other.
     .player-card-open {
-      display: none;
+      display: var(--sliver-open);
     }
   }
 
   // Each sliver tapers inward so the deck fans, as in the reference.
   @for $index from 2 through t.$max-players {
     .player-card:nth-of-type(#{$index}) {
-      margin-inline: ($index - 1) * t.$stack-inset;
-    }
-  }
-
-  // The fan is a luxury a phone cannot afford. At eight players the deepest
-  // sliver is inset 63px each side, which on a 355px card leaves 230px - the
-  // taper stopped reading as depth and started reading as a broken card.
-  @include m.below(t.$breakpoint-phone) {
-    @for $index from 2 through t.$max-players {
-      .player-card:nth-of-type(#{$index}) {
-        margin-inline: ($index - 1) * t.$stack-inset-phone;
-      }
+      margin-inline: calc(#{$index - 1} * var(--stack-inset));
     }
   }
 
   // Beyond a few slivers the fan stops growing and simply fades.
   .player-card:nth-of-type(n + 5) {
-    opacity: 0.55;
+    opacity: var(--stack-fade);
   }
 }
 
@@ -141,6 +159,12 @@
   background: transparent;
 
   @include m.focus-ring;
+}
+
+// The phone card's single figure. Hidden here, where the description list
+// below already carries Cash with its label.
+.player-card-cash {
+  display: none;
 }
 
 /** Small text control, shown only while the stack is expanded. */
@@ -352,6 +376,19 @@
   }
 }
 
+/**
+ * The phone HUD's middle column - the dice, between the two columns of player
+ * cards, as the reference boards have it.
+ *
+ * A `<div>` among `<article>` cards on purpose: the collapsed fan is laid out
+ * entirely by `:nth-of-type` on `.player-card`, so a sibling of a different
+ * element type is invisible to every one of those rules. That is what lets one
+ * DOM serve the desktop fan and the phone grid with no viewport check in JS.
+ */
+.player-stack-centre {
+  display: none;
+}
+
 // ---------------------------------------------------------------------------
 // The card, on a phone
 //
@@ -365,20 +402,133 @@
 // rung. A card is ~65px now, so three players fit where two did.
 // ---------------------------------------------------------------------------
 @include m.below(t.$breakpoint-tablet) {
+  // ---------------------------------------------------------------------
+  // Two columns of players with the dice between them.
+  //
+  // minmax(0, 1fr) rather than 1fr: a plain 1fr has an `auto` MINIMUM, so a
+  // 43-character player name would push its own track wider and the grid off
+  // the screen. The card's ellipsis cannot help until the track stops growing.
+  // ---------------------------------------------------------------------
+  .player-stack {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    column-gap: t.$space-2;
+    row-gap: t.$space-2;
+    align-items: start;
+  }
+
+  // The fan is off. A phone has no room for depth, and the taper it used to
+  // shrink to below $breakpoint-phone was already an admission that it did not
+  // read at this width.
+  //
+  // `.is-collapsed` and not `.player-stack` alone: the collapsed block sets
+  // these same variables at 0,2,0, so a 0,1,0 rule here loses however late it
+  // comes in the file. The phone stack is ALWAYS collapsed - there is nothing
+  // to expand - so this is the selector that governs.
+  .player-stack.is-collapsed {
+    --stack-peek: none;
+    --stack-strip: 100%;
+    --stack-tuck: 0px;
+    --stack-inset: 0px;
+    --stack-fade: 1;
+    // Every card is a whole card: nothing is a sliver, so everything on it is
+    // drawn and its own button is live.
+    --sliver-content: 1;
+    --sliver-open: block;
+    cursor: auto;
+  }
+
+  // Row count comes from the data, not a guessed repeat(): the middle column
+  // spans exactly the rows there are, and `1 / -1` cannot address implicit ones.
+  @for $rows from 1 through 4 {
+    .player-stack[data-rows='#{$rows}'] {
+      grid-template-rows: repeat(#{$rows}, auto);
+    }
+  }
+
+  // Odd seats down the left, even seats down the right. `order` is what makes
+  // the grid follow the SEAT rather than the DOM, which stays turn order for
+  // the desktop fan's sake - so a player keeps their cell for the whole game
+  // instead of jumping every turn.
+  @for $seat from 0 through (t.$max-players - 1) {
+    .player-stack .player-card[data-seat='#{$seat}'] {
+      order: #{$seat};
+      grid-column: if($seat % 2 == 0, 1, 3);
+    }
+  }
+
+  .player-stack-centre {
+    display: grid;
+    grid-column: 2;
+    grid-row: 1 / -1;
+    place-items: center;
+    align-self: center;
+  }
+
+  // Neither control belongs to a grid: there is nothing to expand or collapse.
+  // display:none rather than not rendering them - it drops them from the tab
+  // order and from the android tap-floor sweep, which filters on offsetWidth.
+  .player-stack-expand,
+  .player-stack-collapse,
+  .player-card-chevron {
+    display: none;
+  }
+
+  // ---------------------------------------------------------------------
+  // The card: a name and one figure.
+  //
+  // At ~115px wide there is room for nothing else, so net worth, the owned
+  // count and the set pips come off - all of them already in the holdings
+  // drawer that the whole card opens. The $space-10 right inset goes with the
+  // chevron it was reserving room for; on a 115px card that was a third of it.
+  // ---------------------------------------------------------------------
   .player-card {
-    padding: t.$space-2 t.$space-10 t.$space-2 t.$space-2;
+    display: grid;
+    row-gap: t.$space-hair;
+    padding: t.$space-2;
   }
 
-  // Inline, not stacked. "Net worth ₹1500" on one line reads as one fact and
-  // costs a line rather than two - and it still says which fact it is, which
-  // dropping the label to save the same height would not.
-  .player-card-worth {
-    grid-auto-flow: column;
-    align-items: baseline;
-    gap: t.$space-2;
+  // Scoped to the card, and not only for tidiness: `.group-pips` is declared
+  // `display: flex` in components/_holdings.scss, which main.scss loads AFTER
+  // this file, so a bare `.group-pips` here loses the tie. It is also the
+  // truer rule - the drawer's pips stay, and the drawer is where these went.
+  .player-card-worth,
+  .player-card .player-metrics,
+  .player-card .group-pips {
+    display: none;
   }
 
-  .player-metrics {
-    margin-top: t.$space-1;
+  .player-card-cash {
+    display: block;
+    margin: 0;
+    @include t.text(numeric);
+    color: var(--text-primary);
+  }
+
+  // Corner markers rather than a row of chips: jail, a jail card, mortgages
+  // and bankruptcy still have to read, and they cannot cost the card a line.
+  // The text stays for assistive tech - indented out of sight, not removed.
+  .player-badges {
+    position: absolute;
+    inset: t.$space-1 t.$space-1 auto auto;
+    margin: 0;
+    gap: t.$space-hair;
+  }
+
+  // Filled markers, not shrunken chips. An 8px box with a dashed border and
+  // its text indented away is the `.player-card-open` mistake again: it reads
+  // as a rendering artefact rather than as a mark meaning something. Each
+  // keeps its `title` and its full label for assistive tech.
+  .player-badge {
+    width: t.$space-2;
+    height: t.$space-2;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-indent: 100%;
+  }
+
+  .player-badge.badge-mortgaged {
+    border: 0;
+    background: var(--border-dashed);
   }
 }

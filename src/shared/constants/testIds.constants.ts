@@ -121,7 +121,9 @@ export const TEST_IDS = {
   playerStack: 'player-stack',
   playerStackToggle: 'player-stack-toggle',
   playerStackExpand: 'player-stack-expand',
+  playerStackCentre: 'player-stack-centre',
   playerCard: 'player-card',
+  playerCash: 'player-cash',
   playerBadge: 'player-badge',
   playerNetWorth: 'player-net-worth',
   playerSiteCount: 'player-site-count',
@@ -141,6 +143,11 @@ export const TEST_IDS = {
   diceDock: 'dice-dock',
   dieFace: 'die-face',
   speedDieFace: 'speed-die-face',
+  // The same throw, drawn a second time in the phone HUD's middle column. Two
+  // elements answering one id is a Playwright strict-mode failure even when
+  // one of them is display:none, so the second mount gets its own.
+  dieFaceHud: 'die-face-hud',
+  speedDieFaceHud: 'speed-die-face-hud',
   busDecision: 'bus-decision',
   busChoice: 'bus-choice',
   destinationDecision: 'destination-decision',

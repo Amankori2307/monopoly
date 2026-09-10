@@ -27,20 +27,17 @@ const summary = (overrides: Partial<PlayerSummary> = {}): PlayerSummary => ({
   netWorth: 500,
   mortgagedCount: 0,
   setProgress: [],
+  isActive: false,
+  seatIndex: 0,
   ...overrides,
 });
 
 const renderCard = (overrides: Partial<PlayerSummary> = {}) => {
   const onOpen = vi.fn();
-  render(
-    <PlayerCard
-      currencySymbol="M"
-      isInteractive
-      onOpen={onOpen}
-      summary={summary(overrides)}
-    />
+  const view = render(
+    <PlayerCard currencySymbol="M" onOpen={onOpen} summary={summary(overrides)} />
   );
-  return onOpen;
+  return { ...view, onOpen };
 };
 
 const progress = (
@@ -63,7 +60,56 @@ describe('PlayerCard', () => {
     expect(screen.getByTestId(`${TEST_IDS.playerNetWorth}-player-1`)).toHaveTextContent(
       'M2400'
     );
-    expect(screen.getByText('M500')).toBeInTheDocument();
+    // Twice on purpose, and never both visible: the description list is the
+    // desktop card's, and .player-card-cash is the phone card's single figure.
+    // Both are asserted, so neither can quietly go missing.
+    expect(screen.getAllByText('M500')).toHaveLength(2);
+    expect(screen.getByTestId(`${TEST_IDS.playerCash}-player-1`)).toHaveTextContent(
+      'M500'
+    );
+  });
+
+  /**
+   * The phone card is a name and one figure - at ~115px wide there is room for
+   * nothing else - and cash is the figure a player checks. Everything else on
+   * the card is hidden by the phone tier and lives in the holdings drawer,
+   * which the whole card opens.
+   */
+  it('carries the cash figure on its own line, for the phone card', () => {
+    renderCard({ player: { ...summary().player, cash: 720 } });
+
+    expect(screen.getByTestId(`${TEST_IDS.playerCash}-player-1`)).toHaveTextContent(
+      'M720'
+    );
+  });
+
+  it('says whose turn it is on the card rather than by its position', () => {
+    const { rerender } = renderCard({ isActive: false });
+    expect(screen.getByTestId(`${TEST_IDS.playerCard}-player-1`)).not.toHaveClass(
+      'is-active'
+    );
+
+    rerender(
+      <PlayerCard
+        currencySymbol="M"
+        onOpen={vi.fn()}
+        summary={summary({ isActive: true })}
+      />
+    );
+    expect(screen.getByTestId(`${TEST_IDS.playerCard}-player-1`)).toHaveClass(
+      'is-active'
+    );
+  });
+
+  // Turn order is DOM order and the fan depends on it; the phone grid orders
+  // by seat through CSS so a player keeps their cell all game.
+  it('publishes the seat, which is not the same as its place in the DOM', () => {
+    renderCard({ seatIndex: 3 });
+
+    expect(screen.getByTestId(`${TEST_IDS.playerCard}-player-1`)).toHaveAttribute(
+      'data-seat',
+      '3'
+    );
   });
 
   it('shows the site count', () => {
@@ -165,7 +211,7 @@ describe('PlayerCard', () => {
   });
 
   it('opens the player’s holdings when clicked', () => {
-    const onOpen = renderCard();
+    const { onOpen } = renderCard();
 
     fireEvent.click(screen.getByRole('button', { name: /View Asha holdings/ }));
 

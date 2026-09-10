@@ -23,6 +23,8 @@ import { TEST_IDS } from '../../shared/constants/testIds.constants';
 
 const COMPONENTS_DIR = join(process.cwd(), 'src/components');
 const ROLLER_HOOK = 'useDiceRoller';
+/** The hook's own result type. Nothing else can produce one. */
+const ROLLER_RESULT = 'UseDiceRollerResult';
 
 /**
  * The test ids of controls a player presses to roll.
@@ -77,8 +79,16 @@ describe('every dice roll goes through useDiceRoller', () => {
 
   /**
    * The bug, stated as a property: a file that renders a roll control has to
-   * own a roller. Passing the handler down is fine - DecisionPanel does - but
-   * whoever puts the button on screen animates it.
+   * be wired to a roller. Passing the HANDLER down is not enough - that is the
+   * exact defect, a command with no tumble and no sound in between.
+   *
+   * Two ways to satisfy it, and the second is not a loophole. A component may
+   * call the hook itself, or it may take the hook's own result type. The phone
+   * draws the same throw twice - the dock, and the HUD's middle column - and
+   * the hook plays the roll sound, so calling it twice would sound every throw
+   * twice. `GameSidebar` owns the one roller and hands `UseDiceRollerResult`
+   * down. Naming that type is as strong a claim as calling the hook: it cannot
+   * be produced by anything else, and `tsc` checks it.
    */
   it.each(ROLL_CONTROLS)('gives the control %s a dice roller', (testId) => {
     const rendering = sources.filter((file) =>
@@ -88,15 +98,37 @@ describe('every dice roll goes through useDiceRoller', () => {
     expect(rendering, `nothing renders ${testId}`).not.toHaveLength(0);
     rendering.forEach((file) => {
       // Imported and called, both: either alone can be satisfied by accident.
+      const callsHook =
+        new RegExp(`import\\s*\\{[^}]*\\b${ROLLER_HOOK}\\b[^}]*\\}`).test(file.code) &&
+        new RegExp(`\\b${ROLLER_HOOK}\\s*\\(`).test(file.code);
+
+      const takesRollerResult =
+        new RegExp(`import\\s+type\\s*\\{[^}]*\\b${ROLLER_RESULT}\\b[^}]*\\}`).test(
+          file.code
+        ) && new RegExp(`:\\s*${ROLLER_RESULT}\\b`).test(file.code);
+
       expect(
-        new RegExp(`import\\s*\\{[^}]*\\b${ROLLER_HOOK}\\b[^}]*\\}`).test(file.code),
-        `${file.path} renders ${testId} without importing ${ROLLER_HOOK}`
-      ).toBe(true);
-      expect(
-        new RegExp(`\\b${ROLLER_HOOK}\\s*\\(`).test(file.code),
-        `${file.path} renders ${testId} without calling ${ROLLER_HOOK}`
+        callsHook || takesRollerResult,
+        `${file.path} renders ${testId} without calling ${ROLLER_HOOK} or taking a ${ROLLER_RESULT}`
       ).toBe(true);
     });
+  });
+
+  /**
+   * And the roller is called exactly once on the game screen, which is the
+   * other half of the same rule. Two callers is two roll sounds.
+   */
+  it('calls the roller once, however many times the faces are drawn', () => {
+    const callers = sources.filter((file) =>
+      new RegExp(`\\b${ROLLER_HOOK}\\s*\\(\\{`).test(file.code)
+    );
+
+    // GameSidebar for the board, JailDecision for the modal that covers it -
+    // the two are never on screen rolling at the same time.
+    expect(callers.map((file) => file.path.split('/').pop()).sort()).toEqual([
+      'GameSidebar.tsx',
+      'JailDecision.tsx',
+    ]);
   });
 
   /**

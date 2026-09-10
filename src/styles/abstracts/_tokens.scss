@@ -101,9 +101,10 @@ $stack-peek: 15px;
 // reads as a fanned deck rather than a cropped list.
 $stack-tuck: 7px;
 $stack-inset: 9px;
-// The fan's taper on a phone. At $stack-inset the deepest of eight slivers is
-// inset 63px each side, which is most of a phone-width card.
-$stack-inset-phone: 3px;
+// There is no phone taper any more, and no $stack-inset-phone: below the
+// tablet breakpoint the fan is gone entirely - the players are a two-column
+// grid with the dice between them. The 3px taper it used to shrink to was
+// already an admission that the fan did not read at that width.
 $stack-strip-height: 5px;
 $stack-expanded-max-height: 420px;
 // Most of the sidebar the player stack may claim. Eight expanded cards are

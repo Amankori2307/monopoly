@@ -78,17 +78,15 @@ test.describe('a phone in portrait', () => {
   // child, which is what makes this promise keepable without anyone having to
   // know the bar's height.
   //
-  // Both stack states are checked, because the collapsed fan and the expanded
-  // list are different heights and only the taller one is the real test.
-  for (const stack of ['collapsed', 'expanded'] as const) {
-    test(`lets the last player card clear the action bar, ${stack}`, async ({ page }) => {
-      await startGame(page, { players: MAX_PLAYERS });
-
-      if (stack === 'expanded') {
-        await page.locator('.player-stack-expand').click();
-        // The stack animates its max-height, which otherwise mismeasures.
-        await page.waitForTimeout(600);
-      }
+  // Two table sizes rather than two stack states: the phone HUD is a grid with
+  // no fan to expand, so `.player-stack-expand` is not rendered there any
+  // more. A full table is what makes the column tall, which was always the
+  // point of checking the expanded case.
+  for (const players of [2, MAX_PLAYERS] as const) {
+    test(`lets the last player card clear the action bar, ${players} players`, async ({
+      page,
+    }) => {
+      await startGame(page, { players });
 
       // The assertion that caught the bug this test was written for, stated
       // directly: the stack must CONTAIN its own cards. A flex item shrinks
@@ -281,13 +279,33 @@ test.describe('a phone in portrait', () => {
     await startGame(page);
 
     const card = await boxOf(page, '.player-card');
-    expect(card.bottom - card.top).toBeLessThan(130);
+    expect(card.bottom - card.top).toBeLessThan(80);
 
-    // Compact, but still carrying all four facts.
+    // A name and one figure. The card is ~115px wide in the two-column HUD -
+    // there is room for nothing else - and cash is the figure a player checks.
     const text = await page.locator('.player-card').first().innerText();
-    expect(text).toMatch(/Net worth/i);
-    expect(text).toMatch(/Cash/i);
-    expect(text).toMatch(/Owned/i);
+    expect(text).toMatch(/₹/);
+    expect(text).not.toMatch(/Net worth/i);
+    expect(text).not.toMatch(/Owned/i);
+  });
+
+  /**
+   * The other half of that claim, and the one that makes dropping them
+   * defensible: nothing was lost, it moved one tap away.
+   */
+  test('keeps the facts the card dropped, one tap away', async ({ page }) => {
+    await startGame(page);
+
+    await page
+      .getByRole('button', { name: /View .* holdings/ })
+      .first()
+      .click();
+    await expect(page.getByTestId(TEST_IDS.playerDetailDrawer)).toBeVisible();
+
+    const drawer = await page.getByTestId(TEST_IDS.playerDetailDrawer).innerText();
+    expect(drawer).toMatch(/Net worth/i);
+    expect(drawer).toMatch(/Cash/i);
+    expect(drawer).toMatch(/Owned/i);
   });
 
   /**
@@ -299,24 +317,20 @@ test.describe('a phone in portrait', () => {
   test('makes the holdings control look and behave like a control', async ({ page }) => {
     await startGame(page);
 
-    // Collapsed, the stack's own overlay owns the click - a card's controls are
-    // only reachable once it is expanded.
-    await page.getByTestId(TEST_IDS.playerStackExpand).click();
-
+    // No expand step: the HUD is a grid, every card is fully drawn, and its
+    // own button is reachable from the first frame. The chevron goes with the
+    // fan - on a ~115px card the room it reserved was a third of the card.
     const open = page.getByRole('button', { name: /View .* holdings/ }).first();
-    const chevron = page.locator('.player-card-chevron').first();
-    await expect(chevron).toBeVisible();
 
-    // Painted, rather than a transparent default button.
-    const background = await chevron.evaluate(
-      (element) => getComputedStyle(element).backgroundColor
-    );
-    expect(background).not.toBe('rgba(0, 0, 0, 0)');
-
-    // The whole card is the target, so the tap is comfortably over 44px.
+    // The whole card is the target, so the tap clears the floor on both axes.
+    const card = await boxOf(page, '.player-card');
     const box = await open.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
-    expect(box?.width ?? 0).toBeGreaterThan(200);
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    // It covers the card rather than sitting somewhere on it. `inset: 0` is
+    // measured against the padding box, so the card's 1px frame and its 5px
+    // token-coloured left edge are outside it by design.
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(card.right - card.left - 8);
 
     // And it actually opens the drawer.
     await open.click();
@@ -332,7 +346,6 @@ test.describe('a phone in portrait', () => {
   test('keeps the player drawer stats to a compact grid', async ({ page }) => {
     await startGame(page);
 
-    await page.getByTestId(TEST_IDS.playerStackExpand).click();
     await page
       .getByRole('button', { name: /View .* holdings/ })
       .first()
@@ -463,11 +476,28 @@ test.describe('a phone in portrait', () => {
     // Every stacked element shares those edges. The board is the widest thing
     // on the screen, so anything narrower reads as misaligned rather than as
     // inset - which is what the stack's one-sided gutter was doing.
-    for (const selector of ['.player-card', '.game-side-footer']) {
+    //
+    // The player cards are a two-column grid now, so it is the GRID that has
+    // to line up with the board; a single card is half of it by design.
+    for (const selector of ['.player-stack', '.game-side-footer']) {
       const box = await boxOf(page, selector);
       expect(box.left, `${selector} left edge`).toBe(board.left);
       expect(box.right, `${selector} right edge`).toBe(board.right);
     }
+
+    // And the outermost cards sit flush inside it, which is what proves the
+    // `minmax(0, 1fr) auto minmax(0, 1fr)` template is not leaving a gutter.
+    const columns = await page.evaluate(() => {
+      const cards = Array.from(document.querySelectorAll('.player-card')).map((card) =>
+        card.getBoundingClientRect()
+      );
+      return {
+        leftmost: Math.min(...cards.map((box) => box.left)),
+        rightmost: Math.max(...cards.map((box) => box.right)),
+      };
+    });
+    expect(Math.abs(columns.leftmost - board.left)).toBeLessThanOrEqual(1);
+    expect(Math.abs(columns.rightmost - board.right)).toBeLessThanOrEqual(1);
   });
 
   test('keeps a decision modal inside the window', async ({ page }) => {
@@ -787,27 +817,26 @@ test.describe('an Android phone', () => {
   };
 
   /**
-   * 100px for a name and three numbers, in the scarcest column in the app.
+   * 100px for a name and three numbers, in the scarcest column in the app -
+   * and then half the width of that, once the cards became two columns with
+   * the dice between them.
    *
-   * The head was 46px of that because the label sat ABOVE its figure, and the
-   * `.eyebrow` inside it carried the global type layer's 8px bottom margin
-   * against the block's own declared 1px gap. Inline, and with the paddings a
-   * rung down, the card is about two thirds of what it was - and it still
-   * carries all four facts, which is the half of this that matters.
+   * At ~110px wide there is room for a name and one figure, so the card is a
+   * name and its cash. Everything else it used to carry is in the holdings
+   * drawer that the whole card opens, which the portrait suite asserts
+   * directly - the facts moved, they did not go.
    */
-  test('shows a player in a card two thirds the height, losing no fact', async ({
-    page,
-  }) => {
+  test('shows a player in a card a name and a figure tall', async ({ page }) => {
     await startGame(page);
 
     const card = page.locator('.player-card').first();
     const height = await card.evaluate((el: HTMLElement) => el.offsetHeight);
-    expect(height).toBeLessThan(80);
+    expect(height).toBeLessThan(70);
 
+    // The two facts that survive, and the currency they are counted in.
     const text = await card.innerText();
-    for (const fact of [/Net worth/i, /Cash/i, /Owned/i]) {
-      expect(text).toMatch(fact);
-    }
+    expect(text).toMatch(/₹\d/);
+    expect(text.split('\n').filter(Boolean).length).toBeLessThanOrEqual(2);
   });
 
   /**
@@ -909,13 +938,15 @@ test.describe('a tall phone', () => {
  * in a 740px phone with room to spare, so "a full table" stopped being a full
  * column and the test quietly stopped testing anything. Height is what makes
  * the column full; the number of players only used to.
+ *
+ * There is no expand step any more: the HUD is a grid with every card drawn,
+ * so eight players at 320x568 overflow on their own.
  */
 test.describe('a short phone', () => {
   test.use({ viewport: VIEWPORTS.phoneSmall });
 
   test('gives the shared space back when the column overflows', async ({ page }) => {
     await startGame(page, { players: MAX_PLAYERS });
-    await page.locator('.player-stack-expand').click();
 
     const state = await page.evaluate(() => {
       const side = document.querySelector('.game-side') as HTMLElement;

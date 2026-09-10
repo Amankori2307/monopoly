@@ -480,8 +480,19 @@ const seedHoldings = async (page: Page) => {
   await expect(page.getByTestId(TEST_IDS.boardGrid)).toBeVisible();
 };
 
+/**
+ * Expand the stack first only where there IS one.
+ *
+ * Below the tablet breakpoint the players are a two-column grid with every
+ * card drawn, so `.player-stack-expand` is not rendered and each card's own
+ * button is reachable from the first frame. Above it the fan is still a fan,
+ * and a collapsed sliver's button is `display: none` until it opens.
+ */
 const openFirstPlayerHoldings = async (page: Page) => {
-  await page.getByTestId(TEST_IDS.playerStackExpand).click();
+  const expand = page.getByTestId(TEST_IDS.playerStackExpand);
+  if (await expand.isVisible()) {
+    await expand.click();
+  }
   await page
     .getByRole('button', { name: /View .* holdings/ })
     .first()

@@ -41,7 +41,63 @@ Three arrangements, from one set of components. Breakpoints are tokens in
 
 `.app-shell.is-game` becomes a `100dvh` flex column that never scrolls. Inside it the board is
 pinned at the top, `.game-side` is the **one** scroll container, and `.game-side-footer` is its
-sticky last child holding the toasts and the dice.
+sticky last child holding the toasts and the roll controls.
+
+### The phone HUD: two columns with the dice between them
+
+Below `$breakpoint-tablet` the player cards stop being a fanned deck and become a grid —
+`minmax(0, 1fr) auto minmax(0, 1fr)`, seats down the outside, the dice in the middle. **One DOM
+serves both arrangements**, which is the whole design: there is no viewport check in JavaScript
+anywhere in it.
+
+Four things make that possible, and each is load-bearing:
+
+- **The middle slot is a `<div>` among `<article>` cards.** The collapsed fan is laid out entirely
+  by `:nth-of-type` on `.player-card`, so a sibling of a different element type is invisible to
+  every one of those rules. `layout.spec.ts` and `full-table.spec.ts` pin the desktop fan and did
+  not change at all.
+- **The fan's measurements are custom properties, not tokens read directly** — `--stack-peek`,
+  `--stack-strip`, `--stack-tuck`, `--stack-inset`, `--stack-fade`, `--sliver-content`,
+  `--sliver-open`. The phone tier turns the whole fan off by redeclaring seven values instead of
+  undoing eleven rules. The last two matter most: they are read five classes deep, inside
+  `.is-collapsed .player-card:not(:first-of-type) …`, and **a custom property inherits, so the
+  reader's specificity is irrelevant.** A media query trying to override those selectors directly
+  loses on specificity however late in the file it comes — which it did, twice, before this.
+- **The resets go on `.player-stack.is-collapsed`, not `.player-stack`.** The collapsed block
+  declares the same variables at 0,2,0, so a 0,1,0 rule in the phone tier loses. The phone stack is
+  always collapsed — there is nothing to expand — so that is the selector that governs.
+- **`minmax(0, 1fr)`, never `1fr`.** A plain `1fr` has an `auto` minimum, so a 43-character player
+  name would push its own track wider and the grid off the screen; the card's ellipsis cannot help
+  until the track stops growing.
+
+**The row count comes from the data.** `PlayersPanel` publishes `data-rows` (two cards a row,
+rounded up) because the middle column spans every row and `grid-row: 1 / -1` cannot address
+implicit ones.
+
+**Order is by seat, not by turn.** DOM order stays turn order — that is what the fan reads, and
+what makes its top card the active player — and the grid reorders with CSS `order` from a
+`data-seat` attribute, so a player keeps their cell for the whole game instead of jumping every
+turn. Whose turn it is is carried explicitly by `.is-active`, which took over the emphasis from
+`:first-of-type`: identical on the fan, and the only thing that says it on a grid.
+
+**The card is a name and one figure.** At ~115px wide there is room for nothing else, so net worth,
+the owned count and the colour-set pips come off and cash stays. Every one of them is in the
+holdings drawer the whole card opens, and `mobile.spec.ts` asserts they are actually there rather
+than only that the card is small. The badges stay in the DOM as absolutely-positioned corner
+markers — jail and bankruptcy still have to read, and they must not cost the card a line.
+
+**The dice are drawn twice and rolled once.** `DicePair` is mounted in the dock and in the middle
+column, and the stylesheet shows one; `GameSidebar` owns the single `useDiceRoller` and hands the
+result to both. That is not a refinement — **the hook plays the roll sound**, so a second call
+sounds every throw twice. The two mounts also need separate test ids (`die-face-*` and
+`die-face-hud-*`): two elements answering one id is a Playwright strict-mode failure even when one
+of them is `display: none`. The Roll button stays in the bar on every viewport, because
+`controls.spec.ts` requires every control in that row to be exactly 44px tall and a ~90px column
+cannot hold one with a real label.
+
+**Landscape puts it all back.** The `landscape-compact` block restores a single column, hides the
+middle slot and shows the dock's dice again — and it must stay **after** the portrait block,
+because a 667×375 phone matches both.
 
 - **The board is capped by height as well as width** (`max-width: min(100%, 54dvh)`). This is the
   bug the frame fixes: below `$breakpoint-board` the height term used to be _replaced_ by a plain

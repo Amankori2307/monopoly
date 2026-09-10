@@ -691,6 +691,26 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   rather than as something to press. It is an `inset: 0` overlay over the whole card (so the tap is
   well past 44px) with a visible chevron, hidden on collapsed slivers because the stack's own
   expand overlay owns the click there.
+- **The phone HUD is two columns of players with the dice between them, and it is ONE dom.** The
+  desktop fan and the phone grid are the same markup: the middle slot is a `<div>` among
+  `<article>` cards, so it is invisible to every `:nth-of-type` rule the fan is built from. The
+  fan's measurements are custom properties (`--stack-peek`, `--sliver-content`, ...) so the phone
+  tier turns it off by redeclaring seven values - and that is not a style: `--sliver-content` is
+  read FIVE classes deep, and a custom property inherits, so the reader's specificity does not
+  matter. A media query that tries to override those selectors directly loses however late it
+  comes, which cost two rounds of measuring to see. The resets also have to sit on
+  `.player-stack.is-collapsed`, not `.player-stack`, for the same specificity reason.
+- **Order is by seat; DOM order is still turn order.** `selectPlayerSummaries` keeps returning the
+  active player first, because that is what makes the fan's top card the active one. The grid
+  reorders with CSS `order` off `data-seat`, so a player keeps their cell all game rather than
+  jumping every turn, and `.is-active` carries the emphasis that `:first-of-type` used to.
+- **The dice are drawn twice and rolled once.** `DicePair` is mounted in the dock and in the HUD's
+  middle column and the stylesheet shows one; `GameSidebar` owns the single `useDiceRoller`. That
+  is not tidiness - **the hook plays the roll sound**, so a second call sounds every throw twice.
+  The two mounts need separate test ids, because two elements answering one id is a Playwright
+  strict-mode failure even when one is `display: none`. The Roll button stays in the bar on every
+  viewport: `controls.spec.ts` pins every control in that row at exactly 44px and a ~90px column
+  cannot hold one with a real label.
 - **The board asks the BOARD how big it is, not the window.** Everything drawn on a square - the
   type, the glyph, the colour ribbon, the owner bar, the insets - is a `cqw` function of
   `.board-card`, and its two thresholds are `@container` queries. That is not a style preference:
