@@ -186,6 +186,12 @@
 
 .player-card-name {
   min-width: 0;
+  // A player names themselves, so this is arbitrary text in a card whose whole
+  // job is to be one predictable size. `min-width: 0` alone only let it shrink
+  // the flex item; without these it still wrapped and took the card with it.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   @include t.text(body);
   font-weight: t.$weight-bold;
   font-family: t.$font-serif;
@@ -198,6 +204,14 @@
   text-align: right;
   // The figure must not wrap under its own label.
   white-space: nowrap;
+
+  // The gap above says the label sits a hair above the figure, and it was not
+  // getting it: `.eyebrow` carries `margin: 0 0 $space-2` from the global type
+  // layer, so the real separation was 9px and the declared 1px was decoration.
+  // Two spacings for one relationship, and the card paid 8px for it.
+  .eyebrow {
+    margin-bottom: 0;
+  }
 
   strong {
     @include t.text(heading);
@@ -269,8 +283,11 @@
     min-width: 0;
   }
 
+  // `label`, not `micro`: CASH and OWNED are words, and micro is the rung for
+  // a badge digit. It costs the card nothing - the row's height comes from the
+  // figure beside the label, not from the label.
   dt {
-    @include t.text(micro);
+    @include t.text(label);
 
     color: var(--text-muted);
   }
@@ -332,5 +349,36 @@
   strong {
     display: block;
     margin-bottom: t.$space-1;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The card, on a phone
+//
+// 100px for a name and three numbers, on the screen where the column under the
+// board is the scarcest space in the app. Where it went: 24px of padding, a
+// 46px head - because the label and the figure were stacked - and a 20px
+// metrics row with 8px of margin over it.
+//
+// Nothing is dropped. The label goes BESIDE its figure instead of above it,
+// which is the whole of the saving in the head, and the paddings come down a
+// rung. A card is ~65px now, so three players fit where two did.
+// ---------------------------------------------------------------------------
+@include m.below(t.$breakpoint-tablet) {
+  .player-card {
+    padding: t.$space-2 t.$space-10 t.$space-2 t.$space-2;
+  }
+
+  // Inline, not stacked. "Net worth ₹1500" on one line reads as one fact and
+  // costs a line rather than two - and it still says which fact it is, which
+  // dropping the label to save the same height would not.
+  .player-card-worth {
+    grid-auto-flow: column;
+    align-items: baseline;
+    gap: t.$space-2;
+  }
+
+  .player-metrics {
+    margin-top: t.$space-1;
   }
 }

@@ -59,9 +59,13 @@
   flex-wrap: wrap;
 }
 
+// Only the wrap rule. It carried `min-height: 58px` and its own inline
+// padding, which put it FOURTEEN pixels taller than the roll button standing
+// beside it in the same row - the two overrides pulled in opposite directions,
+// because .dice-roll-button was narrowing itself at the same time. Both are
+// gone: the button base states the height and the padding once, so a row of
+// controls is a row of one size.
 .turn-controls .end-turn-button {
-  min-height: 58px;
-  padding-inline: t.$space-5;
   white-space: nowrap;
 }
 

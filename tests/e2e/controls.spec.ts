@@ -125,6 +125,40 @@ test.describe('the control surface', () => {
 });
 
 /**
+ * The turn controls are the row a player looks at every single turn, and they
+ * were two sizes: `.end-turn-button` carried `min-height: 58px` while
+ * `.dice-roll-button` narrowed its own padding back to $space-4 - two bespoke
+ * overrides in one row, pulling opposite ways, so "End turn" stood fourteen
+ * pixels taller and wider than "Roll dice" beside it.
+ *
+ * The dice are excluded on purpose: they are objects, not controls, and they
+ * are deliberately a different size from the button they sit next to.
+ */
+test('sizes every control in the turn row the same', async ({ page }) => {
+  await startGame(page);
+
+  const endTurn = page.getByTestId(TEST_IDS.endTurnButton);
+  for (let step = 0; step < 20 && !(await endTurn.isVisible()); step += 1) {
+    if ((await advanceGame(page, { declineBuys: true })) === 'none') break;
+  }
+  await expect(endTurn).toBeVisible();
+
+  const heights = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.turn-controls button'))
+      .filter((el) => (el as HTMLElement).offsetHeight > 0)
+      .map((el) => ({
+        label: el.textContent?.trim().slice(0, 16) ?? '',
+        height: (el as HTMLElement).offsetHeight,
+      }))
+  );
+
+  // Vacuity guard: both the turn button and the roll button have to be in it,
+  // or this passes on a row of one.
+  expect(heights.length).toBeGreaterThanOrEqual(2);
+  expect(new Set(heights.map((row) => row.height))).toEqual(new Set([44]));
+});
+
+/**
  * The same surface on a phone, where the shadow was most visible and where a
  * latched :hover had nothing to clear it.
  */

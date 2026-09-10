@@ -134,8 +134,9 @@
   grid-area: 2 / 1;
 }
 
+// No padding of its own - $space-4 here made it narrower than every other
+// button in the app, and narrower than the one standing next to it.
 .dice-roll-button {
-  padding-inline: t.$space-4;
   white-space: nowrap;
   letter-spacing: t.$track-wide;
 }

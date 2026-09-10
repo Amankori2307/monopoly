@@ -141,6 +141,12 @@ ground an edge lifts by lightening.
 `.is-compact` is the one size modifier. It changes the **width and the label,
 never the height** — a finger needs 44px whatever the button is for.
 
+**A bespoke `min-height` on one button in a row is how a row becomes two
+sizes.** `.end-turn-button` carried 58px while `.dice-roll-button` narrowed its
+own padding, in the row a player looks at every single turn — two overrides
+pulling opposite ways. The dice beside them are still a different size, and
+that is right: they are objects, not controls.
+
 ### The tap floor
 
 `$control-tap: 44px` is the floor for anything a thumb has to hit, and

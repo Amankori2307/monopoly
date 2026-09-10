@@ -596,6 +596,49 @@ test.describe('an Android phone', () => {
   };
 
   /**
+   * 100px for a name and three numbers, in the scarcest column in the app.
+   *
+   * The head was 46px of that because the label sat ABOVE its figure, and the
+   * `.eyebrow` inside it carried the global type layer's 8px bottom margin
+   * against the block's own declared 1px gap. Inline, and with the paddings a
+   * rung down, the card is about two thirds of what it was - and it still
+   * carries all four facts, which is the half of this that matters.
+   */
+  test('shows a player in a card two thirds the height, losing no fact', async ({
+    page,
+  }) => {
+    await startGame(page);
+
+    const card = page.locator('.player-card').first();
+    const height = await card.evaluate((el: HTMLElement) => el.offsetHeight);
+    expect(height).toBeLessThan(80);
+
+    const text = await card.innerText();
+    for (const fact of [/Net worth/i, /Cash/i, /Owned/i]) {
+      expect(text).toMatch(fact);
+    }
+  });
+
+  /**
+   * The name is arbitrary text the player typed, in a card whose whole job is
+   * to be one predictable size. `min-width: 0` alone let the flex item shrink
+   * and the text still wrapped, taking the card with it.
+   */
+  test('keeps its size whatever a player calls themselves', async ({ page }) => {
+    await startGame(page);
+
+    const card = page.locator('.player-card').first();
+    const before = await card.evaluate((el: HTMLElement) => el.offsetHeight);
+
+    await card.locator('.player-card-name').evaluate((el) => {
+      el.textContent = 'Bartholomew Fitzgerald-Montgomery the Third';
+    });
+
+    const after = await card.evaluate((el: HTMLElement) => el.offsetHeight);
+    expect(after).toBe(before);
+  });
+
+  /**
    * The buy decision is the tallest thing the game ever puts on screen.
    *
    * It measured 632px inside a 640px window even for a RAILWAY, so the modal
@@ -665,13 +708,21 @@ test.describe('a tall phone', () => {
     // layout's own 12px gap sits above the sidebar, so allow for it.
     expect(Math.abs(above - below)).toBeLessThanOrEqual(16);
   });
+});
 
-  /**
-   * The auto margin has to disappear when there is nothing left to share, or
-   * it would push a full column down and clip the top of it.
-   * `justify-content: center` does exactly that, which is why this is margins.
-   */
-  test('gives the space back when the column is full', async ({ page }) => {
+/**
+ * The other end of the same rule: a column with nothing left to share.
+ *
+ * A SHORT frame rather than a full table, and that is the point - once the
+ * player card came down from 100px to about 67, eight expanded players fitted
+ * in a 740px phone with room to spare, so "a full table" stopped being a full
+ * column and the test quietly stopped testing anything. Height is what makes
+ * the column full; the number of players only used to.
+ */
+test.describe('a short phone', () => {
+  test.use({ viewport: VIEWPORTS.phoneSmall });
+
+  test('gives the shared space back when the column overflows', async ({ page }) => {
     await startGame(page, { players: MAX_PLAYERS });
     await page.locator('.player-stack-expand').click();
 
@@ -682,14 +733,18 @@ test.describe('a tall phone', () => {
       return {
         margin: getComputedStyle(region).marginTop,
         scrolls: side.scrollHeight > side.clientHeight,
+        scrollTop: side.scrollTop,
         firstCardTop: first.getBoundingClientRect().top,
         columnTop: side.getBoundingClientRect().top,
       };
     });
 
+    // Vacuity guard: the whole claim is about a column with no free space.
     expect(state.scrolls).toBe(true);
     expect(state.margin).toBe('0px');
-    // Nothing pushed off the top of the scroll container.
+    // Nothing pushed off the top of the scroll container. Measured at rest, so
+    // an ordinary scroll position cannot be mistaken for clipping.
+    expect(state.scrollTop).toBe(0);
     expect(state.firstCardTop).toBeGreaterThanOrEqual(state.columnTop - 1);
   });
 });

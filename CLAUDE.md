@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1481 unit tests, 210 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1481 unit tests, 213 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -479,6 +479,25 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   button fade into the new palette while the whole page around it flips at
   once. Buttons transition nothing, which is also what `.app-nav-link` and
   `.board-space` already did.
+- **A bespoke `min-height` on one button in a row is how a row becomes two
+  sizes.** `.turn-controls .end-turn-button` carried 58px while
+  `.dice-roll-button` narrowed its own padding back to `$space-4` - two
+  overrides in the row a player looks at every turn, pulling opposite ways, so
+  End turn stood fourteen pixels taller and wider than Roll dice beside it.
+  Both are gone; the base states the size once. The DICE are still a different
+  size from the button next to them, and that is right: they are objects, not
+  controls, which is why `controls.spec.ts` measures `button` and not the row.
+- **The player card was 100px for a name and three numbers**, in the scarcest
+  column in the app. 46 of it was the head, because the label sat ABOVE its
+  figure and the `.eyebrow` in it carried the global type layer's 8px bottom
+  margin straight through the block's own declared `gap: $space-hair` - two
+  spacings for one relationship, and the declared one was decoration. Inline
+  on a phone, with the paddings a rung down, it is ~67px and loses no fact. A
+  player's NAME is arbitrary text, so it needs `text-overflow: ellipsis` and
+  not just `min-width: 0`: the flex item shrank and the text wrapped anyway.
+  **Compacting it broke a test's premise rather than the test** - eight
+  expanded players then fitted a 740px phone, so "a full table" stopped being
+  a full column. Height is what fills a column; the player count only used to.
 - **Every control in the app is `$control-tap` tall - fields included.** A text
   field was 48px because that is what `body` leading plus 12px of padding came
   to, and a button beside it was 44, so every form row was four pixels out of
