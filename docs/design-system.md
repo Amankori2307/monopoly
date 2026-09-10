@@ -179,15 +179,43 @@ ceasing to be a board.
 ### The phone tier
 
 Most of the system is one size everywhere, and that is right: a rung is a
-decision, not a measurement of a particular screen. Three places genuinely
-differ on a phone, and each is a case where **the thing being sized has itself
-changed**, not merely the window around it:
+decision, not a measurement of a particular screen. A handful of places
+genuinely differ on a phone, and each is a case where **the thing being sized
+has itself changed**, not merely the window around it:
 
 | What                                                   | Why it differs                                                                                             |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| The type, all of it (`$root-scale-phone`)              | See below — one root scale, not a rung per role                                                            |
 | The die (`$die-size-phone`)                            | 58px beside a 336px board is the biggest object on the screen                                              |
 | The deed's padding and labels (`$deed-card-pad-phone`) | Below `$breakpoint-mobile` the card stops being a fixed 340×380 object and becomes the width of the screen |
+| The deed again, tighter (`$deed-card-pad-tight`)       | At 360px it measured 300×360 — taller than the 336px board it covers                                       |
 | The scrim's inset                                      | 20px each side of a 360px window is 11% of it spent on inset                                               |
+
+#### Type on a phone is one declaration
+
+`:root { font-size: $root-scale-phone }` — 87.5%, so 14px — in a `below()`
+block at the end of `base/_reset.scss`. Every role in `$type-scale` is in
+`rem`, so that moves all fifteen together and none can be left behind, which a
+sweep of per-component overrides cannot promise. **There is no `*-phone` type
+role, and there should not be**: a rung is a decision, and "this screen is
+smaller" is a measurement.
+
+Three things deliberately do not follow it, and each is the point:
+
+- **Spacing.** `$space-scale` is in `px`, so the 4px grid is untouched.
+- **The tap floor.** `$control-tap` is `px`, so a control stays 44px tall while
+  its label gets smaller. But **pin the width too where a label sets it**: the
+  header's nav links were 44px tall and as wide as the word "Play" happened to
+  be, which was 44 before the scale and 40 after — the tap-floor sweep failed
+  on all five routes at once.
+- **The board.** Its type is a `cqw` function of the board's own width, which
+  is exactly why it was built that way.
+
+And one thing must actively resist it. **A field under 16px makes iOS zoom the
+page on focus**, and the reset gives every control `font: inherit`, so
+`.text-input` / `.select-input` pin `$input-font-phone` in their own phone
+block. A smaller field costs the player their place on the screen every time
+they tap one.
 
 **A phone override of a type role has to come last in its file.** Both
 selectors are the same specificity and a media query adds none, so source

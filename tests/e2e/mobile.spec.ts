@@ -459,6 +459,46 @@ test.describe('a phone in portrait', () => {
    * them, because the stack reserves a gutter on ONE side for the fan's
    * outermost card. On a phone both edges are in view at once, so that showed.
    */
+  /**
+   * The dice sit BETWEEN the two columns of cards, not welded to them.
+   *
+   * This is the third time one bug has produced a broken layout here, and the
+   * first time anything has tested for it. `.player-stack.is-collapsed` sets
+   * `gap: 0` at 0,2,0; the phone tier set `column-gap` on `.player-stack` at
+   * 0,1,0 and lost, so the computed gap really was `0px` and a 42px die had a
+   * card hard against each of its faces. The same specificity had already
+   * eaten the fan's inset and the sliver rules, silently, both times.
+   *
+   * Measured as clearance on both sides rather than as a computed `gap`,
+   * because what matters is the pixels between the two boxes - which is what
+   * a `gap` on the wrong selector fails to produce while still reading back
+   * as whatever value you wrote somewhere else.
+   */
+  test('leaves the dice room on both sides of the middle column', async ({ page }) => {
+    await startGame(page, { players: 4 });
+
+    const clearance = await page.evaluate(() => {
+      const dice = document.querySelector('.dice-pair.is-hud')?.getBoundingClientRect();
+      if (!dice) return null;
+      const cards = Array.from(document.querySelectorAll('.player-card')).map((card) =>
+        card.getBoundingClientRect()
+      );
+      const left = cards.filter((card) => card.right <= dice.left + 1);
+      const right = cards.filter((card) => card.left >= dice.right - 1);
+      return {
+        cards: cards.length,
+        left: Math.min(...left.map((card) => dice.left - card.right)),
+        right: Math.min(...right.map((card) => card.left - dice.right)),
+      };
+    });
+
+    // Vacuity guard: cards on both sides of the dice, or there is no gap to
+    // measure and this passes by having found nothing.
+    expect(clearance?.cards).toBe(4);
+    expect(clearance?.left).toBeGreaterThanOrEqual(8);
+    expect(clearance?.right).toBeGreaterThanOrEqual(8);
+  });
+
   test('insets the board evenly and clears the header', async ({ page }) => {
     await startGame(page);
 
@@ -880,6 +920,65 @@ test.describe('an Android phone', () => {
   });
 
   // The primary action of the tallest decision, reachable without a scroll.
+  /**
+   * The title deed, at about half the board - and still whole.
+   *
+   * It measured 300x360 on a 360px phone: taller than the 336px BOARD it
+   * covers, with 183px of that being seven rent rows at 26px each, of which
+   * 8px a row was padding. Nothing was pinning its size on a phone at all -
+   * below $breakpoint-mobile it is `width: 100%; height: auto`, so it was
+   * simply however tall its contents came out.
+   *
+   * Both halves are asserted on purpose. Small is only correct if nothing was
+   * dropped to get there: a card that fits by losing the rent schedule has
+   * failed at the one job it has.
+   */
+  test('shows the whole title deed in about half the board', async ({ page }) => {
+    await startGame(page);
+
+    await page.getByRole('button', { name: /View details for Bhopal/ }).click();
+    await expect(page.getByTestId(TEST_IDS.spaceDetailCard)).toBeVisible();
+
+    const measured = await page.evaluate(() => {
+      const deed = document.querySelector('.deed-card') as HTMLElement | null;
+      const board = document.querySelector('.board-card');
+      if (!deed || !board) return null;
+      const d = deed.getBoundingClientRect();
+      const b = board.getBoundingClientRect();
+      const close = document
+        .querySelector('.space-detail-close')
+        ?.getBoundingClientRect();
+      const stats = deed.querySelector('.deed-primary-stats')?.getBoundingClientRect();
+      return {
+        share: (d.width * d.height) / (b.width * b.height),
+        rentRows: deed.querySelectorAll('.rent-schedule > div').length,
+        text: deed.textContent ?? '',
+        hasFooter: deed.querySelector('.deed-footer') !== null,
+        // `overflow: hidden` on the card means anything too tall is cut
+        // silently rather than scrolled to.
+        clipped: deed.scrollHeight > deed.clientHeight + 1,
+        // The close button is 44px and absolutely placed; with the eyebrow
+        // gone it landed on top of "Mortgage value".
+        buttonOverlapsStats: Boolean(
+          close && stats && close.bottom > stats.top && close.left < stats.right
+        ),
+      };
+    });
+
+    // Half the board, near enough - measured 59% here and 54% on a taller
+    // phone, where the board itself is bigger.
+    expect(measured?.share).toBeLessThanOrEqual(0.6);
+    expect(measured?.clipped).toBe(false);
+    expect(measured?.buttonOverlapsStats).toBe(false);
+
+    // And it still says everything a player opens it for.
+    expect(measured?.rentRows).toBe(7);
+    expect(measured?.hasFooter).toBe(true);
+    expect(measured?.text).toMatch(/Price/i);
+    expect(measured?.text).toMatch(/Mortgage value/i);
+    expect(measured?.text).toMatch(/With hotel/i);
+  });
+
   test('keeps the buy button on screen at the tap floor', async ({ page }) => {
     await startGame(page);
     test.skip(!(await playToStreetPurchase(page)), 'No street came up for sale.');
@@ -903,23 +1002,31 @@ test.describe('an Android phone', () => {
 //
 // The board is square and a phone is not, so on a tall screen the board is
 // limited by WIDTH and the column under it has height to spare - 145px of it
-// at 360x740 with two players. All of it used to fall between the last player
-// card and the bottom bar, because the bar's `margin-top: auto` took the lot:
-// one hole, at the bottom, which reads as something missing rather than as
-// space.
+// at 360x740 with two players.
+//
+// This used to assert the opposite: that the space was SHARED, half above the
+// cards and half below. That was right when the player stack was the only
+// thing between the board and the bar - all the space fell into one hole at
+// the bottom, which read as something missing.
+//
+// It stopped being right when the action rail arrived between them. Halving
+// the space then put a 72px gap between the rail and the players, which reads
+// as the two being unrelated rather than as air: the board, the actions you
+// can take on it and the people playing are one group. So the column packs
+// upward now and the leftover collects above the sticky bar, where it is
+// plainly just the bottom of the screen.
 test.describe('a tall phone', () => {
   test.use({ viewport: { width: 360, height: 740 } });
 
-  test('shares the spare height above and below the player cards', async ({ page }) => {
+  test('packs the column under the board and leaves the room at the bottom', async ({
+    page,
+  }) => {
     await startGame(page);
 
     const rail = await boxOf(page, '.action-rail');
     const stack = await boxOf(page, '.player-stack-region');
     const footer = await boxOf(page, '.game-side-footer');
 
-    // Measured from the RAIL, not the board: the rail is pinned under the
-    // board and is part of the fixed furniture, so counting its height as
-    // "spare space above the cards" would blow the window below by ~50px.
     const above = stack.top - rail.bottom;
     const below = footer.top - stack.bottom;
 
@@ -927,9 +1034,14 @@ test.describe('a tall phone', () => {
     // ever grew to fill the column this test would be asserting nothing.
     expect(above + below).toBeGreaterThan(80);
 
-    // Shared, not piled at one end. The two are not exactly equal because the
-    // layout's own 12px gap sits above the sidebar, so allow for it.
-    expect(Math.abs(above - below)).toBeLessThanOrEqual(16);
+    // The cards sit directly under the rail - one gap, not a hole.
+    expect(above).toBeLessThanOrEqual(16);
+
+    // And all of it is at the bottom, which is the half of this that changed.
+    expect(below).toBeGreaterThan(above);
+
+    // Still nothing underneath the bar: the column packs up, it does not spill.
+    expect(stack.bottom).toBeLessThanOrEqual(footer.top);
   });
 });
 

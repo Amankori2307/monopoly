@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1564 unit tests, 229 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1564 unit tests, 231 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -703,6 +703,28 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   be learned, and a dead control with no reason is the Buy bug again. The aggregate refusal
   prefers the ONE reason when the holdings agree, because "Already mortgaged" beats a summary of
   itself. See [docs/features/property-actions.md](docs/features/property-actions.md).
+- **`.player-stack.is-collapsed` outranks `.player-stack`, and it has now eaten three
+  declarations.** The collapsed block is 0,2,0; a phone-tier rule written on `.player-stack` is
+  0,1,0 and loses however late in the file it comes. It swallowed the fan's `--stack-inset`, then
+  the sliver rules, then `gap` - which shipped at a computed **0px** with the dice welded to a card
+  on each side, and only a screenshot showed it. **Every phone rule for the stack goes on
+  `.is-collapsed`**, which is safe because the phone stack is always collapsed - there is nothing
+  there to expand. `mobile.spec.ts`'s "leaves the dice room on both sides" is the test that was
+  missing for all three; it measures the clearance between the boxes, not the computed `gap`,
+  because a `gap` on the wrong selector reads back fine from the selector you wrote it on.
+- **Phone type is ONE declaration, and three things must not follow it.** `:root` drops to
+  `$root-scale-phone` (87.5%, so 14px) below the tablet breakpoint, and every role in `$type-scale`
+  is in `rem`, so all fifteen move together. Spacing does not (px), the tap floor does not (px),
+  and the board does not (`cqw` against its own width). Two traps: a control whose WIDTH came from
+  its label can drop under 44px - the header's nav links went 44 -> 40 and failed the tap-floor
+  sweep on all five routes - so pin `min-width` as well as `min-height`; and a text field under
+  16px makes **iOS zoom the whole page on focus**, so `.text-input` pins `$input-font-phone`
+  against the scale rather than inheriting it.
+- **The phone column packs UP, and the room is at the bottom.** It used to share the spare height
+  evenly above and below the player cards, which was right when the stack was the only thing
+  between the board and the bar. The action rail changed that: halving the space put a 72px hole
+  between the rail and the players, and the board, the actions and the people playing are one
+  group. Only `.game-side-footer` carries `margin-top: auto` now.
 - **The phone HUD is two columns of players with the dice between them, and it is ONE dom.** The
   desktop fan and the phone grid are the same markup: the middle slot is a `<div>` among
   `<article>` cards, so it is invisible to every `:nth-of-type` rule the fan is built from. The

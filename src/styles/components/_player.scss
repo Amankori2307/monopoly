@@ -411,20 +411,25 @@
   // ---------------------------------------------------------------------
   .player-stack {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    column-gap: t.$space-2;
-    row-gap: t.$space-2;
     align-items: start;
   }
 
-  // The fan is off. A phone has no room for depth, and the taper it used to
-  // shrink to below $breakpoint-phone was already an admission that it did not
-  // read at this width.
+  // The fan is off, and the grid has gaps. Both on `.is-collapsed`, not on
+  // `.player-stack` alone: the collapsed block sets `gap: 0` and these same
+  // variables at 0,2,0, so a 0,1,0 rule here loses however late in the file it
+  // comes. The phone stack is ALWAYS collapsed - there is nothing to expand -
+  // so this is the selector that governs.
   //
-  // `.is-collapsed` and not `.player-stack` alone: the collapsed block sets
-  // these same variables at 0,2,0, so a 0,1,0 rule here loses however late it
-  // comes in the file. The phone stack is ALWAYS collapsed - there is nothing
-  // to expand - so this is the selector that governs.
+  // That specificity is the single most expensive thing in this file. It has
+  // now caught three separate declarations - the fan's inset, the sliver
+  // rules, and the gap, which shipped at a computed 0px with the dice welded
+  // to both cards. If you are adding a phone rule for the stack, put it here.
   .player-stack.is-collapsed {
+    // $space-3, not $space-2: the middle column is `auto`, sized to two dice
+    // with no padding of its own, so this gap is the ONLY thing between a 42px
+    // die and the edge of a card.
+    column-gap: t.$space-3;
+    row-gap: t.$space-2;
     --stack-peek: none;
     --stack-strip: 100%;
     --stack-tuck: 0px;
@@ -484,7 +489,21 @@
   .player-card {
     display: grid;
     row-gap: t.$space-hair;
-    padding: t.$space-2;
+    // A rung down the block axis only. The card holds two lines of ~12px type,
+    // so 8px above and below was a fifth of its height spent on air; the
+    // inline padding stays, because the 5px token-coloured left border is
+    // already eating into the line the name starts on.
+    padding: t.$space-1 t.$space-2;
+  }
+
+  // A rung down on top of the root scale. The card is ~124px wide and holds
+  // two facts; `body` is the prose role, and 16px of serif was most of the
+  // card's height in leading alone. Role first, then the two overrides - the
+  // `font` shorthand text() emits would reset them the other way round.
+  .player-card-name {
+    @include t.text(body-sm);
+    font-weight: t.$weight-bold;
+    font-family: t.$font-serif;
   }
 
   // Scoped to the card, and not only for tidiness: `.group-pips` is declared

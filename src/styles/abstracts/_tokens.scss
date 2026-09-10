@@ -68,7 +68,8 @@ $deed-card-width: 340px;
 // seven-row rent schedule - measures 380px of content, which in a 380px card
 // with `overflow: hidden` is exactly zero slack: any future row, or a wider
 // currency symbol, clips the footer again with nothing to say so. Three grid
-// steps of room, and deedFits in space-detail.spec.ts is what keeps it honest.
+// steps of room, and "the deed card > fits the longest street name on the
+// board" in overlays.spec.ts is what keeps it honest.
 $deed-card-height: 392px;
 // The colour strip bleeds to the card's top and side edges by negating this
 // padding, so the two must stay derived from one value - which is why the card
@@ -80,6 +81,13 @@ $deed-card-height: 392px;
 // second of those is what stops a long station name wrapping to a third line.
 $deed-card-pad: 18px;
 $deed-card-pad-phone: 12px;
+// And a rung tighter again below $breakpoint-mobile, where the card is the
+// width of the screen and its height is released: measured at 360px it was
+// 300x360, taller than the board it covers. See the phone tier at the end of
+// components/_space-detail.scss for the whole budget.
+$deed-card-pad-tight: 8px;
+// The colour band only has to say which set this is, which it does at 10px.
+$deed-band-height-phone: 10px;
 
 // The holdings drawer is sized by its card, not the other way round: the panel
 // is exactly one card plus this padding either side.
@@ -144,6 +152,28 @@ $pip-radius: 50%;
 $token-move-duration: 170ms;
 // Fast out of a space, slow across the gap, fast into the next one.
 $token-move-easing: cubic-bezier(0.45, 1, 0.55, 0);
+
+// ---------------------------------------------------------------------------
+// Type, on a phone.
+//
+// One root scale rather than a phone rung per role. Every entry in $type-scale
+// is in `rem`, so this moves all fifteen together and none of them can be left
+// behind - which a sweep of per-component overrides cannot promise, and which
+// is why there is no `*-phone` type role anywhere in _scale.scss.
+//
+// Three things deliberately do NOT follow it, and each is the point rather
+// than an oversight: $space-scale is in px, so the 4px grid is untouched;
+// $control-tap is px, so a button stays 44px tall while its label gets
+// smaller; and the board sizes its type in cqw against its own width, which is
+// exactly why it was built that way.
+$root-scale-phone: 87.5%; // 14px, from the browser's 16.
+
+// The one thing that must NOT shrink with it. iOS zooms the whole page when
+// a field it is focusing sets type under 16px, so a smaller field costs the
+// player their place on the screen every time they tap one. `font: inherit` in
+// the reset means every control follows the root by default, so this has to be
+// said out loud.
+$input-font-phone: 16px;
 
 // ---------------------------------------------------------------------------
 // The header, and what it leaves for the page.

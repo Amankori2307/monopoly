@@ -236,24 +236,25 @@
     flex: 0 0 auto;
   }
 
-  // The free space is SHARED, not piled at the bottom.
+  // The free space goes to the BOTTOM, and the screen packs upward.
   //
   // The board is square and the phone is not, so on a tall screen the board is
   // limited by width and the column below it has room left over - 145px of it
-  // at 360x740 with two players. All of that used to fall between the last
-  // player card and the bottom bar, because the bar's own `margin-top: auto`
-  // took the lot: one hole, at the bottom, reading as something missing.
+  // at 360x740 with two players. That space used to be SHARED: a second auto
+  // margin here made flexbox halve it, so the cards floated in the middle of
+  // their region with equal air above and below.
   //
-  // A second auto margin at the top of the column makes flexbox halve it, so
-  // the cards sit in the middle of their region with equal air above and
-  // below. Auto margins are also the reason this is safe when the column is
-  // full: with six or eight players there is no free space to distribute, both
-  // margins resolve to zero, and the sticky bar and the scroll behave exactly
-  // as before. `justify-content: center` would not - it clips the top of an
-  // overflowing column instead of scrolling to it.
-  .app-shell.is-game .player-stack-region {
-    margin-top: auto;
-  }
+  // That was right when the stack was the only thing between the board and the
+  // bar. It is wrong now that the action rail sits between them: halving the
+  // space put a 72px hole between the rail and the players, which reads as the
+  // two being unrelated rather than as air. Board, rail and cards belong
+  // together; the leftover belongs above the sticky bar, where it is plainly
+  // just the bottom of the screen.
+  //
+  // The bar keeps its own `margin-top: auto` and that is now the only one, so
+  // it takes the lot. When the column is full - six or eight players - there
+  // is no free space to distribute, the margin resolves to zero, and the
+  // sticky bar and the scroll behave exactly as they did.
 
   // Sticky, not fixed. The last child of the scroll container sticks to its
   // bottom edge, so nothing needs to know the bar's height: the last player

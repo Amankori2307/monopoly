@@ -54,7 +54,26 @@ label {
   // The label above is bold and the reset gives a control `font: inherit`, so
   // every value the player typed came out bold too. A label is emphasis; what
   // you type is not. Deliberately NOT given a smaller role with it: a field
-  // under 16px makes iOS zoom the page on focus.
+  // under 16px makes iOS zoom the page on focus - see the phone block below,
+  // which is that same rule defending against the root scale.
   font-weight: t.$weight-normal;
   outline-color: var(--accent-strong);
+}
+
+// ---------------------------------------------------------------------------
+// The one thing the phone type scale must not shrink.
+//
+// `:root` drops to 87.5% below this breakpoint and the reset gives every
+// control `font: inherit`, so a field would follow it down to 14px - and iOS
+// zooms the whole page when it focuses a field under 16px, which costs the
+// player their place on the screen every time they tap one. So the field opts
+// out, by name.
+//
+// Last in the file, per the design system's rule 8.
+// ---------------------------------------------------------------------------
+@include m.below(t.$breakpoint-tablet) {
+  .text-input,
+  .select-input {
+    font-size: t.$input-font-phone;
+  }
 }

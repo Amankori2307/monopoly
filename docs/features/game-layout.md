@@ -43,6 +43,34 @@ Three arrangements, from one set of components. Breakpoints are tokens in
 pinned at the top, `.game-side` is the **one** scroll container, and `.game-side-footer` is its
 sticky last child holding the toasts and the roll controls.
 
+### Everything on a phone is drawn at phone scale
+
+The layout landed before the sizing did: the structure was right and every
+number in it was a desktop number. Measured at 360×740 the player name was a
+16px serif on a 124px card, the deed card was 300×360 — _taller than the 336px
+board it covers_ — and the gap between a card and the dice was **0px**.
+
+- **Type is one root scale**, `$root-scale-phone` at 87.5%. See
+  [design-system.md](../design-system.md#the-phone-tier) for what deliberately
+  does not follow it, and for the two traps it sprang (a tap target whose width
+  came from its label, and iOS zooming a sub-16px field).
+- **The column packs up.** Board → rail → cards sit together and the leftover
+  collects above the sticky bar. It used to be shared evenly above and below
+  the cards, which was right until the action rail arrived between them: after
+  that, halving it put a 72px hole between the rail and the players.
+- **The player card is a name and a figure**, at ~47px from 64. The two facts
+  are the same two; what went was leading and padding.
+- **The deed card is about half the board** — 246×244, from 300×360 — and loses
+  nothing: name, price, mortgage value, all seven rent tiers and the building
+  cost are all still on it. Below `$breakpoint-mobile` it is already
+  `width: 100%; height: auto`, so this is a phone tier and the desktop card's
+  exactly-pinned 340×392 never moves. Where the height went: the rent rows'
+  padding (8px × 7 rows), the "Title deed" eyebrow and the "Rent schedule"
+  heading — both labelling something the colour band, the name and the rows
+  already say — and a rung off the title. **Hiding the eyebrow moved the stats
+  grid up under the 44px close button**, so the title row now reserves a
+  tap-target-tall strip beside the name.
+
 ### The phone HUD: two columns with the dice between them
 
 Below `$breakpoint-tablet` the player cards stop being a fanned deck and become a grid —
