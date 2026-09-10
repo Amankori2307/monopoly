@@ -227,12 +227,14 @@
 
   // Selecting expands it: the deal you are assembling *is* a set of title
   // deeds, and everything you are not trading stays a peek.
+  //
+  // The expansion IS the signal - a peek becomes a whole card - so the 3px
+  // accent ring on top of it was the same fact said twice, in the loudest
+  // available voice. It lifts instead: a picked deed is the one in front.
   &.is-selected {
     max-height: t.$deed-card-height;
     z-index: 2;
-    box-shadow:
-      0 0 0 3px var(--accent),
-      t.$elevation-tuck var(--shadow-ink);
+    box-shadow: t.$elevation-2 var(--shadow-ink);
   }
 
   &.is-blocked {
@@ -328,8 +330,11 @@
     background: var(--deck-community-bg);
   }
 
+  // Already said in words ("In the deal" / "Keeping") and in aria-pressed, so
+  // an accent border made it three statements and put the loudest one on the
+  // outside. A neutral weight is enough to pick it out of a row.
   &.is-going {
-    border-color: var(--accent);
+    border-color: var(--border-space);
   }
 }
 

@@ -276,8 +276,8 @@
   // so the square never loses the fact.
   &.is-owned {
     background-image: linear-gradient(
-      color-mix(in srgb, var(--space-owner) 14%, transparent),
-      color-mix(in srgb, var(--space-owner) 14%, transparent)
+      color-mix(in srgb, var(--space-owner) #{t.$owner-wash}, transparent),
+      color-mix(in srgb, var(--space-owner) #{t.$owner-wash}, transparent)
     );
   }
 

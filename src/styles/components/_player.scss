@@ -43,10 +43,14 @@
   // instead of undoing eleven rules one at a time. There is no `above()`
   // mixin and this does not need one.
   --stack-peek: #{t.$stack-expanded-max-height};
-  --stack-strip: 100%;
   --stack-tuck: 0px;
   --stack-inset: 0px;
   --stack-fade: 1;
+  // An expanded card rests flat. The tuck below is a shadow cast UPWARD - it
+  // says "I am underneath the card in front of me" - so it belongs to the fan
+  // and to nothing else. As a variable the phone tier can switch it off in the
+  // same block as the rest, rather than fighting the sliver rule's specificity.
+  --stack-lift: none;
   // What a SLIVER shows. Read far down the cascade - inside
   // `.is-collapsed .player-card:not(:first-of-type) …`, which is five classes
   // deep - so they have to be custom properties: a property inherits, and the
@@ -60,15 +64,31 @@
 // which is identical on the desktop fan - selectPlayerSummaries returns the
 // active player first, so the top card IS them - but says nothing on a phone,
 // where the grid is ordered by seat so a player keeps their cell all game.
+//
+// It is said in THAT PLAYER'S colour, three ways and none of them an outline:
+// the ground is washed with it, the rail doubles, and the card lifts. It used
+// to be a 1px accent border plus a 1px accent ring, which is the treatment the
+// board deleted - and on a four-handed table it outlined the yellow player's
+// card in red while their own yellow sat in the rail an inch away. A ring in
+// the accent names nobody; the wash names them.
+//
+// Three channels rather than one on purpose: a wash of an arbitrary token
+// colour is not a constant weight - 14% of yellow on a near-white ground is
+// far fainter than 14% of blue - so the rail and the lift are what carry the
+// state when the colour cannot.
 .player-stack .player-card.is-active {
   z-index: t.$max-players + 1;
-  border-color: var(--accent);
-  // A ring, and then the elevation. On the fan the top card was the active one
-  // by position and the lift alone said so; in a grid of eight identical cards
-  // nothing does, so the accent has to be drawn rather than implied.
-  box-shadow:
-    0 0 0 1px var(--accent),
-    t.$elevation-2 var(--shadow-ink);
+  border-color: color-mix(in srgb, var(--player-ink) 45%, var(--border-input));
+  background: color-mix(
+    in srgb,
+    var(--player-ink) #{t.$owner-wash},
+    var(--surface-raised)
+  );
+  box-shadow: t.$elevation-2 var(--shadow-ink);
+
+  .player-card-strip {
+    width: t.$player-rail-active;
+  }
 }
 
 .player-stack .player-card {
@@ -92,10 +112,10 @@
   gap: 0;
   cursor: pointer;
   --stack-peek: #{t.$stack-peek};
-  --stack-strip: #{t.$stack-peek};
   --stack-tuck: #{t.$stack-tuck};
   --stack-inset: #{t.$stack-inset};
   --stack-fade: 0.55;
+  --stack-lift: #{t.$elevation-tuck-hair} var(--shadow-ink);
 
   // Painted back-to-front so earlier cards sit above later ones.
   @for $index from 1 through t.$max-players {
@@ -107,12 +127,7 @@
   .player-card:not(:first-of-type) {
     max-height: var(--stack-peek);
     margin-top: calc(-1 * var(--stack-tuck));
-    box-shadow: t.$elevation-tuck-hair var(--shadow-ink);
-
-    // A sliver should read as colour, not as a cropped line of text.
-    .player-card-strip {
-      height: var(--stack-strip);
-    }
+    box-shadow: var(--stack-lift);
 
     // A sliver reads as colour, not as a cropped line of text. This block was
     // a copy-paste accident: the selector list `> strong, .player-card-worth`
@@ -189,14 +204,37 @@
 .player-card {
   position: relative;
   overflow: hidden;
+  // ONE fallback, read by the rail and by the active card's wash. It has to be
+  // declared rather than written at each use: an undefined custom property
+  // inside color-mix invalidates the whole declaration, so a player with no
+  // token would lose the card's background outright rather than its tint.
+  --player-ink: var(--player-color, var(--border-input));
   // The right inset is where the chevron sits, so it never lands on a figure.
-  padding: t.$space-3 t.$space-10 t.$space-3 t.$space-3;
-  border: 1px solid var(--border-input);
-  // Left edge is tinted with the player's token colour, set inline from
-  // ThemeToken.color so each player is identifiable at a glance.
-  border-left: 5px solid var(--border-input);
+  // The leading inset is derived from the rail, which is drawn over it.
+  padding: t.$space-3 t.$space-10 t.$space-3 calc(#{t.$player-rail} + #{t.$space-3});
+  border: t.$border-hairline solid var(--border-input);
   border-radius: t.$radius-sharp;
   background: var(--surface-raised);
+}
+
+// The identity rail: the player's own token colour down the leading edge.
+//
+// This span was in the DOM with a colour on it and NO rule anywhere, so it
+// rendered as a zero-width inline nothing and the colour actually came from a
+// 5px `border-left` on the card. That is why `is-active` had to be saved by an
+// inline style: `border-color` sets all four sides, so the state was one
+// declaration away from painting over the identity. A layer cannot be
+// overwritten by a border, and it can change weight without moving the text.
+.player-card-strip {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: t.$player-rail;
+  background: var(--player-ink);
+
+  @include m.motion {
+    transition: width t.$duration-base t.$ease-standard;
+  }
 }
 
 // Name and headline figure on ONE line. They used to be two stacked blocks with
@@ -431,10 +469,13 @@
     column-gap: t.$space-3;
     row-gap: t.$space-2;
     --stack-peek: none;
-    --stack-strip: 100%;
     --stack-tuck: 0px;
     --stack-inset: 0px;
     --stack-fade: 1;
+    // Nothing is tucked in a grid. The fan's upward shadow said "I am under
+    // the card in front of me", which in two columns with a gap between them
+    // is a shadow pointing at nothing.
+    --stack-lift: none;
     // Every card is a whole card: nothing is a sliver, so everything on it is
     // drawn and its own button is live.
     --sliver-content: 1;
@@ -490,10 +531,23 @@
     display: grid;
     row-gap: t.$space-hair;
     // A rung down the block axis only. The card holds two lines of ~12px type,
-    // so 8px above and below was a fifth of its height spent on air; the
-    // inline padding stays, because the 5px token-coloured left border is
-    // already eating into the line the name starts on.
-    padding: t.$space-1 t.$space-2;
+    // so 8px above and below was a fifth of its height spent on air. The
+    // leading inset stays derived from the rail: on a 112px card the old 5px
+    // slab was 4.5% of the width, and 3px drawn over the padding gives the
+    // name back two of them.
+    padding: t.$space-1 t.$space-2 t.$space-1 calc(#{t.$player-rail} + #{t.$space-2});
+    // The whole card is the tap target - `.player-card-open` is `inset: 0`
+    // over it - so the CARD is what has to clear the floor, and `inset`
+    // resolves against the PADDING box, which is the card less its frame on
+    // each side. Derived rather than eyeballed, because it used to clear 44px
+    // by one pixel and by accident: the identity rail was an empty inline span
+    // in normal flow, a grid turns one of those into an anonymous row, and the
+    // row-gap beneath it was the entire margin. Drawing the rail as a layer
+    // took the row away and the sweep caught it the same run.
+    //
+    // Phone-only, and it must stay so: a sliver in the desktop fan is
+    // `max-height: 15px`, and a min-height beats a max-height outright.
+    min-height: calc(#{t.$control-tap} + 2 * #{t.$border-hairline});
   }
 
   // A rung down on top of the root scale. The card is ~124px wide and holds

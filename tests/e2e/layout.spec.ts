@@ -125,16 +125,73 @@ test('keeps the dice pinned while the sidebar scrolls', async ({ page }) => {
   expect(Math.abs(after.y - before.y)).toBeLessThanOrEqual(1);
 });
 
+// The colour is on a RAIL now, not on a border. It read `borderLeftColor`
+// while the identity was a 5px `border-left`, which is the mechanism this
+// change replaced: `is-active` set `border-color`, and `border-color` is all
+// four sides, so the turn state was one declaration away from painting over
+// whose card it was. Only an inline style stood between them.
 test('tints each player card with its token colour', async ({ page }) => {
   await startGame(page);
 
   const colours = await page
-    .getByTestId(/^player-card-/)
-    .evaluateAll((cards) => cards.map((card) => getComputedStyle(card).borderLeftColor));
+    .locator('.player-card-strip')
+    .evaluateAll((rails) => rails.map((rail) => getComputedStyle(rail).backgroundColor));
 
   expect(colours.length).toBeGreaterThan(1);
   // Distinct per player, and never the untinted default.
   expect(new Set(colours).size).toBe(colours.length);
+  expect(colours).not.toContain('rgba(0, 0, 0, 0)');
+});
+
+// The player card, the trade deed and the jail card each drew their state as a
+// ring in the accent. The board deleted that treatment first - `board-active-
+// outline` came out of the theme contract and board.spec.ts fails on any
+// accent ring - and nothing else was brought along, so the ACTIVE card was
+// outlined in red while the player's own colour sat in the rail beside it
+// saying something different. State is ground, weight and lift now.
+test('says whose turn it is in that player own colour, not in the accent', async ({
+  page,
+}) => {
+  await startGame(page);
+
+  const active = page.locator('.player-card.is-active');
+  await expect(active).toHaveCount(1);
+  // The state reaches a screen reader too. It used to be a class and nothing
+  // else, so whose turn it was existed only as paint.
+  await expect(active).toHaveAttribute('aria-current', 'true');
+
+  const marks = await active.evaluate((card) => {
+    const style = getComputedStyle(card);
+    const rail = card.querySelector('.player-card-strip');
+    const resting = document.querySelector('.player-card:not(.is-active)');
+    return {
+      background: style.backgroundColor,
+      borderColor: style.borderTopColor,
+      outlineStyle: style.outlineStyle,
+      shadow: style.boxShadow,
+      railWidth: rail ? getComputedStyle(rail).width : '',
+      restingBackground: resting ? getComputedStyle(resting).backgroundColor : '',
+      restingRail: resting
+        ? getComputedStyle(resting.querySelector('.player-card-strip')!).width
+        : '',
+    };
+  });
+
+  // No ring, in any of the three ways one can be drawn. The accent is
+  // rgb(200, 65, 50) in the default palette and rgb(213, 63, 50) in aesthetic;
+  // board.spec.ts pins the same two.
+  const ACCENT = /rgb\(200, 65, 50\)|rgb\(213, 63, 50\)/;
+  expect(marks.outlineStyle).toBe('none');
+  expect(marks.borderColor).not.toMatch(ACCENT);
+  expect(marks.shadow).not.toMatch(ACCENT);
+
+  // Ground and weight instead, and both have to differ from a resting card or
+  // the state is drawn by nothing at all.
+  expect(marks.background).not.toBe(marks.restingBackground);
+  expect(parseFloat(marks.railWidth)).toBeGreaterThan(parseFloat(marks.restingRail));
+  // The lift. A resting card in the fan casts an upward tuck; this is the only
+  // one that comes forward.
+  expect(marks.shadow).not.toBe('none');
 });
 
 test('shows players as a stack that expands into a list', async ({ page }) => {

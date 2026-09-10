@@ -97,6 +97,63 @@ const hasNonZeroLength = (value: string): boolean =>
 
 const isZero = (value: string): boolean => /^0(px|rem|em)?$/.test(value.trim());
 
+/**
+ * Every declaration with the selector chain it sits inside.
+ *
+ * A brace scan, not a parser: enough to answer "is this declaration inside a
+ * rule whose selector names a STATE", which is the only question the accent
+ * rule below asks. At-rules push a frame too (`@include m.motion`, `@media`),
+ * which is harmless - the parent selector is still in the chain.
+ */
+const scopedDeclarations = (
+  scss: string
+): { chain: string; property: string; value: string; line: number }[] => {
+  const found: { chain: string; property: string; value: string; line: number }[] = [];
+  const stack: string[] = [];
+  let buffer = '';
+  let line = 1;
+
+  for (const char of strip(scss)) {
+    if (char === '\n') line += 1;
+
+    if (char === '{') {
+      stack.push(buffer.trim());
+      buffer = '';
+    } else if (char === '}') {
+      stack.pop();
+      buffer = '';
+    } else if (char === ';') {
+      const colon = buffer.indexOf(':');
+      if (colon > -1) {
+        found.push({
+          chain: stack.join(' '),
+          property: buffer.slice(0, colon).trim(),
+          value: buffer.slice(colon + 1).trim(),
+          line,
+        });
+      }
+      buffer = '';
+    } else {
+      buffer += char;
+    }
+  }
+
+  return found;
+};
+
+/**
+ * The state classes in the app. A new one belongs in this list, the same
+ * contract `SOUND_FOR_CUE` and `AUDIENCE_FOR_DECISION` hold: a stylesheet scan
+ * has no other way to tell a state apart from a variant, and a pattern broad
+ * enough to catch them all would also catch `.is-chance`, which is a kind of
+ * card rather than a state and is supposed to be a colour.
+ */
+const STATE_SELECTOR = /[.&](is-active|is-selected|is-going|is-current)\b/;
+
+/** The three ways an outline can be drawn around something. */
+const EDGE_PROPERTY =
+  /^(border|border-color|border-[a-z-]+-color|outline|outline-color|box-shadow)$/;
+
 const SPACING_PROPS =
   /^(padding|margin|gap|row-gap|column-gap|inset)(-(top|right|bottom|left|block|inline))?(-(start|end))?$/;
 const TYPE_PROPS = /^(font|font-size|font-weight|line-height|letter-spacing)$/;
@@ -456,6 +513,34 @@ describe('the design system', () => {
             property === 'border-radius' && !isZero(value) && !value.includes('$')
         )
         .map(([, value]) => `${file.name}: border-radius: ${value}`)
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('never draws a state as an accent-coloured outline', () => {
+    // State is GROUND, WEIGHT and LIFT. The board settled it first and paid
+    // for the lesson: `board-active-outline` was deleted from the theme
+    // contract and board.spec.ts fails on any accent ring, because a red
+    // rectangle around a thing reads as an error rather than as emphasis.
+    //
+    // Nothing else was brought along, so three places kept one - the player
+    // card (a 1px accent border AND a 1px accent ring), the trade deed (3px,
+    // on top of an expansion that already said it), and the jail card (an
+    // accent border on top of "In the deal" and an aria-pressed). The player
+    // card's was the worst: at a four-handed table it outlined the yellow
+    // player in red while their own colour sat in the rail beside it.
+    //
+    // A background in the accent family is fine and deliberately not caught -
+    // filling a thing is the opposite of ringing it.
+    const offenders = files.flatMap((file) =>
+      scopedDeclarations(file.scss)
+        .filter(
+          ({ chain, property, value }) =>
+            STATE_SELECTOR.test(chain) &&
+            EDGE_PROPERTY.test(property) &&
+            value.includes('var(--accent')
+        )
+        .map(({ line, property, value }) => `${file.name}:${line}: ${property}: ${value}`)
     );
     expect(offenders).toEqual([]);
   });

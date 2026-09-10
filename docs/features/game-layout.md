@@ -114,6 +114,41 @@ what makes its top card the active player — and the grid reorders with CSS `or
 turn. Whose turn it is is carried explicitly by `.is-active`, which took over the emphasis from
 `:first-of-type`: identical on the fan, and the only thing that says it on a grid.
 
+**Whose turn it is is said in that player's own colour, and never as an outline.** Three channels,
+because one is not enough: the card's ground is washed with the player's token colour at
+`$owner-wash` — the same 14% the board's owned squares use — its identity rail doubles from
+`$player-rail` to `$player-rail-active`, and it is the only card that lifts. It also carries
+`aria-current`, so the state is not paint alone.
+
+It was a 1px accent border plus a 1px accent ring, which is the treatment the board deleted long
+ago: `board-active-outline` came out of the theme contract and `board.spec.ts` fails on any
+accent-coloured ring, because a red rectangle around a thing reads as an error rather than as
+emphasis. Nothing else was brought along, so the player card, the trade deed and the trade's jail
+card each kept a ring of their own — and the player card's was the worst, because at a four-handed
+table it outlined the _yellow_ player's card in red while their own yellow sat in the rail an inch
+away. A ring in the accent names nobody.
+
+Three channels rather than one because a wash of an arbitrary token colour is not a constant
+weight: 14% of yellow over a near-white card is far fainter than 14% of blue, so the rail and the
+lift are what carry the state when the colour cannot. `designSystem.guard.test.ts` fails on an
+accent-coloured border, outline or ring inside any state selector, and `layout.spec.ts` and
+`mobile.spec.ts` check the rendered result on both arrangements.
+
+**The identity rail is a layer, not a border.** The token colour used to be a 5px `border-left`
+with the colour set inline — which is why `is-active` had to be saved by that inline style, since
+`border-color` sets all four sides and the state was one declaration away from painting over whose
+card it was. `PlayerCard` publishes `--player-color` and the stylesheet draws
+`.player-card-strip` over the leading padding, so state can change its weight without moving the
+text. That span was already in the DOM with a colour on it and **no rule anywhere**, so it rendered
+as a zero-width inline nothing.
+
+Removing it from normal flow cost a pixel and the tap-floor sweep caught it the same run: a grid
+turns a stray inline child into an anonymous row, and the `row-gap` beneath it was the whole of the
+margin by which the card cleared 44px. The phone card's `min-height` is derived from `$control-tap`
+plus two hairlines now — the whole card is the tap target, and `inset: 0` resolves against the
+padding box. It has to stay phone-only: a sliver in the desktop fan is `max-height: 15px`, and a
+min-height beats a max-height outright.
+
 **The card is a name and one figure.** At ~115px wide there is room for nothing else, so net worth,
 the owned count and the colour-set pips come off and cash stays. Every one of them is in the
 holdings drawer the whole card opens, and `mobile.spec.ts` asserts they are actually there rather
@@ -426,7 +461,9 @@ all: a rotated word still reads, a rotated house reads as a broken shape. The wi
 the tablet breakpoint, where they are under a device pixel.
 
 The **owner bar runs the full length of the cell's outer edge**, opposite the ribbon, per side, in
-the owner's token colour, and `.is-owned` washes the whole square with 14% of it. It replaced a 5px
+the owner's token colour, and `.is-owned` washes the whole square with `$owner-wash` (14%) of it —
+the same token the active player card now washes with, so "this is theirs" looks the same on a
+square and on a card. It replaced a 5px
 corner dot, which was a quarter of a phone cell and had to be hunted for on each square. It hugs
 the outer edge because the dot used to sit top-right on every side — which on the bottom row is
 where the ribbon is, so it covered the pieces standing on it. See

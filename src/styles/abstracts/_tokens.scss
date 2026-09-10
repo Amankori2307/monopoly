@@ -144,8 +144,30 @@ $stack-inset: 9px;
 // tablet breakpoint the fan is gone entirely - the players are a two-column
 // grid with the dice between them. The 3px taper it used to shrink to was
 // already an admission that the fan did not read at that width.
-$stack-strip-height: 5px;
 $stack-expanded-max-height: 420px;
+// ---------------------------------------------------------------------------
+// SELECTION AND TURN
+//
+// State is drawn as GROUND, WEIGHT and LIFT, and never as a coloured outline.
+// The board settled that first: `board-active-outline` was deleted from the
+// theme contract and board.spec.ts fails on any accent-coloured ring, because
+// a red rectangle around a thing reads as an error rather than as emphasis.
+// Nothing else was brought along, so the player card, the trade deed and the
+// jail card each kept a ring of their own - and the player card's was the
+// worst of them, because it announced whose turn it was in the accent while
+// that player's actual colour sat in the rail beside it saying something else.
+//
+// Where the thing has an OWNER, the ground is that owner's own colour mixed at
+// $owner-wash - the same strength the board's `.is-owned` squares use, so "this
+// is theirs" looks the same on a square and on a card.
+$owner-wash: 14%;
+// The player card's identity rail: their token colour down the leading edge.
+// A LAYER, not a border. `is-active` set `border-color`, which is all four
+// sides, so only the inline left colour survived it - and a border cannot
+// change weight without moving the card's content.
+$player-rail: 3px;
+$player-rail-active: 6px;
+
 // Most of the sidebar the player stack may claim. Eight expanded cards are
 // taller than the column, and without a ceiling they squeezed everything below
 // them - the links and the error banner - down to a clipped strip.

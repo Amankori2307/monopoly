@@ -87,6 +87,27 @@ made a dark appearance possible without a second shadow ladder per theme.
 There is deliberately **no button-lift rung**. `$emboss-press` was one, and the
 button's hover was its only reader — see the control surface above.
 
+### State — ground, weight and lift
+
+**Selected, active and current are never drawn as an accent-coloured outline.**
+The board settled it first: `board-active-outline` was deleted from the theme
+contract and `board.spec.ts` fails on any accent ring, because a red rectangle
+around a thing reads as an error rather than as emphasis.
+
+Where the thing has an **owner**, the ground is that owner's own colour mixed at
+`$owner-wash` (14%) — the same strength the board's `.is-owned` squares use, so
+"this is theirs" looks the same on a square and on a card. The player card adds
+two more channels, and needs them: a wash of an arbitrary token colour is not a
+constant weight, so its identity rail doubles from `$player-rail` to
+`$player-rail-active` and it is the only card that lifts.
+
+Where the thing has no owner, the state is a size change, a fill, or a lift —
+the picked trade deed expands from a peek to a whole card, which is signal
+enough that the 3px accent ring on top of it was the same fact said twice.
+
+Filling a thing in the accent is fine and deliberately not policed. Ringing it
+is what is banned.
+
 ### Layers
 
 `$z-space-detail` 30 · `$z-spectator` 35 · `$z-drawer` 38 · `$z-modal` 40 ·
@@ -271,6 +292,9 @@ in one block at the end of the file for exactly this reason.
    by accident.
 9. **A button casts no shadow and fades no colour.** Hover and `:active` change
    the paint; nothing moves, and nothing animates.
+10. **A state is ground, weight or lift — never an accent outline.** And a
+    colour that _identifies_ is a layer, not a border: a border is one
+    `border-color` away from a state painting over it.
 
 ## The exceptions
 
@@ -314,14 +338,14 @@ raising a number where a reviewer sees it.
 
 ## Enforcement
 
-| Where                                                                           | What                                                                                                                           |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `abstracts/_scale.scss` `@error`                                                | The grid is a grid, the layers are ordered, every type role is complete. Compile time, so a broken ladder fails `pnpm build`.  |
-| [designSystem.guard.test.ts](../src/styles/designSystem.guard.test.ts)          | No literal in any partial: space, type, colour, radius, z-index, motion. Plus the role-ordering rule and the exemption census. |
-| [themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)        | Every contract token is read by something.                                                                                     |
-| [styleGuide.guard.test.ts](../src/features/styleguide/styleGuide.guard.test.ts) | The `#/style` page still shows every rung.                                                                                     |
-| `tests/e2e/styleguide.spec.ts`                                                  | The scales render, and repaint with the appearance.                                                                            |
-| `tests/e2e/navigation.spec.ts`                                                  | Every control draws the same focus ring.                                                                                       |
+| Where                                                                           | What                                                                                                                                                                   |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `abstracts/_scale.scss` `@error`                                                | The grid is a grid, the layers are ordered, every type role is complete. Compile time, so a broken ladder fails `pnpm build`.                                          |
+| [designSystem.guard.test.ts](../src/styles/designSystem.guard.test.ts)          | No literal in any partial: space, type, colour, radius, z-index, motion. Plus the role-ordering rule, the exemption census, and no accent outline in a state selector. |
+| [themeContract.guard.test.ts](../src/styles/themeContract.guard.test.ts)        | Every contract token is read by something.                                                                                                                             |
+| [styleGuide.guard.test.ts](../src/features/styleguide/styleGuide.guard.test.ts) | The `#/style` page still shows every rung.                                                                                                                             |
+| `tests/e2e/styleguide.spec.ts`                                                  | The scales render, and repaint with the appearance.                                                                                                                    |
+| `tests/e2e/navigation.spec.ts`                                                  | Every control draws the same focus ring.                                                                                                                               |
 
 A Sass `@error` in a partial nothing `@use`s is **dead code** — `abstracts/` is
 absent from `main.scss` because it emits no CSS, so `_scale.scss`'s compile-time

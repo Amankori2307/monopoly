@@ -42,6 +42,11 @@ export function PlayerCard({
 
   return (
     <article
+      // The state, said to a screen reader as well as in paint. `is-active`
+      // was a class and nothing else, so whose turn it was existed only as a
+      // colour - and aria-current is exactly "the current item within a set",
+      // so it needs no text on a card 112px wide.
+      aria-current={isActive ? 'true' : undefined}
       className={`player-card ${isActive ? 'is-active' : ''} ${isAway ? 'is-away' : ''}`}
       data-away={isAway ? 'true' : undefined}
       // Where they sit, which is not where they are in the DOM. The phone grid
@@ -49,14 +54,17 @@ export function PlayerCard({
       // turn order, which is what the desktop fan reads.
       data-seat={seatIndex}
       data-testid={scopedTestId(TEST_IDS.playerCard, player.id)}
-      style={{ borderLeftColor: token?.color }}
+      // Published once, read by the rail and by the active card's wash. It was
+      // a `borderLeftColor`, which meant the stylesheet could only reach the
+      // colour by being a border too - and the turn state, which sets the
+      // border, then had to be kept off this one side by hand. Inline because
+      // a token colour is theme DATA, not a CSS token: the same sanctioned
+      // exception BoardSpaceCell takes for `--space-owner`.
+      style={token ? { ['--player-color' as string]: token.color } : undefined}
     >
-      {/* Colour strip: the only thing visible on a collapsed sliver. */}
-      <span
-        aria-hidden="true"
-        className="player-card-strip"
-        style={{ background: token?.color }}
-      />
+      {/* The identity rail. Its colour comes from --player-color above; this
+          span had a background and no rule anywhere, so it drew nothing. */}
+      <span aria-hidden="true" className="player-card-strip" />
 
       <div className="player-card-head">
         <strong className="player-card-name">

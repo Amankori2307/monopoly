@@ -328,8 +328,9 @@ test.describe('a phone in portrait', () => {
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
     // It covers the card rather than sitting somewhere on it. `inset: 0` is
-    // measured against the padding box, so the card's 1px frame and its 5px
-    // token-coloured left edge are outside it by design.
+    // measured against the padding box, so the card's hairline frame is
+    // outside it by design - which is why the card's own min-height is the
+    // floor plus two of them.
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(card.right - card.left - 8);
 
     // And it actually opens the drawer.
@@ -497,6 +498,49 @@ test.describe('a phone in portrait', () => {
     expect(clearance?.cards).toBe(4);
     expect(clearance?.left).toBeGreaterThanOrEqual(8);
     expect(clearance?.right).toBeGreaterThanOrEqual(8);
+  });
+
+  // The phone twin of layout.spec.ts's turn test, and not a duplicate of it:
+  // this grid is where a card is NOT `:first-of-type`, which is what the fan's
+  // rules key on. The resting cards carried the fan's `$elevation-tuck-hair`
+  // here - an upward shadow meaning "I am under the card in front of me",
+  // pointing at nothing in two columns with a gap between them - and it beat
+  // the active card's own lift on specificity, so the state could have been
+  // drawn by a shadow facing the wrong way.
+  test('marks the turn without an accent ring, in the grid too', async ({ page }) => {
+    await startGame(page, { players: 4 });
+
+    const cards = await page.locator('.player-card').evaluateAll((els) =>
+      els.map((el) => {
+        const style = getComputedStyle(el);
+        return {
+          active: el.classList.contains('is-active'),
+          background: style.backgroundColor,
+          borderColor: style.borderTopColor,
+          shadow: style.boxShadow,
+          rail: parseFloat(
+            getComputedStyle(el.querySelector('.player-card-strip')!).width
+          ),
+        };
+      })
+    );
+
+    const active = cards.filter((card) => card.active);
+    const resting = cards.filter((card) => !card.active);
+    expect(active).toHaveLength(1);
+    expect(resting.length).toBeGreaterThan(1);
+
+    const ACCENT = /rgb\(200, 65, 50\)|rgb\(213, 63, 50\)/;
+    for (const card of cards) {
+      expect(card.borderColor).not.toMatch(ACCENT);
+      expect(card.shadow).not.toMatch(ACCENT);
+    }
+
+    // A resting card in a grid is flat: nothing is tucked under anything.
+    expect(resting.map((card) => card.shadow)).toEqual(resting.map(() => 'none'));
+    expect(active[0].shadow).not.toBe('none');
+    expect(active[0].rail).toBeGreaterThan(resting[0].rail);
+    expect(active[0].background).not.toBe(resting[0].background);
   });
 
   test('insets the board evenly and clears the header', async ({ page }) => {

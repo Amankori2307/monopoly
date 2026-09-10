@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1564 unit tests, 232 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1565 unit tests, 234 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on **every push to
@@ -695,7 +695,33 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   player's holdings rendered as a tiny default browser pill - it read as a rendering artefact
   rather than as something to press. It is an `inset: 0` overlay over the whole card (so the tap is
   well past 44px) with a visible chevron, hidden on collapsed slivers because the stack's own
-  expand overlay owns the click there.
+  expand overlay owns the click there. `inset` resolves against the **padding box**, so the CARD is
+  what has to clear the floor - the phone card's `min-height` is `$control-tap` plus two hairlines,
+  and it must stay phone-only because a sliver is `max-height: 15px` and a min-height beats a
+  max-height outright.
+- **State is GROUND, WEIGHT and LIFT, and never an accent-coloured outline.** The board settled
+  this and nothing else was brought along: `board-active-outline` was deleted from the theme
+  contract and `board.spec.ts` fails on any accent ring, because a red rectangle around a thing
+  reads as an error rather than as emphasis. Three places kept one anyway - the player card (a 1px
+  accent border AND a 1px accent ring), the trade deed (3px, on top of an expansion that already
+  said it), and the trade's jail card (an accent border on top of "In the deal" AND an
+  `aria-pressed`). The player card's was the worst: at a four-handed table it outlined the **yellow**
+  player in red while their own yellow sat in the rail an inch away, so the highlight named nobody.
+  Where the thing has an owner the ground is now that owner's own colour at **`$owner-wash`**, the
+  same 14% the board's `.is-owned` squares use. Three channels rather than one on purpose: a wash of
+  an arbitrary token colour is not a constant weight, so the rail and the lift carry the state when
+  the colour cannot. `designSystem.guard.test.ts` fails on an accent border, outline or ring inside
+  any state selector - and it can only recognise a **state** by class name, so a new one belongs in
+  its list, the same contract `SOUND_FOR_CUE` holds.
+- **A colour that identifies is a LAYER; a colour that decorates may be a border.** The player
+  card's token colour was a 5px `border-left` set inline, which is the only reason `is-active`
+  setting `border-color` - all four sides - did not paint over whose card it was. `--player-color`
+  is published on the article and `.player-card-strip` draws it, so identity and state stop sharing
+  a channel and the rail can change weight without moving the text. That span had been in the DOM
+  with a background and **no rule anywhere** the whole time, so it drew nothing at all. Taking it
+  out of normal flow then cost a pixel: a grid turns a stray inline child into an anonymous row,
+  and the `row-gap` under it was the entire margin by which the card cleared the 44px floor. Only
+  the android sweep saw it.
 - **The property-action rail is back, and the objection that removed it is answered.** It listed
   Build/Sell/Mortgage/Redeem and every one of them needs a `spaceId`, which a rail does not have -
   so it went, and the site panel became the only way in. Now the rail offers the action and a
