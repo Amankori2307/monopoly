@@ -452,15 +452,15 @@ test("opens any player's holdings from any player card", async ({ page }) => {
 // started restyling a card it is only supposed to be positioning.
 // Mirrors $deed-card-width / $deed-card-height / $holdings-peek / $drawer-pad
 // in src/styles/abstracts/_tokens.scss.
-const DEED_CARD_WIDTH = 280;
-// Derived, not chosen: the card is `aspect-ratio: 3 / 5`, so the height is
-// always 5/3 of the width and the two cannot drift apart. Written out here as
+const DEED_CARD_WIDTH = 320;
+// Derived, not chosen: the card is `aspect-ratio: 4 / 5`, so the height is
+// always 5/4 of the width and the two cannot drift apart. Written out here as
 // the arithmetic rather than as a number, so this file says the same thing
 // $deed-card-height does.
-const DEED_CARD_RATIO = 5 / 3;
+const DEED_CARD_RATIO = 5 / 4;
 const DEED_CARD_HEIGHT = Math.round(DEED_CARD_WIDTH * DEED_CARD_RATIO);
 /** The card's other tier, below $breakpoint-mobile. Mirrors $deed-card-width-phone. */
-const PHONE_CARD_WIDTH = 200;
+const PHONE_CARD_WIDTH = 240;
 const HOLDINGS_PEEK = 78;
 /** The card's own 1px border, inside its width and height box. */
 const CARD_BORDER = 1;

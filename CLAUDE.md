@@ -722,8 +722,8 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   against the scale rather than inheriting it.
 - **The site card is ONE rectangle, at ONE ratio, and both axes are the rule.** Same width and
   same height for every square; a square with less to say leaves the bottom blank. The ratio is
-  **structural** - `.deed-card` sets `aspect-ratio: 3 / 5` and takes only a width per tier
-  (`$deed-card-width` 280, `$deed-card-width-phone` 200), so the height is derived and the two
+  **structural** - `.deed-card` sets `aspect-ratio: 4 / 5` and takes only a width per tier
+  (`$deed-card-width` 320, `$deed-card-width-phone` 240), so the height is derived and the two
   cannot drift. Every container is derived from the card and never the reverse: the drawer is one
   card plus gutters, the buy modal two cards plus a gap, the stacked peek clears the card's own
   head. Two failures to remember: a rule about ONE SIDE is half a rule - `board.spec.ts` checked

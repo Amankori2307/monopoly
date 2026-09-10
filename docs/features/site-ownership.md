@@ -46,7 +46,7 @@ UI supplied one.
 
 ## Key decisions
 
-- **The card is one rectangle at a 3:5 ratio**, sized per tier (280×467, and 200×333 below
+- **The card is one rectangle at a 4:5 ratio**, sized per tier (320×400, and 240×300 below
   `$breakpoint-mobile`) with the height derived from `aspect-ratio` rather than written down
   twice. Every kind pads out to it and leaves the bottom blank — see
   [design-system.md](../design-system.md#the-site-card-is-one-rectangle-at-one-ratio).

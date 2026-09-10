@@ -199,8 +199,8 @@ having a single card component: it must not resize as you move around the
 board.
 
 **The ratio is structural, not a second token.** The card sets
-`aspect-ratio: 3 / 5` and takes only a **width per tier** (`$deed-card-width`
-280, `$deed-card-width-phone` 200). The height is derived, so the two cannot
+`aspect-ratio: 4 / 5` and takes only a **width per tier** (`$deed-card-width`
+320, `$deed-card-width-phone` 240). The height is derived, so the two cannot
 drift apart, and adding a third tier keeps the ratio for free.
 `$deed-card-height` still exists because the auction panel and a selected
 trade deed read a height directly — but it is computed from the width, never
