@@ -174,6 +174,18 @@
   font-weight: t.$weight-bold;
 }
 
+// The second size modifier, for a button whose width is set by the grid track
+// it sits in - the action rail's five, sharing the width of a phone. Inline
+// padding has nothing to do there, and a descendant rule
+// (`.action-rail button { ... }`) is exactly the anonymous override the block
+// above retired five of. Height is untouched, as with .is-compact.
+.is-fill {
+  width: 100%;
+  padding-inline: 0;
+  @include t.text(small);
+  font-weight: t.$weight-bold;
+}
+
 // The appearance control names itself, until there is no room to.
 //
 // Not cosmetic: with the name, the sidebar's link row wrapped to a second line,

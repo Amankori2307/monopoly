@@ -4,13 +4,16 @@ import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { DicePair } from '../DicePair';
 import { useDiceRoller } from '../hooks/useDiceRoller';
 import { CommandErrorBanner } from '../panels/CommandErrorBanner';
+import { PlayerActionRail } from '../panels/PlayerActionRail';
 import { ToastStack } from '../overlays/ToastStack';
 import { PlayersPanel } from '../panels/PlayersPanel';
 import { TurnControls } from '../panels/TurnControls';
-import type { PlayerSummary } from '../panels/panels.interfaces';
+import type { PlayerActionRow, PlayerSummary } from '../panels/panels.interfaces';
 import type { Toast } from '../overlays/overlays.interfaces';
 
 interface GameSidebarProps {
+  /** The five buttons under the board. See PlayerActionRail. */
+  actionRail: PlayerActionRow[];
   bannerProps: Parameters<typeof CommandErrorBanner>[0];
   canEndTurn: boolean;
   canRoll: boolean;
@@ -18,6 +21,7 @@ interface GameSidebarProps {
   currencySymbol: string;
   onDismissToast: (id: string) => void;
   onEndTurn: () => void;
+  onPickAction: (row: PlayerActionRow) => void;
   onRoll: () => void;
   onSelectPlayer: (playerId: string) => void;
   soundEnabled: boolean;
@@ -37,6 +41,7 @@ interface GameSidebarProps {
  * is now the board, this, and the overlays.
  */
 export function GameSidebar({
+  actionRail,
   bannerProps,
   canEndTurn,
   canRoll,
@@ -44,6 +49,7 @@ export function GameSidebar({
   currencySymbol,
   onDismissToast,
   onEndTurn,
+  onPickAction,
   onRoll,
   onSelectPlayer,
   soundEnabled,
@@ -68,6 +74,14 @@ export function GameSidebar({
 
   return (
     <aside className="game-side" data-testid={TEST_IDS.gameSidebar}>
+      {/*
+        First in the column, and sticky to its top inside the phone frame -
+        the mirror of the footer being sticky to its bottom. So it stays under
+        the board while the players scroll past it, which is what makes it a
+        rail rather than another thing to scroll to.
+      */}
+      <PlayerActionRail onPick={onPickAction} rows={actionRail} />
+
       <PlayersPanel
         currencySymbol={currencySymbol}
         onSelectPlayer={onSelectPlayer}

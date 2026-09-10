@@ -180,6 +180,17 @@
     --token-size: clamp(9px, 3.1cqw, 18px);
   }
 
+  // Sticky to the TOP of the scroll region, the mirror of the footer being
+  // sticky to its bottom - so the rail stays under the board while the players
+  // scroll past it, rather than being another thing to scroll back up to.
+  .app-shell.is-game .action-rail {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding-bottom: t.$space-1;
+    background: var(--surface-app);
+  }
+
   // THE scroll container, and the only one: overscroll-behavior stops a flick
   // at the end of the list from dragging the frame behind it.
   .app-shell.is-game .game-side {

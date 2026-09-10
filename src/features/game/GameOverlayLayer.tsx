@@ -1,3 +1,4 @@
+import { ActionPickerSheet } from '../../components/game/overlays/ActionPickerSheet';
 import { ActivityDrawer } from '../../components/game/overlays/ActivityDrawer';
 import { DecisionModal } from '../../components/game/overlays/DecisionModal';
 import { DecisionSpectatorLayer } from '../../components/game/overlays/DecisionSpectatorLayer';
@@ -83,6 +84,23 @@ export function GameOverlayLayer({
         events={activeGame.history}
         isOpen={overlays.isActivityOpen}
         onClose={overlays.closeActivity}
+      />
+
+      {/*
+        Which of my sites? The rail offers an action with no spaceId; this is
+        where one comes from, and it lists only what the command will accept.
+        With exactly one solvent opponent, Trade skips it - there is no choice
+        to make - and opens the builder directly.
+      */}
+      <ActionPickerSheet
+        currencySymbol={currencySymbol}
+        onClose={overlays.closeActionPicker}
+        onPickOpponent={overlays.openTrade}
+        onPickSite={(command, spaceId) => {
+          commands.runPropertyCommand(command, spaceId);
+          overlays.closeActionPicker();
+        }}
+        row={overlays.actionPickerRow}
       />
 
       <PlayerDetailDrawer

@@ -1,6 +1,14 @@
-import type { PropertyActionDescriptor } from './playerActions.interfaces';
+import type {
+  EligibleSite,
+  PlayerActionOption,
+  PropertyActionDescriptor,
+} from './playerActions.interfaces';
 
-export type { PropertyActionDescriptor } from './playerActions.interfaces';
+export type {
+  EligibleSite,
+  PlayerActionOption,
+  PropertyActionDescriptor,
+} from './playerActions.interfaces';
 
 import {
   HOTEL_BUILD_LEVEL,
@@ -14,8 +22,13 @@ import type {
   PlayerId,
   SpaceId,
 } from '../types/game.interfaces';
-import { buildBlockedReason, getBuildLevel, sellBlockedReason } from './buildings.utils';
-import { groupHasBuildings, isOwnedBy } from './holdings.utils';
+import {
+  buildBlockedReason,
+  getBuildLevel,
+  getSaleRefund,
+  sellBlockedReason,
+} from './buildings.utils';
+import { getPlayerOwnedSpaces, groupHasBuildings, isOwnedBy } from './holdings.utils';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { nounsFor } from '../themes/nouns.utils';
 
@@ -43,6 +56,16 @@ import { nounsFor } from '../themes/nouns.utils';
  */
 export const buyBlockedReason = (buyerCash: number, price: number): string | null =>
   buyerCash < price ? 'Not enough cash to buy it' : null;
+
+/**
+ * The mortgage value plus its interest - what redeeming a site actually costs.
+ *
+ * Its own function because two callers need the same number and they must not
+ * disagree: the refusal is computed from it, and the picker sheet prints it.
+ */
+export const getRedemptionCost = (space: OwnableSpace): number =>
+  space.mortgageValue +
+  Math.ceil((space.mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
 
 /** Build and Sell mean a hotel at the top of the ladder, a house below it. */
 const commandFor = (action: PropertyAction, buildLevel: number): GameCommandType => {
@@ -112,10 +135,7 @@ const siteActionBlockedReason = (
   if (!isMortgaged) {
     return `This ${nouns.site} is not mortgaged`;
   }
-  const redemptionCost =
-    space.mortgageValue +
-    Math.ceil((space.mortgageValue * MORTGAGE_INTEREST_PERCENT) / 100);
-  return state.players[playerId].cash < redemptionCost
+  return state.players[playerId].cash < getRedemptionCost(space)
     ? 'Not enough cash to redeem it'
     : '';
 };
@@ -147,6 +167,137 @@ export const getSiteActions = (
       command: commandFor(action, buildLevel),
       isEnabled: disabledReason === '',
       disabledReason,
+    };
+  });
+};
+
+/**
+ * What the rail's five buttons say.
+ *
+ * One word each, because five of them share the width of a phone. The object
+ * the convention wants - "Build on a city" - is in the accessible name, where
+ * it costs no pixels; see PlayerActionRail.
+ */
+const RAIL_LABELS: Record<PropertyAction, string> = {
+  [PropertyAction.Build]: 'Build',
+  [PropertyAction.Sell]: 'Sell',
+  [PropertyAction.Mortgage]: 'Mortgage',
+  [PropertyAction.Redeem]: 'Redeem',
+};
+
+/**
+ * What one site is worth to one action, which is what the picker prints.
+ *
+ * Build and Sell read the site's own ladder, so a hotel and a house are
+ * different numbers on the same square.
+ */
+const amountFor = (
+  state: GameState,
+  space: OwnableSpace,
+  action: PropertyAction
+): number => {
+  if (action === PropertyAction.Mortgage) {
+    return space.mortgageValue;
+  }
+  if (action === PropertyAction.Redeem) {
+    return getRedemptionCost(space);
+  }
+  if (!isStreetSpace(space)) {
+    return 0;
+  }
+  if (action === PropertyAction.Sell) {
+    return getSaleRefund(state, space);
+  }
+  return getBuildLevel(state, space.id) === MAX_HOUSES_PER_SITE
+    ? space.hotelCost
+    : space.houseCost;
+};
+
+/**
+ * The refusal for a whole action, when no site can take it.
+ *
+ * Prefers the ONE reason when every holding gives the same one - "Already
+ * mortgaged" is more use than a summary of it - and falls back to a summary
+ * when they differ, because listing four different reasons on a button is not
+ * a refusal, it is a report. Shape per docs/conventions.md section 3d: a
+ * fragment, sentence case, no terminal stop, and the square in the edition's
+ * own word.
+ */
+const aggregateReason = (
+  themeId: string,
+  action: PropertyAction,
+  reasons: string[]
+): string => {
+  const nouns = nounsFor(themeId);
+  if (reasons.length === 0) {
+    return 'You do not own anything yet';
+  }
+  const distinct = [...new Set(reasons)];
+  if (distinct.length === 1) {
+    return distinct[0];
+  }
+  if (action === PropertyAction.Build) {
+    return `No ${nouns.site} of yours can take a building`;
+  }
+  if (action === PropertyAction.Sell) {
+    return 'No building of yours can be sold';
+  }
+  if (action === PropertyAction.Mortgage) {
+    return 'Nothing of yours can be mortgaged';
+  }
+  return 'No mortgage of yours can be redeemed';
+};
+
+/**
+ * The four property actions, asked across everything a player holds.
+ *
+ * The site panel asks the same questions of ONE square; this asks them of all
+ * of them, so a rail can offer an action without a spaceId and then supply one
+ * from the list. That is the objection that removed the old action rail - "every
+ * action it listed needs a spaceId, and the site panel is where one exists" -
+ * answered rather than worked around: the spaceId comes from the picker.
+ *
+ * Every predicate here is `getSiteActions`, unchanged. Nothing about what is
+ * legal is restated, so a live button and the command behind it cannot drift.
+ */
+export const getPlayerActionOptions = (
+  state: GameState,
+  playerId: PlayerId
+): PlayerActionOption[] => {
+  const owned = getPlayerOwnedSpaces(state, playerId);
+
+  return SITE_ACTIONS.map((action) => {
+    const sites: EligibleSite[] = [];
+    const reasons: string[] = [];
+
+    owned.forEach((space) => {
+      const descriptor = getSiteActions(state, space.id, playerId).find(
+        (candidate) => candidate.action === action
+      );
+      if (!descriptor) {
+        return;
+      }
+      if (descriptor.isEnabled) {
+        sites.push({
+          spaceId: space.id,
+          name: space.name,
+          command: descriptor.command,
+          amount: amountFor(state, space, action),
+        });
+        return;
+      }
+      reasons.push(descriptor.disabledReason);
+    });
+
+    return {
+      action,
+      // The bare verb. "Build house" vs "Build hotel" is a fact about a SITE,
+      // and the rail has not picked one yet - the picker's rows carry it.
+      label: RAIL_LABELS[action],
+      isEnabled: sites.length > 0,
+      disabledReason:
+        sites.length > 0 ? '' : aggregateReason(state.themeId, action, reasons),
+      sites,
     };
   });
 };

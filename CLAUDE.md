@@ -691,6 +691,18 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   rather than as something to press. It is an `inset: 0` overlay over the whole card (so the tap is
   well past 44px) with a visible chevron, hidden on collapsed slivers because the stack's own
   expand overlay owns the click there.
+- **The property-action rail is back, and the objection that removed it is answered.** It listed
+  Build/Sell/Mortgage/Redeem and every one of them needs a `spaceId`, which a rail does not have -
+  so it went, and the site panel became the only way in. Now the rail offers the action and a
+  picker sheet supplies the site, listing ONLY what the command will accept.
+  `getPlayerActionOptions` ([playerActions.utils.ts](src/domain/rules/playerActions.utils.ts))
+  maps the holder's spaces through `getSiteActions`, so **not one rule is restated** and a live
+  button is always a command that will succeed. The holder is `getAssetHolderId`, never the active
+  player - during a liquidation it is the debtor's holdings that are on offer. Every button is
+  always rendered and a dead one carries its refusal in `title`; a row that changes shape cannot
+  be learned, and a dead control with no reason is the Buy bug again. The aggregate refusal
+  prefers the ONE reason when the holdings agree, because "Already mortgaged" beats a summary of
+  itself. See [docs/features/property-actions.md](docs/features/property-actions.md).
 - **The phone HUD is two columns of players with the dice between them, and it is ONE dom.** The
   desktop fan and the phone grid are the same markup: the middle slot is a `<div>` among
   `<article>` cards, so it is invisible to every `:nth-of-type` rule the fan is built from. The

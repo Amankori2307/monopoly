@@ -913,11 +913,14 @@ test.describe('a tall phone', () => {
   test('shares the spare height above and below the player cards', async ({ page }) => {
     await startGame(page);
 
-    const board = await boxOf(page, '.board-card');
+    const rail = await boxOf(page, '.action-rail');
     const stack = await boxOf(page, '.player-stack-region');
     const footer = await boxOf(page, '.game-side-footer');
 
-    const above = stack.top - board.bottom;
+    // Measured from the RAIL, not the board: the rail is pinned under the
+    // board and is part of the fixed furniture, so counting its height as
+    // "spare space above the cards" would blow the window below by ~50px.
+    const above = stack.top - rail.bottom;
     const below = footer.top - stack.bottom;
 
     // Vacuity guard: with two players there IS spare height here. If the board

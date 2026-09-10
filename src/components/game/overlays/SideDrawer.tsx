@@ -9,6 +9,15 @@ interface SideDrawerProps {
   onClose: () => void;
   testId: string;
   title: string;
+  /**
+   * Rises from the bottom instead of the side, on a phone.
+   *
+   * A picker is answering "which one?" about something the player just tapped
+   * below the board, so it should come from where the thumb is. Above the
+   * phone tier it stays an ordinary right-hand drawer - which is why this is a
+   * class rather than a second component.
+   */
+  isSheet?: boolean;
   /** Wider panel, for content that needs the room - e.g. full title deeds. */
   wide?: boolean;
 }
@@ -21,6 +30,7 @@ export function SideDrawer({
   children,
   eyebrow,
   isOpen,
+  isSheet = false,
   onClose,
   testId,
   title,
@@ -34,7 +44,7 @@ export function SideDrawer({
 
   return (
     <div
-      className="drawer-backdrop"
+      className={`drawer-backdrop ${isSheet ? 'is-sheet-backdrop' : ''}`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -45,7 +55,7 @@ export function SideDrawer({
       <aside
         aria-labelledby={`${testId}-title`}
         aria-modal="true"
-        className={`side-drawer ${wide ? 'is-wide' : ''}`}
+        className={`side-drawer ${wide ? 'is-wide' : ''} ${isSheet ? 'is-sheet' : ''}`}
         data-testid={testId}
         role="dialog"
       >

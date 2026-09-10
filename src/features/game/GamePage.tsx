@@ -72,8 +72,8 @@ export function GamePage() {
     return <GameUnavailable loadError={loadError} />;
   }
 
-  const { findToken, summaries, selectedSummary, ownerMarks, sitePanel } =
-    selectBoardViewModels(activeGame, theme, overlays);
+  const { findToken, summaries, selectedSummary, ownerMarks, sitePanel, actionRail } =
+    selectBoardViewModels(activeGame, theme, overlays, viewer);
 
   return (
     // is-game is what turns the shell into a fixed app frame on a phone: board
@@ -118,10 +118,12 @@ export function GamePage() {
             // second roll then restarted the walk from wherever the token had
             // got to, cutting both legs short.
             canRoll={selectCanRollDice(activeGame, viewer) && !isMoving}
+            actionRail={actionRail}
             connectedSeatIds={connectedSeatIds}
             currencySymbol={currencySymbol}
             onDismissToast={commands.dismissToast}
             onEndTurn={commands.endTurn}
+            onPickAction={overlays.openActionPicker}
             onRoll={commands.rollDice}
             onSelectPlayer={overlays.openPlayer}
             soundEnabled={soundEnabled}

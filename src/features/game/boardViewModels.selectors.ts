@@ -2,7 +2,9 @@ import { getAssetHolderId } from '../../domain/rules/actor.utils';
 import type { GameState, ThemeConfig } from '../../domain/types/game.interfaces';
 import { selectSpaceOwnerMarks } from './boardOwnership.utils';
 import { makeTokenFinder, selectPlayerSummaries } from './gameView.selectors';
+import { selectActionRail } from './playerActions.selectors';
 import { selectSitePanel } from './sitePanel.utils';
+import type { Viewer } from '../multiplayer/viewer.interfaces';
 import type { UseGameOverlaysResult } from './hooks/useGameOverlays';
 
 /**
@@ -16,7 +18,8 @@ import type { UseGameOverlaysResult } from './hooks/useGameOverlays';
 export const selectBoardViewModels = (
   game: GameState,
   theme: ThemeConfig | undefined,
-  overlays: UseGameOverlaysResult
+  overlays: UseGameOverlaysResult,
+  viewer: Viewer
 ) => {
   const findToken = makeTokenFinder(theme);
   const summaries = selectPlayerSummaries(game, theme);
@@ -35,5 +38,8 @@ export const selectBoardViewModels = (
     // raises the cash, and a collect-from-each card can bill someone whose turn
     // it is not. See actor.utils.
     sitePanel: selectSitePanel(game, getAssetHolderId(game), selectedSpace, ownerMarks),
+    // Same actor, same reason: the rail offers the debtor's holdings during a
+    // liquidation, not the active player's.
+    actionRail: selectActionRail(game, viewer),
   };
 };

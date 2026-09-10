@@ -46,6 +46,7 @@ const turn: GameState['turn'] = {
 const renderSidebar = (overrides: Partial<Parameters<typeof GameSidebar>[0]> = {}) =>
   renderWithProviders(
     <GameSidebar
+      actionRail={[]}
       bannerProps={{ message: null, onDismiss: vi.fn() }}
       canEndTurn
       canRoll
@@ -53,6 +54,7 @@ const renderSidebar = (overrides: Partial<Parameters<typeof GameSidebar>[0]> = {
       currencySymbol="₹"
       onDismissToast={vi.fn()}
       onEndTurn={vi.fn()}
+      onPickAction={vi.fn()}
       onRoll={vi.fn()}
       onSelectPlayer={vi.fn()}
       soundEnabled

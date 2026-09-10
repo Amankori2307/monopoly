@@ -81,19 +81,25 @@ test('docks the dice beside the board with no panel background', async ({ page }
 
 // Players sit at the top of the sidebar and the turn controls at the bottom,
 // with only the middle scrolling - mirroring the reference layout.
-test('pins players to the top and turn controls to the bottom', async ({ page }) => {
+// The claim is that the sidebar starts level with the board and its controls
+// end at the bottom, with everything between them in order. The action rail is
+// the column's first child now, so it is the rail that has to be level - the
+// players sit directly under it.
+test('pins the sidebar to the top and turn controls to the bottom', async ({ page }) => {
   await startGame(page);
 
-  const [board, players, controls] = await Promise.all([
+  const [board, rail, players, controls] = await Promise.all([
     page.getByTestId(TEST_IDS.boardGrid).boundingBox(),
+    page.getByTestId(TEST_IDS.actionRail).boundingBox(),
     page.getByTestId(TEST_IDS.playersPanel).boundingBox(),
     page.getByTestId(TEST_IDS.turnControls).boundingBox(),
   ]);
-  if (!board || !players || !controls) {
+  if (!board || !rail || !players || !controls) {
     throw new Error('Layout regions have no bounding box');
   }
 
-  expect(Math.abs(players.y - board.y)).toBeLessThanOrEqual(4);
+  expect(Math.abs(rail.y - board.y)).toBeLessThanOrEqual(4);
+  expect(players.y).toBeGreaterThanOrEqual(rail.y + rail.height - 1);
   expect(controls.y).toBeGreaterThan(players.y + players.height);
   expect(players.x).toBeGreaterThanOrEqual(board.x + board.width - 1);
 });
