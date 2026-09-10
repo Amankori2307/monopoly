@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1564 unit tests, 231 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1564 unit tests, 232 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on every push and PR, so the
@@ -720,6 +720,15 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   sweep on all five routes - so pin `min-width` as well as `min-height`; and a text field under
   16px makes **iOS zoom the whole page on focus**, so `.text-input` pins `$input-font-phone`
   against the scale rather than inheriting it.
+- **`width: 100%` on the deed is right only where a WRAPPER sets the width.** Below
+  `$breakpoint-mobile` `.deed-card` is `width: 100%`, which the holdings drawer and the trade
+  stack both want - they set the width themselves. Everywhere else it resolves against whatever
+  the parent happens to be: `max-content` in the title-deed modal (~246px) and a `1fr` grid track
+  in the buy and auction decisions (302px). One card, two widths, in the two places a player
+  compares it with the board. The decisions size it by `max-content` with a 100% ceiling now.
+  `mobile.spec.ts`'s "shows the deed at one width" is the phone half of what `overlays.spec.ts`
+  has always asserted on a desktop - and it checks the card is narrower than its column, because
+  "the two match" would still pass if both went full width.
 - **The phone column packs UP, and the room is at the bottom.** It used to share the spare height
   evenly above and below the player cards, which was right when the stack was the only thing
   between the board and the bar. The action rail changed that: halving the space put a 72px hole

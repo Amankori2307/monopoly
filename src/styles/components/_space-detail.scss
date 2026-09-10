@@ -398,6 +398,24 @@
     --deed-pad: #{t.$deed-card-pad-tight};
   }
 
+  // The deed sizes to its CONTENT in a decision, not to the column.
+  //
+  // `.deed-card` is `width: 100%` on a phone, which is right where a wrapper
+  // sets the width - the holdings drawer and the trade stack both do. In the
+  // title-deed modal it resolves against a `max-content` parent and comes out
+  // at its natural ~246px. In the buy and auction decisions the parent is a
+  // `1fr` grid track, so the very same declaration made it 302: the same card
+  // at two different widths, in the two places a player sees it side by side
+  // with the board.
+  //
+  // max-content with a 100% ceiling gives one answer in all of them, and the
+  // long-named boards still wrap rather than overflow.
+  .buy-decision .deed-card,
+  .auction-decision .deed-card {
+    width: max-content;
+    max-width: 100%;
+  }
+
   // The band is decoration with a job - it says which colour set this is - and
   // it does that job at 10px as well as at 14.
   .deed-band {

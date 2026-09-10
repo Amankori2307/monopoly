@@ -979,6 +979,66 @@ test.describe('an Android phone', () => {
     expect(measured?.text).toMatch(/With hotel/i);
   });
 
+  /**
+   * The deed is one object, at one size, wherever a phone shows it.
+   *
+   * overlays.spec.ts asserts exactly this on a desktop - "renders the site
+   * card at one fixed size in the drawer and the modal" - and nothing said it
+   * on a phone, where the card has no fixed size at all. It drifted: below
+   * $breakpoint-mobile `.deed-card` is `width: 100%`, which is right where a
+   * WRAPPER sets the width (the holdings drawer, the trade stack) but resolves
+   * against whatever the parent happens to be everywhere else. In the
+   * title-deed modal that parent is `max-content` and gave ~246px; in the buy
+   * decision it is a `1fr` grid track and gave 302. Same card, two widths, in
+   * the two places a player sees it against the board.
+   */
+  test('shows the deed at one width, in the modal and in a decision', async ({
+    page,
+  }) => {
+    await startGame(page);
+
+    // The title-deed modal, opened from the board.
+    await page.getByRole('button', { name: /View details for Bhopal/ }).click();
+    await expect(page.getByTestId(TEST_IDS.spaceDetailCard)).toBeVisible();
+    const fromBoard = await page
+      .locator('.deed-card')
+      .evaluate((el) => el.getBoundingClientRect().width);
+    await page.getByRole('button', { name: 'Close space details' }).click();
+
+    // The same square's deed, inside a buy decision.
+    for (let step = 0; step < 80; step += 1) {
+      if (
+        await page
+          .locator('.buy-decision')
+          .isVisible()
+          .catch(() => false)
+      )
+        break;
+      if ((await advanceGame(page, { declineBuys: false })) === 'none') break;
+    }
+    await expect(page.locator('.buy-decision')).toBeVisible();
+    const inDecision = await page
+      .locator('.buy-decision .deed-card')
+      .evaluate((el) => el.getBoundingClientRect().width);
+
+    // Vacuity guard: a card that measured zero in both places would pass.
+    expect(fromBoard).toBeGreaterThan(100);
+
+    // The sharp one, and the exact shape of the bug: the deed is sized by its
+    // CONTENT, not by the column it was dropped into.
+    const column = await page
+      .locator('.buy-decision')
+      .evaluate((el) => el.getBoundingClientRect().width);
+    expect(inDecision).toBeLessThan(column - 8);
+
+    // And the two are the same object. Not to the pixel: these are two
+    // different squares - the second is whatever the dice found - and
+    // max-content means a longer name or a wider rent label legitimately
+    // measures a little differently. The bug was 56px; this catches it with
+    // room for the content to vary.
+    expect(Math.abs(fromBoard - inDecision)).toBeLessThanOrEqual(24);
+  });
+
   test('keeps the buy button on screen at the tap floor', async ({ page }) => {
     await startGame(page);
     test.skip(!(await playToStreetPurchase(page)), 'No street came up for sale.');

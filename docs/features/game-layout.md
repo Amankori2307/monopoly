@@ -64,7 +64,13 @@ board it covers_ — and the gap between a card and the dice was **0px**.
   nothing: name, price, mortgage value, all seven rent tiers and the building
   cost are all still on it. Below `$breakpoint-mobile` it is already
   `width: 100%; height: auto`, so this is a phone tier and the desktop card's
-  exactly-pinned 340×392 never moves. Where the height went: the rent rows'
+  exactly-pinned 340×392 never moves. **`width: 100%` is right only where a
+  wrapper sets the width** — the holdings drawer and the trade stack do; a
+  decision's `1fr` grid track does not, and the same declaration gave 302px
+  there against 246 in the title-deed modal. The decisions size the card by
+  `max-content` with a 100% ceiling, so it is one object at one width wherever
+  a phone shows it, which is what `overlays.spec.ts` already asserts on a
+  desktop. Where the height went: the rent rows'
   padding (8px × 7 rows), the "Title deed" eyebrow and the "Rent schedule"
   heading — both labelling something the colour band, the name and the rows
   already say — and a rung off the title. **Hiding the eyebrow moved the stats
