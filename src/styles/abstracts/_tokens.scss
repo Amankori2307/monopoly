@@ -11,6 +11,8 @@
 // CSS, so an @error in a partial nothing @uses is never evaluated. _scale.scss
 // guards its own grid and its own layer order at compile time, and both guards
 // were silently inert until this line put the file in everyone's graph.
+@use 'sass:math';
+
 @forward 'scale';
 // @use as well as @forward: a forward exposes the scale to this file's
 // importers, not to this file, and the gap tokens below are defined from it.
@@ -66,27 +68,35 @@ $board-color-bar: clamp(5px, 2.2cqw, 12px);
 // leaves the bottom blank, so the card never resizes as you move around the
 // board.
 //
-// **2:3, and the height is DERIVED.** A printed title deed is a tall
+// **3:5, and the height is DERIVED.** A printed title deed is a tall
 // rectangle, and the ratio is the thing that must not drift, so it is not
-// written down twice: `.deed-card` sets `aspect-ratio: 2 / 3` and takes only a
+// written down twice: `.deed-card` sets `aspect-ratio: 3 / 5` and takes only a
 // width. Changing a width changes its height by construction, and no rule can
-// set one without the other.
+// set one without the other - which is why moving from 2:3 to 3:5 was one
+// declaration and this one number.
 //
 // A tier is a width. Two of them cover every supported viewport: 200 fits the
 // tightest container at a 320px window (the holdings drawer, 263px of content
 // box) and 280 fits at 620. Add a third and the ratio still holds for free.
 $deed-card-width: 280px;
-// 200 x 300 on a 360px phone, where the board is 336: the card is about half
-// the board's area and every fact still fits. Measured at 200 wide, the
-// tallest street on any edition - "North Carolina Avenue", seven rows plus the
-// building-cost footer - wants 269px, so there is 31px of slack.
+// 200 x 333 on a 360px phone, where the board is 336. Measured at 200 wide,
+// the tallest content on any edition - "North Carolina Avenue", seven rent
+// tiers plus the building-cost footer - wants 263px, so there is 70px of
+// slack and the shorter kinds simply leave more of the bottom blank.
 $deed-card-width-phone: 200px;
+// And a third tier for the narrowest device the app supports. At 3:5 the
+// 200px card is 333 tall, which pushed the buy decision 21px past its modal
+// at 320x568 - the taller ratio ate the headroom the 2:3 card had. 180 gives
+// back 33px of that and still clears its own content: the tallest street
+// wraps to 284px below 184 wide, which leaves 16px inside a 300px box.
+$deed-card-width-narrow: 180px;
 // Derived, never independent. This exists only because .auction-decision and
 // .trade-deed read a height directly; it is the same number aspect-ratio
 // produces, and it must stay that way.
-$deed-card-ratio: 1.5;
+$deed-card-ratio: math.div(5, 3);
 $deed-card-height: $deed-card-width * $deed-card-ratio;
 $deed-card-height-phone: $deed-card-width-phone * $deed-card-ratio;
+$deed-card-height-narrow: $deed-card-width-narrow * $deed-card-ratio;
 // The colour strip bleeds to the card's top and side edges by negating this
 // padding, so the two must stay derived from one value - which is why the card
 // publishes it as --deed-pad rather than either site reading the variable.
@@ -218,6 +228,10 @@ $breakpoint-mobile: 620px;
 // The board at this width gives roughly 30px street cells, and a space name
 // cannot be set in one at any size - see components/_board.scss.
 $breakpoint-phone: 560px;
+// Narrower than any phone the app is designed around, and wider than the 320
+// floor the reset commits to - so it catches a 320px window and leaves a 360
+// one alone. `below()` is inclusive, which is why this is 340 and not 360.
+$breakpoint-narrow: 340px;
 // A viewport this short is a phone or a small tablet held sideways. It is a
 // HEIGHT threshold on purpose: width cannot tell a landscape phone from a small
 // desktop window, and it is the height that breaks the board. Used only by the

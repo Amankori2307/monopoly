@@ -995,9 +995,9 @@ test.describe('an Android phone', () => {
     // Vacuity guard: a card that measured zero everywhere would be uniform.
     expect(width).toBeGreaterThan(100);
 
-    // 2:3, the same ratio the desktop card holds. Structural, not a token
+    // 3:5, the same ratio the desktop card holds. Structural, not a token
     // pair - the card sets `aspect-ratio` and takes only a width per tier.
-    expect(height / width).toBeCloseTo(1.5, 2);
+    expect(height / width).toBeCloseTo(5 / 3, 2);
 
     // And the box is big enough for the fullest square on it. Uniform is only
     // correct if the tallest content still fits: the alternative is a card

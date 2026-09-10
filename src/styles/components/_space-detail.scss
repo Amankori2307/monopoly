@@ -72,11 +72,12 @@
   // Positions the mortgage watermark, which is struck across the whole card.
   position: relative;
   width: var(--deed-width);
-  // 2:3, and the height is never written down beside it. A printed title deed
+  // 3:5, and the height is never written down beside it. A printed title deed
   // is a tall rectangle; the ratio is the thing that must not drift, so it is
   // structural rather than a second token to keep in step. A tier changes the
-  // width and the height follows by construction.
-  aspect-ratio: 2 / 3;
+  // width and the height follows by construction - which is why moving from
+  // 2:3 to 3:5 was this line and one token.
+  aspect-ratio: 3 / 5;
   height: auto;
   padding: var(--deed-pad);
   overflow: hidden;
@@ -499,5 +500,19 @@
   // still makes them read as a table.
   .rent-schedule div {
     padding: 0;
+  }
+}
+
+// The narrowest device gets a third tier: same rectangle, same ratio, one
+// step smaller. See $deed-card-width-narrow for what it buys.
+//
+// LAST, and that is not tidiness. `below(340)` and `below(620)` both match a
+// 320px window at the same specificity, so source order is the entire
+// difference between this applying and being silently overridden back to the
+// 200px tier by the block above it.
+@include m.below(t.$breakpoint-narrow) {
+  .space-detail-backdrop,
+  .deed-card {
+    --deed-width: #{t.$deed-card-width-narrow};
   }
 }

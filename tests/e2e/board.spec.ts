@@ -586,11 +586,11 @@ test('renders every space card at the same size', async ({ page }) => {
 
   expect(new Set(Object.values(sizes)).size, JSON.stringify(sizes)).toBe(1);
 
-  // And that one size is 2:3. The ratio is structural - `aspect-ratio` on the
+  // And that one size is 3:5. The ratio is structural - `aspect-ratio` on the
   // card, with only a width per tier - so this is the assertion that says the
   // structure is still doing its job.
   const [width, height] = Object.values(sizes)[0].split('x').map(Number);
-  expect(height / width).toBeCloseTo(1.5, 2);
+  expect(height / width).toBeCloseTo(5 / 3, 2);
 });
 
 // Tokens are drawn over the board, not inside the space cells. In the flow an

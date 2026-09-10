@@ -453,11 +453,12 @@ test("opens any player's holdings from any player card", async ({ page }) => {
 // Mirrors $deed-card-width / $deed-card-height / $holdings-peek / $drawer-pad
 // in src/styles/abstracts/_tokens.scss.
 const DEED_CARD_WIDTH = 280;
-// Derived, not chosen: the card is `aspect-ratio: 2 / 3`, so the height is
-// always 1.5x the width and the two cannot drift apart. Written out here as
+// Derived, not chosen: the card is `aspect-ratio: 3 / 5`, so the height is
+// always 5/3 of the width and the two cannot drift apart. Written out here as
 // the arithmetic rather than as a number, so this file says the same thing
 // $deed-card-height does.
-const DEED_CARD_HEIGHT = DEED_CARD_WIDTH * 1.5;
+const DEED_CARD_RATIO = 5 / 3;
+const DEED_CARD_HEIGHT = Math.round(DEED_CARD_WIDTH * DEED_CARD_RATIO);
 /** The card's other tier, below $breakpoint-mobile. Mirrors $deed-card-width-phone. */
 const PHONE_CARD_WIDTH = 200;
 const HOLDINGS_PEEK = 78;
@@ -626,7 +627,7 @@ test('steps the card down a tier on a narrow screen', async ({ page }) => {
 
   // The phone tier, exactly - not "something that fits".
   expect(Math.round(box.width)).toBe(PHONE_CARD_WIDTH);
-  expect(Math.round(box.height)).toBe(PHONE_CARD_WIDTH * 1.5);
+  expect(Math.round(box.height)).toBe(Math.round(PHONE_CARD_WIDTH * DEED_CARD_RATIO));
 
   // No sideways scroll: the page never grows past the viewport.
   const overflow = await page.evaluate(
