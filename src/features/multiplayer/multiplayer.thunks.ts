@@ -206,7 +206,46 @@ export const claimLobbySeat =
   ) => {
     const config = requireConfig();
     const deviceId = readDeviceId();
-    const existing = getState().seat.seats;
+
+    /**
+     * The table as the SERVER has it, never as this device last saw it.
+     *
+     * This read is the whole of a real bug. `/join` claims a seat on the way
+     * through, and it reaches that click having done nothing but resolve a code
+     * to a game id - so `state.seat.seats` was `[]`, `nextFreeSeatId` answered
+     * `player-1`, and every guest asked for the HOST's chair. Which is exactly
+     * the race migration 0003 was written for, arriving by a new route: before
+     * 0005 it deleted the host, and after it the server refuses and the guest
+     * silently never appears.
+     *
+     * The lobby had a guard for this - `isLoaded`, which offered nothing until
+     * the table had been read - and it did not come with the claim when the
+     * claim moved to the join screen. A read cannot be skipped here: this is
+     * the one place a device decides something about seats it does not own.
+     */
+    const table = (await rpc.fetchGame(config, {
+      gameId: input.gameId,
+      joinCode: input.joinCode,
+    })) as { seats: LobbySeat[]; phase: string; hostSeatId?: string | null } | null;
+
+    if (!table) {
+      dispatch(setLobbyError(TABLE_MESSAGES.tableGone));
+      return;
+    }
+    if (table.phase !== 'lobby') {
+      // It started while this device was on its way in. Not an error: the
+      // caller navigates into the game, where a spectator is a valid thing.
+      dispatch(
+        setLobby({
+          seats: table.seats ?? [],
+          phase: table.phase,
+          hostSeatId: table.hostSeatId ?? null,
+        })
+      );
+      return;
+    }
+
+    const existing = table.seats ?? [];
     // A device already at the table is moving, not arriving.
     const mine = existing.find((seat) => seat.deviceId === deviceId);
     const seatId =
@@ -214,7 +253,8 @@ export const claimLobbySeat =
       nextFreeSeatId(existing.filter((seat) => seat.deviceId !== deviceId));
 
     if (!seatId) {
-      dispatch(setLobbyError(TABLE_MESSAGES.tableFull));
+      dispatch(setLobby({ seats: existing, phase: 'lobby' }));
+      dispatch(setStartRefusal(TABLE_MESSAGES.tableFull));
       return;
     }
 

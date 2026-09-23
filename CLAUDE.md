@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1569 unit tests, 236 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1573 unit tests, 236 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on **every push to
@@ -414,6 +414,16 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   of all four old catalogs, because by the time it runs the live code has none of those ids. Freezing
   them from memory got three of the four editions wrong, and the fallback to seat order would have
   produced the right answer often enough to hide it - `git show HEAD:` is the source, not recall.
+- **A claim decides something about seats this device does not own, so it reads the table FIRST.**
+  `claimLobbySeat` computed its seat id from `state.seat.seats`, which was right while the only
+  caller was the lobby - the lobby had already fetched, and `isLoaded` refused to offer the button
+  until it had. Moving the claim to `/join` left that guard behind: the join screen reaches the
+  click having done nothing but resolve a code to a game id, so the array was `[]`, `nextFreeSeatId`
+  answered `player-1`, and **every guest asked for the host's chair**. That is the 0003 race by a new
+  route - before 0005 it deleted the host, and after 0005 the server refused and the guest silently
+  never appeared, which is how it was reported. `multiplayer.thunks.test.ts` asserts the fetch comes
+  first, and the payload, because the symptom is invisible on the client: the refusal is the
+  server's.
 - **Joining a table IS taking a seat at it.** `/join` took a code and the lobby then asked for a name
   and a piece - while an invite LINK skipped `/join` and asked the same two questions somewhere
   else. One door: `/join` takes the code and the name together and claims the seat, and the invite
