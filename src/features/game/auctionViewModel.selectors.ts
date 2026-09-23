@@ -1,3 +1,4 @@
+import { colorForId } from '../../domain/themes/playerColors.constants';
 import type {
   AuctionBidderViewModel,
   AuctionDecisionViewModel,
@@ -12,7 +13,6 @@ import type {
   PlayerId,
 } from '../../domain/types/game.interfaces';
 import type { KeyedBidInput } from './auctionBid.interfaces';
-import type { TokenFinder } from './gameView.interfaces';
 
 /**
  * The auction panel's view model.
@@ -26,24 +26,19 @@ import type { TokenFinder } from './gameView.interfaces';
  * look at it.
  */
 
-const bidderViewModel = (
-  game: GameState,
-  findToken: TokenFinder,
-  playerId: PlayerId
-): AuctionBidderViewModel => {
+const bidderViewModel = (game: GameState, playerId: PlayerId): AuctionBidderViewModel => {
   const player = game.players[playerId];
 
   return {
     playerId,
     name: player?.name ?? '',
-    token: player ? findToken(player.tokenId) : undefined,
+    color: player ? colorForId(player.colorId) : '',
     cash: player?.cash ?? 0,
   };
 };
 
 export const selectAuctionDecision = (
-  game: GameState,
-  findToken: TokenFinder
+  game: GameState
 ): AuctionDecisionViewModel | null => {
   const auction = game.auctionState;
   if (!auction) {
@@ -57,12 +52,12 @@ export const selectAuctionDecision = (
   const byId = new Map(
     auction.activeBidderOrder.map((playerId) => [
       playerId,
-      bidderViewModel(game, findToken, playerId),
+      bidderViewModel(game, playerId),
     ])
   );
   // A bidder who has since left the game still owns their line in the log.
   const bidderFor = (playerId: PlayerId): AuctionBidderViewModel =>
-    byId.get(playerId) ?? bidderViewModel(game, findToken, playerId);
+    byId.get(playerId) ?? bidderViewModel(game, playerId);
 
   const ledger: AuctionLedgerLineViewModel[] = auction.ledger.map((entry) => ({
     kind: entry.kind,

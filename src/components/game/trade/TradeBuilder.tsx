@@ -150,7 +150,7 @@ function TradeColumn({
       <p className="trade-column-head">
         {/* The token colour is theme data, so it is inline here the same way it
             is on the board and the player card. */}
-        <span className="trade-column-dot" style={{ backgroundColor: party.color }} />
+        <span className="player-dot" style={{ backgroundColor: party.color }} />
         {heading} — {party.name}
       </p>
       <p className="trade-column-cash">Has {formatMoney(party.cash, currencySymbol)}</p>

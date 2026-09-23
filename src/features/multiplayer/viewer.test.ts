@@ -20,10 +20,7 @@ const game = (over: Partial<GameState> = {}): GameState => ({
   ...createGameState(
     {
       name: 'Viewer Test',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
       themeId: 'india-edition',
       createdAt: '2026-09-01T00:00:00.000Z',
     },

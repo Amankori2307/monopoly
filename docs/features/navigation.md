@@ -16,8 +16,8 @@ joining one with a code.
 App.tsx  (HashRouter)
   /            ChooserPage      how are you playing, plus Continue when there is a save
   /new         NewGamePage      the setup form + the saved games
-  /host        HostPage         host name/token, ruleset, Speed Die -> opens a table
-  /join        JoinPage         a six-character code -> a lobby, or straight into a game
+  /host        HostPage         host name, ruleset, Speed Die -> opens a table
+  /join        JoinPage         a code AND a name -> seated in a lobby, or into a game
   /rules       RulesPage
   /game/:id    GamePage
   /lobby/:id   LobbyPage

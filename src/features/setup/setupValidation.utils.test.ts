@@ -1,48 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import { SETUP_ERRORS } from './setup.constants';
+import type { SetupDraft } from './setup.interfaces';
 import { trimPlayerNames, validateSetupDraft } from './setupValidation.utils';
 
-const draft = (playerNames: string[], playerTokens: string[]) => ({
-  playerNames,
-  playerTokens,
-});
+const draft = (playerNames: string[]): SetupDraft => ({ playerNames });
 
 describe('validateSetupDraft', () => {
-  it('accepts distinct names and tokens', () => {
-    expect(
-      validateSetupDraft(draft(['Asha', 'Vikram'], ['elephant', 'train']))
-    ).toBeNull();
+  it('accepts distinct names', () => {
+    expect(validateSetupDraft(draft(['Asha', 'Vikram']))).toBeNull();
   });
 
   it('rejects an empty name', () => {
-    expect(validateSetupDraft(draft(['Asha', ''], ['elephant', 'train']))).toBe(
-      SETUP_ERRORS.emptyName
-    );
+    expect(validateSetupDraft(draft(['Asha', '']))).toBe(SETUP_ERRORS.emptyName);
   });
 
   it('rejects a whitespace-only name', () => {
-    expect(validateSetupDraft(draft(['Asha', '   '], ['elephant', 'train']))).toBe(
-      SETUP_ERRORS.emptyName
-    );
+    expect(validateSetupDraft(draft(['Asha', '   ']))).toBe(SETUP_ERRORS.emptyName);
   });
 
   it('rejects duplicate names regardless of case or padding', () => {
-    expect(validateSetupDraft(draft(['Asha', ' asha '], ['elephant', 'train']))).toBe(
+    expect(validateSetupDraft(draft(['Asha', ' asha ']))).toBe(
       SETUP_ERRORS.duplicateName
     );
   });
 
-  it('rejects duplicate tokens', () => {
-    expect(validateSetupDraft(draft(['Asha', 'Vikram'], ['train', 'train']))).toBe(
-      SETUP_ERRORS.duplicateToken
-    );
-  });
-
-  it('reports the empty name before the duplicate token', () => {
-    expect(validateSetupDraft(draft(['', ''], ['train', 'train']))).toBe(
-      SETUP_ERRORS.emptyName
-    );
-  });
+  // "rejects duplicate tokens" and "reports the empty name before the
+  // duplicate token" were here. Nobody picks a colour now, so the state they
+  // refused cannot be built - SETUP_ERRORS.duplicateToken is gone with them.
 });
 
 describe('trimPlayerNames', () => {

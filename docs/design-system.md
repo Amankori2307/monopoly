@@ -87,6 +87,18 @@ made a dark appearance possible without a second shadow ladder per theme.
 There is deliberately **no button-lift rung**. `$emboss-press` was one, and the
 button's hover was its only reader — see the control surface above.
 
+### A player, as a mark
+
+A player's colour IS their identity: the board piece is a plain coloured disc,
+and there is no emoji or shape behind it. So the same `.player-dot` appears
+wherever a name needs one — the trade columns, the deed panel's owner line, the
+auction ledger and the setup form — at `$player-dot-size`, round, and one of the
+documented exceptions to the sharp system because it is a **piece** rather than a
+surface.
+
+It became a utility on its third copy. There were two, nine and ten pixels
+across with one carrying a ring, differing by a pixel nobody had decided.
+
 ### State — ground, weight and lift
 
 **Selected, active and current are never drawn as an accent-coloured outline.**

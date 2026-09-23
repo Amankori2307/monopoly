@@ -1,12 +1,15 @@
-import type { TokenId } from '../../domain/types/game.interfaces';
-
 /** One seat at a table that has not started yet. */
 export interface LobbySeat {
   /** Becomes the player's id when the game is created. */
   seatId: string;
   name: string;
-  tokenId: TokenId;
-  /** Which device holds it. A reconnect from a new device changes this. */
+  /**
+   * Which device holds it. A reconnect from a new device changes this.
+   *
+   * Returned to every code-holder by `fetch_game`, which is why it cannot be
+   * the credential that proves you opened the table - see the host secret in
+   * seatClaim.utils.
+   */
   deviceId: string;
   claimedAt: string;
 }
@@ -20,9 +23,12 @@ export interface LobbySeat {
  * `state` jsonb either, which would be more robust but means new reads and
  * writes on the one code path that cannot be tested locally.
  *
- * The edition matters to a guest, not just to the host: seat tokens come from
- * `theme.tokenCatalog`, so a guest picking a token from the wrong edition sends
- * an id the host's board has no piece for.
+ * Only the HOST's own URL carries them now, and both halves of that changed in
+ * one go: the edition used to matter to a guest too, because seat tokens came
+ * from `theme.tokenCatalog` and a guest on the wrong edition sent an id the
+ * host's board had no piece for - the palette is shared, so that cannot happen
+ * - and only the host can start a game, so nobody else needs to know what kind
+ * of game it will be. The invite link is `#/join?code=…` and carries neither.
  */
 export interface TableOptions {
   themeId: string;

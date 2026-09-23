@@ -25,6 +25,16 @@ interface SeatSliceState {
   phase: string | null;
   /** Set when a lobby cannot be reached, or the code is wrong. */
   lobbyError: string | null;
+  /** Which seat opened the table, from the row. Null on a row with no host. */
+  hostSeatId: string | null;
+  /**
+   * The server's own refusal of a start, shown beside the button.
+   *
+   * Deliberately NOT `lobbyError`: LobbyPage treats any non-null lobbyError as
+   * fatal and returns early with "That table is not there", which would hide a
+   * table that is demonstrably there behind a refusal about who may start it.
+   */
+  startRefusal: string | null;
   /**
    * Bumped every time the live session is replaced.
    *
@@ -46,6 +56,8 @@ const initialState: SeatSliceState = {
   seats: [],
   phase: null,
   lobbyError: null,
+  hostSeatId: null,
+  startRefusal: null,
   sessionEpoch: 0,
 };
 
@@ -68,10 +80,27 @@ const slice = createSlice({
     setJoinCode(state, action: PayloadAction<string | null>) {
       state.joinCode = action.payload;
     },
-    setLobby(state, action: PayloadAction<{ seats: LobbySeat[]; phase: string | null }>) {
+    setLobby(
+      state,
+      action: PayloadAction<{
+        seats: LobbySeat[];
+        phase: string | null;
+        hostSeatId?: string | null;
+      }>
+    ) {
       state.seats = action.payload.seats;
       state.phase = action.payload.phase;
       state.lobbyError = null;
+      // A fresh read of the table clears a stale refusal too, so the next
+      // doorbell heals the lobby on its own rather than leaving yesterday's
+      // sentence under a button that now works.
+      state.startRefusal = null;
+      if (action.payload.hostSeatId !== undefined) {
+        state.hostSeatId = action.payload.hostSeatId;
+      }
+    },
+    setStartRefusal(state, action: PayloadAction<string | null>) {
+      state.startRefusal = action.payload;
     },
     setLobbyError(state, action: PayloadAction<string | null>) {
       state.lobbyError = action.payload;
@@ -87,6 +116,8 @@ const slice = createSlice({
       state.seats = [];
       state.phase = null;
       state.lobbyError = null;
+      state.hostSeatId = null;
+      state.startRefusal = null;
       state.connection = ConnectionState.Offline;
     },
   },
@@ -100,6 +131,7 @@ export const {
   setJoinCode,
   setLobby,
   setLobbyError,
+  setStartRefusal,
   sessionReplaced,
   leaveTable,
 } = slice.actions;

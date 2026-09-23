@@ -5,8 +5,6 @@ import type { GameTheme } from '../../../domain/themes/theme.interfaces';
 interface UseHostTableFormResult {
   hostName: string;
   setHostName: (value: string) => void;
-  tokenId: string;
-  setTokenId: (value: string) => void;
   themeId: string;
   setThemeId: (value: string) => void;
   useSpeedDie: boolean;
@@ -40,19 +38,13 @@ export const useHostTableForm = (): UseHostTableFormResult => {
     [themeId]
   );
 
-  const [tokenId, setTokenId] = useState(defaultTheme.tokenCatalog[0].id);
-
-  // A token from the previous edition may not exist in this one, so fall back
-  // rather than sending the table a piece it has no drawing for.
-  const resolvedTokenId = selectedTheme.tokenCatalog.some((token) => token.id === tokenId)
-    ? tokenId
-    : selectedTheme.tokenCatalog[0].id;
-
+  // There was a token here, and a fallback for it: a piece from the previous
+  // edition existed in no other, so switching the ruleset sent the table an id
+  // its board had no drawing for. Both are gone - the palette is one list and a
+  // colour is assigned by seat, so an edition cannot disagree with it.
   return {
     hostName,
     setHostName,
-    tokenId: resolvedTokenId,
-    setTokenId,
     themeId,
     setThemeId,
     useSpeedDie,

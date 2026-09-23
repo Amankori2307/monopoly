@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../../domain/board/indiaEditionBoard';
-import { indiaTheme as indiaEditionTheme } from '../../../../domain/themes/india.theme';
 import {
   AuctionLedgerKind,
   BuildingKind,
@@ -20,22 +19,20 @@ if (!street) {
   throw new Error('No street on the board');
 }
 
-const token = (index: number) => indiaEditionTheme.tokenCatalog[index];
-
 const bidder = (
   name: string,
   overrides: Partial<AuctionBidderViewModel> = {}
 ): AuctionBidderViewModel => ({
   playerId: `player-${name}`,
   name,
-  token: token(0),
+  color: '#e01b1b',
   cash: 1500,
   ...overrides,
 });
 
-const ASHA = bidder('Asha', { token: token(0) });
-const VIKRAM = bidder('Vikram', { token: token(1) });
-const MEERA = bidder('Meera', { token: token(2) });
+const ASHA = bidder('Asha', { color: '#e01b1b' });
+const VIKRAM = bidder('Vikram', { color: '#1466ff' });
+const MEERA = bidder('Meera', { color: '#ffd400' });
 
 const LEDGER: AuctionLedgerLineViewModel[] = [
   { kind: AuctionLedgerKind.Start, bidder: null, amount: 10 },
@@ -98,12 +95,12 @@ describe('AuctionDecision', () => {
         .map((line) => line.textContent?.replace(/\s+/g, ' ').trim())
     ).toEqual([
       'Auction started at ₹10',
-      '🐘 Asha bid ₹20',
-      '🚂 Vikram bid ₹50',
-      '🛺 Meera bid ₹100',
-      '🐘 Asha passed',
-      '🚂 Vikram bid ₹120',
-      '🛺 Meera passed',
+      'Asha bid ₹20',
+      'Vikram bid ₹50',
+      'Meera bid ₹100',
+      'Asha passed',
+      'Vikram bid ₹120',
+      'Meera passed',
     ]);
     // The live line is the log's last, and is asserted on its own below - it
     // carries the active-bidder id rather than a history line's.

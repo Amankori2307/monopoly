@@ -1,8 +1,4 @@
-import type {
-  BoardSpace,
-  PlayerState,
-  ThemeToken,
-} from '../../../domain/types/game.interfaces';
+import type { BoardSpace, PlayerState } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { SpaceOwnerMark, TokenPositions } from './board.interfaces';
 import { BoardCenter } from './BoardCenter';
@@ -15,7 +11,6 @@ interface BoardGridProps {
   centerSubtitle: string;
   /** Prefixes every price printed on a square. The edition's, not a default. */
   currencySymbol: string;
-  findToken: (tokenId: string) => ThemeToken | undefined;
   onSelectSpace: (spaceId: string) => void;
   /** Owner marks by space id, for the spaces someone owns. */
   ownerMarks: Record<string, SpaceOwnerMark>;
@@ -31,7 +26,6 @@ export function BoardGrid({
   centerTitle,
   centerSubtitle,
   currencySymbol,
-  findToken,
   onSelectSpace,
   ownerMarks,
   players,
@@ -55,11 +49,7 @@ export function BoardGrid({
             themeId={themeId}
           />
         ))}
-        <BoardTokenLayer
-          findToken={findToken}
-          players={players}
-          positions={tokenPositions}
-        />
+        <BoardTokenLayer players={players} positions={tokenPositions} />
       </div>
     </section>
   );

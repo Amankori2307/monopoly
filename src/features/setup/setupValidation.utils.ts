@@ -10,7 +10,6 @@ import { SETUP_ERRORS, type SetupErrorMessage } from './setup.constants';
  */
 export const validateSetupDraft = ({
   playerNames,
-  playerTokens,
 }: SetupDraft): SetupErrorMessage | null => {
   const trimmedNames = playerNames.map((name) => name.trim());
 
@@ -23,9 +22,9 @@ export const validateSetupDraft = ({
     return SETUP_ERRORS.duplicateName;
   }
 
-  if (new Set(playerTokens).size !== playerTokens.length) {
-    return SETUP_ERRORS.duplicateToken;
-  }
+  // There was a duplicate-TOKEN rule here too. Two players can no longer share
+  // a colour, because nobody picks one: the engine assigns it by creation
+  // order from one palette, so the state this rule refused is unrepresentable.
 
   return null;
 };

@@ -40,7 +40,7 @@ export function HostPage() {
     setError(null);
     try {
       const { gameId, joinCode } = await dispatch(
-        createOnlineLobby({ name: form.hostName.trim(), tokenId: form.tokenId })
+        createOnlineLobby({ name: form.hostName.trim() })
       );
       // The edition and the Speed Die ride in the URL beside the code: the
       // lobby starts the game, not this screen, and a host reloading their own
@@ -79,22 +79,6 @@ export function HostPage() {
                 onChange={(event) => form.setHostName(event.target.value)}
                 value={form.hostName}
               />
-            </label>
-
-            <label>
-              Your token
-              <select
-                className="select-input"
-                data-testid={TEST_IDS.hostTokenSelect}
-                onChange={(event) => form.setTokenId(event.target.value)}
-                value={form.tokenId}
-              >
-                {form.selectedTheme.tokenCatalog.map((token) => (
-                  <option key={token.id} value={token.id}>
-                    {token.emoji} {token.label}
-                  </option>
-                ))}
-              </select>
             </label>
 
             <label>

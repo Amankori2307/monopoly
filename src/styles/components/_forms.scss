@@ -27,14 +27,21 @@ label {
   font-weight: t.$weight-bold;
 }
 
+// One column, because there is one field. It was a 1.5fr/1fr grid holding a
+// name and a Token select, and the select is gone: a colour is assigned by
+// creation order rather than chosen, so the row shows the one it will get.
 .player-config-row {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
   gap: t.$space-3;
+}
 
-  @include m.below(t.$breakpoint-tablet) {
-    grid-template-columns: 1fr;
-  }
+// The swatch sits INSIDE the field's line rather than above it, so a row is
+// still one line tall. A promise, not a control - it is exactly the colour this
+// player will wear on the board.
+.player-config-name {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
 }
 
 // One control height across the app. A field was 48px and a button beside it

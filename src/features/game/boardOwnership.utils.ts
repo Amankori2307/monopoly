@@ -1,16 +1,16 @@
 import type { SpaceOwnerMark } from '../../components/game/board/board.interfaces';
-import type { GameState, ThemeToken } from '../../domain/types/game.interfaces';
+import { colorForId } from '../../domain/themes/playerColors.constants';
+import type { GameState } from '../../domain/types/game.interfaces';
 
 /**
  * Who owns what, in the shape the board needs to paint it.
  *
  * The board only ever needed a colour and a flag per space, so it takes this
- * rather than the whole ownership record plus the token catalogue - keeping
+ * rather than the whole ownership record plus the palette - keeping
  * BoardSpaceCell presentational.
  */
 export const selectSpaceOwnerMarks = (
-  game: GameState,
-  findToken: (tokenId: string) => ThemeToken | undefined
+  game: GameState
 ): Record<string, SpaceOwnerMark> => {
   const marks: Record<string, SpaceOwnerMark> = {};
 
@@ -24,7 +24,7 @@ export const selectSpaceOwnerMarks = (
       return;
     }
     marks[spaceId] = {
-      color: findToken(owner.tokenId)?.color ?? '',
+      color: colorForId(owner.colorId),
       mortgaged: ownership.mortgaged,
       ownerName: owner.name,
       buildLevel: ownership.buildLevel ?? 0,

@@ -15,10 +15,7 @@ const createGame = (): GameState =>
   createGameState(
     {
       name: 'Actions Test',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
       themeId: 'india-edition',
       createdAt: '2026-08-29T00:00:00.000Z',
     },

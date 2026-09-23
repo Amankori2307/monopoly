@@ -74,7 +74,15 @@ export function AuctionLedger({
           ) : (
             <>
               <span className="auction-log-who">
-                {line.bidder?.token?.emoji} {line.bidder?.name}
+                {/* The bidder's colour, the same mark the board and the trade
+                    columns use. It was the token's emoji; a piece is a plain
+                    coloured disc everywhere it is actually drawn. */}
+                <span
+                  aria-hidden="true"
+                  className="player-dot"
+                  style={{ backgroundColor: line.bidder?.color }}
+                />
+                {line.bidder?.name}
               </span>{' '}
               {line.kind === AuctionLedgerKind.Pass ? (
                 'passed'
@@ -93,7 +101,12 @@ export function AuctionLedger({
         data-testid={TEST_IDS.auctionActiveBidder}
       >
         <span className="auction-log-who">
-          {activeBidder.token?.emoji} {activeBidder.name}
+          <span
+            aria-hidden="true"
+            className="player-dot"
+            style={{ backgroundColor: activeBidder.color }}
+          />
+          {activeBidder.name}
         </span>{' '}
         bidding&hellip;
       </p>

@@ -44,8 +44,9 @@ test('says joining cannot reach a server rather than blaming the code', async ({
 }) => {
   await page.goto('/#/join');
   await page.getByTestId(TEST_IDS.joinCodeInput).fill('ABC234');
+  await page.getByTestId(TEST_IDS.joinNameInput).fill('Vikram');
 
-  // A full, valid code, so the reason cannot be the code's.
+  // A full, valid code and a name, so the reason cannot be either field's.
   await expect(page.getByTestId(TEST_IDS.joinSubmitButton)).toBeEnabled();
   await page.getByTestId(TEST_IDS.joinSubmitButton).click();
 

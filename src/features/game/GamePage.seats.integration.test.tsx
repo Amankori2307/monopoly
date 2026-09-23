@@ -21,10 +21,7 @@ const onlineGameAwaitingABuy = (): GameState => {
   const game = createGameState(
     {
       name: 'Two Seats',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
       themeId: 'india-edition',
       createdAt: '2026-09-01T00:00:00.000Z',
       tableMode: TableMode.Online,
@@ -102,10 +99,7 @@ describe('one game, two seats', () => {
     const game = createGameState(
       {
         name: 'Two Seats',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: 'india-edition',
         createdAt: '2026-09-01T00:00:00.000Z',
         tableMode: TableMode.Online,
@@ -125,10 +119,7 @@ describe('one game, two seats', () => {
     const game = createGameState(
       {
         name: 'Two Seats',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: 'india-edition',
         createdAt: '2026-09-01T00:00:00.000Z',
         tableMode: TableMode.Online,

@@ -25,10 +25,7 @@ const createGame = (themeId: string = indiaEditionTheme.id): GameState =>
   createGameState(
     {
       name: 'Buildings',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
       themeId,
       createdAt: '2026-08-29T00:00:00.000Z',
     },

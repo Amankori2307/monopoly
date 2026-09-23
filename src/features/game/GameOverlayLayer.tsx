@@ -11,7 +11,7 @@ import { PlayerDetailDrawer } from '../../components/game/overlays/PlayerDetailD
 import type { PlayerSummary } from '../../components/game/panels/panels.interfaces';
 import { SpaceDetailCard } from '../../components/game/SpaceDetailCard';
 import { TradeBuilder } from '../../components/game/trade/TradeBuilder';
-import type { GameState, ThemeToken } from '../../domain/types/game.interfaces';
+import type { GameState } from '../../domain/types/game.interfaces';
 import {
   selectDecisionViewModel,
   selectGroupedHoldings,
@@ -24,8 +24,6 @@ interface GameOverlayLayerProps {
   activeGame: GameState;
   commands: UseGameCommandsResult;
   currencySymbol: string;
-  /** Token lookup, so each side of a trade wears its player's colour. */
-  findToken: (tokenId: string) => ThemeToken | undefined;
   /** True while a token is walking, when a decision must stay hidden. */
   isMoving: boolean;
   /** False when the player has muted the game - the Jail panel rolls dice. */
@@ -49,7 +47,6 @@ export function GameOverlayLayer({
   activeGame,
   commands,
   currencySymbol,
-  findToken,
   isMoving,
   overlays,
   selectedSummary,
@@ -58,13 +55,13 @@ export function GameOverlayLayer({
   soundEnabled,
 }: GameOverlayLayerProps) {
   const tradeBuilder = overlays.tradeTargetPlayerId
-    ? selectTradeBuilder(activeGame, findToken, overlays.tradeTargetPlayerId)
+    ? selectTradeBuilder(activeGame, overlays.tradeTargetPlayerId)
     : null;
 
   // One decision, two presentations. Resolved here rather than in either
   // component so the owner and the table cannot end up looking at different
   // states of the same game.
-  const decision = isMoving ? null : selectDecisionViewModel(activeGame, findToken);
+  const decision = isMoving ? null : selectDecisionViewModel(activeGame);
   const decisionOwnerId = decisionActorId(activeGame);
   // Game over belongs to the whole table - there is no owner, and the panel is
   // how anybody gets back to the home page. Everything else is one seat's.

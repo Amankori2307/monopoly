@@ -41,10 +41,7 @@ import {
 
 const input = (overrides: Partial<CreateGameInput> = {}): CreateGameInput => ({
   name: 'Thunk Test',
-  playerConfigs: [
-    { name: 'Asha', tokenId: 'elephant' },
-    { name: 'Vikram', tokenId: 'train' },
-  ],
+  playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
   themeId: indiaEditionTheme.id,
   createdAt: '2026-09-01T00:00:00.000Z',
   ...overrides,
@@ -436,11 +433,7 @@ describe('an auction through the store', () => {
     const game = store.dispatch(
       createNewGame(
         input({
-          playerConfigs: [
-            { name: 'Asha', tokenId: 'elephant' },
-            { name: 'Vikram', tokenId: 'train' },
-            { name: 'Meera', tokenId: 'auto' },
-          ],
+          playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }, { name: 'Meera' }],
         })
       )
     );

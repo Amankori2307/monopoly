@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
+import { PLAYER_COLORS } from '../../../domain/themes/playerColors.constants';
 import { SpeedDieFace, TurnPhase } from '../../../domain/types/game.enums';
 import type { GameState } from '../../../domain/types/game.interfaces';
 import { renderWithProviders } from '../../../test/renderWithProviders';
@@ -12,7 +12,7 @@ const summary = (index: number): PlayerSummary => ({
   player: {
     id: `player-${index + 1}`,
     name: `Player ${index + 1}`,
-    tokenId: indiaEditionTheme.tokenCatalog[index].id,
+    colorId: PLAYER_COLORS[index].id,
     cash: 1500,
     position: 0,
     inJail: false,
@@ -23,7 +23,7 @@ const summary = (index: number): PlayerSummary => ({
     hasPassedGo: false,
     lastMove: null,
   },
-  token: indiaEditionTheme.tokenCatalog[index],
+  color: PLAYER_COLORS[index].color,
   propertyCount: 0,
   netWorth: 1500,
   mortgagedCount: 0,

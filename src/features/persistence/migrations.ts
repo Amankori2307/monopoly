@@ -261,6 +261,97 @@ const v8ToV9 = (raw: Record<string, unknown>): Record<string, unknown> => {
   };
 };
 
+/**
+ * A player's playing piece becomes their colour.
+ *
+ * The four editions each listed eight pieces - an elephant, a top hat - and
+ * every one of them was drawn as a plain coloured circle, so the catalogs were
+ * the same eight colours in the same order wearing four sets of names. They are
+ * one palette now, assigned by seat rather than chosen, and `tokenId` is
+ * `colorId`.
+ *
+ * The old ids are FROZEN HERE rather than read from the themes, because the
+ * themes no longer have them - a migration writes the shape of its own version,
+ * and by the time this runs the only place those forty ids exist is this table.
+ * Order is the palette's order, so the index IS the colour.
+ */
+const LEGACY_TOKEN_ORDER: string[][] = [
+  ['elephant', 'train', 'auto', 'peacock', 'tiger', 'lotus', 'rickshaw', 'kite'],
+  [
+    'top-hat',
+    'motor-car',
+    'thimble',
+    'boot',
+    'scottie-dog',
+    'battleship',
+    'wheelbarrow',
+    'cat',
+  ],
+  [
+    'racecar',
+    'top-hat-us',
+    'rubber-duck',
+    't-rex',
+    'penguin',
+    'battleship-us',
+    'wheelbarrow-us',
+    'scottie-dog-us',
+  ],
+  [
+    'globe',
+    'aeroplane',
+    'camera',
+    'compass',
+    'suitcase',
+    'passport',
+    'sailboat',
+    'hot-air-balloon',
+  ],
+];
+
+/** The palette's ids, frozen at v11. Live code reads playerColors.constants. */
+const V11_COLOR_IDS = [
+  'red',
+  'blue',
+  'yellow',
+  'green',
+  'orange',
+  'purple',
+  'teal',
+  'pink',
+];
+
+const v10ToV11 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const players = (raw.players ?? {}) as Record<string, Record<string, unknown>>;
+  // Falls back to the player's ORDER when a token id is unknown - a save from a
+  // theme that never shipped, or a hand-edited one. A player with no colour at
+  // all renders an undefined background, which is the one outcome worth ruling
+  // out; a wrong-but-distinct colour is merely wrong.
+  const ids = Object.keys(players);
+
+  return {
+    ...raw,
+    players: Object.fromEntries(
+      ids.map((playerId, order) => {
+        const player = players[playerId];
+        const { tokenId, ...rest } = player;
+        const index = LEGACY_TOKEN_ORDER.reduce(
+          (found, catalog) => (found === -1 ? catalog.indexOf(String(tokenId)) : found),
+          -1
+        );
+        return [
+          playerId,
+          {
+            ...rest,
+            colorId: V11_COLOR_IDS[(index === -1 ? order : index) % V11_COLOR_IDS.length],
+          },
+        ];
+      })
+    ),
+    version: 11,
+  };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
@@ -271,6 +362,7 @@ const MIGRATIONS: Record<number, Migration> = {
   7: v7ToV8,
   8: v8ToV9,
   9: v9ToV10,
+  10: v10ToV11,
 };
 
 /**

@@ -120,3 +120,62 @@ export const clearJoinCode = (gameId: GameId): void => {
     logger.debug('seat', 'could not clear the join code', { error });
   }
 };
+
+// ---------------------------------------------------------------------------
+// The host secret: proof that this device opened the table.
+//
+// Per device, and NOT in Redux, for the same reasons the join code is not: it
+// is a capability rather than state, read at call time like `readDeviceId()`,
+// and a device that was never given it must not be able to read it back out of
+// somebody else's save.
+//
+// Why a secret at all, rather than checking who sits in the host's seat:
+// `fetch_game` returns the whole seats array - `deviceId` included - to anyone
+// holding the code, so the server hands that credential to every device that
+// could fail the check. Minted by `create_game`, returned by `create_game` and
+// by nothing else.
+//
+// Losing it loses the ability to start that table, and there is deliberately no
+// recovery: the same is already true of the join code, without which a host
+// cannot reopen its own table at all. A lobby is minutes old and re-hostable.
+// ---------------------------------------------------------------------------
+
+export const HOST_SECRET_KEY_PREFIX = 'monopoly.host';
+
+export const getHostSecretKey = (gameId: GameId): string =>
+  `${HOST_SECRET_KEY_PREFIX}.${gameId}.v1`;
+
+/** A uuid, or null. Shape-checked rather than trusted - see readJoinCode. */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const readHostSecret = (gameId: GameId): string | null => {
+  try {
+    const stored = window.localStorage.getItem(getHostSecretKey(gameId));
+    // Validated, not trusted: this is whatever is on the disk of a browser that
+    // may have run an older build or been hand-edited, and it goes to a uuid
+    // column. A malformed value would be a 400 rather than a refusal.
+    return stored && UUID_PATTERN.test(stored) ? stored : null;
+  } catch (error) {
+    logger.debug('seat', 'could not read the host secret', { error });
+    return null;
+  }
+};
+
+export const writeHostSecret = (gameId: GameId, secret: string | null): void => {
+  if (!secret) {
+    return;
+  }
+  try {
+    window.localStorage.setItem(getHostSecretKey(gameId), secret);
+  } catch (error) {
+    logger.debug('seat', 'could not save the host secret', { error });
+  }
+};
+
+export const clearHostSecret = (gameId: GameId): void => {
+  try {
+    window.localStorage.removeItem(getHostSecretKey(gameId));
+  } catch (error) {
+    logger.debug('seat', 'could not clear the host secret', { error });
+  }
+};

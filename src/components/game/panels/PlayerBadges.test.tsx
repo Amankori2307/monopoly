@@ -18,7 +18,7 @@ const JAIL_CARD = {
 const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
   id: 'player-1',
   name: 'Asha',
-  tokenId: 'elephant',
+  colorId: 'red',
   cash: 1500,
   position: 0,
   inJail: false,

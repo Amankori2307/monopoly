@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { getTokenPosition } from '../../../domain/board/boardLayout.utils';
 import { JAIL_POSITION } from '../../../domain/constants/game.constants';
 import { MoveDirection } from '../../../domain/types/game.enums';
-import type { PlayerState, ThemeToken } from '../../../domain/types/game.interfaces';
-import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
+import type { PlayerState } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import { BoardTokenLayer } from './BoardTokenLayer';
 
@@ -14,13 +13,10 @@ import { BoardTokenLayer } from './BoardTokenLayer';
  * right place - which for the Jail square means reading `inJail`.
  */
 
-const findToken = (tokenId: string): ThemeToken | undefined =>
-  indiaEditionTheme.tokenCatalog.find((token) => token.id === tokenId);
-
 const player = (overrides: Partial<PlayerState> = {}): PlayerState => ({
   id: 'p1',
   name: 'Asha',
-  tokenId: 'elephant',
+  colorId: 'red',
   cash: 1500,
   position: JAIL_POSITION,
   inJail: false,
@@ -34,7 +30,7 @@ const player = (overrides: Partial<PlayerState> = {}): PlayerState => ({
 });
 
 const renderLayer = (players: PlayerState[]) =>
-  render(<BoardTokenLayer findToken={findToken} players={players} positions={{}} />);
+  render(<BoardTokenLayer players={players} positions={{}} />);
 
 const placementOf = (container: HTMLElement, id: string) => {
   const chip = container.querySelector(
@@ -66,7 +62,7 @@ describe('BoardTokenLayer at the Jail square', () => {
   it('does not put a jailed player where a visitor stands', () => {
     const { container } = renderLayer([
       player({ id: 'p1', inJail: true }),
-      player({ id: 'p2', name: 'Vikram', tokenId: 'train', inJail: false }),
+      player({ id: 'p2', name: 'Vikram', colorId: 'blue', inJail: false }),
     ]);
 
     expect(placementOf(container, 'p1')).not.toEqual(placementOf(container, 'p2'));
@@ -77,7 +73,7 @@ describe('BoardTokenLayer at the Jail square', () => {
   it('gives each region its own first slot', () => {
     const { container } = renderLayer([
       player({ id: 'p1', inJail: true }),
-      player({ id: 'p2', name: 'Vikram', tokenId: 'train', inJail: false }),
+      player({ id: 'p2', name: 'Vikram', colorId: 'blue', inJail: false }),
     ]);
 
     expect(placementOf(container, 'p1')).toEqual(expected(0, true));
@@ -87,7 +83,7 @@ describe('BoardTokenLayer at the Jail square', () => {
   it('clusters two players within one region', () => {
     const { container } = renderLayer([
       player({ id: 'p1', inJail: true }),
-      player({ id: 'p2', name: 'Vikram', tokenId: 'train', inJail: true }),
+      player({ id: 'p2', name: 'Vikram', colorId: 'blue', inJail: true }),
     ]);
 
     expect(placementOf(container, 'p1')).toEqual(expected(0, true));
@@ -102,7 +98,6 @@ describe('BoardTokenLayer at the Jail square', () => {
   it('leaves a jailed player who has not arrived yet where they are', () => {
     const { container } = render(
       <BoardTokenLayer
-        findToken={findToken}
         players={[player({ inJail: true, position: 4 })]}
         positions={{ p1: 4 }}
       />
@@ -122,7 +117,7 @@ describe('BoardTokenLayer', () => {
   it('draws every token inside the overlay', () => {
     const { container } = renderLayer([
       player({ id: 'p1' }),
-      player({ id: 'p2', name: 'Vikram', tokenId: 'train', position: 3 }),
+      player({ id: 'p2', name: 'Vikram', colorId: 'blue', position: 3 }),
     ]);
 
     const layer = container.querySelector('.board-token-layer');

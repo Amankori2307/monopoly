@@ -11,10 +11,11 @@ import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 
 /** Opens a table and returns the invite link the host would send. */
 const hostATable = async (page: Page): Promise<string> => {
-  // Hosting is its own screen now, and its form is valid on first render -
-  // name, token, edition and Speed Die are all prefilled - so this is still
-  // one click. That is deliberate: a required empty field here would turn this
-  // into a fill step in the one suite that cannot be run locally.
+  // Hosting is its own screen, and its form is valid on first render - name,
+  // edition and Speed Die are all prefilled - so this is one click. That is
+  // deliberate: a required empty field here would turn this into a fill step in
+  // the one suite that cannot be run locally. (The token select that used to be
+  // on it is gone; a colour is assigned by seat.)
   await page.goto('./#/host');
   await page.getByTestId(TEST_IDS.openTableButton).click();
   await expect(page.getByTestId(TEST_IDS.lobbyPanel)).toBeVisible({ timeout: 20000 });
@@ -24,9 +25,24 @@ const hostATable = async (page: Page): Promise<string> => {
   );
 };
 
-const asSecondDevice = async (context: BrowserContext, link: string): Promise<Page> => {
+/**
+ * Following an invitation, which is now the JOIN screen rather than the lobby.
+ *
+ * One door: a code read out loud and a link clicked cold reach the same screen,
+ * which takes the code and the name together and seats you. The lobby that
+ * follows has no form on it at all.
+ */
+const asSecondDevice = async (
+  context: BrowserContext,
+  link: string,
+  name: string
+): Promise<Page> => {
   const page = await context.newPage();
   await page.goto(link);
+  // The code rides in the link, so only the name is left to give.
+  await expect(page.getByTestId(TEST_IDS.joinCodeInput)).not.toHaveValue('');
+  await page.getByTestId(TEST_IDS.joinNameInput).fill(name);
+  await page.getByTestId(TEST_IDS.joinSubmitButton).click();
   await expect(page.getByTestId(TEST_IDS.lobbyPanel)).toBeVisible({ timeout: 20000 });
   return page;
 };
@@ -37,13 +53,14 @@ test('two devices join one table, and only one of them can act', async ({ browse
   const host = await hostContext.newPage();
 
   const link = await hostATable(host);
-  const guest = await asSecondDevice(guestContext, link);
-
-  // The guest takes a seat, and the host sees it arrive without a refresh.
-  await guest.getByTestId(TEST_IDS.lobbyNameInput).fill('Vikram');
-  await guest.getByTestId(TEST_IDS.lobbyTokenSelect).selectOption({ index: 2 });
-  await guest.getByTestId(TEST_IDS.lobbyClaimButton).click();
+  // Seated on the way in, and the host sees it arrive without a refresh.
+  const guest = await asSecondDevice(guestContext, link, 'Vikram');
   await expect(host.getByTestId(TEST_IDS.lobbySeat)).toHaveCount(2, { timeout: 20000 });
+
+  // Only the person who opened the table is offered a start. This used to be
+  // one button on both devices, live for whoever clicked first.
+  await expect(guest.getByTestId(TEST_IDS.lobbyStartButton)).toHaveCount(0);
+  await expect(guest.getByTestId(TEST_IDS.lobbyBlockedReason)).toContainText(/host/i);
 
   // The host starts, and the guest is carried into the game by the same bell.
   await host.getByTestId(TEST_IDS.lobbyStartButton).click();

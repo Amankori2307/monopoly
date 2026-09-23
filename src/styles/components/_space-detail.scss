@@ -407,13 +407,6 @@
 }
 
 // Matches the board's owner bar, so the same colour means the same player.
-.site-owner-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: t.$token-radius;
-  box-shadow: 0 0 0 1px var(--border-space);
-}
-
 .site-action-buttons {
   display: flex;
   flex-wrap: wrap;

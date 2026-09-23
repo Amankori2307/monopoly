@@ -24,7 +24,7 @@ export const TURN_RULE_COVERAGE: RuleCoverageMap = {
     'creates a game with India Edition defaults',
     'gives each player the starting cash',
   ],
-  '3.3': ['gives every player a token from the theme catalogue'],
+  '3.3': ['gives every player a colour of their own'],
   '3.4': ['starts every token on GO'],
   '3.5': ['shuffles both decks at creation'],
   '3.6': [

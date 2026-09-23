@@ -172,9 +172,8 @@ export const monsoonTheme: ThemeConfig = {
   id: 'monsoon', // MUST match the SCSS map key
   name: 'Monsoon Edition',
   currencySymbol: 'M',
-  tokenCatalog: [
-    /* at least 8 tokens - the max player count */
-  ],
+  // No pieces: a player's colour comes from the shared palette in
+  // domain/themes/playerColors.constants, not from the edition.
   // …
 };
 

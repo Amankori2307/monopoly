@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ColorGroupProgress } from '../../../domain/rules/holdings.utils';
-import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
 import { ColorGroup } from '../../../domain/types/game.enums';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { PlayerSummary } from './panels.interfaces';
@@ -11,7 +10,7 @@ const summary = (overrides: Partial<PlayerSummary> = {}): PlayerSummary => ({
   player: {
     id: 'player-1',
     name: 'Asha',
-    tokenId: 'elephant',
+    colorId: 'red',
     cash: 500,
     position: 0,
     inJail: false,
@@ -22,7 +21,7 @@ const summary = (overrides: Partial<PlayerSummary> = {}): PlayerSummary => ({
     hasPassedGo: false,
     lastMove: null,
   },
-  token: indiaEditionTheme.tokenCatalog[0],
+  color: '#e01b1b',
   propertyCount: 0,
   netWorth: 500,
   mortgagedCount: 0,

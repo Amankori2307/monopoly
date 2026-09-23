@@ -1,5 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { clearJoinCode, clearSeatClaim } from '../multiplayer/seatClaim.utils';
+import {
+  clearHostSecret,
+  clearJoinCode,
+  clearSeatClaim,
+} from '../multiplayer/seatClaim.utils';
 import type { AppDispatch } from '../../app/appStore';
 import { createGameState, executeGameCommand } from '../../domain/rules/gameEngine';
 import { DefaultRandomSource } from '../../domain/rules/rng';
@@ -357,6 +361,7 @@ export const removeSavedGame =
     // claim behind for ever.
     clearSeatClaim(gameId);
     clearJoinCode(gameId);
+    clearHostSecret(gameId);
     if (getState().game.activeGame?.id === gameId) {
       dispatch(setActiveGame(null));
     }

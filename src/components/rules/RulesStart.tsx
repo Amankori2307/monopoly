@@ -26,7 +26,7 @@ export function RulesStart() {
         <li>
           Shuffle Chance and Community Chest separately and place both decks face down.
         </li>
-        <li>Each player chooses a token and places it on GO.</li>
+        <li>Each player is given a colour, and starts on GO.</li>
         <li>
           Each player rolls both dice. The highest roll goes first; play moves to the
           left. If two players tie for the highest, only those players roll again.

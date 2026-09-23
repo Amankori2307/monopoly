@@ -15,20 +15,6 @@ export const usTheme: GameTheme = {
   name: 'Monopoly Classic (Atlantic City)',
   currencySymbol: '$',
 
-  // The eight tokens from the modern box. Colours match the other editions
-  // position for position, so no player is harder to pick out on one board
-  // than another.
-  tokenCatalog: [
-    { id: 'racecar', label: 'Racecar', emoji: '🏎️', color: '#e01b1b' },
-    { id: 'top-hat-us', label: 'Top Hat', emoji: '🎩', color: '#1466ff' },
-    { id: 'rubber-duck', label: 'Rubber Duck', emoji: '🦆', color: '#ffd400' },
-    { id: 't-rex', label: 'T-Rex', emoji: '🦖', color: '#00b352' },
-    { id: 'penguin', label: 'Penguin', emoji: '🐧', color: '#ff7a00' },
-    { id: 'battleship-us', label: 'Battleship', emoji: '🚢', color: '#a020f0' },
-    { id: 'wheelbarrow-us', label: 'Wheelbarrow', emoji: '🛒', color: '#00c8c8' },
-    { id: 'scottie-dog-us', label: 'Scottie Dog', emoji: '🐕', color: '#ff4fa3' },
-  ],
-
   boardCenter: { title: 'Monopoly', subtitle: 'Atlantic City' },
 
   // What this edition calls the things on its board, for the rules booklet.

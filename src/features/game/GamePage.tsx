@@ -72,7 +72,7 @@ export function GamePage() {
     return <GameUnavailable loadError={loadError} />;
   }
 
-  const { findToken, summaries, selectedSummary, ownerMarks, sitePanel, actionRail } =
+  const { summaries, selectedSummary, ownerMarks, sitePanel, actionRail } =
     selectBoardViewModels(activeGame, theme, overlays, viewer);
 
   return (
@@ -102,7 +102,6 @@ export function GamePage() {
             centerSubtitle={theme.boardCenter.subtitle}
             centerTitle={theme.boardCenter.title}
             currencySymbol={currencySymbol}
-            findToken={findToken}
             onSelectSpace={overlays.selectSpace}
             ownerMarks={ownerMarks}
             players={players}
@@ -138,7 +137,6 @@ export function GamePage() {
           activeGame={activeGame}
           commands={commands}
           currencySymbol={currencySymbol}
-          findToken={findToken}
           overlays={overlays}
           selectedSummary={selectedSummary}
           isMoving={isMoving}

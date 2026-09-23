@@ -16,19 +16,6 @@ export const indiaTheme: GameTheme = {
   name: 'Monopoly India Edition',
   currencySymbol: '₹',
 
-  // Vivid and clearly distinguishable: the board tokens are plain coloured
-  // discs, so colour is the only thing telling two players apart.
-  tokenCatalog: [
-    { id: 'elephant', label: 'Elephant', emoji: '🐘', color: '#e01b1b' },
-    { id: 'train', label: 'Train', emoji: '🚂', color: '#1466ff' },
-    { id: 'auto', label: 'Auto', emoji: '🛺', color: '#ffd400' },
-    { id: 'peacock', label: 'Peacock', emoji: '🦚', color: '#00b352' },
-    { id: 'tiger', label: 'Tiger', emoji: '🐅', color: '#ff7a00' },
-    { id: 'lotus', label: 'Lotus', emoji: '🪷', color: '#a020f0' },
-    { id: 'rickshaw', label: 'Rickshaw', emoji: '🚲', color: '#00c8c8' },
-    { id: 'kite', label: 'Kite', emoji: '🪁', color: '#ff4fa3' },
-  ],
-
   boardCenter: { title: 'Monopoly', subtitle: 'India Edition' },
 
   // What this edition calls the things on its board, for the rules booklet.

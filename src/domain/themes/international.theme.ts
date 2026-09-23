@@ -18,19 +18,6 @@ export const internationalTheme: GameTheme = {
   name: 'Monopoly Classic (London)',
   currencySymbol: '£',
 
-  // The eight classic pieces. Colours match the India set position for
-  // position, so neither edition has a player harder to pick out than another.
-  tokenCatalog: [
-    { id: 'top-hat', label: 'Top Hat', emoji: '🎩', color: '#e01b1b' },
-    { id: 'motor-car', label: 'Motor Car', emoji: '🚗', color: '#1466ff' },
-    { id: 'thimble', label: 'Thimble', emoji: '🧵', color: '#ffd400' },
-    { id: 'boot', label: 'Boot', emoji: '🥾', color: '#00b352' },
-    { id: 'scottie-dog', label: 'Scottie Dog', emoji: '🐕', color: '#ff7a00' },
-    { id: 'battleship', label: 'Battleship', emoji: '🚢', color: '#a020f0' },
-    { id: 'wheelbarrow', label: 'Wheelbarrow', emoji: '🛒', color: '#00c8c8' },
-    { id: 'cat', label: 'Cat', emoji: '🐈', color: '#ff4fa3' },
-  ],
-
   boardCenter: { title: 'Monopoly', subtitle: 'Classic Edition' },
 
   // What this edition calls the things on its board, for the rules booklet.

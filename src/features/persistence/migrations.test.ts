@@ -297,10 +297,7 @@ describe('giving an older save a table mode', () => {
         createGameState(
           {
             name: 'v8 Save',
-            playerConfigs: [
-              { name: 'Asha', tokenId: 'elephant' },
-              { name: 'Vikram', tokenId: 'train' },
-            ],
+            playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
             themeId: 'india-edition',
             createdAt: '2026-09-01T00:00:00.000Z',
           },
@@ -371,10 +368,7 @@ describe('v9 -> v10: unsticking a jail decision the player already left', () => 
         createGameState(
           {
             name: 'v9 Save',
-            playerConfigs: [
-              { name: 'Asha', tokenId: 'elephant' },
-              { name: 'Vikram', tokenId: 'train' },
-            ],
+            playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
             themeId: 'india-edition',
             createdAt: '2026-09-01T00:00:00.000Z',
           },
@@ -456,5 +450,80 @@ describe('v9 -> v10: unsticking a jail decision the player already left', () => 
     const migrated = migrateSavedGame(v9Save()) as { version: number };
 
     expect(migrated.version).toBe(GAME_STATE_VERSION);
+  });
+});
+
+describe('v10 -> v11: a playing piece becomes a colour', () => {
+  /**
+   * A real current game wound back to what v10 wrote: `tokenId` instead of
+   * `colorId`, carrying an id from the edition's own catalog.
+   *
+   * Built by hand rather than projected through the current code, for the same
+   * reason the table-mode fixture is: today's `createGameState` writes
+   * `colorId`, so a projection would pass while proving nothing.
+   */
+  const v10Save = (tokenIds: string[]) => {
+    const game = JSON.parse(
+      JSON.stringify(
+        createGameState(
+          {
+            name: 'v10 Save',
+            playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
+            themeId: 'india-edition',
+            createdAt: '2026-09-01T00:00:00.000Z',
+          },
+          new SeededRandomSource(11)
+        )
+      )
+    );
+    Object.keys(game.players).forEach((playerId, index) => {
+      delete game.players[playerId].colorId;
+      game.players[playerId].tokenId = tokenIds[index];
+    });
+    return { ...game, version: 10 };
+  };
+
+  const colorsOf = (raw: unknown) =>
+    Object.values((raw as { players: Record<string, { colorId: string }> }).players).map(
+      (player) => player.colorId
+    );
+
+  it('keeps the colour an India player already had', () => {
+    // elephant was the first piece in India's catalog and red is the first
+    // colour, so a player who was red stays red across the rename.
+    const migrated = migrateSavedGame(v10Save(['elephant', 'train']));
+
+    expect(colorsOf(migrated)).toEqual(['red', 'blue']);
+    expect(JSON.stringify(migrated)).not.toContain('tokenId');
+  });
+
+  /**
+   * Atlantic City, on purpose.
+   *
+   * The four editions used different ids for the same eight colours, so a
+   * migration that only knew India's would silently fall back to player order -
+   * which happens to be the right answer most of the time, and would have hidden
+   * the bug. `racecar` is red and `top-hat-us` is blue; reversing them proves
+   * the table is being read rather than the order.
+   */
+  it('reads a US save by its own token ids, not by seat order', () => {
+    const migrated = migrateSavedGame(v10Save(['top-hat-us', 'racecar']));
+
+    expect(colorsOf(migrated)).toEqual(['blue', 'red']);
+  });
+
+  it('falls back to the seat order for an id no edition ever had', () => {
+    // A hand-edited save, or one from a theme that never shipped. A player with
+    // no colour at all renders an invisible piece, which is the one outcome
+    // worth ruling out.
+    const migrated = migrateSavedGame(v10Save(['not-a-piece', 'also-not']));
+
+    expect(colorsOf(migrated)).toEqual(['red', 'blue']);
+  });
+
+  it('leaves a save already at the current version alone', () => {
+    const current = { ...v10Save(['elephant', 'train']), version: GAME_STATE_VERSION };
+
+    expect(migrateSavedGame(current)).toEqual(current);
   });
 });

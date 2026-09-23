@@ -2,15 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { getThemeOrDefault } from '../../domain/rules/engine/state.utils';
-import { readDeviceId } from '../multiplayer/seatClaim.utils';
+import { playerColorForIndex } from '../../domain/themes/playerColors.constants';
+import type { LobbySeatView } from '../../components/lobby/lobby.interfaces';
+import { readDeviceId, readHostSecret } from '../multiplayer/seatClaim.utils';
 import {
-  claimBlockedReason,
   inviteLinkFor,
+  isHostDevice,
+  seatIndexOf,
   startBlockedReason,
 } from '../multiplayer/lobby.utils';
 import {
   attachOnlineSession,
-  claimLobbySeat,
   openOnlineTable,
   startOnlineGame,
 } from '../multiplayer/multiplayer.thunks';
@@ -19,10 +21,12 @@ import { useSession } from '../multiplayer/hooks/useSession';
 /**
  * Everything the lobby page does, kept out of its markup.
  *
- * The page is one screen with three jobs - read the table, take a seat, start
- * the game - and each is an async call that can fail, so keeping them here
- * means the component stays a rendering of state rather than a pile of
- * handlers.
+ * It had three jobs - read the table, take a seat, start the game - and takes
+ * a seat no longer. Joining a table IS taking a seat, so `/join` asks for the
+ * code and the name together and seats you on the way in; this screen is a
+ * roster with a Start button on it, and only for the one person who may press
+ * it. What went with the claim: `name`, `tokenId`, `setName`, `setTokenId`,
+ * `takenTokens`, `claim` and `claimReason`.
  */
 export const useLobby = () => {
   const { gameId = '' } = useParams();
@@ -31,13 +35,13 @@ export const useLobby = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { seats, phase, lobbyError, seatId } = useAppSelector((state) => state.seat);
+  const { seats, phase, lobbyError, seatId, hostSeatId, startRefusal } = useAppSelector(
+    (state) => state.seat
+  );
   // Re-renders when the session is replaced - see useSession - so the
   // subscription below attaches to the online session rather than staying on
   // the local one that never rings.
   const session = useSession();
-  const [name, setName] = useState('');
-  const [tokenId, setTokenId] = useState('');
   const [isBusy, setIsBusy] = useState(false);
 
   // The table's options travel in the URL beside the code, because this is
@@ -45,7 +49,8 @@ export const useLobby = () => {
   // to be hardcoded here - `availableThemes[0]` and `useSpeedDie: false` - so
   // every online table was the first edition and no online game could ever use
   // the Speed Die. getThemeOrDefault falls back, so an absent or tampered
-  // param degrades to the default rather than throwing.
+  // param degrades to the default rather than throwing. Only the host's own URL
+  // carries them now: nobody else can start a game with them.
   const theme = getThemeOrDefault(searchParams.get('theme') ?? '');
   const useSpeedDie = searchParams.get('speed') === 'on';
   const mySeat = seats.find((seat) => seat.deviceId === readDeviceId());
@@ -98,71 +103,65 @@ export const useLobby = () => {
     // for.
   }, [dispatch, gameId, joinCode, navigate, session]);
 
-  // Prefill from the seat this device already holds, so a reload is not a
-  // blank form.
-  useEffect(() => {
-    if (mySeat) {
-      setName((current) => current || mySeat.name);
-      setTokenId((current) => current || mySeat.tokenId);
-    }
-  }, [mySeat]);
-
-  const takenTokens = seats
-    .filter((seat) => seat.deviceId !== readDeviceId())
-    .map((seat) => seat.tokenId);
-
   // Nothing is offered until the table has actually been read. Acting on an
   // empty table is how a guest claimed a seat before its first fetch came back
   // and, with the old whole-array claim, deleted the host.
   const isLoaded = phase !== null;
-  const claimReason = !isLoaded
-    ? 'Loading the table…'
-    : claimBlockedReason(seats, readDeviceId(), name, tokenId);
-  const startReason = !isLoaded ? 'Loading the table…' : startBlockedReason(seats);
+  const isHost = isHostDevice(
+    seats,
+    hostSeatId,
+    readDeviceId(),
+    readHostSecret(gameId) !== null
+  );
 
-  const claim = useCallback(async () => {
-    setIsBusy(true);
-    try {
-      await dispatch(claimLobbySeat({ gameId, joinCode, name, tokenId }));
-    } finally {
-      setIsBusy(false);
-    }
-  }, [dispatch, gameId, joinCode, name, tokenId]);
+  /**
+   * A seat's colour is its INDEX, and nothing is stored or sent for it.
+   *
+   * `player-3` is palette entry 2 in the lobby and still palette entry 2 once
+   * `createGameState` assigns colours in creation order - so what a player sees
+   * here is what they get on the board.
+   */
+  const seatViews: LobbySeatView[] = seats.map((seat) => ({
+    seatId: seat.seatId,
+    name: seat.name,
+    color: playerColorForIndex(seatIndexOf(seat.seatId)).color,
+  }));
+
+  const startReason = !isLoaded
+    ? 'Loading the table…'
+    : (startBlockedReason(seats, isHost) ?? startRefusal);
 
   const start = useCallback(async () => {
     setIsBusy(true);
     try {
-      await dispatch(
+      const started = await dispatch(
         startOnlineGame({ gameId, joinCode, themeId: theme.id, useSpeedDie })
       );
-      navigate(`/game/${gameId}`);
+      // Only on a start that actually happened. A refusal leaves its reason on
+      // screen, and navigating past it would land this device in a game the
+      // server does not have.
+      if (started) {
+        navigate(`/game/${gameId}`);
+      }
     } finally {
       setIsBusy(false);
     }
   }, [dispatch, gameId, joinCode, navigate, theme.id, useSpeedDie]);
 
   return {
-    claim,
-    claimReason,
     gameId,
-    inviteLink:
-      gameId && joinCode
-        ? inviteLinkFor(gameId, joinCode, { themeId: theme.id, useSpeedDie })
-        : '',
+    hostSeatId,
+    inviteLink: joinCode ? inviteLinkFor(joinCode) : '',
     isBusy,
+    isHost,
     isLoaded,
     joinCode,
     lobbyError,
     mySeatId: mySeat?.seatId ?? seatId,
-    name,
     phase,
-    seats,
-    setName,
-    setTokenId,
+    seats: seatViews,
     start,
     startReason,
-    takenTokens,
     theme,
-    tokenId,
   };
 };

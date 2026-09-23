@@ -95,7 +95,7 @@ const deckCardSchema = z.object({
 const playerSchema = z.object({
   id: z.string(),
   name: z.string(),
-  tokenId: z.string(),
+  colorId: z.string(),
   cash: z.number(),
   position: z.number().int().min(0),
   inJail: z.boolean(),

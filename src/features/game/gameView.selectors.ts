@@ -8,6 +8,7 @@ import {
 import {} from '../../domain/rules/buildings.utils';
 import { getTradableSites } from '../../domain/rules/trade.utils';
 import { getExpectedActorId } from '../../domain/rules/actor.utils';
+import { colorForId } from '../../domain/themes/playerColors.constants';
 import type { Viewer } from '../multiplayer/viewer.interfaces';
 import { HOT_SEAT_VIEWER, viewerControls } from '../multiplayer/viewer.utils';
 import { selectDecisionViewModel } from './decisionViewModel.selectors';
@@ -22,8 +23,6 @@ import type {
   GameState,
   PlayerId,
   PlayerState,
-  ThemeConfig,
-  ThemeToken,
 } from '../../domain/types/game.interfaces';
 import type {
   TradeBuilderViewModel,
@@ -39,11 +38,6 @@ import type { PlayerSummary } from '../../components/game/panels/panels.interfac
 export const selectActivePlayer = (game: GameState): PlayerState =>
   game.players[game.playerOrder[game.activePlayerIndex]];
 
-export const makeTokenFinder =
-  (theme: ThemeConfig | undefined) =>
-  (tokenId: string): ThemeToken | undefined =>
-    theme?.tokenCatalog.find((token) => token.id === tokenId);
-
 /**
  * Turn order rotated so the active player comes first, then whoever plays next.
  * The card stack shows position rather than a separate "active" marker, so this
@@ -57,11 +51,7 @@ export const selectPlayerOrderFromActive = (game: GameState): PlayerId[] => {
   ];
 };
 
-export const selectPlayerSummaries = (
-  game: GameState,
-  theme: ThemeConfig | undefined
-): PlayerSummary[] => {
-  const findToken = makeTokenFinder(theme);
+export const selectPlayerSummaries = (game: GameState): PlayerSummary[] => {
   const activePlayerId = game.playerOrder[game.activePlayerIndex];
   // Turn order, still: DOM order is what the desktop fan's :nth-of-type rules
   // read, and what makes the top card the active player. The phone grid orders
@@ -70,7 +60,7 @@ export const selectPlayerSummaries = (
     const player = game.players[playerId];
     return {
       player,
-      token: findToken(player.tokenId),
+      color: colorForId(player.colorId),
       propertyCount: getPlayerOwnedSpaces(game, playerId).length,
       netWorth: getNetWorth(game, playerId),
       mortgagedCount: getMortgagedCount(game, playerId),
@@ -148,8 +138,7 @@ export const selectCanRollDice = (game: GameState, viewer: Viewer = HOT_SEAT_VIE
 export const selectHasAvailableAction = (game: GameState) =>
   selectCanRollDice(game, HOT_SEAT_VIEWER) ||
   selectCanEndTurn(game, HOT_SEAT_VIEWER) ||
-  // Only whether a decision exists, so it needs no theme to colour it with.
-  selectDecisionViewModel(game, () => undefined) !== null;
+  selectDecisionViewModel(game) !== null;
 
 /** A player's holdings grouped for the holdings drawer. */
 export const selectGroupedHoldings = (game: GameState, playerId: PlayerId) =>
@@ -159,12 +148,11 @@ export const selectGroupedHoldings = (game: GameState, playerId: PlayerId) =>
  * Both sides of a trade the active player is assembling.
  *
  * Built here rather than in the component because it needs the board, the
- * ownership record and the theme's token colours - none of which a
+ * ownership record and the palette - none of which a
  * presentational component may reach for.
  */
 export const selectTradeBuilder = (
   game: GameState,
-  findToken: (tokenId: string) => ThemeToken | undefined,
   recipientPlayerId: PlayerId
 ): TradeBuilderViewModel | null => {
   const proposer = selectActivePlayer(game);
@@ -176,7 +164,7 @@ export const selectTradeBuilder = (
   const party = (player: PlayerState): TradePartyViewModel => ({
     playerId: player.id,
     name: player.name,
-    color: findToken(player.tokenId)?.color ?? '',
+    color: colorForId(player.colorId),
     cash: player.cash,
     jailFreeCards: player.jailFreeCards,
     sites: getTradableSites(game, player.id),

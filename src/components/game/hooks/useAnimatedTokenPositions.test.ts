@@ -16,7 +16,7 @@ const player = (
 ): PlayerState => ({
   id,
   name: id,
-  tokenId: 'elephant',
+  colorId: 'red',
   cash: 1500,
   position,
   inJail: false,

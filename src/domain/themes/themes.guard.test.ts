@@ -1,4 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import {
+  colorForId,
+  PALETTE_FLOOR,
+  PLAYER_COLORS,
+  playerColorForIndex,
+} from './playerColors.constants';
 import { SpaceKind } from '../types/game.enums';
 import { BOARD_LAYOUT } from './boardLayout.constants';
 import { buildBoard } from './buildBoard.utils';
@@ -32,22 +38,6 @@ describe.each(availableThemes.map((theme) => [theme.id, theme] as const))(
         .map(({ index }) => theme.spaceNames[index]);
 
       expect(new Set(propertyNames).size).toBe(propertyNames.length);
-    });
-
-    it('has a piece for every player the game seats', () => {
-      expect(theme.tokenCatalog.length).toBeGreaterThanOrEqual(8);
-    });
-
-    it('gives every piece a colour of its own', () => {
-      // The board tokens are plain coloured discs, so two players sharing a
-      // colour are genuinely indistinguishable on the board.
-      const colors = theme.tokenCatalog.map((token) => token.color.toLowerCase());
-      expect(new Set(colors).size).toBe(colors.length);
-    });
-
-    it('gives every piece an id of its own', () => {
-      const ids = theme.tokenCatalog.map((token) => token.id);
-      expect(new Set(ids).size).toBe(ids.length);
     });
 
     it('carries a currency symbol', () => {
@@ -112,5 +102,47 @@ describe('the registry', () => {
     // one does not must still open.
     expect(getThemeOrDefault('a-theme-that-was-removed')).toBe(defaultTheme);
     expect(getThemeOrDefault('')).toBe(defaultTheme);
+  });
+});
+
+/**
+ * The palette, which no longer belongs to any edition.
+ *
+ * All four listed the same eight colours in the same order and differed only in
+ * what they called the piece - and the piece was never drawn. These three used
+ * to run once per theme; there is one list to check now.
+ */
+describe('the player palette', () => {
+  it('seats a full table', () => {
+    expect(PLAYER_COLORS.length).toBeGreaterThanOrEqual(PALETTE_FLOOR);
+  });
+
+  it('gives every player a colour of its own', () => {
+    // A board piece is a plain coloured disc, so two players sharing a colour
+    // are genuinely indistinguishable - there is no shape to fall back on.
+    const colors = PLAYER_COLORS.map((entry) => entry.color.toLowerCase());
+    expect(new Set(colors).size).toBe(colors.length);
+  });
+
+  it('gives every colour an id of its own', () => {
+    // The ids are persisted on PlayerState.colorId, so a duplicate would make
+    // two players' saves indistinguishable as well.
+    const ids = PLAYER_COLORS.map((entry) => entry.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('assigns a distinct colour to every seat at a full table', () => {
+    const assigned = Array.from(
+      { length: PALETTE_FLOOR },
+      (_unused, index) => playerColorForIndex(index).id
+    );
+    expect(new Set(assigned).size).toBe(PALETTE_FLOOR);
+  });
+
+  it('falls back rather than resolving to no colour at all', () => {
+    // An unknown id means a corrupt save. `backgroundColor: ''` is a piece you
+    // cannot see, which is the documented failure this fallback exists for.
+    expect(colorForId('not-a-colour')).toBe(PLAYER_COLORS[0].color);
+    expect(colorForId(PLAYER_COLORS[3].id)).toBe(PLAYER_COLORS[3].color);
   });
 });

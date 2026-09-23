@@ -15,19 +15,12 @@ import {
   selectAuctionDecision,
   selectBidField,
 } from './auctionViewModel.selectors';
-import { makeTokenFinder } from './gameView.selectors';
-
-const findToken = makeTokenFinder(indiaEditionTheme);
 
 const threePlayerGame = (): GameState =>
   createGameState(
     {
       name: 'Auction View',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-        { name: 'Meera', tokenId: 'auto' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }, { name: 'Meera' }],
       themeId: indiaEditionTheme.id,
       createdAt: '2026-09-01T00:00:00.000Z',
     },
@@ -78,12 +71,12 @@ const pass = (game: GameState): GameState =>
 
 describe('selectAuctionDecision', () => {
   it('is null when no auction is running', () => {
-    expect(selectAuctionDecision(threePlayerGame(), findToken)).toBeNull();
+    expect(selectAuctionDecision(threePlayerGame())).toBeNull();
   });
 
   // The panel shows the deed, so the space travels with the decision.
   it('carries the space being auctioned, not just its name', () => {
-    const view = selectAuctionDecision(openAuction(), findToken);
+    const view = selectAuctionDecision(openAuction());
 
     expect(view?.space.id).toBe(view?.auction.spaceId);
     expect(view?.spaceName).toBe(view?.space.name);
@@ -91,27 +84,27 @@ describe('selectAuctionDecision', () => {
 
   it('names the bidder being asked, with their token and cash', () => {
     const game = openAuction();
-    const view = selectAuctionDecision(game, findToken);
+    const view = selectAuctionDecision(game);
     const bidderId =
       game.auctionState?.activeBidderOrder[game.auctionState.activeBidderIndex];
 
     expect(view?.activeBidder.playerId).toBe(bidderId);
     expect(view?.activeBidder.name).toBe(view?.activeBidderName);
-    expect(view?.activeBidder.token).toBeDefined();
+    expect(view?.activeBidder.color).toBeTruthy();
     expect(view?.activeBidder.cash).toBe(game.players[bidderId as string].cash);
   });
 
   it('moves the named bidder on as the turn passes', () => {
     const opened = openAuction();
-    const first = selectAuctionDecision(opened, findToken)?.activeBidder.playerId;
+    const first = selectAuctionDecision(opened)?.activeBidder.playerId;
 
-    const next = selectAuctionDecision(pass(opened), findToken)?.activeBidder.playerId;
+    const next = selectAuctionDecision(pass(opened))?.activeBidder.playerId;
 
     expect(next).not.toBe(first);
   });
 
   it('carries the standing high bid, and the minimum above it', () => {
-    const view = selectAuctionDecision(bid(openAuction(), 40), findToken);
+    const view = selectAuctionDecision(bid(openAuction(), 40));
 
     expect(view?.highestBid).toBe(40);
     expect(view?.minimumBid).toBe(41);
@@ -119,7 +112,7 @@ describe('selectAuctionDecision', () => {
 
   it('resolves every ledger line to the player who made it', () => {
     const game = bid(bid(openAuction(), 20), 50);
-    const view = selectAuctionDecision(game, findToken);
+    const view = selectAuctionDecision(game);
 
     expect(view?.ledger.map((line) => line.kind)).toEqual([
       AuctionLedgerKind.Start,
@@ -134,9 +127,9 @@ describe('selectAuctionDecision', () => {
 
   it('opens the minimum at the start price, then a bid above the standing one', () => {
     const opened = openAuction();
-    expect(selectAuctionDecision(opened, findToken)?.minimumBid).toBe(10);
+    expect(selectAuctionDecision(opened)?.minimumBid).toBe(10);
 
-    expect(selectAuctionDecision(bid(opened, 100), findToken)?.minimumBid).toBe(101);
+    expect(selectAuctionDecision(bid(opened, 100))?.minimumBid).toBe(101);
   });
 });
 

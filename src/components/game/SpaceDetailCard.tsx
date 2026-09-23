@@ -119,7 +119,7 @@ function SiteActions({
         <p className="site-owner" data-testid={TEST_IDS.siteOwner}>
           {/* The token colour is theme data, so it is an inline style here the
               same way it is on the board and the player card. */}
-          <span className="site-owner-dot" style={{ backgroundColor: ownerMark.color }} />
+          <span className="player-dot" style={{ backgroundColor: ownerMark.color }} />
           {isOwnedByViewer ? 'You own this site' : `Owned by ${ownerMark.ownerName}`}
         </p>
       ) : null}

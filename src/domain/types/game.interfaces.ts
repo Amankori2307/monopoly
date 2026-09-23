@@ -30,7 +30,8 @@ export type CardId = string;
 export type ThemeId = string;
 export type AuctionId = string;
 export type RulesetId = string;
-export type TokenId = string;
+/** An entry in the player palette. See domain/themes/playerColors.constants. */
+export type ColorId = string;
 
 // -- Board -------------------------------------------------------------------
 
@@ -106,7 +107,14 @@ export type OwnableSpace = StreetSpace | RailwaySpace | UtilitySpace;
 export interface PlayerState {
   id: PlayerId;
   name: string;
-  tokenId: TokenId;
+  /**
+   * Which of the eight palette colours is theirs.
+   *
+   * Assigned by creation order rather than chosen - see
+   * `domain/themes/playerColors.constants`. It was `tokenId`, a playing piece
+   * picked at setup, and the piece was never drawn on a board.
+   */
+  colorId: ColorId;
   cash: number;
   position: number;
   inJail: boolean;
@@ -281,18 +289,10 @@ export interface GameEvent {
 
 // -- Theme -------------------------------------------------------------------
 
-export interface ThemeToken {
-  id: TokenId;
-  label: string;
-  emoji: string;
-  color: string;
-}
-
 export interface ThemeConfig {
   id: ThemeId;
   name: string;
   currencySymbol: string;
-  tokenCatalog: ThemeToken[];
 }
 
 // -- Root state --------------------------------------------------------------
@@ -360,7 +360,6 @@ export interface StoredGameIndexEntry {
 
 export interface CreatePlayerInput {
   name: string;
-  tokenId: TokenId;
   /**
    * Fixes this player's id, rather than letting creation assign one.
    *

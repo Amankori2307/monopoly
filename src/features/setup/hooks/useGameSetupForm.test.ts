@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MAX_PLAYERS, MIN_PLAYERS } from '../../../domain/constants/game.constants';
-import { availableThemes, defaultTheme } from '../../../domain/themes/themes.registry';
 import { useGameSetupForm } from './useGameSetupForm';
 
 /**
@@ -69,60 +68,17 @@ describe('the Speed Die setting', () => {
 });
 
 /**
- * Every player must hold a piece the chosen edition actually has.
+ * A colour is no longer a choice, so there is nothing here to test.
  *
- * The token defaults read India's catalog whatever edition was selected, and
- * the effect that rebuilt them keyed on the player count alone - so switching
- * edition left ids like `elephant`, which exist in no other catalog. The token
- * finder returned undefined and every player rendered as a colourless,
- * emoji-less disc, on a board where colour is the only thing telling them
- * apart.
+ * This file held four tests about the token catalog: that everybody started on
+ * a piece the default edition had, that switching edition moved everybody onto
+ * a piece THAT edition had, that no two players shared one, and that a
+ * deliberate pick survived a count change. Every one of them was guarding a
+ * decision the form no longer makes - the engine assigns a colour by creation
+ * order from a single palette, so "a piece this edition does not have" cannot
+ * happen and two players sharing one is unrepresentable.
+ *
+ * What replaced them lives in domain/themes/themes.guard.test.ts, on the
+ * palette itself: eight distinct colours, eight distinct ids, and a distinct
+ * colour for every seat at a full table.
  */
-describe('the tokens each edition offers', () => {
-  const otherEditions = availableThemes.filter((theme) => theme.id !== defaultTheme.id);
-
-  it('starts everybody on a piece the default edition has', () => {
-    const { result } = renderHook(() => useGameSetupForm());
-
-    for (const tokenId of result.current.playerTokens) {
-      expect(defaultTheme.tokenCatalog.map((token) => token.id)).toContain(tokenId);
-    }
-  });
-
-  it.each(otherEditions.map((theme) => theme.id))(
-    'moves everybody onto a piece %s has',
-    (themeId) => {
-      const { result } = renderHook(() => useGameSetupForm());
-
-      act(() => result.current.setThemeId(themeId));
-
-      const catalog = availableThemes
-        .find((theme) => theme.id === themeId)!
-        .tokenCatalog.map((token) => token.id);
-      expect(result.current.playerTokens).toHaveLength(result.current.playerCount);
-      for (const tokenId of result.current.playerTokens) {
-        expect(catalog).toContain(tokenId);
-      }
-    }
-  );
-
-  it('gives no two players the same piece', () => {
-    const { result } = renderHook(() => useGameSetupForm());
-
-    act(() => result.current.setPlayerCount(MAX_PLAYERS));
-
-    expect(new Set(result.current.playerTokens).size).toBe(MAX_PLAYERS);
-  });
-
-  // A deliberate pick must survive a count change, so only pieces the edition
-  // lacks are replaced.
-  it('keeps a piece the player chose themselves', () => {
-    const { result } = renderHook(() => useGameSetupForm());
-    const chosen = defaultTheme.tokenCatalog[3].id;
-
-    act(() => result.current.setPlayerToken(0, chosen));
-    act(() => result.current.setPlayerCount(4));
-
-    expect(result.current.playerTokens[0]).toBe(chosen);
-  });
-});

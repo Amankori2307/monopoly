@@ -20,7 +20,6 @@ import type {
   PlayerId,
   PlayerState,
   SpaceId,
-  ThemeToken,
 } from '../../../domain/types/game.interfaces';
 
 /**
@@ -34,7 +33,8 @@ import type {
 
 export interface PlayerSummary {
   player: PlayerState;
-  token: ThemeToken | undefined;
+  /** Their palette colour, already resolved. See playerColors.constants. */
+  color: string;
   propertyCount: number;
   /** Cash plus site and building value - who is actually winning. */
   netWorth: number;
@@ -90,7 +90,7 @@ export interface BuyDecisionViewModel {
 export interface AuctionBidderViewModel {
   playerId: PlayerId;
   name: string;
-  token: ThemeToken | undefined;
+  color: string;
   cash: number;
 }
 
@@ -269,7 +269,7 @@ export interface DecisionHandlers {
 export interface TradeOpponent {
   playerId: PlayerId;
   name: string;
-  tokenId: string;
+  color: string;
 }
 
 /**

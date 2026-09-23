@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { indiaEditionBoard } from '../../../domain/board/indiaEditionBoard';
 import type { HoldingsSection } from '../../../domain/rules/holdings.utils';
 import { isOwnableSpace, isStreetSpace } from '../../../domain/rules/space.utils';
-import { indiaTheme as indiaEditionTheme } from '../../../domain/themes/india.theme';
 import { ColorGroup, SpaceKind } from '../../../domain/types/game.enums';
 import type { OwnableSpace } from '../../../domain/types/game.interfaces';
 import { TEST_IDS } from '../../../shared/constants/testIds.constants';
@@ -43,7 +42,7 @@ const summary: PlayerSummary = {
   player: {
     id: 'player-1',
     name: 'Asha',
-    tokenId: 'elephant',
+    colorId: 'red',
     cash: 700,
     position: 12,
     inJail: false,
@@ -54,7 +53,7 @@ const summary: PlayerSummary = {
     hasPassedGo: false,
     lastMove: null,
   },
-  token: indiaEditionTheme.tokenCatalog[0],
+  color: '#e01b1b',
   propertyCount: 2,
   netWorth: 1820,
   mortgagedCount: 1,

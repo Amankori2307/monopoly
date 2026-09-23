@@ -36,19 +36,35 @@ describe('normaliseJoinCode', () => {
 
 describe('joinBlockedReason', () => {
   it('asks for a code when the field is empty', () => {
-    expect(joinBlockedReason('')).toMatch(/code/i);
+    expect(joinBlockedReason('', 'Asha')).toMatch(/code/i);
   });
 
   it('says how long a code is when it is too short', () => {
-    expect(joinBlockedReason('ABC')).toContain(String(JOIN_CODE_LENGTH));
+    expect(joinBlockedReason('ABC', 'Asha')).toContain(String(JOIN_CODE_LENGTH));
   });
 
   it('lets a full code through', () => {
-    expect(joinBlockedReason('ABC234')).toBeNull();
+    expect(joinBlockedReason('ABC234', 'Asha')).toBeNull();
   });
 
   it('lets a code through however it was typed', () => {
-    expect(joinBlockedReason('abc 234')).toBeNull();
+    expect(joinBlockedReason('abc 234', 'Asha')).toBeNull();
+  });
+
+  /**
+   * The name is asked HERE now, not in the lobby.
+   *
+   * Joining a table is taking a seat at it, so this screen claims one - and a
+   * seat with no name on it is what the lobby's own claim rule always refused.
+   */
+  it('asks for a name once the code is good', () => {
+    expect(joinBlockedReason('ABC234', '')).toMatch(/name/i);
+    expect(joinBlockedReason('ABC234', '   ')).toMatch(/name/i);
+  });
+
+  it('reports the code before the name', () => {
+    // First error wins, and the code is the field they are looking at.
+    expect(joinBlockedReason('', '')).toMatch(/code/i);
   });
 });
 
@@ -65,7 +81,7 @@ describe('every code this build mints', () => {
         true
       );
       expect(normaliseJoinCode(code)).toBe(code);
-      expect(joinBlockedReason(code)).toBeNull();
+      expect(joinBlockedReason(code, 'Asha')).toBeNull();
     }
   });
 });

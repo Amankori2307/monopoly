@@ -89,9 +89,6 @@ export function NewGamePage() {
                     key={`player-${index + 1}`}
                     name={name}
                     onNameChange={form.setPlayerName}
-                    onTokenChange={form.setPlayerToken}
-                    tokenCatalog={form.selectedTheme.tokenCatalog}
-                    tokenId={form.playerTokens[index] ?? ''}
                   />
                 ))}
               </div>

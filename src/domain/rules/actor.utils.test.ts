@@ -28,11 +28,7 @@ const baseGame = (): GameState =>
   createGameState(
     {
       name: 'Test Game',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-        { name: 'Meera', tokenId: 'ship' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }, { name: 'Meera' }],
       themeId: 'india-edition',
       createdAt: '2026-08-29T00:00:00.000Z',
     },

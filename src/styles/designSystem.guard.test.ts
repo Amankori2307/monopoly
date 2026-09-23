@@ -502,8 +502,8 @@ describe('the design system', () => {
   });
 
   it('takes every radius from a token', () => {
-    // The sharp system is a decision, and the four physical pieces are its
-    // documented exception - a pawn, a die, its pips and an owner's dot are
+    // The sharp system is a decision, and the physical pieces are its
+    // documented exception - a pawn, a die, its pips and a player's dot are
     // real objects, not UI surfaces. Both come from tokens, so neither needs a
     // literal. An e2e sweep checks the rendered result; this checks the source.
     const offenders = files.flatMap((file) =>

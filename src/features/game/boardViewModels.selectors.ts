@@ -1,7 +1,7 @@
 import { getAssetHolderId } from '../../domain/rules/actor.utils';
 import type { GameState, ThemeConfig } from '../../domain/types/game.interfaces';
 import { selectSpaceOwnerMarks } from './boardOwnership.utils';
-import { makeTokenFinder, selectPlayerSummaries } from './gameView.selectors';
+import { selectPlayerSummaries } from './gameView.selectors';
 import { selectActionRail } from './playerActions.selectors';
 import { selectSitePanel } from './sitePanel.utils';
 import type { Viewer } from '../multiplayer/viewer.interfaces';
@@ -21,14 +21,12 @@ export const selectBoardViewModels = (
   overlays: UseGameOverlaysResult,
   viewer: Viewer
 ) => {
-  const findToken = makeTokenFinder(theme);
-  const summaries = selectPlayerSummaries(game, theme);
+  const summaries = selectPlayerSummaries(game);
   const selectedSpace =
     game.board.find((space) => space.id === overlays.selectedSpaceId) ?? null;
-  const ownerMarks = selectSpaceOwnerMarks(game, findToken);
+  const ownerMarks = selectSpaceOwnerMarks(game);
 
   return {
-    findToken,
     summaries,
     selectedSummary:
       summaries.find((summary) => summary.player.id === overlays.selectedPlayerId) ??

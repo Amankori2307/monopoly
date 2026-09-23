@@ -2,5 +2,4 @@
 
 export interface SetupDraft {
   playerNames: string[];
-  playerTokens: string[];
 }

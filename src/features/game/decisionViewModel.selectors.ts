@@ -31,7 +31,6 @@ import { isOwnableSpace } from '../../domain/rules/space.utils';
 import { getMortgageTransferFee, getTransferFees } from '../../domain/rules/trade.utils';
 import { selectAuctionDecision } from './auctionViewModel.selectors';
 import { selectActivePlayer } from './gameView.selectors';
-import type { TokenFinder } from './gameView.interfaces';
 
 /**
  * One view model per pending decision.
@@ -237,10 +236,7 @@ const busDecision = (
  * its bidders and wears their colours, and a token id only becomes a colour
  * through the active theme. `selectTradeBuilder` takes the same argument.
  */
-export const selectDecisionViewModel = (
-  game: GameState,
-  findToken: TokenFinder
-): DecisionViewModel | null => {
+export const selectDecisionViewModel = (game: GameState): DecisionViewModel | null => {
   const decision = game.pendingDecision;
   const activePlayer = selectActivePlayer(game);
 
@@ -248,7 +244,7 @@ export const selectDecisionViewModel = (
     case PendingDecisionType.LandedUnownedProperty:
       return buyDecision(game, decision.spaceId, activePlayer);
     case PendingDecisionType.AuctionBid:
-      return selectAuctionDecision(game, findToken);
+      return selectAuctionDecision(game);
     case PendingDecisionType.JailChoice:
       return jailDecisionIfActionable(game, activePlayer);
     case PendingDecisionType.CardDraw:

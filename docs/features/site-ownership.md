@@ -165,7 +165,7 @@ the whole ladder. `isOwnedBy` was made public in `holdings.utils.ts`.
   cell and had to be hunted for on every square; `.space-owner-bar` runs the full length of the
   cell's outer edge in the owner's token colour, and `.board-space.is-owned` washes the square with
   `color-mix(in srgb, var(--space-owner) 14%, transparent)`. Both derive from the player's colour
-  set inline, so neither needs a theme token — a token colour is theme _data_, the same sanctioned
+  set inline, so neither needs a theme token — a player colour is _data_, the same sanctioned
   exception `BoardTokenLayer` and `PlayerCard` take. Contrast was measured on both extremes:
   13.3:1 → 11.3:1 on the India palette, 12.5:1 → 9.4:1 on `midnight`.
 

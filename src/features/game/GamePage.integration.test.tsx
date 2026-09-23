@@ -32,10 +32,7 @@ const seedGame = (overrides: Partial<GameState> = {}): GameState => {
       {
         gameId: 'page-test',
         name: 'Page Test',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: indiaEditionTheme.id,
         createdAt: '2026-09-01T00:00:00.000Z',
       },

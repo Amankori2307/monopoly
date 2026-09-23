@@ -20,17 +20,6 @@ export const worldTheme: GameTheme = {
   name: 'Monopoly World Cities',
   currencySymbol: '$',
 
-  tokenCatalog: [
-    { id: 'globe', label: 'Globe', emoji: '🌍', color: '#e01b1b' },
-    { id: 'aeroplane', label: 'Aeroplane', emoji: '✈️', color: '#1466ff' },
-    { id: 'camera', label: 'Camera', emoji: '📷', color: '#ffd400' },
-    { id: 'compass', label: 'Compass', emoji: '🧭', color: '#00b352' },
-    { id: 'suitcase', label: 'Suitcase', emoji: '🧳', color: '#ff7a00' },
-    { id: 'passport', label: 'Passport', emoji: '🛂', color: '#a020f0' },
-    { id: 'sailboat', label: 'Sailboat', emoji: '⛵', color: '#00c8c8' },
-    { id: 'hot-air-balloon', label: 'Balloon', emoji: '🎈', color: '#ff4fa3' },
-  ],
-
   boardCenter: { title: 'Monopoly', subtitle: 'World Cities' },
 
   // What this edition calls the things on its board, for the rules booklet.

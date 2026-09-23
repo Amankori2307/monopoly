@@ -62,13 +62,14 @@ RLS on, no policies, no table grants — every call goes through a `security def
 the join code. A wrong code and an unknown game id give the **same** answer, so game ids cannot be
 enumerated. Not-found is a value rather than an exception: a mistyped code is a typo, not an HTTP 500.
 
-| RPC                  | Does                                                               |
-| -------------------- | ------------------------------------------------------------------ |
-| `create_game`        | Inserts the row and its state at revision 1                        |
-| `fetch_game`         | Row + state in one round trip, or `null`                           |
-| `publish_game_state` | The compare-and-set; the only way a state changes                  |
-| `claim_seat`         | Seats, bumping the revision so the lobby is live off the same bell |
-| `find_game_by_code`  | Which table a code belongs to: the id and the phase, nothing else  |
+| RPC                  | Does                                                                     |
+| -------------------- | ------------------------------------------------------------------------ |
+| `create_game`        | Inserts the row and its state at revision 1                              |
+| `fetch_game`         | Row + state in one round trip, or `null`                                 |
+| `publish_game_state` | The compare-and-set; the only way a state changes                        |
+| `claim_seat`         | Seats, bumping the revision so the lobby is live off the same bell       |
+| `find_game_by_code`  | Which table a code belongs to: the id and the phase, nothing else        |
+| `start_game`         | Takes a table out of the lobby. The one write with an authorisation rule |
 
 The **publishable** key ships in the bundle by design and is an identifier, not a secret. The
 `sb_secret_` key bypasses RLS and appears nowhere.
@@ -80,9 +81,9 @@ The **publishable** key ships in the bundle by design and is an identifier, not 
 | `supabase/migrations/`                  | The schema, the RPCs, the access control                |
 | `multiplayer/gameSession.interfaces.ts` | The seam: publish, fetch, subscribe, close              |
 | `multiplayer/localSession.ts`           | Hot-seat: accepts every publish, does nothing           |
-| `multiplayer/onlineSession.ts`          | The real one, over the four RPCs                        |
+| `multiplayer/onlineSession.ts`          | The real one, over the RPCs                             |
 | `multiplayer/doorbell.ts`               | Broadcast subscribe/ring, realtime imported dynamically |
-| `multiplayer/supabaseRpc.ts`            | The four calls, over plain `fetch` — no SDK             |
+| `multiplayer/supabaseRpc.ts`            | The five calls, over plain `fetch` — no SDK             |
 | `multiplayer/onlineConfig.utils.ts`     | Resolves config once; `null` means offline              |
 
 ## Decisions
@@ -93,8 +94,9 @@ The **publishable** key ships in the bundle by design and is an identifier, not 
 - **Not lockstep command replay.** `crypto.randomUUID()` and `new Date()` are called inside the
   engine, so peers would diverge on event ids and timestamps — and the sound cue keys off
   `events[0].id`.
-- **Not host-authoritative.** The host closing their laptop would end the game and leave no artifact
-  to resume from.
+- **Not host-authoritative — with exactly one exception.** The host closing their laptop must not end
+  the game, so every move stays open to every seated device. **Starting** is the one thing only the
+  person who opened the table may do; see below.
 - **No SDK for the RPCs.** A PostgREST function call is a POST with two headers; the full client is
   ~28% of this app's bundle to wrap that. Only the socket needs a library, and it is imported
   dynamically so an offline player downloads none of it.
@@ -169,12 +171,63 @@ appended. Four spellings of "we cannot find that game", and three of the constan
 one of them reads from the constant now; the tails were the best of the wordings, so they moved
 into it. See [conventions.md](../conventions.md) section 3d.
 
+## Only the host starts
+
+Every device in the lobby used to see the same "Start the game", and it went live for all of them the
+moment two people were seated — including a device holding **no seat at all**. Whoever clicked first
+won and everybody else adopted their game.
+
+The fix could not be a hidden button, because the join code is a bearer capability: anybody holding
+it could publish a state with `phase: 'in_progress'` over a lobby, which is exactly how this app's own
+client started games. So migration **0005** moves the rule to the server, in two parts:
+
+- **`publish_game_state` refuses to take a row out of `lobby`.** A **phase** check, never an identity
+  one — this function must not learn who the host is, or the host becomes an authority over the
+  running game and the decision above dies by accident. Once the row has left the lobby it behaves
+  byte for byte as 0002 left it. Scoped to `protocol_version >= 2`, so a build already open in
+  somebody's tab can still start the rows it created.
+- **`start_game` is the only door**, and it takes the **phase** as its compare-and-set. `lobby` is a
+  one-way door, so exactly one start can win — where a revision CAS would have refused a start
+  because an unrelated seat claim bumped the row. It also deleted the `fetch_game` that
+  `startOnlineGame` did purely to learn a revision, and the window between reading it and writing.
+
+**Why a secret rather than a device id.** `fetch_game` hands the whole seats array — `deviceId`
+included — to anyone holding the code. So "prove you are the host by sending their device id" is a
+check whose credential the server publishes to everyone who could fail it: real against this app's
+own client, decoration against a hand-rolled POST. Hence two columns doing two jobs. `host_seat_id`
+is **who** (public, already derivable from the earliest `claimedAt`, and what the lobby draws);
+`host_secret` is **proof** — minted by `create_game`, returned by `create_game` and nothing else,
+stored per device under `monopoly.host.<gameId>.v1`.
+
+`start_game` authorises down three branches, and `isHostDevice` in `lobby.utils.ts` mirrors them in
+the same order so the button and the server cannot disagree: the secret if there is one; failing
+that the device in the host's seat (transitional, for rows backfilled by the migration); and failing
+both, **open to any seated device** — because the alternative is a live table nobody can ever start.
+
+What this cannot be, in 0004's voice: host-only start can never be stronger than the join code.
+Losing the secret loses the ability to start that lobby, with no recovery — the same is already true
+of the join code, and a lobby is minutes old and re-hostable.
+
+## Joining is taking a seat
+
+`/join` took a code, then the lobby asked for a name **and** a playing piece — while an invite _link_
+skipped `/join` entirely and asked the same two questions somewhere else. One door now: `/join` takes
+the code and the name together and claims the seat, and the invite link points at it
+(`#/join?code=ABC123`) rather than at the lobby. The link is short enough to read out loud and no
+longer carries the game's uuid; the lobby is a roster with no form on it.
+
+The lobby also stopped drawing `MAX_PLAYERS - seats.length` rows of the word "Empty" — two players at
+a table looked like six things missing, which on a 360px phone was most of the screen. Whether there
+is room is one sentence, said only while there is any.
+
 ## The table's own options
 
 `useLobby.start()` hardcoded `themeId: availableThemes[0].id` and `useSpeedDie: false`, so every
 online table was the first edition whatever the host wanted, and **an online game could never be a
 Speed Die game**. The host picks both at `#/host` and they travel in the lobby URL beside the code
 (`&theme=…&speed=on`), because the lobby is where the game is _started_ and a host reloading their
-own lobby is routine — Redux would lose them. `inviteLinkFor` carries them too, and that is a
-correctness fix rather than a nicety: seat tokens come from `theme.tokenCatalog`, so a guest whose
-lobby defaulted to another edition picks a token id the host's board has no piece for.
+own lobby is routine — Redux would lose them. `inviteLinkFor` no longer carries them, and that is
+safe for two reasons that did not both hold before: the palette is one shared list, so a guest can no
+longer send a colour the host's board has no drawing for — the correctness argument that used to
+require it — and only the host can start a game, so only the host's own URL needs to know what kind
+of game it will be.

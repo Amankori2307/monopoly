@@ -45,7 +45,7 @@ export function PlayerDetailDrawer({
     return null;
   }
 
-  const { player, token, propertyCount, netWorth, mortgagedCount } = summary;
+  const { player, propertyCount, netWorth, mortgagedCount } = summary;
   const featured =
     allSpaces.find((space) => space.id === selectedSpaceId) ?? allSpaces[0] ?? null;
 
@@ -55,7 +55,7 @@ export function PlayerDetailDrawer({
       isOpen
       onClose={onClose}
       testId={TEST_IDS.playerDetailDrawer}
-      title={`${token?.emoji ?? ''} ${player.name}`.trim()}
+      title={player.name}
       wide
     >
       <div className="drawer-stats">

@@ -3,7 +3,10 @@ import { TEST_IDS } from '../../src/shared/constants/testIds.constants';
 import { VIEWPORTS } from './helpers';
 
 /**
- * Typing in a code somebody read out.
+ * Typing in a code somebody read out, and the name you want at the table.
+ *
+ * This screen asks both, because joining a table IS taking a seat at it - it
+ * used to take the code alone and hand you to a lobby that asked the rest.
  *
  * The dev server resolves a real config, and the browser cannot resolve the
  * backend's host - playwright.config.ts blackholes it, so the offline promise
@@ -14,6 +17,7 @@ import { VIEWPORTS } from './helpers';
 test.use({ viewport: VIEWPORTS.desktop });
 
 const field = (page: Page) => page.getByTestId(TEST_IDS.joinCodeInput);
+const nameField = (page: Page) => page.getByTestId(TEST_IDS.joinNameInput);
 
 test('uppercases a code typed in lower case', async ({ page }) => {
   await page.goto('/#/join');
@@ -80,6 +84,7 @@ test('lets a full code be sent, and says when the table cannot be reached', asyn
 }) => {
   await page.goto('/#/join');
   await field(page).fill('ABC234');
+  await nameField(page).fill('Vikram');
 
   // The build resolves a config now, so a valid code is sendable - what it
   // cannot do in this suite is resolve the backend's host, which
@@ -88,4 +93,35 @@ test('lets a full code be sent, and says when the table cannot be reached', asyn
   await page.getByTestId(TEST_IDS.joinSubmitButton).click();
 
   await expect(page.locator('.error-text')).toBeVisible();
+});
+
+/**
+ * The name is asked HERE, not a screen later.
+ *
+ * A perfect code is not enough on its own, and the refusal says which half is
+ * missing rather than leaving a dead button - the same contract every other
+ * blocked control in this app holds.
+ */
+test('will not join on a code alone, and says a name is wanted', async ({ page }) => {
+  await page.goto('/#/join');
+  await field(page).fill('ABC234');
+
+  await expect(page.getByTestId(TEST_IDS.joinSubmitButton)).toBeDisabled();
+  await expect(page.getByTestId(TEST_IDS.joinBlockedReason)).toContainText(/name/i);
+
+  await nameField(page).fill('Vikram');
+  await expect(page.getByTestId(TEST_IDS.joinSubmitButton)).toBeEnabled();
+});
+
+/**
+ * An invite link is this screen with the code already in it.
+ *
+ * That is what lets one door serve a code read aloud and a link clicked cold -
+ * and it is why the name is only ever asked once.
+ */
+test('takes the code from an invite link, leaving only the name', async ({ page }) => {
+  await page.goto('/#/join?code=ABC234');
+
+  await expect(field(page)).toHaveValue('ABC234');
+  await expect(page.getByTestId(TEST_IDS.joinBlockedReason)).toContainText(/name/i);
 });

@@ -35,8 +35,8 @@ const tradeRow: PlayerActionRow = {
   disabledReason: '',
   sites: [],
   opponents: [
-    { playerId: 'player-2', name: 'Vikram', tokenId: 'train' },
-    { playerId: 'player-3', name: 'Meera', tokenId: 'boat' },
+    { playerId: 'player-2', name: 'Vikram', color: '#1466ff' },
+    { playerId: 'player-3', name: 'Meera', color: '#1466ff' },
   ],
 };
 

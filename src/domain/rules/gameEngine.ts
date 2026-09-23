@@ -1,6 +1,7 @@
 import { STANDARD_RULESET_ID } from '../constants/board.constants';
 import { buildBoard } from '../themes/buildBoard.utils';
 import { buildCards } from '../themes/buildCards.utils';
+import { playerColorForIndex } from '../themes/playerColors.constants';
 import { getThemeOrDefault } from '../themes/themes.registry';
 import {
   GAME_STATE_VERSION,
@@ -144,7 +145,10 @@ const createPlayers = (input: CreateGameInput): Record<PlayerId, PlayerState> =>
       accumulator[playerId] = {
         id: playerId,
         name: playerConfig.name,
-        tokenId: playerConfig.tokenId,
+        // Assigned here rather than chosen at setup, which is what makes two
+        // players sharing a colour unrepresentable rather than merely refused.
+        // The palette is one list for every edition - see playerColors.
+        colorId: playerColorForIndex(index).id,
         cash: STARTING_CASH + (input.useSpeedDie ? SPEED_DIE_BONUS_CASH : 0),
         position: 0,
         inJail: false,

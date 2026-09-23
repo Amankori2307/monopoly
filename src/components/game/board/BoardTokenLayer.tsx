@@ -1,11 +1,11 @@
 import { getTokenPosition, tokenCrowdKey } from '../../../domain/board/boardLayout.utils';
 import { JAIL_POSITION } from '../../../domain/constants/game.constants';
-import type { PlayerState, ThemeToken } from '../../../domain/types/game.interfaces';
+import { colorForId } from '../../../domain/themes/playerColors.constants';
+import type { PlayerState } from '../../../domain/types/game.interfaces';
 import { scopedTestId, TEST_IDS } from '../../../shared/constants/testIds.constants';
 import type { TokenPositions } from './board.interfaces';
 
 interface BoardTokenLayerProps {
-  findToken: (tokenId: string) => ThemeToken | undefined;
   players: PlayerState[];
   positions: TokenPositions;
 }
@@ -18,7 +18,7 @@ interface BoardTokenLayerProps {
  * used to live in the cell's flow, which made an occupied cell taller than its
  * neighbours and shifted the board.
  */
-export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLayerProps) {
+export function BoardTokenLayer({ players, positions }: BoardTokenLayerProps) {
   const occupants = new Map<string, number>();
 
   return (
@@ -37,8 +37,6 @@ export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLay
         occupants.set(crowdKey, crowdIndex + 1);
         const { leftPercent, topPercent } = getTokenPosition(space, crowdIndex, inJail);
 
-        const token = findToken(player.tokenId);
-
         return (
           <span
             aria-label={player.name}
@@ -50,7 +48,7 @@ export function BoardTokenLayer({ findToken, players, positions }: BoardTokenLay
             style={{
               left: `${leftPercent}%`,
               top: `${topPercent}%`,
-              backgroundColor: token?.color,
+              backgroundColor: colorForId(player.colorId),
             }}
             title={player.name}
           />

@@ -477,9 +477,16 @@ moving is a real CSS transition rather than a jump between grid cells. Tokens us
 cell's flow, which made an occupied cell taller than its neighbours and shifted the board.
 
 A token is a small **shaded sphere in the player's colour** — one of the documented physical-piece
-exceptions to the sharp-corner system. The base colour is set inline from `ThemeToken.color`; the
-gradients and inset shading are colour-agnostic overlays, so the sphere reads over any colour.
-Colour is the only thing distinguishing pieces, so the token catalog uses vivid, separable colours.
+exceptions to the sharp-corner system. The base colour is set inline from the player's `colorId`
+through `colorForId`; the gradients and inset shading are colour-agnostic overlays, so the sphere
+reads over any colour.
+
+Colour is the **only** thing distinguishing pieces, which is why the palette is eight vivid,
+separable colours and why nobody picks one. Each edition used to list eight named playing pieces —
+an elephant, a top hat — and every one of them was drawn as this same circle, so the four catalogs
+were the same eight colours in the same order wearing four sets of names. They are one shared list
+now, assigned by creation order, and the _word_ token survives only where it means the thing on the
+board: `BoardTokenLayer`, `.token-chip`, `getTokenPosition`.
 
 **Tokens sharing a space cluster around its centre**, from `getTokenCrowdOffset`: a lone token — much
 the commonest case — sits exactly on the space, and a crowd grows outwards around it into a fixed

@@ -1,3 +1,4 @@
+import { colorForId } from '../../domain/themes/playerColors.constants';
 import { getAssetHolderId } from '../../domain/rules/actor.utils';
 import { getPlayerActionOptions } from '../../domain/rules/playerActions.utils';
 import { nounsFor } from '../../domain/themes/nouns.utils';
@@ -88,7 +89,7 @@ const tradeRow = (
     .map((playerId) => ({
       playerId,
       name: game.players[playerId].name,
-      tokenId: game.players[playerId].tokenId,
+      color: colorForId(game.players[playerId].colorId),
     }));
 
   const noOneLeft = opponents.length === 0 ? 'Nobody is left to trade with' : '';

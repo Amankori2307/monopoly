@@ -1,4 +1,4 @@
-import type { DeckCard, ThemeToken } from '../types/game.interfaces';
+import type { DeckCard } from '../types/game.interfaces';
 
 /**
  * One theme, whole.
@@ -32,6 +32,19 @@ import type { DeckCard, ThemeToken } from '../types/game.interfaces';
  *
  * Lower case: the booklet interpolates them mid-sentence.
  */
+/**
+ * One entry in the player palette.
+ *
+ * Not on a theme, and that is the whole point of it: all four editions listed
+ * the same eight colours in the same order, differing only in what they called
+ * the piece - and the piece was never drawn. See playerColors.constants.
+ */
+export interface PlayerColor {
+  /** Persisted on PlayerState.colorId, so changing one needs a migration. */
+  id: string;
+  color: string;
+}
+
 export interface ThemeNouns {
   /** A single ordinary property square. */
   site: string;
@@ -48,13 +61,6 @@ export interface GameTheme {
   name: string;
   /** Prefixes every amount on screen, and in the card text built from it. */
   currencySymbol: string;
-  /**
-   * The playing pieces.
-   *
-   * Colour is load-bearing rather than decorative: the board tokens are plain
-   * coloured discs, so it is the only thing telling two players apart.
-   */
-  tokenCatalog: ThemeToken[];
   /** What this edition calls a site and a railway. See ThemeNouns. */
   nouns: ThemeNouns;
   /**

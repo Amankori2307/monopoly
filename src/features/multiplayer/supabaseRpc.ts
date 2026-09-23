@@ -1,7 +1,8 @@
 import type { OnlineConfig } from './onlineConfig.interfaces';
+import type { CreatedGameRow, StartGameResponse } from './supabaseRpc.interfaces';
 
 /**
- * The four RPCs, over plain `fetch`.
+ * The five RPCs, over plain `fetch`.
  *
  * No SDK here on purpose: a PostgREST function call is a POST with two headers
  * and a JSON body, and the full supabase-js client is ~28% of this app's whole
@@ -72,7 +73,7 @@ export const rpc = {
       protocolVersion: number;
     }
   ) =>
-    callRpc<unknown>(config, 'create_game', {
+    callRpc<CreatedGameRow>(config, 'create_game', {
       p_game_id: input.gameId,
       p_join_code: input.joinCode,
       p_state: input.state,
@@ -147,12 +148,55 @@ export const rpc = {
    */
   claimSeat: (
     config: OnlineConfig,
-    input: { gameId: string; joinCode: string; seat: unknown; maxPlayers: number }
+    input: {
+      gameId: string;
+      joinCode: string;
+      seat: unknown;
+      maxPlayers: number;
+      /** Present only on the host's own device: lets them retake their seat. */
+      hostSecret?: string | null;
+    }
   ) =>
     callRpc<unknown>(config, 'claim_seat', {
       p_game_id: input.gameId,
       p_join_code: input.joinCode,
       p_seat: input.seat,
       p_max_players: input.maxPlayers,
+      p_host_secret: input.hostSecret ?? null,
+    }),
+
+  /**
+   * Takes the table out of the lobby, and the only write with an authorisation
+   * rule on it.
+   *
+   * Its own function rather than a branch in `publishGameState`, for three
+   * reasons. Publish is the hot path for every move, and teaching it who the
+   * host is is how the host becomes an authority over a running game by
+   * accident. The PHASE is the compare-and-set here - `lobby` is a one-way
+   * door, so exactly one start can win - where a revision CAS would refuse a
+   * start because an unrelated seat claim had bumped the row. And it can check
+   * something a move cannot: that the seats this game was built from are still
+   * the seats on the row, sent as IDS rather than as the array, per 0003.
+   */
+  startGame: (
+    config: OnlineConfig,
+    input: {
+      gameId: string;
+      joinCode: string;
+      state: unknown;
+      phase: string;
+      seatIds: string[];
+      deviceId: string;
+      hostSecret?: string | null;
+    }
+  ) =>
+    callRpc<StartGameResponse>(config, 'start_game', {
+      p_game_id: input.gameId,
+      p_join_code: input.joinCode,
+      p_state: input.state,
+      p_phase: input.phase,
+      p_seat_ids: input.seatIds,
+      p_device_id: input.deviceId,
+      p_host_secret: input.hostSecret ?? null,
     }),
 };

@@ -1,3 +1,4 @@
+import { PLAYER_COLORS } from '../themes/playerColors.constants';
 import { describe, expect, it } from 'vitest';
 import {
   AuctionLedgerKind,
@@ -31,7 +32,6 @@ import { createGameState, executeGameCommand } from './gameEngine';
 import { isOwnableSpace, isStreetSpace } from './space.utils';
 import { RAILWAY_RENT_BY_COUNT } from '../constants/board.constants';
 import { chanceCards, communityChestCards } from '../cards/indiaEditionCards';
-import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme';
 import { getPlacementSites } from './buildings.utils';
 import { startAuction } from './engine/auction.utils';
 import { drawCard } from './engine/cards.utils';
@@ -60,10 +60,7 @@ const createBaseGame = () =>
   createGameState(
     {
       name: 'Test Game',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
       themeId: 'india-edition',
       createdAt: '2026-08-29T00:00:00.000Z',
     },
@@ -515,10 +512,10 @@ describe('auction bidder rotation', () => {
       {
         name: 'Auction Test',
         playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-          { name: 'Meera', tokenId: 'auto' },
-          { name: 'Rahul', tokenId: 'peacock' },
+          { name: 'Asha' },
+          { name: 'Vikram' },
+          { name: 'Meera' },
+          { name: 'Rahul' },
         ],
         themeId: 'india-edition',
         createdAt: '2026-09-01T00:00:00.000Z',
@@ -2456,10 +2453,7 @@ describe('Speed Die setup', () => {
     const speedGame = createGameState(
       {
         name: 'Speed',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: 'india-edition',
         createdAt: '2026-08-29T00:00:00.000Z',
         useSpeedDie: true,
@@ -2514,10 +2508,7 @@ describe('rolling with the Speed Die', () => {
     const game = createGameState(
       {
         name: 'Speed',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: 'india-edition',
         createdAt: '2026-08-29T00:00:00.000Z',
         useSpeedDie: true,
@@ -4655,13 +4646,16 @@ describe('turn order', () => {
  */
 describe('setting up a game', () => {
   // 3.3
-  it('gives every player a token from the theme catalogue', () => {
+  it('gives every player a colour of their own', () => {
+    // Given, not picked. Every edition used to list eight pieces and the piece
+    // was never drawn - a board token is a plain coloured disc - so the rule is
+    // now about the one thing that actually identifies somebody.
     const game = createBaseGame();
-    const catalogue = indiaEditionTheme.tokenCatalog.map((token) => token.id);
+    const palette = PLAYER_COLORS.map((entry) => entry.id);
+    const assigned = game.playerOrder.map((playerId) => game.players[playerId].colorId);
 
-    game.playerOrder.forEach((playerId) => {
-      expect(catalogue).toContain(game.players[playerId].tokenId);
-    });
+    assigned.forEach((colorId) => expect(palette).toContain(colorId));
+    expect(new Set(assigned).size).toBe(assigned.length);
   });
 
   // 3.4
@@ -4678,10 +4672,7 @@ describe('setting up a game', () => {
     const shuffled = createGameState(
       {
         name: 'Shuffle',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: 'india-edition',
         createdAt: '2026-08-29T00:00:00.000Z',
       },
@@ -5064,10 +5055,7 @@ describe('doubles and the Speed Die', () => {
     const game = createGameState(
       {
         name: 'Speed doubles',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: 'india-edition',
         createdAt: '2026-08-29T00:00:00.000Z',
         useSpeedDie: true,

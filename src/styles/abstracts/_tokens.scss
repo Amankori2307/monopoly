@@ -165,6 +165,10 @@ $owner-wash: 14%;
 // A LAYER, not a border. `is-active` set `border-color`, which is all four
 // sides, so only the inline left colour survived it - and a border cannot
 // change weight without moving the card's content.
+// A player's colour as a mark beside their name - trade columns, the deed
+// panel's owner line, the auction ledger. One size, where there were two that
+// differed by a pixel.
+$player-dot-size: 10px;
 $player-rail: 3px;
 $player-rail-active: 6px;
 

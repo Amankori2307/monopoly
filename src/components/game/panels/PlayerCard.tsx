@@ -31,7 +31,7 @@ export function PlayerCard({
 }: PlayerCardProps) {
   const {
     player,
-    token,
+    color,
     propertyCount,
     netWorth,
     mortgagedCount,
@@ -60,16 +60,14 @@ export function PlayerCard({
       // border, then had to be kept off this one side by hand. Inline because
       // a token colour is theme DATA, not a CSS token: the same sanctioned
       // exception BoardSpaceCell takes for `--space-owner`.
-      style={token ? { ['--player-color' as string]: token.color } : undefined}
+      style={{ ['--player-color' as string]: color }}
     >
       {/* The identity rail. Its colour comes from --player-color above; this
           span had a background and no rule anywhere, so it drew nothing. */}
       <span aria-hidden="true" className="player-card-strip" />
 
       <div className="player-card-head">
-        <strong className="player-card-name">
-          {token?.emoji} {player.name}
-        </strong>
+        <strong className="player-card-name">{player.name}</strong>
 
         {/* Net worth leads: cash alone misleads when a player is property-rich.
             It keeps its label because the card also shows cash, and the two are

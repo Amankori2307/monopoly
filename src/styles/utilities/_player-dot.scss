@@ -1,0 +1,25 @@
+@use '../abstracts/tokens' as t;
+
+// ---------------------------------------------------------------------------
+// A player, as a mark.
+//
+// A player's colour IS their identity - the board piece is a plain coloured
+// disc and there is no emoji or shape behind it - so the same dot appears
+// wherever a name needs one: the trade columns, the deed panel's owner line,
+// and the auction ledger.
+//
+// This is the third copy, which is what makes it a utility. There were two,
+// nine and ten pixels across with one carrying a ring, differing by a pixel and
+// by nothing anybody had decided. The ring stays, and on both: a yellow player
+// on a near-white card is otherwise a dot you have to hunt for.
+//
+// Round, and one of the four documented exceptions to the sharp system - it is
+// a PIECE, not a surface. See docs/conventions.md 3b.
+// ---------------------------------------------------------------------------
+.player-dot {
+  flex: 0 0 auto;
+  width: t.$player-dot-size;
+  height: t.$player-dot-size;
+  border-radius: t.$token-radius;
+  box-shadow: 0 0 0 1px var(--border-space);
+}

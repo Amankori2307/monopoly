@@ -15,7 +15,6 @@ import { indiaTheme as indiaEditionTheme } from '../../domain/themes/india.theme
 import { isStreetSpace } from '../../domain/rules/space.utils';
 import type { GameState, OwnableSpace } from '../../domain/types/game.interfaces';
 import {
-  makeTokenFinder,
   selectHasAvailableAction,
   selectActivePlayer,
   selectPlayerOrderFromActive,
@@ -27,16 +26,12 @@ import {
 } from './gameView.selectors';
 
 /** The decision view model colours its bidders, so it needs the theme's tokens. */
-const findToken = makeTokenFinder(indiaEditionTheme);
 
 const createGame = (): GameState =>
   createGameState(
     {
       name: 'Selector Test',
-      playerConfigs: [
-        { name: 'Asha', tokenId: 'elephant' },
-        { name: 'Vikram', tokenId: 'train' },
-      ],
+      playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
       themeId: indiaEditionTheme.id,
       createdAt: '2026-08-29T00:00:00.000Z',
     },
@@ -47,11 +42,11 @@ describe('selectPlayerSummaries', () => {
   it('returns one summary per player', () => {
     const game = createGame();
 
-    const summaries = selectPlayerSummaries(game, indiaEditionTheme);
+    const summaries = selectPlayerSummaries(game);
 
     expect(summaries).toHaveLength(2);
     expect(summaries.every((s) => s.propertyCount === 0)).toBe(true);
-    expect(summaries[0].token?.emoji).toBeTruthy();
+    expect(summaries.every((summary) => summary.color)).toBe(true);
   });
 
   // The card stack has no active-player marker: the player on top is the active
@@ -60,16 +55,28 @@ describe('selectPlayerSummaries', () => {
     const game = createGame();
     game.activePlayerIndex = 1;
 
-    const summaries = selectPlayerSummaries(game, indiaEditionTheme);
+    const summaries = selectPlayerSummaries(game);
 
     expect(summaries[0].player.id).toBe(game.playerOrder[1]);
     expect(summaries[1].player.id).toBe(game.playerOrder[0]);
   });
 
-  it('leaves the token undefined when no theme is supplied', () => {
+  /**
+   * It used to be "leaves the token undefined when no theme is supplied" - the
+   * summaries took a theme, looked a token id up in its catalog, and handed
+   * back `undefined` when there was no theme. There is no theme to supply now:
+   * the palette is one module-level list and a colour is assigned by creation
+   * order, so a player without one is unrepresentable rather than merely rare.
+   */
+  it('gives every player a colour without being handed a theme', () => {
     const game = createGame();
+    const summaries = selectPlayerSummaries(game);
 
-    expect(selectPlayerSummaries(game, undefined)[0].token).toBeUndefined();
+    // Keyed by player id, not by position: these come back in TURN order from
+    // the active player, which the starter roll decides.
+    const byId = new Map(summaries.map((summary) => [summary.player.id, summary.color]));
+    expect(byId.get(game.playerOrder[0])).toBeTruthy();
+    expect(new Set(byId.values()).size).toBe(summaries.length);
   });
 });
 
@@ -119,7 +126,7 @@ describe('turn selectors', () => {
 
 describe('selectDecisionViewModel', () => {
   it('returns null when nothing is pending', () => {
-    expect(selectDecisionViewModel(createGame(), findToken)).toBeNull();
+    expect(selectDecisionViewModel(createGame())).toBeNull();
   });
 
   it('describes the buy decision after landing on an unowned property', () => {
@@ -131,7 +138,7 @@ describe('selectDecisionViewModel', () => {
       new SeededRandomSource(2)
     );
 
-    const decision = selectDecisionViewModel(nextState, findToken);
+    const decision = selectDecisionViewModel(nextState);
 
     expect(decision?.type).toBe(PendingDecisionType.LandedUnownedProperty);
     if (decision?.type === PendingDecisionType.LandedUnownedProperty) {
@@ -166,7 +173,7 @@ describe('selectDecisionViewModel', () => {
       },
     };
 
-    const decision = selectDecisionViewModel(broke, findToken);
+    const decision = selectDecisionViewModel(broke);
 
     expect(decision?.type).toBe(PendingDecisionType.LandedUnownedProperty);
     if (decision?.type === PendingDecisionType.LandedUnownedProperty) {
@@ -186,7 +193,7 @@ describe('selectDecisionViewModel', () => {
       type: GameCommandType.DeclineLandedAsset,
     });
 
-    const decision = selectDecisionViewModel(declined.nextState, findToken);
+    const decision = selectDecisionViewModel(declined.nextState);
 
     expect(decision?.type).toBe(PendingDecisionType.AuctionBid);
     if (decision?.type === PendingDecisionType.AuctionBid) {
@@ -196,14 +203,10 @@ describe('selectDecisionViewModel', () => {
   });
 });
 
-describe('makeTokenFinder', () => {
-  it('finds a token by id and returns undefined for unknown ids', () => {
-    const find = makeTokenFinder(indiaEditionTheme);
-
-    expect(find('elephant')?.emoji).toBe('🐘');
-    expect(find('not-a-token')).toBeUndefined();
-  });
-});
+// `makeTokenFinder` was here, resolving a token id against the active theme's
+// catalog. There is no catalog and no lookup to thread: the palette is a single
+// module-level list, so `colorForId` is a plain function and its own tests live
+// beside it in domain/themes/themes.guard.test.ts.
 
 describe('a jailed player always has something to do', () => {
   const jailedGame = (): GameState => {
@@ -221,7 +224,7 @@ describe('a jailed player always has something to do', () => {
     game.pendingDecision = { type: PendingDecisionType.None };
     game.turn = { ...game.turn, phase: TurnPhase.AwaitRoll };
 
-    const decision = selectDecisionViewModel(game, findToken);
+    const decision = selectDecisionViewModel(game);
 
     expect(decision?.type).toBe(PendingDecisionType.JailChoice);
     // The action is the decision, not the dice dock: the jail panel offers the
@@ -229,9 +232,7 @@ describe('a jailed player always has something to do', () => {
     // regression cared about - that a jailed player is never left with nothing
     // to do - still holds, and is what this asserts.
     expect(selectHasAvailableAction(game)).toBe(true);
-    expect(selectDecisionViewModel(game, findToken)?.type).toBe(
-      PendingDecisionType.JailChoice
-    );
+    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
   });
 
   it('offers no dock roll to a jailed player, because the panel owns it', () => {
@@ -250,9 +251,7 @@ describe('a jailed player always has something to do', () => {
       playerId: game.playerOrder[game.activePlayerIndex],
     };
 
-    expect(selectDecisionViewModel(game, findToken)?.type).toBe(
-      PendingDecisionType.JailChoice
-    );
+    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
   });
 
   it('does not offer a roll while a blocking decision is open', () => {
@@ -369,7 +368,7 @@ describe('a finished game', () => {
 
   it('shows the winner', () => {
     const game = finishedGame();
-    const decision = selectDecisionViewModel(game, findToken);
+    const decision = selectDecisionViewModel(game);
 
     expect(decision).toEqual({
       type: PendingDecisionType.GameOver,
@@ -396,7 +395,7 @@ describe('the jail decision', () => {
   };
 
   it.each([0, 1, 2])('reports %i attempts used', (served) => {
-    const decision = selectDecisionViewModel(jailedGame(served), findToken);
+    const decision = selectDecisionViewModel(jailedGame(served));
 
     expect(decision).toMatchObject({
       type: PendingDecisionType.JailChoice,
@@ -408,9 +407,7 @@ describe('the jail decision', () => {
   it('offers the choice even with no pending decision recorded', () => {
     const game = jailedGame(0);
 
-    expect(selectDecisionViewModel(game, findToken)?.type).toBe(
-      PendingDecisionType.JailChoice
-    );
+    expect(selectDecisionViewModel(game)?.type).toBe(PendingDecisionType.JailChoice);
   });
 });
 
@@ -438,7 +435,7 @@ describe('the jail panel and the turn', () => {
   it.each([TurnPhase.AwaitDecision, TurnPhase.AwaitRoll])(
     'offers the choice at the start of the turn (%s)',
     (phase) => {
-      expect(selectDecisionViewModel(jailedAt(phase), findToken)?.type).toBe(
+      expect(selectDecisionViewModel(jailedAt(phase))?.type).toBe(
         PendingDecisionType.JailChoice
       );
     }
@@ -447,7 +444,7 @@ describe('the jail panel and the turn', () => {
   it('offers nothing once the attempt has been spent', () => {
     const spent = jailedAt(TurnPhase.TurnComplete);
 
-    expect(selectDecisionViewModel(spent, findToken)).toBeNull();
+    expect(selectDecisionViewModel(spent)).toBeNull();
     // And what is left to do is end the turn, which is now uncovered.
     expect(selectCanEndTurn(spent)).toBe(true);
     expect(selectHasAvailableAction(spent)).toBe(true);
@@ -533,10 +530,7 @@ describe('a jail roll never leaves the game with nothing to do', () => {
     const game = createGameState(
       {
         name: 'Jail deadlock',
-        playerConfigs: [
-          { name: 'Asha', tokenId: 'elephant' },
-          { name: 'Vikram', tokenId: 'train' },
-        ],
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }],
         themeId: indiaEditionTheme.id,
         createdAt: '2026-09-01T00:00:00.000Z',
       },

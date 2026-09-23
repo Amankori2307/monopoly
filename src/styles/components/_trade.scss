@@ -65,16 +65,6 @@
   font-weight: t.$weight-heavy;
 }
 
-// The owner's token colour: theme data, applied inline, like the board's dot -
-// and round for the same reason, so it takes $token-radius rather than the
-// sharp system's 0. It is a piece, not a surface. See docs/conventions.md 3b.
-.trade-column-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: t.$token-radius;
-  flex: 0 0 auto;
-}
-
 .trade-column-cash {
   margin: 0;
   color: var(--text-muted);

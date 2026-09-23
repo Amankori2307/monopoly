@@ -198,7 +198,7 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
   `monopoly.seat.<id>.v1` and its join code `monopoly.code.<id>.v1`, plus the preferences
   `monopoly.sound.v1` and `monopoly.appearance.v1`. **The index is its own shape with its own
   schema and no version**, so adding a field to it is not a `GAME_STATE_VERSION` change - see §8.
-- `GAME_STATE_VERSION = 10`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
+- `GAME_STATE_VERSION = 11`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
 - **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. Add the field to the schema, or it will not survive a save.
@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1565 unit tests, 234 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1569 unit tests, 236 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on **every push to
@@ -275,7 +275,7 @@ When you touch one of these, extract it (colors/icons → a shared board-present
 
 **Styling** — SCSS under `src/styles/`, entry `main.scss`, imported once in `App.tsx`. Layered: `abstracts` (tokens, mixins) → `themes` → `base` → `layout` → `components` → `pages`.
 
-- **Never hardcode a colour, and the board now proves it.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. `board.spec.ts` flips `data-theme` to `midnight` mid-run and fails on any board colour that does not move — the board's paper, grain and vignette are all tokens plus repeating gradients, with **no raster assets to ship or theme**. The theme guard also `@error`s on a token a theme defines that nothing reads. The one sanctioned exception is a **player token colour**, applied inline from `ThemeToken.color` — it is theme _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
+- **Never hardcode a colour, and the board now proves it.** Every colour is a CSS custom property emitted by the theme engine; use `var(--accent)`, `var(--surface-panel)`, etc. A raw hex in a component partial breaks theming. `board.spec.ts` flips `data-theme` to `midnight` mid-run and fails on any board colour that does not move — the board's paper, grain and vignette are all tokens plus repeating gradients, with **no raster assets to ship or theme**. The theme guard also `@error`s on a token a theme defines that nothing reads. The one sanctioned exception is a **player's colour**, applied inline from the shared palette (`colorForId`) — it is _data_, not a CSS token. See `BoardTokenLayer`, `PlayerCard`, and the board's owner dot.
 - Themes are token maps in `themes/_themes.scss`, emitted as `[data-theme="<id>"]` blocks. A compile-time guard fails the build if a theme misses a contract token. See [docs/theming.md](docs/theming.md).
 - **An appearance is not an edition.** An edition (`src/domain/themes/`) names the forty squares, the currency and the pieces; an **appearance** is only a palette, and it overrides `data-theme` for whichever edition is being played. It is a per-device preference stored under `monopoly.appearance.v1` - the same standing as the sound switch - so adding one needs **no `GAME_STATE_VERSION` bump and no migration**. `edition` is a sentinel, not a palette: it resolves to the edition's own id. One hook answers all of it, [useAppearance](src/features/appearance/useAppearance.ts) - three pages ask, and answering it in each is how two of them disagree.
 - **Every breakpoint goes through a mixin, and one of them is a height query.** `below()` for widths; `landscape-compact()` for a wide-but-short viewport, which needs all three of `max-width`, `max-height` and `orientation` — width alone cannot tell a landscape phone from a small desktop window, and it is the height that breaks the board. Tokens: `$breakpoint-board` (1250) / `-tablet` (720) / `-mobile` (620) / `-phone` (560), plus `$breakpoint-short`. Never write a bare `@media` width query.
@@ -382,6 +382,46 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   inert copy of their own only move. Every decision type needs a row in `AUDIENCE_FOR_DECISION`;
   `decisionAudience.guard.test.ts` fails until it has one, the same tactic as `SOUND_FOR_CUE`.
   Game over is the one `Everyone` row - there is no owner and everybody needs the button.
+- **The lobby door only opens from `start_game`, and publish enforces it with a PHASE check rather
+  than an identity one.** Every device in the lobby used to see "Start the game" and it went live
+  for all of them at two seats - including a device holding no seat at all - so whoever clicked
+  first won. Hiding the button fixes nothing: the join code is a bearer capability, and starting a
+  game was a `publish_game_state` with `phase: 'in_progress'`. Migration 0005 adds `start_game` and
+  teaches publish to refuse taking a row out of `lobby`. That refusal must stay a **phase** check:
+  the moment publish learns who the host is, the host becomes an authority over the running game and
+  "not host-authoritative" dies by accident. `start_game` uses the phase as its **compare-and-set** -
+  `lobby` is a one-way door, so exactly one start wins, where a revision CAS would refuse a start
+  because an unrelated seat claim bumped the row.
+- **`deviceId` is public, so it cannot be a credential.** `fetch_game` hands the whole seats array -
+  every `deviceId` with it - to anyone holding the code. "Prove you are the host by sending their
+  device id" is therefore a check whose credential the server published to everyone who could fail
+  it: real against this app's own client, decoration against a hand-rolled POST. Hence two columns.
+  `host_seat_id` is WHO (public, drives the lobby); `host_secret` is PROOF (minted by `create_game`,
+  returned by `create_game` **and nothing else**, per device under `monopoly.host.<gameId>.v1`).
+  `isHostDevice` in `lobby.utils.ts` mirrors the SQL's three branches **in the same order**, or the
+  button and the server disagree - and the third branch fails OPEN, because a live table nobody can
+  start is worse than a table a stranger can.
+- **A colour that IDENTIFIES is a layer, and it is assigned rather than chosen.** Setup offered eight
+  playing pieces and the piece was never drawn: `BoardTokenLayer` renders a self-closing span with a
+  `backgroundColor`, so an elephant and a top hat were the same circle in two colours - and all four
+  editions listed the **same eight colours in the same order**, so `tokenCatalog` was a seat-index
+  palette wearing four sets of names. It is one shared list now
+  ([playerColors.constants.ts](src/domain/themes/playerColors.constants.ts)) and `createPlayers`
+  assigns by creation order, which makes two players sharing a colour **unrepresentable** rather
+  than refused - `SETUP_ERRORS.duplicateToken` and "That token is taken" are deleted, not rewritten,
+  and the whole cross-edition class of bug (`docs/features/setup.md`) goes with them. `tokenId` is
+  `colorId`, which is a `GameState` shape change: v11, and `v10ToV11` carries its **own frozen copy**
+  of all four old catalogs, because by the time it runs the live code has none of those ids. Freezing
+  them from memory got three of the four editions wrong, and the fallback to seat order would have
+  produced the right answer often enough to hide it - `git show HEAD:` is the source, not recall.
+- **Joining a table IS taking a seat at it.** `/join` took a code and the lobby then asked for a name
+  and a piece - while an invite LINK skipped `/join` and asked the same two questions somewhere
+  else. One door: `/join` takes the code and the name together and claims the seat, and the invite
+  link points at it (`#/join?code=ABC123`) rather than at the lobby, so it is short enough to read
+  out loud and carries no game id. The lobby is a roster with no form on it, and a refusal about who
+  may start goes to `startRefusal` and **never** to `setLobbyError` - `LobbyPage` treats a
+  `lobbyError` as fatal and replaces the screen with "That table is not there", over a table whose
+  seats it has just drawn. `claimLobbySeat`'s `tableFull` path had that bug.
 - **A client never sends the whole seats list.** `claim_seat` used to take the array and store it,
   which made every claim a last-writer-wins overwrite of everybody - a guest that clicked before its
   first fetch came back sent an array containing only itself and **deleted the host**. Found with two
