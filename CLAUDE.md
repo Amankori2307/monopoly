@@ -230,7 +230,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1573 unit tests, 236 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1574 unit tests, 236 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on **every push to
@@ -414,6 +414,15 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   of all four old catalogs, because by the time it runs the live code has none of those ids. Freezing
   them from memory got three of the four editions wrong, and the fallback to seat order would have
   produced the right answer often enough to hide it - `git show HEAD:` is the source, not recall.
+- **Ring the bell over a session that can ring it.** `claimLobbySeat` announces the revision so the
+  others redraw, and moving that claim from the lobby to `/join` moved it a screen EARLIER than
+  `useLobby`, which is what attaches the online session - so the registry was still holding the
+  `LocalSession`, whose `announce` accepts everything and does nothing. The bell never left the
+  device and the host sat on a stale table until its 30s poll. Measured against the deployed site:
+  the host noticed a guest after **30,121ms**, which is the backstop rather than the doorbell, and
+  reads exactly like online play being broken. The claim attaches first now, guarded on
+  `session.gameId` the way `useTableRejoin` is, because replacing a session CLOSES the one it
+  replaces and the lobby attaches again a moment later.
 - **A claim decides something about seats this device does not own, so it reads the table FIRST.**
   `claimLobbySeat` computed its seat id from `state.seat.seats`, which was right while the only
   caller was the lobby - the lobby had already fetched, and `isLoaded` refused to offer the button

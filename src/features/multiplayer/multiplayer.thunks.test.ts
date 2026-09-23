@@ -3,6 +3,7 @@ import { makeStore } from '../../app/appStore';
 import { claimLobbySeat } from './multiplayer.thunks';
 import { HOST_SEAT_ID, seatIdForIndex } from './lobby.utils';
 import { readDeviceId } from './seatClaim.utils';
+import { ConnectionState } from './viewer.enums';
 
 /**
  * The thunks with the network stubbed.
@@ -106,6 +107,28 @@ describe('claiming a seat', () => {
 
     const claim = sent.find((call) => call.fn === 'claim_seat');
     expect((claim?.args.p_seat as { seatId: string }).seatId).toBe(seatIdForIndex(2));
+  });
+
+  /**
+   * The bell has to be rung over a session that can actually ring it.
+   *
+   * `useLobby` is what used to attach, and this claim runs a screen earlier, so
+   * the registry was still holding the `LocalSession` - which accepts every
+   * announce and does nothing. Measured against the deployed site, the host
+   * noticed a guest after 30,121ms: the poll backstop, not the doorbell.
+   */
+  it('attaches to the table before it announces the claim', async () => {
+    const store = makeStore();
+    captureRpc({ seats: [hostSeat], phase: 'lobby', revision: 2 });
+
+    await store.dispatch(
+      claimLobbySeat({ gameId: 'game-1', joinCode: 'ABC234', name: 'Vikram' })
+    );
+
+    expect(store.getState().seat.connection).toBe(ConnectionState.Live);
+    // `sessionEpoch` is what says the session was genuinely replaced - the
+    // connection state alone is often set to the value it already had.
+    expect(store.getState().seat.sessionEpoch).toBeGreaterThan(0);
   });
 
   it('sends one seat, never the table', async () => {

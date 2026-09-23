@@ -309,6 +309,27 @@ export const claimLobbySeat =
     );
     dispatch(claimSeat({ gameId: input.gameId, seatId }));
 
+    /**
+     * Attach BEFORE announcing, or the bell is rung into a local session.
+     *
+     * This claim runs on `/join` now, and `useLobby` - which is what used to
+     * attach - has not mounted yet: the registry is still holding the
+     * `LocalSession`, whose `announce` accepts everything and does nothing. So
+     * the bell never left this device and the host sat on a stale table until
+     * its 30s poll came round. Measured against the deployed site: the host
+     * noticed a guest after **30,121ms**, which is the backstop and not the
+     * bell.
+     *
+     * Guarded on `session.gameId` - the same fact `useTableRejoin` uses to
+     * answer "already attached" - because replacing a session CLOSES the one it
+     * replaces, and the lobby attaches again a moment later.
+     */
+    if (extra.session.current.gameId !== input.gameId) {
+      dispatch(
+        attachOnlineSession({ gameId: input.gameId, joinCode: input.joinCode, seatId })
+      );
+    }
+
     // claim_seat bumps the revision but writes nothing through publish(), so
     // nothing has rung. Without this the others watch a stale table until their
     // poll comes round - up to thirty seconds of wondering where you went.
