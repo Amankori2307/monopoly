@@ -97,6 +97,16 @@ File-naming rules are in [conventions.md](conventions.md).
 | [rules/trade.interfaces.ts](../src/domain/rules/trade.interfaces.ts)                                     | TradableSite and TradeSide: the shapes the offer builder works in.                                                                                           |
 | [rules/speedDie.utils.ts](../src/domain/rules/speedDie.utils.ts)                                         | When the Speed Die is in play, what it rolls, and what a three-of-a-kind means.                                                                              |
 
+### Bots
+
+| File                                                                          | What it does                                                                        |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [ai/botPolicy.ts](../src/domain/ai/botPolicy.ts)                              | What a bot does next, as one pure function of the state. Exhaustive over the decisions. |
+| [ai/botValuation.utils.ts](../src/domain/ai/botValuation.utils.ts)            | What a square is worth to a bot, which is not what it costs.                          |
+| [ai/botCashRaising.utils.ts](../src/domain/ai/botCashRaising.utils.ts)        | Answering a debt, and putting up a house out of spare cash.                           |
+| [ai/bot.constants.ts](../src/domain/ai/bot.constants.ts)                      | The float it keeps and what it will pay at auction. Judgements, not rules.            |
+| [ai/botPolicy.test.ts](../src/domain/ai/botPolicy.test.ts)                    | Every branch by hand, plus four bots playing whole games to a winner.                 |
+
 ### Data
 
 | File                                                                       | What it does                                                                                  |
@@ -201,6 +211,10 @@ File-naming rules are in [conventions.md](conventions.md).
 | [multiplayer/supabaseRpc.ts](../src/features/multiplayer/supabaseRpc.ts)                                          | The five RPCs over plain `fetch`; no SDK.                                                                     |
 | [multiplayer/supabaseRpc.interfaces.ts](../src/features/multiplayer/supabaseRpc.interfaces.ts)                    | Seat, row and publish-response shapes.                                                                        |
 | [multiplayer/multiplayer.thunks.ts](../src/features/multiplayer/multiplayer.thunks.ts)                            | Create, open, claim, start. A lobby is a game row whose phase is still `lobby`.                               |
+| [multiplayer/leaveTable.thunks.ts](../src/features/multiplayer/leaveTable.thunks.ts)                              | Leaving: tell the server, ring the bell, then forget. The one thunk that tears a table down.                  |
+| [game/hooks/useBotTurns.ts](../src/features/game/hooks/useBotTurns.ts)                                            | Asks the bot policy for a move and dispatches it, gated on the token walk. Hot seat only.                     |
+| [game/GamePage.bots.integration.test.tsx](../src/features/game/GamePage.bots.integration.test.tsx)                | A bot's turn through the page: played, saved, and never on a human's turn.                                    |
+| [multiplayer/leaveTable.thunks.test.ts](../src/features/multiplayer/leaveTable.thunks.test.ts)                    | The ordering and the failure handling, both of which are silent when wrong.                                   |
 | [multiplayer/multiplayer.thunks.test.ts](../src/features/multiplayer/multiplayer.thunks.test.ts)                  | The payloads the thunks send, with the network stubbed - a claim reads the table before it picks a seat.      |
 | [multiplayer/lobby.utils.ts](../src/features/multiplayer/lobby.utils.ts)                                          | The lobby's rules as `*BlockedReason`, and the invite link.                                                   |
 | [multiplayer/lobby.interfaces.ts](../src/features/multiplayer/lobby.interfaces.ts)                                | `LobbySeat`: the seat id that becomes the player id.                                                          |
@@ -485,6 +499,7 @@ Static prose, one component per booklet section, composed by `RulesPage`.
 | [supabase/migrations/0003_claim_one_seat.sql](../supabase/migrations/0003_claim_one_seat.sql)                       | A claim sends one seat and the server merges - the array version deleted everyone else.                          |
 | [supabase/migrations/0004_find_game_by_code.sql](../supabase/migrations/0004_find_game_by_code.sql)                 | A typed code resolves to a table: the id and the phase, and nothing else.                                        |
 | [supabase/migrations/0005_only_the_host_starts.sql](../supabase/migrations/0005_only_the_host_starts.sql)           | The host seat and the host secret, `start_game`, and the phase door on `publish_game_state`.                     |
+| [supabase/migrations/0006_leaving_a_table.sql](../supabase/migrations/0006_leaving_a_table.sql)                     | `leave_seat`: a device removes itself, and a departing host's chair passes to whoever arrived next.              |
 
 ## Assets and tools
 

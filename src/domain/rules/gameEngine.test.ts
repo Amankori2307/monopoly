@@ -1485,6 +1485,80 @@ describe('bankruptcy', () => {
     };
   };
 
+  /**
+   * The turn a player is ruined on is over, extra roll and all.
+   *
+   * `doublesCount` rather than `canRollAgain`, because
+   * `resumeTurnAfterDecision` recomputes the flag from the count - so clearing
+   * the flag alone is undone before the command returns.
+   *
+   * Leaving it set is a DEAD GAME rather than a generous one: `endTurn` sees
+   * the extra roll and puts the phase back to `AwaitRoll` instead of advancing,
+   * and there `selectCanRollDice` refuses a bankrupt player while
+   * `selectCanEndTurn` insists on `TurnComplete`. No Roll, no End turn, no
+   * decision, and the turn belongs to somebody who has left the game.
+   *
+   * Three players, deliberately: with two, this bankruptcy ends the game and
+   * the phase stops mattering, which is why every test above it could pass
+   * while this was broken.
+   */
+  it('takes the extra roll away from a player who goes out on a double', () => {
+    const game = createGameState(
+      {
+        name: 'Three-handed',
+        playerConfigs: [{ name: 'Asha' }, { name: 'Vikram' }, { name: 'Meera' }],
+        themeId: 'india-edition',
+        createdAt: '2026-09-24T00:00:00.000Z',
+      },
+      new SeededRandomSource(7)
+    );
+    const [debtorId, creditorId] = game.playerOrder;
+
+    const ruined: GameState = {
+      ...game,
+      players: {
+        ...game.players,
+        [debtorId]: { ...game.players[debtorId], cash: 0 },
+      },
+      activePlayerIndex: game.playerOrder.indexOf(debtorId),
+      pendingDecision: {
+        type: PendingDecisionType.AssetLiquidation as const,
+        playerId: debtorId,
+        amountDue: 5000,
+        creditorPlayerId: creditorId,
+        reason: 'rent',
+        queued: [],
+      },
+      // Ruined on a double, which is the whole premise.
+      turn: {
+        ...game.turn,
+        phase: TurnPhase.AwaitDecision,
+        doublesCount: 1,
+        canRollAgain: true,
+      },
+    };
+
+    const next = executeGameCommand(
+      ruined,
+      { type: GameCommandType.ConfirmBankruptcy },
+      new SeededRandomSource(3)
+    ).nextState;
+
+    expect(next.players[debtorId].isBankrupt).toBe(true);
+    expect(next.turn.canRollAgain).toBe(false);
+    // The count too, or the flag comes straight back.
+    expect(next.turn.doublesCount).toBe(0);
+
+    // And the turn can actually be passed on, which is the thing that was
+    // broken - an assertion about the phase alone would have missed it.
+    const after = executeGameCommand(
+      next,
+      { type: GameCommandType.EndTurn },
+      new SeededRandomSource(3)
+    ).nextState;
+    expect(after.playerOrder[after.activePlayerIndex]).not.toBe(debtorId);
+  });
+
   it('hands everything to the creditor', () => {
     const { state, debtorId, creditorId, street } = hopelesslyInDebt();
     const creditorCashBefore = state.players[creditorId].cash;
@@ -4173,6 +4247,14 @@ describe('Jail', () => {
 
   // 5.11: they are out of the game, so there is nothing to take another roll
   // with, whatever the dice said.
+  /**
+   * Two-handed, so this bankruptcy also ENDS the game - and that is why it is
+   * not the whole of rule 5.11. The win branch sets `canRollAgain: false` on
+   * its way out, so this passed for as long as the rule was broken for every
+   * table with three or more players at it. Its three-handed counterpart is
+   * 'takes the extra roll away from a player who goes out on a double', in the
+   * bankruptcy suite; both are claimed by 5.11 and neither is a duplicate.
+   */
   it('leaves a bankrupt player no extra roll, even after doubles', () => {
     const game = createBaseGame();
     const [debtorId, creditorId] = game.playerOrder;

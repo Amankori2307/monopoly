@@ -98,6 +98,30 @@
   }
 }
 
+// One of these sits under every player's name, so up to eight of them stack in
+// one column - and the slab treatment above, written for the single Speed Die
+// switch, reads as eight competing panels at that count. This is the same
+// control with the weight taken out: no ground, no accent rail, and the regular
+// weight a row of repeated options wants.
+//
+// What it does NOT take out is the height. `$control-tap` is stated here rather
+// than left to padding plus leading, because this variant HAS less padding -
+// and the tap floor is about the finger, not about the decoration.
+.checkbox-field.is-inline {
+  align-items: center;
+  min-height: t.$control-tap;
+  padding: t.$space-1 0;
+  border: 0;
+  background: none;
+  font-weight: t.$weight-medium;
+
+  input {
+    // Centred against a single line rather than nudged down to meet the first
+    // line of a two-line label, which is what the block variant does.
+    margin-top: 0;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Recent games
 // ---------------------------------------------------------------------------

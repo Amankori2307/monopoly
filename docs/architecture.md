@@ -17,7 +17,7 @@ Keep this file in step with the code — see the Documentation contract in CLAUD
     ┌───────────▼──────────┐   ┌───────────▼───────────────────┐
     │ components/game/     │   │ domain/                       │
     │ DiceDock             │   │ types · rules · board         │
-    │ SpaceDetailCard      │   │ cards · themes · rng          │
+    │ SpaceDetailCard      │   │ cards · themes · rng · ai      │
     │ props in, events out │   │ PURE: no React/Redux/DOM      │
     └──────────────────────┘   └───────────────────────────────┘
 ```
@@ -52,10 +52,18 @@ formatting. Anything here must be dependency-free apart from `domain/` types and
 
 ```
 domain/**/*.utils.ts        rules, predicates       pure
+domain/ai/*                 bot moves               pure, and no RandomSource
 features/**/*.selectors.ts  state -> view models    pure
 components/**/*.tsx         view models -> markup   no derivation, no store
 features/**/*Page.tsx       select, derive, dispatch
 ```
+
+`domain/ai/` is a **reader** of the rules, never a second copy of them. It answers "which command
+next" out of the engine's own predicates and returns it; applying it, pacing it and saving it all
+belong to `features/game/hooks/useBotTurns.ts`. It takes no `RandomSource` - a bot that rolled its
+own dice to choose between moves would make the same save play out differently twice, and a save
+that cannot be replayed is a bug nobody can hand to a test. See
+[features/bots.md](features/bots.md).
 
 `GamePage` is wiring only; `gameView.selectors.ts` builds every view model the panels render.
 That split is what makes the screen's behaviour unit-testable without a DOM. See

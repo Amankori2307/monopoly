@@ -24,6 +24,7 @@ const makePlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
   inJail: false,
   jailTurnsServed: 0,
   jailFreeCards: [],
+  isBot: false,
   isBankrupt: false,
   bankruptcyRank: null,
   hasPassedGo: false,

@@ -19,4 +19,5 @@ export const TABLE_MESSAGES = {
   codeLost: 'This device does not have the code for that table, so it cannot rejoin.',
   tableGone: 'That table is no longer there.',
   tableFull: 'That table is full.',
+  leaveFailed: 'Could not leave the table. Try again in a moment.',
 } as const;

@@ -3,6 +3,7 @@ import { createGameState } from '../../domain/rules/gameEngine';
 import { SeededRandomSource } from '../../domain/rules/rng';
 import { TableMode } from '../../domain/types/game.enums';
 import type { GameState } from '../../domain/types/game.interfaces';
+import { selectHasAvailableAction } from '../game/gameView.selectors';
 import { ViewerKind } from './viewer.enums';
 import {
   HOT_SEAT_VIEWER,
@@ -97,5 +98,52 @@ describe('resolveViewer', () => {
 
   it('has no viewer without a game', () => {
     expect(resolveViewer(null, 'player-1').kind).toBe(ViewerKind.Spectator);
+  });
+});
+
+/**
+ * While a bot is the one to act, this device is watching.
+ *
+ * Expressed here rather than inside `selectCanRollDice`, because
+ * `selectHasAvailableAction` - the deadlock detector - calls that selector
+ * through `HOT_SEAT_VIEWER` on purpose, and a bot clause inside it would report
+ * a deadlock on every bot turn.
+ */
+describe('a bot holding the move', () => {
+  const withBotFirst = (): GameState => {
+    const base = game();
+    const [first] = base.playerOrder;
+    return {
+      ...base,
+      players: { ...base.players, [first]: { ...base.players[first], isBot: true } },
+      activePlayerIndex: base.playerOrder.indexOf(first),
+    };
+  };
+
+  it('makes the device a spectator, so nothing is offered to press', () => {
+    // Without this the hot seat controls every chair including the machine's,
+    // so Roll sat live during a bot's turn - and pressing it raced the bot's
+    // own pending command into a phase it no longer fitted.
+    expect(resolveViewer(withBotFirst(), null).kind).toBe(ViewerKind.Spectator);
+  });
+
+  it("hands the table straight back when the move is a person's", () => {
+    const base = withBotFirst();
+    const human = base.playerOrder[1];
+    expect(
+      resolveViewer(
+        { ...base, activePlayerIndex: base.playerOrder.indexOf(human) },
+        null
+      )
+    ).toEqual(HOT_SEAT_VIEWER);
+  });
+
+  /**
+   * The detector asks a different question - "does the game have a legal move
+   * for whoever owns it" - and a bot's turn has one. It is the thing that logs
+   * loudly on a dead table, so a bot turn must not read as one.
+   */
+  it('is still a game with something to do', () => {
+    expect(selectHasAvailableAction(withBotFirst())).toBe(true);
   });
 });

@@ -38,6 +38,8 @@ export const TEST_IDS = {
   lobbyStartButton: 'lobby-start-button',
   lobbyRoom: 'lobby-room',
   lobbyBlockedReason: 'lobby-blocked-reason',
+  lobbyLeaveButton: 'lobby-leave-button',
+  lobbyLeaveError: 'lobby-leave-error',
   openTableButton: 'open-table-button',
   joinCodeInput: 'join-code-input',
   joinNameInput: 'join-name-input',
@@ -173,6 +175,7 @@ export const TEST_IDS = {
   // Setup
   playerCountInput: 'player-count-input',
   playerCountNotice: 'player-count-notice',
+  playerBotToggle: 'player-bot-toggle',
   speedDieToggle: 'speed-die-toggle',
   setupForm: 'setup-form',
   rulesetGlance: 'ruleset-glance',

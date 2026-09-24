@@ -130,6 +130,16 @@ export interface PlayerState {
   /** The Speed Die stays out of play until every player has been round once. */
   hasPassedGo: boolean;
   /**
+   * Whether this seat is played by the machine rather than by somebody.
+   *
+   * On the PLAYER rather than per-device, for the same reason `tableMode` is on
+   * the state: every device has to agree, or two of them drive one bot's turn
+   * and both publish, and the second is a conflict that discards a real move.
+   * It is also what makes a bot survive a save - a game resumed a day later has
+   * to know which of its four players nobody is sitting behind.
+   */
+  isBot: boolean;
+  /**
    * Which way this player last travelled, or null before their first move.
    *
    * Recorded so the walking animation replays the move the engine actually made
@@ -368,6 +378,12 @@ export interface CreatePlayerInput {
    * Mirrors `CreateGameInput.gameId`, which exists for the same reason.
    */
   playerId?: PlayerId;
+  /**
+   * Whether the machine plays this seat. Optional and false by default, so
+   * every existing caller - and every online lobby, where a seat is a person
+   * by definition - keeps meaning exactly what it meant.
+   */
+  isBot?: boolean;
 }
 
 export interface CreateGameInput {

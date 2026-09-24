@@ -102,6 +102,14 @@ const playerSchema = z.object({
   jailTurnsServed: z.number().int().min(0),
   /** The cards themselves, so each knows the deck it must return to. */
   jailFreeCards: z.array(deckCardSchema),
+  /**
+   * A save written before bots existed comes back without this, so it is
+   * defaulted rather than required - the same standing `tableMode` has on the
+   * index entry. `v11ToV12` sets it on every player anyway; this is the belt
+   * to that migration's braces, and the thing that keeps a hand-edited save
+   * loadable rather than lost.
+   */
+  isBot: z.boolean().default(false),
   isBankrupt: z.boolean(),
   bankruptcyRank: z.number().nullable(),
   hasPassedGo: z.boolean(),

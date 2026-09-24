@@ -48,6 +48,7 @@ const summary: PlayerSummary = {
     inJail: false,
     jailTurnsServed: 0,
     jailFreeCards: [],
+    isBot: false,
     isBankrupt: false,
     bankruptcyRank: null,
     hasPassedGo: false,

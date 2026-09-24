@@ -74,3 +74,26 @@ export interface StartGameResponse {
   seats?: SeatRecord[];
   state?: unknown;
 }
+
+/**
+ * What `leave_seat` hands back.
+ *
+ * `left: true` with unchanged seats is the idempotent case - a device that was
+ * not at the table asking to go - and is deliberately not an error, so a
+ * double-click and a retry after a timeout both succeed.
+ */
+export interface LeaveSeatResponse {
+  left: boolean;
+  notFound?: boolean;
+  /**
+   * The game began while this device was on its way out. A seat is a player by
+   * then and the engine has no command for removing one, so the server refuses
+   * and the caller falls back to forgetting the table locally.
+   */
+  alreadyStarted?: boolean;
+  revision?: number;
+  phase?: string;
+  seats?: SeatRecord[];
+  /** Whoever holds the chair now - the departing host's successor, or null. */
+  hostSeatId?: string | null;
+}

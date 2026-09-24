@@ -1,6 +1,7 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_IDS } from '../../shared/constants/testIds.constants';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import type { LobbySeat } from '../multiplayer/lobby.interfaces';
@@ -20,11 +21,24 @@ import { LobbyPage } from './LobbyPage';
  * in; this screen is a roster.
  */
 
+/** Set per test, so one mock can answer every departure outcome. */
+const leaveOutcome = {
+  current: 'left' as 'left' | 'started' | 'missing' | 'unreachable',
+};
+
 vi.mock('../multiplayer/multiplayer.thunks', () => ({
   openOnlineTable: () => () => Promise.resolve('lobby'),
   attachOnlineSession: () => () => undefined,
   startOnlineGame: () => () => Promise.resolve({}),
 }));
+
+vi.mock('../multiplayer/leaveTable.thunks', () => ({
+  leaveOnlineTable: () => () => Promise.resolve(leaveOutcome.current),
+}));
+
+beforeEach(() => {
+  leaveOutcome.current = 'left';
+});
 
 /**
  * The host's own device.
@@ -148,6 +162,49 @@ describe('the lobby', () => {
     expect(await screen.findByText(/not there/i)).toBeInTheDocument();
     expect(screen.queryByTestId(TEST_IDS.lobbySeats)).not.toBeInTheDocument();
   });
+
+  /**
+   * Sitting down used to be the only thing a device could do to a table. An
+   * invite link opened by accident seated you for the row's whole 30-day life,
+   * counting against the eight chairs, with nothing anywhere to undo it.
+   */
+  it('offers a guest a way out', async () => {
+    renderLobby([seat({ deviceId: 'device-host' }), guest({ deviceId: readDeviceId() })]);
+
+    expect(await screen.findByTestId(TEST_IDS.lobbyLeaveButton)).toBeEnabled();
+  });
+
+  /**
+   * The host gets one too, and that is the decision rather than an oversight:
+   * migration 0006 moves the chair to whoever arrived next, so a table is never
+   * locked to the person who opened it. A host with no way out is how a lobby
+   * ends up with a stranger in it and no host to remove them.
+   */
+  it('offers the host a way out as well, beside the start', async () => {
+    renderLobby([seat(), guest()]);
+
+    expect(await screen.findByTestId(TEST_IDS.lobbyStartButton)).toBeEnabled();
+    expect(screen.getByTestId(TEST_IDS.lobbyLeaveButton)).toBeEnabled();
+  });
+
+  /**
+   * A departure that did not happen is NOT a `lobbyError`: that one is fatal -
+   * the page returns early and replaces the screen with "That table is not
+   * there" - which would be a lie about a table this device is demonstrably
+   * still sitting at. The same trap `startRefusal` exists for.
+   */
+  it('shows a refused departure beside the seats, not instead of them', async () => {
+    leaveOutcome.current = 'unreachable';
+    renderLobby([seat(), guest()]);
+
+    await userEvent.click(await screen.findByTestId(TEST_IDS.lobbyLeaveButton));
+
+    await waitFor(() =>
+      expect(screen.getByTestId(TEST_IDS.lobbyLeaveError)).toBeInTheDocument()
+    );
+    expect(screen.getByTestId(TEST_IDS.lobbySeats)).toHaveTextContent('Asha');
+    expect(screen.queryByText(/not there/i)).not.toBeInTheDocument();
+  });
 });
 
 /**
@@ -174,5 +231,8 @@ describe('a table that has not loaded yet', () => {
     expect(screen.getByTestId(TEST_IDS.lobbyBlockedReason)).toHaveTextContent(/loading/i);
     // Nor does it claim there is room at a table it has not read.
     expect(screen.queryByTestId(TEST_IDS.lobbyRoom)).not.toBeInTheDocument();
+    // Nor a way out of a table it cannot yet say this device is at. Leaving is
+    // a write, and every other control here waits for the same fact.
+    expect(screen.queryByTestId(TEST_IDS.lobbyLeaveButton)).not.toBeInTheDocument();
   });
 });

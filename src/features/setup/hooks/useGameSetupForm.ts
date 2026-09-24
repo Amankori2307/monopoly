@@ -20,6 +20,10 @@ export interface UseGameSetupFormResult {
   /** Set when a typed player count was outside 2-8 and had to be pulled back. */
   playerCountNotice: string | null;
   setPlayerName: (index: number, value: string) => void;
+  /** Hands a seat to the machine, or takes it back. */
+  setPlayerIsBot: (index: number, value: boolean) => void;
+  /** Which seats the machine plays, by the same index as `playerNames`. */
+  playerIsBot: boolean[];
   setThemeId: (value: string) => void;
   setUseSpeedDie: (value: boolean) => void;
   themeId: string;
@@ -36,6 +40,20 @@ const defaultNames = (count: number, current: string[] = []) =>
   Array.from({ length: count }, (_, index) => current[index] ?? `Player ${index + 1}`);
 
 /**
+ * Seats added by raising the player count are people, like every seat was
+ * before bots existed. Growing the table is not a request for opponents, and a
+ * form that quietly turned one into a bot would be a surprise at the board.
+ */
+const defaultBots = (count: number, current: boolean[] = []) =>
+  Array.from({ length: count }, (_, index) => current[index] ?? false);
+
+/** What to call a seat handed to the machine, when its name is still the default. */
+const BOT_NAME_PREFIX = 'Bot';
+
+const isUntouchedName = (name: string, index: number): boolean =>
+  name === `Player ${index + 1}` || name === `${BOT_NAME_PREFIX} ${index + 1}`;
+
+/**
  * Owns the setup form's state and validation. The page renders it; the rules
  * are testable through validateSetupDraft without mounting anything.
  */
@@ -44,6 +62,7 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
   const [playerCount, setPlayerCountState] = useState(MIN_PLAYERS);
   const [themeId, setThemeId] = useState(defaultTheme.id);
   const [playerNames, setPlayerNames] = useState(() => defaultNames(MIN_PLAYERS));
+  const [playerIsBot, setPlayerIsBot] = useState(() => defaultBots(MIN_PLAYERS));
   const [formError, setFormError] = useState<string | null>(null);
   const [useSpeedDie, setUseSpeedDie] = useState(false);
   const [playerCountNotice, setPlayerCountNotice] = useState<string | null>(null);
@@ -60,20 +79,45 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
   // this form. See domain/themes/playerColors.constants.
   useEffect(() => {
     setPlayerNames((current) => defaultNames(playerCount, current));
+    setPlayerIsBot((current) => defaultBots(playerCount, current));
   }, [playerCount]);
 
   const setPlayerName = useCallback((index: number, value: string) => {
     setPlayerNames((current) => current.map((name, i) => (i === index ? value : name)));
   }, []);
 
+  /**
+   * Renames the seat too, but ONLY while its name is still one this form wrote.
+   *
+   * "Player 2" and "Bot 2" are placeholders; anything else is something a
+   * person typed, and overwriting that is the kind of helpfulness that loses
+   * work. The rename matters because the name is what the history, the toasts
+   * and the player card all say - a bot called "Player 2" is indistinguishable
+   * from the human beside it in every sentence the game speaks.
+   */
+  const setPlayerIsBotAt = useCallback((index: number, value: boolean) => {
+    setPlayerIsBot((current) => current.map((flag, i) => (i === index ? value : flag)));
+    setPlayerNames((current) =>
+      current.map((name, i) => {
+        if (i !== index || !isUntouchedName(name, i)) {
+          return name;
+        }
+        return value ? `${BOT_NAME_PREFIX} ${i + 1}` : `Player ${i + 1}`;
+      })
+    );
+  }, []);
+
   const validate = useCallback((): CreatePlayerInput[] | null => {
-    const error = validateSetupDraft({ playerNames });
+    const error = validateSetupDraft({ playerNames, playerIsBot });
     setFormError(error);
     if (error) {
       return null;
     }
-    return trimPlayerNames(playerNames).map((name) => ({ name }));
-  }, [playerNames]);
+    return trimPlayerNames(playerNames).map((name, index) => ({
+      name,
+      isBot: playerIsBot[index] ?? false,
+    }));
+  }, [playerIsBot, playerNames]);
 
   return {
     setFormError,
@@ -95,7 +139,9 @@ export const useGameSetupForm = (): UseGameSetupFormResult => {
           : null
       );
     },
+    playerIsBot,
     setPlayerName,
+    setPlayerIsBot: setPlayerIsBotAt,
     setThemeId,
     setUseSpeedDie,
     themeId,

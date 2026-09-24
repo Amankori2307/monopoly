@@ -158,6 +158,31 @@ describe('isHostDevice', () => {
     expect(isHostDevice(table(), HOST_SEAT_ID, 'device-guest', false)).toBe(false);
   });
 
+  /**
+   * After a host walks out, migration 0006 moves `host_seat_id` to whoever
+   * arrived next and NULLS the secret in the same statement. This is the client
+   * half of why the secret has to go: the branches are ordered secret-first, so
+   * a transferred chair with a live secret arms the strongest check with a
+   * value the departing host took with them, and the device branch below is
+   * never reached - a table more unstartable than the one the transfer fixed.
+   *
+   * Nobody holds a secret here, so the successor is the host by their seat.
+   */
+  it('makes the successor the host once the chair has been transferred', () => {
+    const afterTheHostLeft = [seat({ seatId: 'player-2', deviceId: 'device-guest' })];
+    expect(isHostDevice(afterTheHostLeft, 'player-2', 'device-guest', false)).toBe(true);
+  });
+
+  it('does not make everyone the host when the chair has been transferred', () => {
+    // The transfer names one seat. It is not the "no host recorded" case, which
+    // is the only one that fails open.
+    const afterTheHostLeft = [
+      seat({ seatId: 'player-2', deviceId: 'device-guest' }),
+      seat({ seatId: 'player-3', deviceId: 'device-third' }),
+    ];
+    expect(isHostDevice(afterTheHostLeft, 'player-2', 'device-third', false)).toBe(false);
+  });
+
   it('is false for a device with no seat at all', () => {
     // A spectator holding the link used to see a live Start button.
     expect(isHostDevice(table(), HOST_SEAT_ID, 'device-lurker', false)).toBe(false);

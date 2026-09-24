@@ -32,7 +32,7 @@ export const makeStore = (preloadedState?: PreloadedState) => {
   // mutation is dispatched as a thunk.
   const extra: ThunkExtra = { session: createSessionRegistry() };
 
-  return configureStore({
+  const store = configureStore({
     reducer,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: { extraArgument: extra } }),
@@ -48,6 +48,19 @@ export const makeStore = (preloadedState?: PreloadedState) => {
       ...(preloadedState as object),
     } as PreloadedState,
   });
+
+  /**
+   * The registry, reachable from the store it belongs to.
+   *
+   * It is the one part of a thunk's world that is deliberately not in state -
+   * a session holds a socket, so it would trip `serializableCheck` - which left
+   * a test no way at all to assert anything about it. That matters for ordering
+   * guarantees in particular: `leaveOnlineTable` has to ring the bell BEFORE it
+   * resets the session, because a `LocalSession` accepts every announce and
+   * does nothing, and getting those two lines the wrong way round is silent and
+   * costs everyone else thirty seconds of watching a chair that is empty.
+   */
+  return Object.assign(store, { session: extra.session });
 };
 
 export const appStore = makeStore();

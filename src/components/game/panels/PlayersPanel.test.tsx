@@ -17,6 +17,7 @@ const makeSummary = (index: number): PlayerSummary => ({
     inJail: false,
     jailTurnsServed: 0,
     jailFreeCards: [],
+    isBot: false,
     isBankrupt: false,
     bankruptcyRank: null,
     hasPassedGo: false,

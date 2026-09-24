@@ -1,8 +1,12 @@
 import type { OnlineConfig } from './onlineConfig.interfaces';
-import type { CreatedGameRow, StartGameResponse } from './supabaseRpc.interfaces';
+import type {
+  CreatedGameRow,
+  LeaveSeatResponse,
+  StartGameResponse,
+} from './supabaseRpc.interfaces';
 
 /**
- * The five RPCs, over plain `fetch`.
+ * The six RPCs, over plain `fetch`.
  *
  * No SDK here on purpose: a PostgREST function call is a POST with two headers
  * and a JSON body, and the full supabase-js client is ~28% of this app's whole
@@ -198,5 +202,25 @@ export const rpc = {
       p_seat_ids: input.seatIds,
       p_device_id: input.deviceId,
       p_host_secret: input.hostSecret ?? null,
+    }),
+
+  /**
+   * Gets up from a table, by DEVICE rather than by seat.
+   *
+   * Naming a seat would let any code-holder remove any player; a device can
+   * only ever remove itself, which is 0003's rule applied to a departure. If
+   * the departing device held the host's chair the server transfers it to
+   * whoever arrived next and clears the secret in the same statement - see
+   * migration 0006 for why leaving the secret set is worse than having no host
+   * at all.
+   */
+  leaveSeat: (
+    config: OnlineConfig,
+    input: { gameId: string; joinCode: string; deviceId: string }
+  ) =>
+    callRpc<LeaveSeatResponse>(config, 'leave_seat', {
+      p_game_id: input.gameId,
+      p_join_code: input.joinCode,
+      p_device_id: input.deviceId,
     }),
 };

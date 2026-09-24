@@ -66,7 +66,15 @@ export const TURN_RULE_COVERAGE: RuleCoverageMap = {
     'grants an extra roll for doubles rolled after paying the fine',
     'grants an ordinary double after leaving Jail with a card',
   ],
-  '5.11': ['leaves a bankrupt player no extra roll, even after doubles'],
+  // Two claims, and the second is the one that proves it. The first plays a
+  // two-handed game, where this bankruptcy ENDS the game - so the win branch
+  // sets `canRollAgain: false` on its way out and the assertion passes without
+  // ever reaching the live path. It went green for as long as the rule was
+  // broken. The second plays three-handed, where the game carries on.
+  '5.11': [
+    'leaves a bankrupt player no extra roll, even after doubles',
+    'takes the extra roll away from a player who goes out on a double',
+  ],
   '6.1': ['sends a player who lands on Go To Jail there, with no GO salary'],
   '6.2': ['ends the turn when a card sends the player to jail on a doubles roll'],
   '6.3': ['resolves each roll in turn and keeps their outcomes when the third jails'],

@@ -156,6 +156,10 @@ const createPlayers = (input: CreateGameInput): Record<PlayerId, PlayerState> =>
         jailFreeCards: [],
         hasPassedGo: false,
         lastMove: null,
+        // Defaulted rather than required, so every caller that predates bots -
+        // the online lobby included, where a seat is a person by definition -
+        // keeps meaning what it meant.
+        isBot: playerConfig.isBot ?? false,
         isBankrupt: false,
         bankruptcyRank: null,
       };

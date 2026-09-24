@@ -86,8 +86,10 @@ export function NewGamePage() {
                 {form.playerNames.map((name, index) => (
                   <PlayerConfigRow
                     index={index}
+                    isBot={form.playerIsBot[index] ?? false}
                     key={`player-${index + 1}`}
                     name={name}
+                    onIsBotChange={form.setPlayerIsBot}
                     onNameChange={form.setPlayerName}
                   />
                 ))}

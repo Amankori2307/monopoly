@@ -34,20 +34,36 @@ and surfaces `loadError` rather than crashing the page.
 
 ## State and data
 
-`GAME_STATE_VERSION` is currently `1`. **Any change to the `GameState` shape must bump it and add
-a migration**, or existing saves fail to load.
+`GAME_STATE_VERSION` is currently `12`. **Any change to the `GameState` shape must bump it and add
+a migration**, or existing saves fail to load. Migrations live in
+[migrations.ts](../../src/features/persistence/migrations.ts), keyed by the version they upgrade
+_from_, and run **before** validation — the schema describes the current shape, so an older save
+has to be made current first or it fails to parse and the game is lost.
 
-The zod schema is deliberately loose in places — `players`, `board`, and `ownership` are
-`z.record(z.any())` / `z.array(z.any())`, so corruption inside them is not detected. Tighten
-these alongside any shape change.
+The zod schema is **tight**, and was not always: `players`, `board` and `ownership` were
+`z.record(z.any())` / `z.array(z.any())`, so corruption inside them went undetected. They are now
+described in full, the board as a discriminated union of space kinds, with three cross-field checks
+(40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist). `pendingDecision`
+is a full discriminated union too — it used to be `.passthrough()`, which was the one hole a peer
+could hang arbitrary keys off a decision through.
+
+**A new top-level field is silently stripped on load.** `gameStateSchema` is a plain `z.object`,
+which drops unknown keys, so a field added to `GameState` and not to the schema will not survive a
+save. The exception is a field given a `.default()` — `PlayerState.isBot` is one, so a hand-edited
+or older save still parses.
 
 ## Tests
 
-| Level       | File | Covers                                                                                                         |
-| ----------- | ---- | -------------------------------------------------------------------------------------------------------------- |
-| Unit        | —    | _Gap: no tests at all. Round trip, index projection, delete, and the throw-on-corrupt path are all uncovered._ |
-| Integration | —    | _Gap: no thunk-level test that a command actually persists._                                                   |
-| E2E         | —    | _Gap: no reload-and-resume journey._                                                                           |
+| Level       | File                                                                                     | Covers                                                                |
+| ----------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Unit        | [schema.test.ts](../../src/features/persistence/schema.test.ts)                          | What the schema accepts and what it refuses, field by field            |
+| Unit        | [migrations.test.ts](../../src/features/persistence/migrations.test.ts)                  | Every migration, and a future version passing through untouched        |
+| Unit        | [decodeGameState.test.ts](../../src/features/persistence/decodeGameState.test.ts)        | One decoder for disk and network: migrate, then validate               |
+| Unit        | [persistence.errors.test.ts](../../src/features/persistence/persistence.errors.test.ts)  | A corrupt save, and a browser with storage blocked                     |
+| Unit        | [indexTableMode.test.ts](../../src/features/persistence/indexTableMode.test.ts)          | An index entry written by an older build still lists its games         |
+| Integration | [persistence.integration.test.ts](../../src/features/persistence/persistence.integration.test.ts) | Round trip, index projection, delete                          |
+| Integration | [gameSlice.integration.test.ts](../../src/features/game/gameSlice.integration.test.ts)   | Thunk → engine → `localStorage`, asserted on both                      |
+| E2E         | [tests/e2e/navigation.spec.ts](../../tests/e2e/navigation.spec.ts)                       | Resuming a saved game from the front door                              |
 
 ## Known gaps
 

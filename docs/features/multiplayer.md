@@ -62,14 +62,15 @@ RLS on, no policies, no table grants — every call goes through a `security def
 the join code. A wrong code and an unknown game id give the **same** answer, so game ids cannot be
 enumerated. Not-found is a value rather than an exception: a mistyped code is a typo, not an HTTP 500.
 
-| RPC                  | Does                                                                     |
-| -------------------- | ------------------------------------------------------------------------ |
-| `create_game`        | Inserts the row and its state at revision 1                              |
-| `fetch_game`         | Row + state in one round trip, or `null`                                 |
-| `publish_game_state` | The compare-and-set; the only way a state changes                        |
-| `claim_seat`         | Seats, bumping the revision so the lobby is live off the same bell       |
-| `find_game_by_code`  | Which table a code belongs to: the id and the phase, nothing else        |
-| `start_game`         | Takes a table out of the lobby. The one write with an authorisation rule |
+| RPC                  | Does                                                                         |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `create_game`        | Inserts the row and its state at revision 1                                  |
+| `fetch_game`         | Row + state in one round trip, or `null`                                     |
+| `publish_game_state` | The compare-and-set; the only way a state changes                            |
+| `claim_seat`         | Seats, bumping the revision so the lobby is live off the same bell           |
+| `find_game_by_code`  | Which table a code belongs to: the id and the phase, nothing else            |
+| `start_game`         | Takes a table out of the lobby. The one write with an authorisation rule     |
+| `leave_seat`         | A device removes its own seat, and transfers the host's chair if it held one |
 
 The **publishable** key ships in the bundle by design and is an identifier, not a secret. The
 `sb_secret_` key bypasses RLS and appears nowhere.
@@ -102,6 +103,57 @@ The **publishable** key ships in the bundle by design and is an identifier, not 
   dynamically so an offline player downloads none of it.
 - **One publish in flight at a time** (to come, with the UI): at most one move can then be lost to a
   conflict, so there is never a divergent local branch to unwind.
+
+## Leaving a table, and the chair the host leaves behind
+
+There was no way out. `claim_seat` adds and evicts; nothing ever removed a seat, so somebody who
+followed an invite link by accident sat at that table for the row's whole 30-day life — counting
+against the eight chairs, with nothing on any screen to undo it. The client had half of this
+already: `leaveTable` had been in `seatSlice` since the slice was written and was dispatched
+nowhere, because there was no server call for it to follow. Migration `0006` adds `leave_seat`.
+
+**By device, never by seat.** That is 0003's rule applied to a departure: a client says who it is,
+and never which chairs exist. Taking a seat id would let any code-holder remove any player by
+naming their seat — and the join code is a bearer capability, so that is the difference between a
+way out and a way to throw somebody else out.
+
+**The host is the whole difficulty, and it is smaller than it looks.** Per 0005 the host controls
+exactly one transition — lobby → playing — and has no authority whatsoever over a running game, so
+that closing a laptop mid-game ends nothing. The consequence is that a host who leaves matters in
+the lobby and nowhere else: their seat is the only one whose departure can brick a table, by
+leaving a row every remaining player can read, can sit at, and can never start. So the chair
+transfers, to the earliest remaining `claimedAt` — the same "who got here first" rule 0005's
+backfill used.
+
+**The trap, because it is silent and total.** `start_game` checks the secret FIRST and the device
+second. Moving `host_seat_id` while leaving `host_secret` set arms the strongest branch with a
+value nobody holds — the departing host took it with them — and the device branch is never
+reached, so the transfer produces a table _more_ unstartable than the one it was fixing. A transfer
+therefore nulls the secret in the same statement, dropping the row onto 0005's device branch.
+`isHostDevice` mirrors that, so the button and the server still agree.
+
+What it costs, stated rather than discovered: the device branch is weaker, because `fetch_game`
+hands every `deviceId` to every code-holder. It is 0005's own transitional branch for the same
+reason — the alternative is a table nobody can start — and it is bounded to tables whose host
+actually walked out.
+
+**Three things it deliberately does not do.** It does not delete the row when the last player
+leaves (an empty row is harmless and `expires_at` reaps it; deleting would cascade `game_states`
+out from under a device that is merely slow). It does not bump the revision when the caller was not
+at the table, so a double-click is idempotent and wakes nobody. And it refuses once the game has
+started: a seat is a player by then, `playerOrder` is fixed at `createGameState`, and the engine has
+no command for removing one — so a vacated seat would leave a player nobody can act for and a turn
+that can never end. The client sends that device into the game instead.
+
+The bell matters as much as the write. `leave_seat` bumps the revision but writes nothing through
+`publish`, so — exactly as with a seat claim — nothing has rung, and `leaveOnlineTable` announces
+**before** it resets the session. Getting those two lines the wrong way round is silent: the
+announce goes into a `LocalSession`, which accepts everything and does nothing, and everyone else
+watches an occupied chair until their 30-second poll comes round.
+
+A transport failure does **not** forget locally. That is the same call `connection.utils` makes for
+a move: a device that has quietly left a table the server still seats it at is a ghost in a chair
+nobody can clear, and a visible refusal is worse to look at and far easier to recover from.
 
 ## Joining by a typed code
 

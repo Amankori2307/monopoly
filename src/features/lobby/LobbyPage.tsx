@@ -19,6 +19,11 @@ import { useLobby } from './useLobby';
  * The same URL is the invite link and the lobby, so somebody who follows it
  * after the game has begun is sent straight into the game rather than into a
  * lobby that no longer exists - see `openOnlineTable`.
+ *
+ * There is one control everybody gets, and it is the way out. Sitting down used
+ * to be the only thing a device could do to a table: an invite link opened by
+ * accident seated you for the row's whole 30-day life, counting against the
+ * eight chairs, with nothing on any screen to undo it.
  */
 export function LobbyPage() {
   const lobby = useLobby();
@@ -63,11 +68,16 @@ export function LobbyPage() {
             </p>
           ) : null}
 
-          {/* Only the host is offered this, and the server refuses it from
+          {/* Start is only offered to the host, and the server refuses it from
               anyone else - the join code is a bearer capability, so a hidden
-              button was never a rule. See migration 0005. */}
-          {lobby.isHost ? (
-            <div className="button-row">
+              button was never a rule. See migration 0005.
+
+              Leave is offered to EVERYBODY, host included: the chair moves to
+              whoever arrived next rather than the table being locked to the
+              person who opened it. It waits for `isLoaded` for the same reason
+              nothing else here is offered before the table has been read. */}
+          <div className="button-row">
+            {lobby.isHost ? (
               <button
                 className="primary-button"
                 data-testid={TEST_IDS.lobbyStartButton}
@@ -77,7 +87,26 @@ export function LobbyPage() {
               >
                 Start the game
               </button>
-            </div>
+            ) : null}
+            {lobby.isLoaded ? (
+              <button
+                className="secondary-button"
+                data-testid={TEST_IDS.lobbyLeaveButton}
+                disabled={lobby.isBusy}
+                onClick={() => void lobby.leave()}
+                type="button"
+              >
+                Leave table
+              </button>
+            ) : null}
+          </div>
+
+          {/* A departure that did not happen. Deliberately not `lobbyError`,
+              which replaces this whole screen - see useLobby. */}
+          {lobby.leaveError ? (
+            <p className="helper-text" data-testid={TEST_IDS.lobbyLeaveError}>
+              {lobby.leaveError}
+            </p>
           ) : null}
 
           {/* The reason is on screen, not only in a title attribute - every

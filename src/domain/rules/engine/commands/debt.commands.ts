@@ -179,12 +179,37 @@ export const debtCommands: CommandHandlers = {
       bankruptcyRank: alreadyOut + 1,
     }));
 
+    /**
+     * Going bankrupt ends the turn it happened on, extra roll and all.
+     *
+     * `doublesCount` rather than `canRollAgain`, and that is the whole of it:
+     * `resumeTurnAfterDecision` recomputes the flag as `doublesCount > 0`, so
+     * clearing the flag alone is undone by the very next line of this handler.
+     * CLAUDE.md section 8 states the rule; this is the place that has to obey
+     * it in reverse, because it wants the extra roll GONE.
+     *
+     * Without it a player who went out on a double is handed another one, and
+     * that is a dead game rather than an odd one: `endTurn` sees `canRollAgain`
+     * and puts the phase back to `AwaitRoll` instead of advancing, where
+     * `selectCanRollDice` refuses a bankrupt player and `selectCanEndTurn`
+     * wants `TurnComplete`. No Roll, no End turn, no decision, and a turn
+     * belonging to somebody who is out of the game.
+     *
+     * Found by four bots playing each other, which is what it took: a person
+     * reaches it only by rolling doubles on the turn they are ruined, and once
+     * there has nothing to press and nothing to report.
+     */
+    nextState = {
+      ...nextState,
+      turn: { ...nextState.turn, doublesCount: 0, canRollAgain: false },
+    };
+
     // A bankruptcy is the only way a player leaves, so it is the only place
     // the game can become won - and it is checked before the queued auctions
     // run, because auctioning to a lone survivor is theatre.
     const won = concludeIfWon({
       ...nextState,
-      turn: { ...nextState.turn, phase: TurnPhase.TurnComplete, canRollAgain: false },
+      turn: { ...nextState.turn, phase: TurnPhase.TurnComplete },
     });
     if (won.status !== GameStatus.InProgress) {
       nextState = { ...won, pendingAuctionSpaceIds: [] };

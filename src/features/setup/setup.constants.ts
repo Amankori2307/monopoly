@@ -14,6 +14,12 @@ export const DEFAULT_GAME_NAME = '';
 export const SETUP_ERRORS = {
   emptyName: 'Every player needs a name.',
   duplicateName: 'Two players cannot share a name.',
+  /**
+   * A table of nothing but bots plays itself to a winner with nobody watching
+   * a decision. It is not harmful and it is not a game, and refusing it here
+   * costs one line where explaining it afterwards costs a support question.
+   */
+  noHumans: 'Someone has to play, so one seat cannot be a bot.',
 } as const;
 
 export type SetupErrorMessage = (typeof SETUP_ERRORS)[keyof typeof SETUP_ERRORS];

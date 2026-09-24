@@ -22,6 +22,7 @@ which the code itself cannot tell them.
 | Game screen layout         | [game-layout.md](game-layout.md)           | Shipped (responsive)               |
 | Property actions           | [property-actions.md](property-actions.md) | Shipped                            |
 | Play from your own devices | [multiplayer.md](multiplayer.md)           | 🚧 In progress                     |
+| Bot players                | [bots.md](bots.md)                         | Shipped (hot seat only)            |
 | Theming and appearances    | [../theming.md](../theming.md)             | Shipped                            |
 | Rules booklet              | [rules-page.md](rules-page.md)             | Shipped                            |
 | Navigation and the header  | [navigation.md](navigation.md)             | Shipped                            |

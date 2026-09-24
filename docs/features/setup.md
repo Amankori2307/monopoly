@@ -5,9 +5,14 @@
 
 ## What it does
 
-Configure and start a new game — 2 to 8 players, **each with a name and nothing else**, plus an
-optional game name and a theme. A player's colour is assigned by the engine, not chosen. The same screen lists previously saved games so any of them can
-be resumed or deleted.
+Configure and start a new game — 2 to 8 players, each with a name and a switch saying whether the
+machine plays them, plus an optional game name and a theme. A player's colour is assigned by the
+engine, not chosen. The same screen lists previously saved games so any of them can be resumed or
+deleted.
+
+**A seat can be a bot**, which is what makes this a game one person can play: the engine's minimum
+is two players, so before it there had to be somebody else in the room or on another device. See
+[bots.md](bots.md).
 
 **This is `#/new` now, not `/`.** The front door is a chooser
 ([navigation.md](navigation.md)): it asks how you want to play and sends you here, to `#/host`, or
@@ -19,7 +24,7 @@ appearance picker, the saved-games list _and_ a "Play online" button sharing a `
 
 ```
 NewGamePage form state (local useState)
-  └─ submit → validate (non-empty, unique names)
+  └─ submit → validate (non-empty, unique names, at least one human)
        └─ dispatch(createNewGame(CreateGameInput))          gameSlice thunk
             ├─ createGameState(input, DefaultRandomSource)  domain/rules/gameEngine
             ├─ saveGame(nextGame)                           features/persistence
@@ -38,6 +43,19 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 
 - **Form state is local, not Redux.** It is ephemeral and belongs to one screen; putting it in
   the store would add persistence questions for nothing.
+- **Handing a seat to the machine renames it — but only while the name is still one this form
+  wrote.** "Player 2" and "Bot 2" are placeholders; anything else was typed by a person, and
+  overwriting that is the kind of helpfulness that loses work. The rename matters because a name is
+  what the history, the toasts and the player card all speak, so a bot called "Player 2" is
+  indistinguishable from the human beside it in every sentence the game says.
+- **A table of nothing but bots is refused** (`SETUP_ERRORS.noHumans`), and the rule is checked
+  LAST, after the blank and duplicate names: a table with nobody at it is a stranger problem than an
+  empty field, and the first thing wrong with a form should be the first thing said about it.
+- **The bot switch is a `<label>` around the box**, not a box with a label beside it.
+  `$control-checkbox` stays 20px on purpose and the label is what carries the 44px tap floor — the
+  same arrangement `.checkbox-field` already had, and what `mobile.spec.ts` measures. It uses the
+  `is-inline` variant, because up to eight of them stack in one column and the slab treatment
+  written for the single Speed Die switch reads as eight competing panels at that count.
 - **Validation happens before the thunk**, so the engine only ever sees valid input and does not
   need to defend against duplicate names. It no longer has to defend against duplicate _colours_ at
   all — it assigns them.
@@ -114,9 +132,10 @@ Turn order is not the form order: `createGameState` simulates an opening roll pe
 
 | Level       | File                                                                                                                                                         | Covers                                                                                                                                                   |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit        | —                                                                                                                                                            | _Gap: `clampPlayerCount`, validation rules._                                                                                                             |
+| Unit        | [setupValidation.utils.test.ts](../../src/features/setup/setupValidation.utils.test.ts)                                                                      | Every validation rule and the order they are reported in, bots included.                                                                                 |
 | Integration | [NewGamePage.test.tsx](../../src/features/setup/NewGamePage.test.tsx)                                                                                        | Renders setup + recent games; rejects duplicate names; the masthead titles itself from the ruleset and quotes the constants.                             |
 | Unit        | [resume.utils.test.ts](../../src/features/setup/resume.utils.test.ts), [tableModeLabel.guard.test.ts](../../src/features/setup/tableModeLabel.guard.test.ts) | An online save needs its code on this device; every table mode has a label.                                                                              |
+| E2E         | [tests/e2e/bots.spec.ts](../../tests/e2e/bots.spec.ts)                                                                                                       | A solo game started with a bot in seat two, and a table of nothing but bots refused.                                                                     |
 | E2E         | [tests/e2e/setup.spec.ts](../../tests/e2e/setup.spec.ts)                                                                                                     | Create game → navigates to `/game/:id`; the masthead is set in the display serif, the form takes the wider column, and the copy carries no build detail. |
 
 ## Known gaps

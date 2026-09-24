@@ -352,6 +352,34 @@ const v10ToV11 = (raw: Record<string, unknown>): Record<string, unknown> => {
   };
 };
 
+/**
+ * Every player in an existing save is a person.
+ *
+ * The only honest answer: bots did not exist when these were written, so there
+ * was nobody behind a seat who was not sitting at it. Unlike `v10ToV11` there
+ * is nothing to reconstruct and no frozen table to carry - the field has one
+ * correct value for every save that predates it, which is what makes this the
+ * shortest migration in the file rather than a suspiciously short one.
+ *
+ * It writes the shape of ITS OWN version, not today's: `isBot` is a plain
+ * boolean here and will stay one even if a later version turns it into a
+ * difficulty. `v4ToV5` is the standing reminder of what happens otherwise.
+ */
+const v11ToV12 = (raw: Record<string, unknown>): Record<string, unknown> => {
+  const players = (raw.players ?? {}) as Record<string, Record<string, unknown>>;
+
+  return {
+    ...raw,
+    players: Object.fromEntries(
+      Object.entries(players).map(([playerId, player]) => [
+        playerId,
+        { ...player, isBot: false },
+      ])
+    ),
+    version: 12,
+  };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: v1ToV2,
   2: v2ToV3,
@@ -363,6 +391,7 @@ const MIGRATIONS: Record<number, Migration> = {
   8: v8ToV9,
   9: v9ToV10,
   10: v10ToV11,
+  11: v11ToV12,
 };
 
 /**

@@ -16,6 +16,8 @@ import {
   openOnlineTable,
   startOnlineGame,
 } from '../multiplayer/multiplayer.thunks';
+import { leaveOnlineTable } from '../multiplayer/leaveTable.thunks';
+import { TABLE_MESSAGES } from '../multiplayer/multiplayer.constants';
 import { useSession } from '../multiplayer/hooks/useSession';
 
 /**
@@ -27,6 +29,10 @@ import { useSession } from '../multiplayer/hooks/useSession';
  * roster with a Start button on it, and only for the one person who may press
  * it. What went with the claim: `name`, `tokenId`, `setName`, `setTokenId`,
  * `takenTokens`, `claim` and `claimReason`.
+ *
+ * It does have a second job again, and it is the opposite one: `leave`. Sitting
+ * down was the only thing a device could ever do to a table, so an accidental
+ * tap on an invite link was permanent for the row's whole 30-day life.
  */
 export const useLobby = () => {
   const { gameId = '' } = useParams();
@@ -43,6 +49,15 @@ export const useLobby = () => {
   // the local one that never rings.
   const session = useSession();
   const [isBusy, setIsBusy] = useState(false);
+  /**
+   * Why a departure did not happen, when it did not.
+   *
+   * Local rather than in the slice, and deliberately NOT `lobbyError`: that one
+   * is fatal - the page returns early and replaces the screen with "That table
+   * is not there" - which would be a lie about a table this device is still
+   * demonstrably sitting at. The same trap `startRefusal` exists for.
+   */
+  const [leaveError, setLeaveError] = useState<string | null>(null);
 
   // The table's options travel in the URL beside the code, because this is
   // where the game is STARTED and the host chose them a screen ago. They used
@@ -148,6 +163,37 @@ export const useLobby = () => {
     }
   }, [dispatch, gameId, joinCode, navigate, theme.id, useSpeedDie]);
 
+  /**
+   * Gets up and goes home.
+   *
+   * Offered to everybody, host included: the chair is transferred to whoever
+   * arrived next rather than the table being locked to the person who opened
+   * it - see migration 0006. The only outcome that does not end on the front
+   * page is a table that started mid-click, which goes into the game, because
+   * this device's seat is a player on a board by then and abandoning it would
+   * leave a turn that can never end.
+   */
+  const leave = useCallback(async () => {
+    setIsBusy(true);
+    setLeaveError(null);
+    try {
+      const outcome = await dispatch(leaveOnlineTable({ gameId, joinCode }));
+      if (outcome === 'started') {
+        navigate(`/game/${gameId}`);
+        return;
+      }
+      if (outcome === 'unreachable') {
+        // Still seated, and the server still thinks so. Saying so beats a
+        // silent local forget that leaves a ghost in a chair.
+        setLeaveError(TABLE_MESSAGES.leaveFailed);
+        return;
+      }
+      navigate('/');
+    } finally {
+      setIsBusy(false);
+    }
+  }, [dispatch, gameId, joinCode, navigate]);
+
   return {
     gameId,
     hostSeatId,
@@ -156,6 +202,8 @@ export const useLobby = () => {
     isHost,
     isLoaded,
     joinCode,
+    leave,
+    leaveError,
     lobbyError,
     mySeatId: mySeat?.seatId ?? seatId,
     phase,

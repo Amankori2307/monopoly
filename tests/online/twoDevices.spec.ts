@@ -90,3 +90,89 @@ test('two devices join one table, and only one of them can act', async ({ browse
   await hostContext.close();
   await guestContext.close();
 });
+
+/**
+ * Getting up from a table, and the chair the host leaves behind.
+ *
+ * Only provable here. A departure is a server write whose whole point is what
+ * the OTHER devices see, and the transfer rule lives in SQL - a mocked
+ * `leave_seat` would assert that this app sends what it sends, which the unit
+ * tests already do, and nothing at all about migration 0006.
+ *
+ * Three devices rather than two, deliberately: the successor has to be able to
+ * actually START, and two seats minus a host is one seat, which is below
+ * MIN_PLAYERS. A two-device version would prove the button appears and never
+ * that it works.
+ */
+test('a guest can leave, and the host sees the chair empty', async ({ browser }) => {
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+
+  const link = await hostATable(host);
+  const guest = await asSecondDevice(guestContext, link, 'Vikram');
+  await expect(host.getByTestId(TEST_IDS.lobbySeat)).toHaveCount(2, { timeout: 20000 });
+
+  await guest.getByTestId(TEST_IDS.lobbyLeaveButton).click();
+
+  // The person leaving ends up somewhere they can start again, rather than on
+  // a table they are no longer at.
+  await expect(guest.getByTestId(TEST_IDS.lobbyPanel)).toHaveCount(0, { timeout: 20000 });
+
+  // And the host learns about it from the BELL. `leave_seat` bumps the revision
+  // but writes nothing through `publish`, so without the announce this only
+  // arrives when the 30s poll comes round - which is why the timeout here is
+  // deliberately well under thirty seconds.
+  await expect(host.getByTestId(TEST_IDS.lobbySeat)).toHaveCount(1, { timeout: 15000 });
+
+  await hostContext.close();
+  await guestContext.close();
+});
+
+test('the host can leave, and the chair passes to whoever arrived next', async ({
+  browser,
+}) => {
+  const hostContext = await browser.newContext();
+  const firstContext = await browser.newContext();
+  const secondContext = await browser.newContext();
+  const host = await hostContext.newPage();
+
+  const link = await hostATable(host);
+  const first = await asSecondDevice(firstContext, link, 'Vikram');
+  const second = await asSecondDevice(secondContext, link, 'Meera');
+  await expect(host.getByTestId(TEST_IDS.lobbySeat)).toHaveCount(3, { timeout: 20000 });
+
+  // Neither guest can start while the host is here.
+  await expect(first.getByTestId(TEST_IDS.lobbyStartButton)).toHaveCount(0);
+
+  await host.getByTestId(TEST_IDS.lobbyLeaveButton).click();
+  await expect(first.getByTestId(TEST_IDS.lobbySeat)).toHaveCount(2, { timeout: 15000 });
+
+  /**
+   * The headline. Before this the table was simply dead: the chair still named
+   * a device that had gone, and the secret proving that chair was on a laptop
+   * nobody could reach - so two people sat looking at a game that could never
+   * begin.
+   *
+   * It works because the transfer NULLS the secret in the same statement that
+   * moves the seat. `start_game` checks the secret first, so a moved chair with
+   * a live secret arms the strongest branch with a value nobody holds and the
+   * device branch is never reached - a table more unstartable than the one the
+   * transfer was fixing.
+   */
+  await expect(first.getByTestId(TEST_IDS.lobbyStartButton)).toBeEnabled({
+    timeout: 20000,
+  });
+  // Exactly one successor, not everybody. The transfer names a seat; only the
+  // "no host recorded at all" case fails open.
+  await expect(second.getByTestId(TEST_IDS.lobbyStartButton)).toHaveCount(0);
+
+  // And it is a real start, not a live-looking button.
+  await first.getByTestId(TEST_IDS.lobbyStartButton).click();
+  await expect(first.getByTestId(TEST_IDS.boardGrid)).toBeVisible({ timeout: 20000 });
+  await expect(second.getByTestId(TEST_IDS.boardGrid)).toBeVisible({ timeout: 20000 });
+
+  await hostContext.close();
+  await firstContext.close();
+  await secondContext.close();
+});

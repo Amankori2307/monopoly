@@ -15,6 +15,7 @@ import { useAppSelector } from '../../app/hooks';
 import { ActivityButton } from '../../components/game/overlays/ActivityButton';
 import { AppShell } from '../shell/AppShell';
 import { useActiveGame } from './hooks/useActiveGame';
+import { useBotTurns } from './hooks/useBotTurns';
 import { useFeedbackGate } from './hooks/useFeedbackGate';
 import { useGameSounds } from './hooks/useGameSounds';
 import { useGameCommands } from './hooks/useGameCommands';
@@ -57,6 +58,9 @@ export function GamePage() {
   );
   // Roll, then move, then outcome - nothing is said until the token arrives.
   useFeedbackGate(isMoving);
+  // The bots play here, gated on the same walk: a bot that moved over its own
+  // animation would make a four-handed game a blur of nothing legible.
+  useBotTurns(activeGame, isMoving);
   const { viewer, connectionMessage, connectedSeatIds } = useTableState(
     activeGame,
     useAppSelector((state) => state.game.revision)

@@ -12,7 +12,7 @@ Guidance for Claude Code working in this repository.
 
 ## 1. What this project is
 
-A **Monopoly** board game in the browser, playable as any of four editions (India, London, US, World): React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `#/game/:gameId`.
+A **Monopoly** board game in the browser, playable as any of four editions (India, London, US, World): React 19 + TypeScript + Redux Toolkit, built with NX + Vite, saved to `localStorage`. Games have stable ids and are resumable via `#/game/:gameId`. Play it round one screen, across devices at an online table, or on your own against bots.
 
 The defining architectural decision: **the rules engine is a pure module that knows nothing about React or Redux.** UI dispatches _commands_; the engine returns a _new game state_. Keep it that way.
 
@@ -61,6 +61,7 @@ src/App.tsx                      routes only
        rules/engine/commands/    one handler per command, grouped by area
        rules/rng.ts              RandomSource (Default / Seeded)
        board/, cards/, themes/   India Edition data
+       ai/                       bot players: a pure command factory, no state of its own
   └─ app/                        store wiring + typed hooks
   └─ styles/                     SCSS: tokens, themes, components, pages
        main.scss                 the one stylesheet App.tsx imports
@@ -172,6 +173,19 @@ Money moves through exactly three choke points, and all of them log an event: `r
 to move cash inline and log their own line; they go through the primitives now, so the invariant is
 total. Add a fourth and feedback silently stops working for it.
 
+**A bot is a command factory, and it restates no rule.** `chooseBotCommand(state)` in
+[botPolicy.ts](src/domain/ai/botPolicy.ts) returns one `RuntimeGameCommand` or `null`, applies
+nothing, and takes **no `RandomSource`** - a bot that rolled its own dice to choose between moves
+would make the same save play out differently twice. Every command it emits comes from the engine's
+own predicates (`buyBlockedReason`, `bidBlockedReason`, `getPlayerActionOptions`,
+`getPlacementSites`, `getLiquidationValue`), because a guess throws out of the engine and a throw in
+the turn driver reaches nothing but `ErrorBoundary` - the page, not the turn. Its decision table is a
+`Record` over `PendingDecision['type']`, the same tactic as `decisionOwnerOf`: a new decision type is
+a compile error rather than a bot that sits on it and hangs the table. `null` means "no legal move"
+and [useBotTurns](src/features/game/hooks/useBotTurns.ts) stops on it. **Hot seat only** - a bot has
+no device, so online there is no answer to "which client sends its commands" that does not make one
+of them an authority over the running game. See [docs/features/bots.md](docs/features/bots.md).
+
 **An auction records its own bidding.** `AuctionState.ledger` is every bid and pass, oldest first,
 opening line included - it cannot be derived from the standing high bid and `passedPlayerIds`, and
 the game history is prose without a player id. The panel reads it; the _win_ is not in it, because
@@ -198,7 +212,7 @@ Money values live in `domain/board/` and `gameEngine.ts` constants — never har
   `monopoly.seat.<id>.v1` and its join code `monopoly.code.<id>.v1`, plus the preferences
   `monopoly.sound.v1` and `monopoly.appearance.v1`. **The index is its own shape with its own
   schema and no version**, so adding a field to it is not a `GAME_STATE_VERSION` change - see §8.
-- `GAME_STATE_VERSION = 11`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
+- `GAME_STATE_VERSION = 12`. **Bump it and add a migration whenever `GameState` changes shape**, or saved games break on load. Migrations live in [features/persistence/migrations.ts](src/features/persistence/migrations.ts), keyed by the version they upgrade _from_, and run **before** zod validation - the schema describes the current shape, so an older save has to be made current first or it fails to parse and the game is lost.
 - Loads are validated with zod (`features/persistence/schema.ts`), and it is **tight**: players, the board as a discriminated union of space kinds, ownership, both decks, and the trade and auction states are all described. Three cross-field checks too — 40 spaces, `activePlayerIndex` in range, `playerOrder` naming players that exist. Change a shape and this changes with it. `pendingDecision` is the one deliberate exception (see below).
 - **A render that throws is caught** by `ErrorBoundary` (`shared/components/`), the only class component here. The schema should catch a corrupt save first; this is for a save that satisfies it and still breaks a component.
 - **A new top-level `GameState` field is silently stripped on load**: `gameStateSchema` is a plain `z.object`, which drops unknown keys. Add the field to the schema, or it will not survive a save.
@@ -230,7 +244,7 @@ pnpm fix-all      # eslint --fix + prettier write
 pnpm deploy       # gh-pages → build/
 ```
 
-**Baseline as of the last verified run: `pnpm check-all` clean, 1574 unit tests, 236 e2e and 5 routing tests passing,
+**Baseline as of the last verified run: `pnpm check-all` clean, 1617 unit tests, 240 e2e and 5 routing tests passing,
 `pnpm build` succeeds.** Keep it that way — re-run all of them before reporting a change done.
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs exactly that on **every push to
@@ -423,6 +437,57 @@ Full definition of done, per-layer patterns, and the current coverage gap: [docs
   reads exactly like online play being broken. The claim attaches first now, guarded on
   `session.gameId` the way `useTableRejoin` is, because replacing a session CLOSES the one it
   replaces and the lobby attaches again a moment later.
+- **A guard that marks work as done when it is SCHEDULED deadlocks under StrictMode.**
+  `useBotTurns` waits `BOT_MOVE_DELAY_MS`, then dispatches; its once-per-state ref was set when the
+  timer was armed. StrictMode double-invokes an effect on mount - setup, cleanup, setup - so the
+  cleanup cancelled the pending timer and the second setup, seeing its own mark, returned without
+  arming another. **Nothing was ever dispatched.** Mark on the way OUT, inside the callback, so a
+  cancelled timer leaves nothing behind. It needed three things at once - StrictMode (the app has
+  one, `renderWithProviders` does not), a bot active on the FIRST render, and the early mark - which
+  is to say: start a solo game, lose the opening roll, and the game is frozen on the first screen a
+  player sees. Every test passed, the e2e journey included, because that journey plays a human turn
+  first and by then the deps had changed and StrictMode was long done. **Only the browser saw it**,
+  which is the lesson: an effect whose behaviour depends on mount timing needs one test mounted in a
+  `StrictMode`.
+- **While a bot holds the move, the device is a Spectator - and that cannot live in
+  `selectCanRollDice`.** `selectHasAvailableAction` calls that selector through `HOT_SEAT_VIEWER`
+  deliberately, as a DEADLOCK DETECTOR, so a bot clause inside it would report a dead table on every
+  bot turn and log an error for each one. The detector asks "does the game have a legal move for
+  whoever owns it", and a bot's turn has one. It belongs in `resolveViewer`, keyed on
+  `getExpectedActorId` and never the active player. Without it the hot seat controls every chair
+  including the machine's, so Roll stayed live during a bot's turn - and pressing it raced the bot's
+  own pending command into a phase it no longer fitted, which throws out of the engine.
+- **A bankruptcy has to take the extra roll away, and it is `doublesCount` that does it.** A player
+  ruined on a double kept `canRollAgain`, so `endTurn` put the phase back to `AwaitRoll` instead of
+  advancing - and there `selectCanRollDice` refuses a bankrupt player while `selectCanEndTurn`
+  insists on `TurnComplete`. No Roll, no End turn, no decision, and the turn belonging to somebody
+  who has left: a dead game with three solvent players in it. Clearing the FLAG is not enough,
+  because `resumeTurnAfterDecision` recomputes it as `doublesCount > 0` - the inverse of the rule
+  above, and the one place that needs the count gone. **Found by four bots playing each other**, not
+  by reading: a person reaches it only by rolling doubles on the turn they are ruined, and once there
+  has nothing to press and nothing to report. **Rule 5.11 documented it and a test claimed it**, and
+  that test went green throughout - it plays TWO-handed, where the bankruptcy also ends the game, so
+  the win branch sets `canRollAgain: false` on its way out and the live path is never reached. A
+  second, three-handed test now claims 5.11 alongside it. The same shape as the `display: none`
+  clipping scan below: a test that passes by proving nothing. The whole-game bot test is the guard
+  for this class of thing, and it is worth more than any single case written by hand.
+- **A transferred host chair must null the secret, or the table gets MORE unstartable.** There was
+  no way out of a table at all - `claim_seat` adds and evicts, nothing removed - so an invite link
+  opened by accident seated you for the row's whole 30-day life, and `leaveTable` sat in `seatSlice`
+  dispatched from nowhere for want of a server call. Migration 0006 is `leave_seat`, by **device**
+  rather than by seat (0003's rule: a client says who it is, never which chairs exist, or a
+  code-holder could evict anyone by naming their seat). The host is the only seat whose departure
+  can brick a table, because per 0005 the host controls exactly one transition and the lobby is the
+  only place it matters - so the chair passes to the earliest remaining `claimedAt`. **And
+  `start_game` checks the secret FIRST**: moving `host_seat_id` while leaving `host_secret` set arms
+  the strongest branch with a value the departing host took with them, and the device branch is
+  never reached. `isHostDevice` mirrors it, as always. Three deliberate non-actions: no row deletion
+  on the last departure (`expires_at` reaps it; a delete cascades `game_states` out from under a
+  slow device), no revision bump when the caller was not seated (a double-click must wake nobody),
+  and a refusal once the game has started - a seat is a player by then and `playerOrder` is fixed,
+  so a vacated seat is a turn that can never end. `leaveOnlineTable` announces **before** it resets
+  the session, or the bell goes into a `LocalSession` and everyone waits out the 30s poll; and a
+  transport failure does not forget locally, because a ghost in a chair is a fork nobody can clear.
 - **A claim decides something about seats this device does not own, so it reads the table FIRST.**
   `claimLobbySeat` computed its seat id from `state.seat.seats`, which was right while the only
   caller was the lobby - the lobby had already fetched, and `isLoaded` refused to offer the button

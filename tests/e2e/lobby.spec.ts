@@ -68,3 +68,12 @@ test('a lobby link with no code is not a lobby', async ({ page }) => {
   // No code means no capability, so there is nothing to show.
   await expect(page.getByTestId(TEST_IDS.lobbyStartButton)).toBeDisabled();
 });
+
+test('offers no way out of a table it has not read', async ({ page }) => {
+  await page.goto('/#/lobby/some-game');
+
+  // Leaving is a write, and every control here waits on the same fact: "not
+  // read yet" is not "empty". Acting on an unread table is how a guest claimed
+  // a seat before its first fetch came back and deleted the host.
+  await expect(page.getByTestId(TEST_IDS.lobbyLeaveButton)).toHaveCount(0);
+});

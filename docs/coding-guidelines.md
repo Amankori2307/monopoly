@@ -258,6 +258,9 @@ The mandate above is the standard going forward. The repository does **not** mee
 | The suite's offline guarantee                  | —               | —           | 2 tests      |
 | Edition-aware rules booklet                    | 18 tests        | —           | 2 tests      |
 | The design system's scales and its guard       | 18 tests        | —           | 3 tests      |
+| Bot players                                    | 21 tests        | 4 tests     | 3 tests      |
+| Leaving a table, and the host's chair          | 8 tests         | 4 tests     | 3 tests      |
+| A bot's turn is nobody's to press              | 3 tests         | —           | —            |
 
 **The harness blockers are cleared, and so is the coverage gap they existed to unblock.** The
 thunks — the layer this section calls the highest-value one to test — now have 24 integration tests

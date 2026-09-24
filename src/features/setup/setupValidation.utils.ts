@@ -10,6 +10,7 @@ import { SETUP_ERRORS, type SetupErrorMessage } from './setup.constants';
  */
 export const validateSetupDraft = ({
   playerNames,
+  playerIsBot,
 }: SetupDraft): SetupErrorMessage | null => {
   const trimmedNames = playerNames.map((name) => name.trim());
 
@@ -20,6 +21,13 @@ export const validateSetupDraft = ({
   const uniqueNames = new Set(trimmedNames.map((name) => name.toLowerCase()));
   if (uniqueNames.size !== trimmedNames.length) {
     return SETUP_ERRORS.duplicateName;
+  }
+
+  // Last, and deliberately so: a table with no people at it is a stranger
+  // problem than a blank name, and the first thing wrong with the form should
+  // be the first thing said about it.
+  if (playerIsBot.length > 0 && playerIsBot.every(Boolean)) {
+    return SETUP_ERRORS.noHumans;
   }
 
   // There was a duplicate-TOKEN rule here too. Two players can no longer share

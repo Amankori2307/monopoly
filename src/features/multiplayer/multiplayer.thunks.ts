@@ -37,6 +37,10 @@ import { randomUUID } from '../../domain/rules/id.utils';
 /**
  * Creating, joining and starting an online game.
  *
+ * Leaving is next door in `leaveTable.thunks` - it is the one thunk here that
+ * tears a table down rather than building one up, and this file was over its
+ * line budget with it in.
+ *
  * A lobby is a game row whose `phase` is still `lobby`: the seats are real, the
  * state is not a game yet. Building the GameState only when the host starts is
  * what lets players arrive one at a time - `createGameState` needs every player

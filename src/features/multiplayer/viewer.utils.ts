@@ -1,4 +1,5 @@
 import { TableMode } from '../../domain/types/game.enums';
+import { getExpectedActorId } from '../../domain/rules/actor.utils';
 import type { GameState, PlayerId } from '../../domain/types/game.interfaces';
 import { ViewerKind } from './viewer.enums';
 import type { Viewer } from './viewer.interfaces';
@@ -55,6 +56,31 @@ export const resolveViewer = (
   claimedSeatId: PlayerId | null
 ): Viewer => {
   if (!game) {
+    return SPECTATOR;
+  }
+  /**
+   * While a bot is the one to act, this device is WATCHING.
+   *
+   * Expressed as the viewer rather than as a clause inside `selectCanRollDice`,
+   * and that is not a style choice: `selectHasAvailableAction` - the deadlock
+   * detector - calls that selector through `HOT_SEAT_VIEWER` on purpose, so a
+   * bot clause inside it would report a deadlock on every single bot turn and
+   * log an error for each one. The detector is asking a different question
+   * ("does the game have a legal move for whoever owns it"), and a bot's turn
+   * has one.
+   *
+   * Spectator, because that is exactly the standing: nothing to press, and the
+   * board still to watch. Without it the hot seat controls every chair
+   * including the machine's, so Roll sat live during a bot's turn - and a
+   * player who pressed it raced the bot's own pending command, which then
+   * arrived into a phase it no longer fitted and threw out of the engine.
+   *
+   * `getExpectedActorId`, never the active player: the auction's current bidder
+   * rotates independently of the turn, and a trade's recipient is never the
+   * active player - the two cases this file already exists to get right.
+   */
+  const actorId = getExpectedActorId(game);
+  if (actorId !== null && game.players[actorId]?.isBot) {
     return SPECTATOR;
   }
   if (game.tableMode === TableMode.HotSeat) {
