@@ -99,13 +99,13 @@ File-naming rules are in [conventions.md](conventions.md).
 
 ### Bots
 
-| File                                                                          | What it does                                                                        |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [ai/botPolicy.ts](../src/domain/ai/botPolicy.ts)                              | What a bot does next, as one pure function of the state. Exhaustive over the decisions. |
-| [ai/botValuation.utils.ts](../src/domain/ai/botValuation.utils.ts)            | What a square is worth to a bot, which is not what it costs.                          |
-| [ai/botCashRaising.utils.ts](../src/domain/ai/botCashRaising.utils.ts)        | Answering a debt, and putting up a house out of spare cash.                           |
-| [ai/bot.constants.ts](../src/domain/ai/bot.constants.ts)                      | The float it keeps and what it will pay at auction. Judgements, not rules.            |
-| [ai/botPolicy.test.ts](../src/domain/ai/botPolicy.test.ts)                    | Every branch by hand, plus four bots playing whole games to a winner.                 |
+| File                                                                   | What it does                                                                            |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [ai/botPolicy.ts](../src/domain/ai/botPolicy.ts)                       | What a bot does next, as one pure function of the state. Exhaustive over the decisions. |
+| [ai/botValuation.utils.ts](../src/domain/ai/botValuation.utils.ts)     | What a square is worth to a bot, which is not what it costs.                            |
+| [ai/botCashRaising.utils.ts](../src/domain/ai/botCashRaising.utils.ts) | Answering a debt, and putting up a house out of spare cash.                             |
+| [ai/bot.constants.ts](../src/domain/ai/bot.constants.ts)               | The float it keeps and what it will pay at auction. Judgements, not rules.              |
+| [ai/botPolicy.test.ts](../src/domain/ai/botPolicy.test.ts)             | Every branch by hand, plus four bots playing whole games to a winner.                   |
 
 ### Data
 

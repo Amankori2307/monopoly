@@ -32,12 +32,12 @@ nor the store — which is why it lives under `domain/` beside the engine it spe
 
 Three modules, split by what changes them:
 
-| File                     | Holds                                                         |
-| ------------------------ | ------------------------------------------------------------- |
-| `bot.constants.ts`       | The float it keeps, and what it will pay at auction           |
-| `botValuation.utils.ts`  | What a square is worth to a player — colour sets, extra rails |
-| `botCashRaising.utils.ts`| Answering a debt, and spending spare cash on houses           |
-| `botPolicy.ts`           | Which command, given the state                                |
+| File                      | Holds                                                         |
+| ------------------------- | ------------------------------------------------------------- |
+| `bot.constants.ts`        | The float it keeps, and what it will pay at auction           |
+| `botValuation.utils.ts`   | What a square is worth to a player — colour sets, extra rails |
+| `botCashRaising.utils.ts` | Answering a debt, and spending spare cash on houses           |
+| `botPolicy.ts`            | Which command, given the state                                |
 
 The decision table is a `Record` keyed by `PendingDecision['type']`, the arrangement
 `actor.utils.ts` uses and for the same reason: **a new decision type is a compile error here**
@@ -57,7 +57,7 @@ rather than a bot that silently sits on it and hangs the game for every human at
 
 - **A cash reserve, not a spending limit.** `BOT_CASH_RESERVE` is 20% of the starting cash and
   its whole job is the next rent bill. A bot that spends to its last rupee owns a great deal and
-  goes out to the first railway it lands on — which in a two-handed game *ends* the game rather
+  goes out to the first railway it lands on — which in a two-handed game _ends_ the game rather
   than losing it, and is a worse opponent than one that owns less. The one thing it will spend
   through the reserve for is the last street of a colour group, because that is the purchase
   there is no second chance at.
@@ -73,7 +73,7 @@ rather than a bot that silently sits on it and hangs the game for every human at
 
 - **It declines every trade, and that is a stated limit rather than a stub.** Valuing an offer
   means weighing a colour set against cash against position, which is the whole of Monopoly
-  strategy — and a bot that accepted badly would be *worse* than one that never accepts, because
+  strategy — and a bot that accepted badly would be _worse_ than one that never accepts, because
   a human would find the lever and the game would stop being a game. Rejecting always resolves
   the decision, so no trade can hang a table.
 
@@ -115,11 +115,11 @@ rather than a bot that silently sits on it and hangs the game for every human at
 
 ## Tests
 
-| Level       | File                                              | Covers                                                                        |
-| ----------- | ------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Unit        | `src/domain/ai/botPolicy.test.ts`                 | Every branch by hand, plus four bots playing whole games to a winner           |
-| Integration | `src/features/game/GamePage.bots.integration.test.tsx` | The page drives it, saves it, and leaves a human turn alone              |
-| E2E         | `tests/e2e/bots.spec.ts`                          | One person starts a solo game, and the bot turn plays itself and hands back    |
+| Level       | File                                                   | Covers                                                                      |
+| ----------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Unit        | `src/domain/ai/botPolicy.test.ts`                      | Every branch by hand, plus four bots playing whole games to a winner        |
+| Integration | `src/features/game/GamePage.bots.integration.test.tsx` | The page drives it, saves it, and leaves a human turn alone                 |
+| E2E         | `tests/e2e/bots.spec.ts`                               | One person starts a solo game, and the bot turn plays itself and hands back |
 
 **The whole-game test is the one that matters.** Every case somebody thought to write down can
 pass while the policy still hangs on the one they did not, and `null` is how it says "no legal
@@ -127,7 +127,7 @@ move" — a bot that stops mid-turn leaves a table with no modal, no Roll and no
 nothing on screen saying why. Four seeds, because a single seed walks one path through the deck.
 
 **And one bug it could not see, which only the browser could.** The driver's once-per-state guard
-marked a move as sent when it was *scheduled* rather than when it was dispatched. React StrictMode
+marked a move as sent when it was _scheduled_ rather than when it was dispatched. React StrictMode
 double-invokes an effect on mount — setup, cleanup, setup — so the cleanup cancelled the pending
 timer and the second setup, seeing its own mark, returned without scheduling another. **Nothing was
 ever dispatched.** It needed all three of StrictMode (the app has one, `renderWithProviders` does

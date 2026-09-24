@@ -54,16 +54,16 @@ or older save still parses.
 
 ## Tests
 
-| Level       | File                                                                                     | Covers                                                                |
-| ----------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Unit        | [schema.test.ts](../../src/features/persistence/schema.test.ts)                          | What the schema accepts and what it refuses, field by field            |
-| Unit        | [migrations.test.ts](../../src/features/persistence/migrations.test.ts)                  | Every migration, and a future version passing through untouched        |
-| Unit        | [decodeGameState.test.ts](../../src/features/persistence/decodeGameState.test.ts)        | One decoder for disk and network: migrate, then validate               |
-| Unit        | [persistence.errors.test.ts](../../src/features/persistence/persistence.errors.test.ts)  | A corrupt save, and a browser with storage blocked                     |
-| Unit        | [indexTableMode.test.ts](../../src/features/persistence/indexTableMode.test.ts)          | An index entry written by an older build still lists its games         |
-| Integration | [persistence.integration.test.ts](../../src/features/persistence/persistence.integration.test.ts) | Round trip, index projection, delete                          |
-| Integration | [gameSlice.integration.test.ts](../../src/features/game/gameSlice.integration.test.ts)   | Thunk → engine → `localStorage`, asserted on both                      |
-| E2E         | [tests/e2e/navigation.spec.ts](../../tests/e2e/navigation.spec.ts)                       | Resuming a saved game from the front door                              |
+| Level       | File                                                                                              | Covers                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Unit        | [schema.test.ts](../../src/features/persistence/schema.test.ts)                                   | What the schema accepts and what it refuses, field by field     |
+| Unit        | [migrations.test.ts](../../src/features/persistence/migrations.test.ts)                           | Every migration, and a future version passing through untouched |
+| Unit        | [decodeGameState.test.ts](../../src/features/persistence/decodeGameState.test.ts)                 | One decoder for disk and network: migrate, then validate        |
+| Unit        | [persistence.errors.test.ts](../../src/features/persistence/persistence.errors.test.ts)           | A corrupt save, and a browser with storage blocked              |
+| Unit        | [indexTableMode.test.ts](../../src/features/persistence/indexTableMode.test.ts)                   | An index entry written by an older build still lists its games  |
+| Integration | [persistence.integration.test.ts](../../src/features/persistence/persistence.integration.test.ts) | Round trip, index projection, delete                            |
+| Integration | [gameSlice.integration.test.ts](../../src/features/game/gameSlice.integration.test.ts)            | Thunk → engine → `localStorage`, asserted on both               |
+| E2E         | [tests/e2e/navigation.spec.ts](../../tests/e2e/navigation.spec.ts)                                | Resuming a saved game from the front door                       |
 
 ## Known gaps
 

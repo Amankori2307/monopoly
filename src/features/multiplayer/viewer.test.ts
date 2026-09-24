@@ -131,10 +131,7 @@ describe('a bot holding the move', () => {
     const base = withBotFirst();
     const human = base.playerOrder[1];
     expect(
-      resolveViewer(
-        { ...base, activePlayerIndex: base.playerOrder.indexOf(human) },
-        null
-      )
+      resolveViewer({ ...base, activePlayerIndex: base.playerOrder.indexOf(human) }, null)
     ).toEqual(HOT_SEAT_VIEWER);
   });
 
